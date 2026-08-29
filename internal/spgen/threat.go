@@ -148,10 +148,12 @@ what counts as a threat, and this decides what it is worth. Every scan in the mo
 walks player slots, and a tank occupies none, which is mvm-ds3: not fixed here, and fixable here
 for the first time.
 
-isPlayer and inGame are read as one pair because the shipped code tested them together, and the
-caller has to fill them the same way: the shipped test is || and short circuits, so IsClientInGame
-is never reached for a non-player. Calling it anyway to fill this record throws "Client index is
-invalid" on every tank in the game. Fill inGame as isPlayer && IsClientInGame(threat). */
+Every field after isPlayer is filled behind it, not beside it. The shipped chain reads the class,
+the miniboss flag and the carrier flag only after its player test has passed, and all three throw
+when asked about something that is not a player: TF2_HasTheFlag threw 3933 times over four waves,
+on tank_boss and on obj_attachment_sapper, and each one aborted the whole threat choice for that
+tick. The decision reads none of them for a non-player, so filling them false costs nothing, and
+that is asserted in internal/threat rather than assumed here. See mvm-z83.46. */
 stock int ThreatPriorityOf(float rangeSq, bool isPlayer, bool inGame, TFClassType pclass, bool giant, bool carrier)
 {
 	int flags = (isPlayer ? 1 : 0) | (inGame ? 2 : 0) | (giant ? 4 : 0) | (carrier ? 8 : 0);
