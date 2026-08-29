@@ -21,6 +21,23 @@ type Sample struct {
 	Recent [Slots]int32
 }
 
+// seen is package state, which becomes a SourcePawn global. Its initialiser is
+// written once at load, so it is a constant or an array of them.
+var seen [Slots]int32 = [Slots]int32{1, 2}
+
+// worst is the scalar shape of the same thing.
+var worst Priority = PriorityIdle
+
+// Note records a client and returns what the highest priority seen so far is,
+// which is the read-and-write a state emission has to get right.
+func Note(slot int32, p Priority) Priority {
+	seen[slot]++
+	if p > worst {
+		worst = p
+	}
+	return worst
+}
+
 // Rank folds the sample into a priority, and shows the switch, the tagged
 // return and the float comparison in one place.
 func Rank(s Sample, threshold float32) Priority {

@@ -15,4 +15,5 @@ public void main()
 	float average;
 	printnum(Go_SumRecent(s, average));
 	printnum(Go_Clamp(9, 0, 4));
+	printnum(view_as<int>(Go_Note(1, Go_PriorityBusy)));
 }

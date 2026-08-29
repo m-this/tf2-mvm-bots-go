@@ -40,6 +40,9 @@ type emitter struct {
 	// for: it becomes a local, so a naked return has a value.
 	resultName string
 	resultDecl string
+	// state is every package-level var, in declaration order, so Reset puts
+	// them back in the order they were declared.
+	state []stateVar
 	// helpers are the builtins that had to be written out, because
 	// SourcePawn has neither min nor max.
 	helpers map[string]helper
@@ -86,14 +89,23 @@ func (e *emitter) line(format string, args ...any) {
 
 func (e *emitter) run(files []*ast.File) {
 	e.helpers = make(map[string]helper)
-	for _, f := range files {
-		if isGenerated(f) {
-			continue
-		}
-		for _, decl := range f.Decls {
-			e.decl(decl)
-		}
+	// SourcePawn reads top to bottom for everything but a function call, so
+	// the declarations come out in dependency order rather than source
+	// order: the defines an array length may use, then the enums and enum
+	// structs, then the globals, then the bodies.
+	e.eachDecl(files, func(d ast.Decl) bool { g, ok := d.(*ast.GenDecl); return ok && g.Tok == token.CONST })
+	e.eachDecl(files, func(d ast.Decl) bool { g, ok := d.(*ast.GenDecl); return ok && g.Tok == token.TYPE })
+	e.eachDecl(files, func(d ast.Decl) bool { g, ok := d.(*ast.GenDecl); return ok && g.Tok == token.VAR })
+	if len(e.state) > 0 {
+		e.blank()
 	}
+	e.eachDecl(files, func(d ast.Decl) bool { _, ok := d.(*ast.FuncDecl); return ok })
+	// Anything left is a declaration no pass claimed, and decl refuses it by
+	// name rather than dropping it.
+	e.eachDecl(files, func(d ast.Decl) bool {
+		g, ok := d.(*ast.GenDecl)
+		return ok && g.Tok != token.CONST && g.Tok != token.TYPE && g.Tok != token.VAR && g.Tok != token.IMPORT
+	})
 }
 
 // prologue is the helpers the body needed, in name order so the output is the
@@ -113,6 +125,21 @@ func (e *emitter) prologue() string {
 		fmt.Fprintf(&b, "stock %s %s(%s a, %s b)\n{\n\tif (a %s b)\n\t{\n\t\treturn a;\n\t}\n\treturn b;\n}\n\n", h.tag, name, h.tag, h.tag, h.op)
 	}
 	return b.String()
+}
+
+// eachDecl emits the declarations one pass wants, in the order they were
+// written, so a reordering here never reorders two things of the same kind.
+func (e *emitter) eachDecl(files []*ast.File, want func(ast.Decl) bool) {
+	for _, f := range files {
+		if isGenerated(f) {
+			continue
+		}
+		for _, decl := range f.Decls {
+			if want(decl) {
+				e.decl(decl)
+			}
+		}
+	}
 }
 
 func (e *emitter) decl(decl ast.Decl) {
@@ -135,8 +162,10 @@ func (e *emitter) genDecl(d *ast.GenDecl) {
 		}
 	case token.CONST:
 		e.constDecl(d)
+	case token.VAR:
+		e.varDecl(d)
 	default:
-		e.fail(d.Pos(), "a package-level %s declaration; a body owns no state", d.Tok)
+		e.fail(d.Pos(), "an unrecognised package-level %s declaration", d.Tok)
 	}
 }
 

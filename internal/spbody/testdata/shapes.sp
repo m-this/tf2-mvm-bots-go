@@ -34,6 +34,19 @@ enum struct Go_Sample
 	int Recent[4];
 }
 
+int Go_seen[4] = {1, 2};
+Go_Priority Go_worst = Go_PriorityIdle;
+
+stock Go_Priority Go_Note(int slot, Go_Priority p)
+{
+	Go_seen[slot]++;
+	if (p > Go_worst)
+	{
+		Go_worst = p;
+	}
+	return Go_worst;
+}
+
 stock Go_Priority Go_Rank(Go_Sample s, float threshold)
 {
 	if (s.Score > threshold)

@@ -29,26 +29,32 @@ static void Emit(int result)
 
 public void main()
 {
+	Go_ResetState();
+
+	for (int slot = 1; slot <= WORLD_SLOTS; slot++)
+		Go_SetDefenderBot(slot, gDefender[slot]);
+
 	for (int team = 0; team < 4; team++)
 		Emit(Go_AliveOnTeam(WORLD_SLOTS, team));
 
 	for (int weapon = 0; weapon <= WORLD_SLOTS; weapon++)
 		Emit(Go_LoadedRounds(weapon));
 
+	/* The touch pair and the answer it changes, in the order the engine runs
+	   them: enter the touch, ask, leave the touch, ask again. The state the
+	   two hooks share is what makes the second answer differ from the
+	   first, so asking outside the pair as well is the whole test. */
 	for (int player = 1; player <= WORLD_SLOTS; player++)
 	{
-		Go_MyTouchPre(0, player);
-		Emit(0);
-	}
+		bool value;
 
-	for (int client = 1; client <= WORLD_SLOTS; client++)
-	{
-		for (int touching = 0; touching < 2; touching++)
-		{
-			bool value;
-			bool supercede = Go_IsBotPre(client, view_as<bool>(touching), value);
-			printnum(view_as<int>(supercede));
-			Emit(view_as<int>(value));
-		}
+		Emit(view_as<int>(Go_IsBotPre(player, value)));
+
+		Go_MyTouchPre(0, player);
+		Emit(view_as<int>(Go_IsBotPre(player, value)));
+		printnum(view_as<int>(value));
+
+		Go_MyTouchPost(0, player);
+		Emit(view_as<int>(Go_IsBotPre(player, value)));
 	}
 }

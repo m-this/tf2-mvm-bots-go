@@ -8,12 +8,13 @@ construct produces a plugin that compiles and is wrong.
 
 A generated body is one function, called by hand-written SourcePawn, taking
 plain values and returning plain values. It reaches the engine only through the
-extern package, `internal/engine`. It owns no state and it allocates nothing.
+extern package, `internal/engine`. It allocates nothing.
 
-Owning no state is the rule that still costs the most: the plugin keeps its
-answers in package globals, so a body that needs one reaches it the way it
-reaches an engine call. When package-level state moves here the rule changes,
-and until then the extern package is where the seam is.
+It may own state: a package-level `var` is the plugin's own global, emitted as a
+SourcePawn global with the same initial value. What SourcePawn will not do is
+compute one at load, so the initialiser is a constant or an array of constants
+and anything else is refused. Putting the state back between maps is the body's
+own job, written as an ordinary function so the differential test walks it.
 
 ## Types
 
@@ -49,7 +50,8 @@ Refused, with the fix:
   parameters.
 - `const`, including `iota` blocks.
 - `type`, at package level only.
-- Package-level `var` is refused: a body owns no state.
+- Package-level `var`, whose initialiser is a constant or an array literal of
+  constants. It becomes a SourcePawn global.
 - `init`, methods, receivers and generic functions are refused. A methodmap is
   the actions generator's job, not this one.
 

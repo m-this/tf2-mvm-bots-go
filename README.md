@@ -3,10 +3,11 @@
 The decisions the RED bots make in Mann vs Machine, written in Go, and the
 generators that turn them into SourcePawn.
 
-The plugin is [tf2-mvm-bots](https://github.com/m-this/tf2-mvm-bots). It keeps
-the SourcePawn that has to be SourcePawn: `SDKCall`, `DHook`, raw address reads,
-gamedata. About 250 sites in 24k lines. This repository is meant to own the
-rest.
+The plugin is [tf2-mvm-bots](https://github.com/m-this/tf2-mvm-bots). It kept
+the SourcePawn that had to be SourcePawn: `SDKCall`, `DHook`, raw address reads,
+gamedata. About 250 sites in 24k lines. That boundary is gone: `internal/spbody`
+emits all three, so what stays there is the gamedata, the map configs and the
+popfiles, and this repository is meant to own everything else.
 
 ## Why
 

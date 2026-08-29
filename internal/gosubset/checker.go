@@ -147,15 +147,35 @@ func lastSlash(s string) int {
 
 func (c *checker) checkValueSpec(spec *ast.ValueSpec, tok token.Token, atPackageLevel bool) {
 	if tok == token.VAR && atPackageLevel {
-		c.refuse(spec.Pos(), "a package-level variable",
-			"a generated body owns no state; pass the value in as a parameter and return the result")
-		return
+		// A package-level var is the plugin's own state, emitted as a
+		// SourcePawn global. Its initialiser is written once at load, so
+		// it has to be something SourcePawn can write there.
+		for _, v := range spec.Values {
+			c.checkStaticInit(v)
+		}
 	}
 	if spec.Type != nil {
 		c.checkType(spec.Type)
 	}
 	for _, v := range spec.Values {
 		c.checkExpr(v)
+	}
+}
+
+// checkStaticInit accepts what SourcePawn writes at load: a constant, or an
+// array literal of constants. Anything computed runs at load in Go and never
+// runs at all in SourcePawn, so it is refused rather than half emitted.
+func (c *checker) checkStaticInit(v ast.Expr) {
+	lit, ok := v.(*ast.CompositeLit)
+	if !ok {
+		c.checkConstExpr(v, "a package-level initialiser")
+		return
+	}
+	if lit.Type != nil {
+		c.checkType(lit.Type)
+	}
+	for _, elt := range lit.Elts {
+		c.checkStaticInit(elt)
 	}
 }
 

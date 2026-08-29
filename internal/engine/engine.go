@@ -25,13 +25,11 @@ import "fmt"
 // not expect the body to make, and reaching it is a failed expectation rather
 // than a zero value quietly standing in for one.
 type Calls struct {
-	IsClientInGame  func(client int32) bool
-	IsPlayerAlive   func(client int32) bool
-	GetClientTeam   func(client int32) int32
-	HasAmmo         func(weapon int32) bool
-	Clip1           func(weapon int32) int32
-	IsDefenderBot   func(client int32) bool
-	SetTouchCredits func(touching bool)
+	IsClientInGame func(client int32) bool
+	IsPlayerAlive  func(client int32) bool
+	GetClientTeam  func(client int32) int32
+	HasAmmo        func(weapon int32) bool
+	Clip1          func(weapon int32) int32
 }
 
 var installed Calls
@@ -97,29 +95,4 @@ func Clip1(weapon int32) int32 {
 		missing("Clip1")
 	}
 	return installed.Clip1(weapon)
-}
-
-// The two below stand in for plugin globals, g_bIsDefenderBot and
-// m_bTouchCredits. A generated body owns no state, so the state stays in the
-// hand-written SourcePawn and is reached the same way an engine call is. When
-// package-level state moves here too they become ordinary variables.
-
-// IsDefenderBot says whether the client is one of ours.
-//
-//sp:native IsDefenderBot
-func IsDefenderBot(client int32) bool {
-	if installed.IsDefenderBot == nil {
-		missing("IsDefenderBot")
-	}
-	return installed.IsDefenderBot(client)
-}
-
-// SetTouchCredits says a defender bot is in the middle of picking up credits.
-//
-//sp:native SetTouchCredits
-func SetTouchCredits(touching bool) {
-	if installed.SetTouchCredits == nil {
-		missing("SetTouchCredits")
-	}
-	installed.SetTouchCredits(touching)
 }

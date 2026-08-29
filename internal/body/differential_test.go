@@ -25,8 +25,6 @@ const (
 	traceGetClientTeam
 	traceHasAmmo
 	traceClip1
-	traceIsDefenderBot
-	traceSetTouchCredits
 )
 
 // world is what the stubs answer, indexed by slot. Slot 0 is never a client and
@@ -81,10 +79,6 @@ func (in *installed) calls() engine.Calls {
 		GetClientTeam:  func(c int32) int32 { in.record(traceGetClientTeam, c); return in.w.team[c] },
 		HasAmmo:        func(x int32) bool { in.record(traceHasAmmo, x); return in.w.hasAmmo[x] },
 		Clip1:          func(x int32) int32 { in.record(traceClip1, x); return in.w.clip[x] },
-		IsDefenderBot:  func(c int32) bool { in.record(traceIsDefenderBot, c); return in.w.defender[c] },
-		SetTouchCredits: func(touching bool) {
-			in.record(traceSetTouchCredits, boolCell(touching))
-		},
 	}
 }
 
@@ -101,6 +95,11 @@ func goCells(w world) []int32 {
 	in := &installed{w: w}
 	defer engine.Install(in.calls())()
 
+	roster.ResetState()
+	for slot := int32(1); slot <= worldSlots; slot++ {
+		roster.SetDefenderBot(slot, w.defender[slot])
+	}
+
 	var out []int32
 	emit := func(result int32) {
 		out = append(out, result, int32(len(in.trace))) //nolint:gosec // G115: record bounds the trace at traceCells
@@ -114,15 +113,17 @@ func goCells(w world) []int32 {
 		emit(roster.LoadedRounds(weapon))
 	}
 	for player := int32(1); player <= worldSlots; player++ {
+		supercede, _ := roster.IsBotPre(player)
+		emit(boolCell(supercede))
+
 		roster.MyTouchPre(0, player)
-		emit(0)
-	}
-	for client := int32(1); client <= worldSlots; client++ {
-		for _, touching := range []bool{false, true} {
-			supercede, value := roster.IsBotPre(client, touching)
-			out = append(out, boolCell(supercede))
-			emit(boolCell(value))
-		}
+		supercede, value := roster.IsBotPre(player)
+		emit(boolCell(supercede))
+		out = append(out, boolCell(value))
+
+		roster.MyTouchPost(0, player)
+		supercede, _ = roster.IsBotPre(player)
+		emit(boolCell(supercede))
 	}
 	return out
 }
@@ -199,8 +200,6 @@ static void Trace(int id, int arg)
 	fmt.Fprintf(&b, "stock bool IsClientInGame(int client) { Trace(%d, client); return gInGame[client]; }\n", traceIsClientInGame)
 	fmt.Fprintf(&b, "stock bool IsPlayerAlive(int client) { Trace(%d, client); return gAlive[client]; }\n", traceIsPlayerAlive)
 	fmt.Fprintf(&b, "stock int GetClientTeam(int client) { Trace(%d, client); return gTeam[client]; }\n", traceGetClientTeam)
-	fmt.Fprintf(&b, "stock bool IsDefenderBot(int client) { Trace(%d, client); return gDefender[client]; }\n", traceIsDefenderBot)
-	fmt.Fprintf(&b, "stock void SetTouchCredits(bool touching) { Trace(%d, view_as<int>(touching)); }\n", traceSetTouchCredits)
 	b.WriteString(`
 /* The two SDKCall handles, and the SDKCall that reaches them. SourceMod's takes
    any number of arguments; both of ours take one, and a stub that accepts what

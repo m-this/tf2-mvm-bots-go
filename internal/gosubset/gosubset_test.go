@@ -61,7 +61,7 @@ func TestRefused(t *testing.T) {
 		{"method receiver", "package decisions\n\ntype T struct{ A int32 }\n\nfunc (t T) M() int32 { return t.A }\n", "method receiver"},
 		{"method call", "package decisions\n\ntype T struct{ A int32 }\n\nfunc f(t T) int32 { return t.M() }\n", "method call"},
 		{"generic function", "package decisions\n\nfunc f[T any](x T) T { return x }\n", "generic function"},
-		{"package variable", "package decisions\n\nvar counter int32\n", "package-level variable"},
+		{"computed package variable", "package decisions\n\nfunc n() int32 { return 1 }\n\nvar counter = n()\n", "package-level initialiser"},
 		{"import", "package decisions\n\nimport \"os\"\n\nfunc f() { _ = os.Args }\n", "import of \"os\""},
 		{"unknown call", wrap("\t_ = TF2_IsMiniBoss(a)"), "unknown function"},
 		{"anonymous struct", "package decisions\n\nfunc f(x struct{ A int32 }) {}\n", "anonymous struct"},
@@ -109,6 +109,7 @@ func TestAccepted(t *testing.T) {
 		src  string
 	}{
 		{"sized arithmetic", wrap("\ta = a*2 + int32(b)")},
+		{"package state", "package decisions\n\nvar touching bool\n\nvar counts [4]int32 = [4]int32{1, 2, 3, 4}\n\nfunc f() int32 {\n\tif touching {\n\t\tcounts[0]++\n\t}\n\treturn counts[0]\n}\n"},
 		{"if else", wrap("\tif a > 1 {\n\t\ta = 1\n\t} else if a < 0 {\n\t\ta = 0\n\t} else {\n\t\ta = 2\n\t}")},
 		{"three clause for", wrap("\tfor i := int32(0); i < 8; i++ {\n\t\ta += i\n\t}")},
 		{"range over array", "package decisions\n\nfunc f(xs [4]int32) int32 {\n\ttotal := int32(0)\n\tfor _, x := range xs {\n\t\ttotal += x\n\t}\n\treturn total\n}\n"},
