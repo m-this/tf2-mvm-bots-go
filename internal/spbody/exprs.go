@@ -29,6 +29,9 @@ func (e *emitter) expr(x ast.Expr) string {
 	case *ast.SelectorExpr:
 		return e.selector(n)
 	case *ast.CallExpr:
+		if _, isGlobal := e.globalExtern(n); isGlobal {
+			return e.callWith(n, nil)
+		}
 		if e.isArrayValue(n) && !e.returnsArrayValue(n) {
 			if tv, isType := e.info.Types[n.Fun]; !isType || !tv.IsType() {
 				e.fail(n.Pos(), "a call returning an array used as a value; SourcePawn fills a parameter, so assign it to a name on a line of its own")

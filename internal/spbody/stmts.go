@@ -155,6 +155,11 @@ func (e *emitter) arrayCall(define bool, lhs, rhs ast.Expr) bool {
 	if !ok || !e.isArrayValue(rhs) {
 		return false
 	}
+	if _, isGlobal := e.globalExtern(call); isGlobal {
+		// NULL_VECTOR and its like are values, not calls, so the
+		// assignment is an ordinary one however the Go spells it.
+		return false
+	}
 	if e.returnsArrayValue(call) {
 		// spcomp takes the float[] form as the right hand side of an
 		// assignment and not as an initialiser, so the declaration and

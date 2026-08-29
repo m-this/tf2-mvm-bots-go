@@ -123,11 +123,12 @@ func (e *emitter) run(files []*ast.File) {
 				e.spNames[fn.Name.Name] = name
 			}
 		}
-		// Package level vars claim a name the same way, and by the same
-		// argument: the files that still read them have not moved.
+		// Package level vars and constants claim a name the same way, and
+		// by the same argument: the files that still read them have not
+		// moved.
 		for _, decl := range f.Decls {
 			g, ok := decl.(*ast.GenDecl)
-			if !ok || g.Tok != token.VAR {
+			if !ok || (g.Tok != token.VAR && g.Tok != token.CONST) {
 				continue
 			}
 			for _, spec := range g.Specs {
@@ -266,6 +267,7 @@ func (e *emitter) constDecl(d *ast.GenDecl) {
 	}
 	var group []entry
 	tagName := ""
+	claimedName := false
 	for _, spec := range d.Specs {
 		vs := spec.(*ast.ValueSpec)
 		for _, name := range vs.Names {
@@ -289,7 +291,16 @@ func (e *emitter) constDecl(d *ast.GenDecl) {
 				}
 				tagName = named.Obj().Name()
 			}
-			group = append(group, entry{name: e.ident(name.Pos(), name.Name), value: lit})
+			emitted := e.ident(name.Pos(), name.Name)
+			if claimed, ok := varName(vs, d); ok && len(vs.Names) == 1 {
+				// A constant keeps the plugin's name for the same
+				// reason a function does: what still reads it has
+				// not moved.
+				emitted = e.ident(name.Pos(), claimed)
+				e.spNames[name.Name] = claimed
+				claimedName = true
+			}
+			group = append(group, entry{name: emitted, value: lit})
 		}
 	}
 	if len(group) == 0 {
@@ -297,7 +308,11 @@ func (e *emitter) constDecl(d *ast.GenDecl) {
 	}
 	if tagName == "" {
 		for _, c := range group {
-			e.line("#define %s%s (%s)", e.cfg.Prefix, c.name, c.value)
+			prefix := e.cfg.Prefix
+			if claimedName {
+				prefix = ""
+			}
+			e.line("#define %s%s (%s)", prefix, c.name, c.value)
 		}
 		e.blank()
 		return

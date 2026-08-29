@@ -84,8 +84,15 @@ func (e *emitter) stateVar(name *ast.Ident, value ast.Expr, claimed string) {
 		e.fail(name.Pos(), "%s: %v", name.Name, err)
 		return
 	}
-	if len(dims) > 1 {
-		e.fail(name.Pos(), "%s is a global of more than one dimension; Reset writes one loop, so declare it flat", name.Name)
+	if len(dims) > 2 {
+		e.fail(name.Pos(), "%s is a global of more than two dimensions; the plugin has none, so this is almost certainly a mistake", name.Name)
+		return
+	}
+	if len(dims) == 2 && value != nil {
+		// A two dimensional global is a vector per client, and the plugin
+		// never initialises one. Emitting the nested literal is work with
+		// nothing asking for it.
+		e.fail(name.Pos(), "%s is a two dimensional global with an initialiser, which nothing emits yet", name.Name)
 		return
 	}
 	emitted := e.cfg.Prefix + e.ident(name.Pos(), name.Name)
