@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	mvmbots "github.com/m-this/tf2-mvm-bots-go"
 	"github.com/m-this/tf2-mvm-bots-go/internal/bindgen"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spgen"
@@ -102,7 +103,15 @@ func run(out, upstream string) error {
 	if err := os.RemoveAll(out); err != nil {
 		return fmt.Errorf("clearing %s: %w", out, err)
 	}
-	emitted, err := files(".")
+	// The bodies are generated from Go source, which is in the working
+	// directory in a checkout and in the binary anywhere else.
+	sources, done, err := mvmbots.SourceRoot(".")
+	if err != nil {
+		return fmt.Errorf("resolving the generator's own sources: %w", err)
+	}
+	defer done()
+
+	emitted, err := files(sources)
 	if err != nil {
 		return err
 	}
