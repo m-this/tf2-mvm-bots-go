@@ -224,7 +224,7 @@ func readArea(r *reader) (*Area, error) {
 	r.skip(2 * 4) // earliest occupy time per team
 	r.skip(4 * 4) // light intensity per corner
 
-	visible := int(int32(r.u32()))
+	visible := int(r.i32())
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -250,6 +250,8 @@ func (m *Mesh) index() {
 	for _, a := range m.Areas {
 		m.byID[a.ID] = a
 	}
+
+	m.grid = newGrid(m.Areas)
 
 	m.incoming = make(map[AreaID][]AreaID, len(m.Areas))
 	for _, a := range m.Areas {
@@ -299,6 +301,15 @@ func (r *reader) u16() uint16 {
 		return 0
 	}
 	return binary.LittleEndian.Uint16(b)
+}
+
+// i32 reads a signed count. The file writes the visible-area count with
+// CUtlBuffer::PutInt, so the four bytes are a signed int and reinterpreting them
+// as one is the whole job; a negative result is a misread and the caller refuses
+// it rather than allocating on it.
+func (r *reader) i32() int32 {
+	//nolint:gosec // G115: the bytes are a signed int in the file, so this is a reinterpretation and not a narrowing.
+	return int32(r.u32())
 }
 
 func (r *reader) u32() uint32 {

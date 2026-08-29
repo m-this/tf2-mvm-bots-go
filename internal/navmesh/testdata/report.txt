@@ -1,0 +1,263 @@
+
+What is covered
+---------------
+
+27 map configs, of which 7 have a nav mesh here and 20 do not.
+The meshes are nav version 16 subversion 2, out of the game's own
+tf2_misc_dir.vpk. The 20 without are community maps whose .nav files are
+not in the dedicated server install, so nothing below can say anything
+about them.
+
+Not checked:
+  mvm_area_52_rc3
+  mvm_autumnull_rc2
+  mvm_boogge_rc3d
+  mvm_brugge_rc4b
+  mvm_butcher_rc1b
+  mvm_cliffside_b8
+  mvm_coastrock_rc1_1
+  mvm_coldtown_rc1f
+  mvm_cyberia_rc6a
+  mvm_decay_rc1
+  mvm_downpour_rc3a
+  mvm_kelly_rc1b
+  mvm_legerdemain_a6a
+  mvm_lostvalley_b5
+  mvm_nox_b5
+  mvm_rancher_b11
+  mvm_rustvalley_rc4
+  mvm_sharp_rc9
+  mvm_sludge_b6
+  mvm_tensai_rc3
+
+mvm-fgs: where a build spot snaps to
+------------------------------------
+
+Every declared spot, with the gap to the nearest nav surface and what the
+eight BuildStandPoint sides do with it. "elsewhere" counts the sides that
+were accepted onto ground other than the spot's own area.
+
+map              spot             origin                 offset  sides  elsewhere   drop
+mvm_bigrock      SniperSpot 1     -129 3293 386              78    8/8          8     94
+mvm_bigrock      SniperSpot 2     586 4657 389               65    8/8          8     71
+mvm_bigrock      SniperSpot 3     -990 3290 359              66    8/8          8     66
+mvm_bigrock      SniperSpot 4     40 1318 433                65    8/8          8     65
+mvm_bigrock      SniperSpot 5     -802 778 641               65    8/8          8     65
+mvm_bigrock      SniperSpot 6     451 478 641                65    8/8          8     65
+mvm_bigrock      EngineerNest 1   -552 4266 250              98    8/8          8     79
+mvm_bigrock      EngineerNest 2   -423 4579 260              96    5/8          5     60
+mvm_bigrock      TeleporterExit 1 -178 3921 318              68    8/8          8     92
+mvm_bigrock      DispenserSpot 1  -4 4580 246                 4    8/8          8     16
+mvm_bigrock      DispenserSpot 2  -1086 4386 133              6    8/8          7      9
+mvm_coaltown     SniperSpot 1     364 311 717                39    8/8          8     40
+mvm_coaltown     SniperSpot 2     -345 311 717               40    8/8          8     42
+mvm_coaltown     SniperSpot 3     1393 74 781                45    8/8          8     58
+mvm_coaltown     SniperSpot 4     966 -488 781               45    8/8          8     45
+mvm_coaltown     SniperSpot 5     -1131 285 685              45    8/8          8     45
+mvm_coaltown     SniperSpot 6     41 443 493                 45    8/8          8     77
+mvm_coaltown     EngineerNest 1   467 1887 496                0    8/8          3     78
+mvm_coaltown     EngineerNest 2   -193 938 406                1    8/8          4     19
+mvm_coaltown     EngineerNest 3   329 960 402                 0    8/8          6     19
+mvm_coaltown     TeleporterExit 1 -6 463 672                  1    8/8          4      0
+mvm_coaltown     DispenserSpot 1  506 1035 416                2    8/8          0      3
+mvm_coaltown     DispenserSpot 2  453 1092 494               79    7/8          7     82
+mvm_coaltown     DispenserSpot 3  525 1542 273                7    8/8          8     10
+mvm_coaltown     DispenserSpot 4  -328 964 422                1    8/8          6     21
+mvm_decoy        SniperSpot 1     -3 -134 625                45    8/8          8     45
+mvm_decoy        SniperSpot 2     47 -223 397                45    8/8          8     45
+mvm_decoy        SniperSpot 3     -1028 -400 769             48    8/8          8     51
+mvm_decoy        SniperSpot 4     -187 -129 625              45    8/8          8     48
+mvm_decoy        SniperSpot 5     548 -1855 470              51    8/8          8     53
+mvm_decoy        SniperSpot 6     -739 -1901 470             48    8/8          8     51
+mvm_decoy        EngineerNest 1   292 598 544                 0    8/8          0      0
+mvm_decoy        EngineerNest 2   214 537 364                 0    8/8          6      7
+mvm_decoy        EngineerNest 3   -218 737 360                2    8/8          4      3
+mvm_decoy        TeleporterExit 1 -361 -159 573               3    8/8          1      1
+mvm_decoy        DispenserSpot 1  -205 1162 365               0    8/8          4      9
+mvm_decoy        DispenserSpot 2  320 439 358                 1    8/8          3      2
+mvm_decoy        DispenserSpot 3  -452 634 352                4    8/8          0      0
+mvm_ghost_town   SniperSpot 1     364 311 717                39    8/8          8     40
+mvm_ghost_town   SniperSpot 2     -345 311 717               40    8/8          8     42
+mvm_ghost_town   SniperSpot 3     1393 74 781                45    8/8          8     58
+mvm_ghost_town   SniperSpot 4     966 -488 781               45    8/8          8     45
+mvm_ghost_town   SniperSpot 5     -1131 285 685              45    8/8          8     45
+mvm_ghost_town   SniperSpot 6     41 443 493                 45    8/8          8     77
+mvm_mannhattan   SniperSpot 1     -64 -2033 10               64    8/8          8     74
+mvm_mannhattan   SniperSpot 2     460 -2254 1                65    8/8          8     65
+mvm_mannhattan   SniperSpot 3     361 -2955 1                65    8/8          8     65
+mvm_mannhattan   SniperSpot 4     -81 -1445 269              69    8/8          8     69
+mvm_mannhattan   SniperSpot 5     -1236 -1792 77             45    8/8          8     88
+mvm_mannhattan   SniperSpot 6     856 -512 277               45    8/8          8     45
+mvm_mannhattan   EngineerNest 1   214 -1319 204              19    8/8          1      4
+mvm_mannhattan   EngineerNest 2   -362 -1393 203              0    8/8          5      3
+mvm_mannhattan   EngineerNest 3   -152 -3319 -63              1    8/8          0      1
+mvm_mannhattan   EngineerNest 4   271 -2910 -63               1    8/8          0      1
+mvm_mannhattan   TeleporterExit 1 -61 -1351 204               4    8/8          3      4
+mvm_mannhattan   TeleporterExit 2 167 -3224 -235              5    8/8          0      5
+mvm_mannhattan   TeleporterExit 3 -131 -2058 -54              0    8/8          3     10
+mvm_mannhattan   DispenserSpot 1  926 -1777 -64               0    8/8          1      0
+mvm_mannhattan   DispenserSpot 2  -723 -629 -68              23    8/8          6     13
+mvm_mannhattan   DispenserSpot 3  -414 -3222 -240            14    8/8          3      0
+mvm_mannworks    SniperSpot 1     -593 -402 577              65    8/8          8     65
+mvm_mannworks    SniperSpot 2     1191 -294 449              65    8/8          8     65
+mvm_mannworks    SniperSpot 3     1528 790 467               66    8/8          8     75
+mvm_mannworks    SniperSpot 4     -860 989 448               70    8/8          8     68
+mvm_mannworks    SniperSpot 5     -89 1036 513               65    8/8          8     65
+mvm_mannworks    SniperSpot 6     466 -775 446               65    8/8          8     72
+mvm_mannworks    EngineerNest 1   -178 1131 249               2    8/8          6     18
+mvm_mannworks    EngineerNest 2   -236 1249 252               1    8/8          7     18
+mvm_mannworks    EngineerNest 3   223 1141 240                2    8/8          7     25
+mvm_mannworks    EngineerNest 4   1014 885 256               11    8/8          4     11
+mvm_mannworks    TeleporterExit 1 417 663 384                 0    8/8          0      0
+mvm_mannworks    DispenserSpot 1  -287 1480 284               2    8/8          6     20
+mvm_mannworks    DispenserSpot 2  999 551 256                 1    8/8          8      2
+mvm_mannworks    DispenserSpot 3  -141 725 258                1    8/8          8      2
+mvm_rottenburg   SniperSpot 1     1531 675 -146              63    8/8          8     66
+mvm_rottenburg   SniperSpot 2     1996 -556 -350             66    8/8          8     66
+mvm_rottenburg   SniperSpot 3     907 -670 -350              64    8/8          8     66
+mvm_rottenburg   SniperSpot 4     2238 122 -146             213    0/8          0      0
+mvm_rottenburg   SniperSpot 5     761 1055 -146              62    8/8          8     64
+mvm_rottenburg   EngineerNest 1   1958 -1289 -543             0    8/8          7     16
+mvm_rottenburg   TeleporterExit 1 1723 -199 -407              0    8/8          6     61
+mvm_rottenburg   DispenserSpot 1  1459 -1775 -582             0    8/8          7     13
+mvm_rottenburg   NestNoTank 1     1476 -1074 -539             3    8/8          4     20
+mvm_rottenburg   NestTankOnly 1   1855 -720 -415              1    8/8          8     93
+
+mvm-0am and mvm-778: spots beside a drop
+----------------------------------------
+
+The deepest fall within 150 units of each declared spot. Fall damage starts
+at about 264 units of drop and about 520 kills a light class. A blank is no
+fall over a step; the query under-reports, because a pit with no nav in the
+bottom of it is a pit this cannot measure.
+
+mvm_bigrock      SniperSpot 5     224 down off area 5344 south at -1000 800 576, onto area 5324, unguarded edge
+mvm_bigrock      SniperSpot 6     256 down off area 5368 south at 575 500 576, onto area 4, unguarded edge
+mvm_coaltown     SniperSpot 1     262 down off area 7 south at 325 375 678, onto area 3070, unguarded edge
+mvm_coaltown     SniperSpot 2     259 down off area 3234 south at -312 375 680, onto area 244, unguarded edge
+mvm_coaltown     SniperSpot 4     228 down off area 3018 south at 938 -450 736, onto area 2371, unguarded edge
+mvm_coaltown     SniperSpot 5     191 down off area 60 east at -1100 338 640, onto area 5064, one-way link
+mvm_coaltown     EngineerNest 1   209 down off area 3092 west at 375 2062 416, onto area 4034, one-way link
+mvm_coaltown     EngineerNest 2   37 down off area 243 east at -275 1062 417, onto area 180, unguarded edge
+mvm_coaltown     TeleporterExit 1 262 down off area 7 south at 325 375 678, onto area 3070, unguarded edge
+mvm_coaltown     DispenserSpot 4  37 down off area 243 east at -275 1062 417, onto area 180, unguarded edge
+mvm_decoy        SniperSpot 1     239 down off area 1399 south at 38 -75 596, onto area 2702, unguarded edge
+mvm_decoy        SniperSpot 3     605 down off area 3260 north at -1412 -675 736, onto area 50, unguarded edge  KILLS
+mvm_decoy        SniperSpot 4     207 down off area 64 west at -450 -162 577, onto area 3812, unguarded edge
+mvm_decoy        EngineerNest 1   189 down off area 31 north at 425 525 544, onto area 3981, one-way link
+mvm_decoy        TeleporterExit 1 207 down off area 64 west at -450 -162 577, onto area 3812, unguarded edge
+mvm_decoy        DispenserSpot 3  114 down off area 78 north at -800 525 466, onto area 1, unguarded edge
+mvm_ghost_town   SniperSpot 1     262 down off area 7 south at 325 375 678, onto area 3070, unguarded edge
+mvm_ghost_town   SniperSpot 2     259 down off area 3234 south at -312 375 680, onto area 244, unguarded edge
+mvm_ghost_town   SniperSpot 4     228 down off area 3018 south at 938 -450 736, onto area 2371, unguarded edge
+mvm_ghost_town   SniperSpot 5     191 down off area 60 east at -1100 338 640, onto area 5064, one-way link
+mvm_mannhattan   SniperSpot 1     186 down off area 4933 east at -50 -2100 -54, onto area 4802, one-way link
+mvm_mannhattan   SniperSpot 2     176 down off area 241 north at 412 -2325 -64, onto area 4791, unguarded edge
+mvm_mannhattan   SniperSpot 4     264 down off area 7701 north at -212 -1400 200, onto area 9820, unguarded edge
+mvm_mannhattan   SniperSpot 5     32 down off area 9978 east at -1200 -1750 32, onto area 9971, one-way link
+mvm_mannhattan   SniperSpot 6     296 down off area 8574 south at 888 -300 232, onto area 7780, unguarded edge  HURTS
+mvm_mannhattan   EngineerNest 1   258 down off area 7719 north at 200 -1300 200, onto area 9818, unguarded edge
+mvm_mannhattan   EngineerNest 2   267 down off area 9829 north at -350 -1425 203, onto area 9769, one-way link  HURTS
+mvm_mannhattan   TeleporterExit 1 264 down off area 7701 north at -212 -1400 200, onto area 9820, unguarded edge
+mvm_mannhattan   TeleporterExit 3 186 down off area 4933 east at -50 -2100 -54, onto area 4802, one-way link
+mvm_mannworks    SniperSpot 1     256 down off area 12622 east at -575 -450 512, onto area 12698, one-way link
+mvm_mannworks    SniperSpot 2     219 down off area 13830 south at 1325 -275 496, onto area 13913, one-way link
+mvm_mannworks    SniperSpot 3     131 down off area 7490 west at 1375 725 388, onto area 14519, one-way link
+mvm_mannworks    SniperSpot 4     119 down off area 14194 east at -800 1012 381, onto area 14081, one-way link
+mvm_mannworks    SniperSpot 5     192 down off area 59 north at -162 775 448, onto area 14567, one-way link
+mvm_mannworks    SniperSpot 6     109 down off area 14715 south at 450 -725 384, onto area 12206, one-way link
+mvm_mannworks    EngineerNest 1   106 down off area 14327 south at -38 1175 322, onto area 14329, one-way link
+mvm_mannworks    EngineerNest 3   131 down off area 14405 east at 325 1212 260, onto area 11727, one-way link
+mvm_mannworks    EngineerNest 4   131 down off area 13316 east at 1000 825 388, onto area 14519, one-way link
+mvm_mannworks    TeleporterExit 1 249 down off area 9114 north at 438 425 384, onto area 14027, unguarded edge
+mvm_mannworks    DispenserSpot 2  74 down off area 8852 east at 1000 688 331, onto area 14519, unguarded edge
+mvm_rottenburg   SniperSpot 1     210 down off area 4309 east at 1600 638 -208, onto area 3366, unguarded edge
+mvm_rottenburg   SniperSpot 5     224 down off area 71 south at 688 1425 -208, onto area 4616, unguarded edge
+
+And the whole mesh, for scale: every fall on each map, and how much of the
+map has a teleporter exit ring point beside one. The exit ring is what the
+engineer falls back to when the named spot beats him, 500 units out from his
+nest on eight sides, and nothing vets it.
+
+map                falls   hurts   kills   areas     risky ring
+mvm_bigrock          100       5       0    1305             1%
+mvm_coaltown         151       8       0    1092             6%
+mvm_decoy            220      77      12     990            32%
+mvm_ghost_town       151       8       0    1107             6%
+mvm_mannhattan        73      16      23     679            10%
+mvm_mannworks        393      33      11    1328            10%
+mvm_rottenburg        75      11       0    1127             1%
+
+Declared spots with no nav area over them
+-----------------------------------------
+
+A spot in a hole is worse than a spot off the mesh by the same distance: a
+path to it ends at the edge of the hole, so the arrival test never comes
+true, and every attempt sends the bot back to the same place.
+
+mvm_bigrock      EngineerNest 1   -552 4266 250: in a hole in the mesh, nearest surface 98 away
+mvm_bigrock      EngineerNest 2   -423 4579 260: in a hole in the mesh, nearest surface 96 away
+mvm_bigrock      TeleporterExit 1 -178 3921 318: in a hole in the mesh, nearest surface 68 away
+mvm_mannhattan   EngineerNest 1   214 -1319 204: in a hole in the mesh, nearest surface 19 away
+mvm_mannhattan   DispenserSpot 2  -723 -629 -68: in a hole in the mesh, nearest surface 23 away
+mvm_mannhattan   DispenserSpot 3  -414 -3222 -240: in a hole in the mesh, nearest surface 14 away
+mvm_mannworks    EngineerNest 4   1014 885 256: in a hole in the mesh, nearest surface 11 away
+
+mvm-wb0 and mvm-ipf: the coordinate
+-----------------------------------
+
+1014 885 274: in a hole in the mesh, nearest surface 20 away
+
+The ground round it, by distance:
+  area 14519   20.2 away, 275x250, surface at z 257
+  area 14584   22.6 away,  75x75 , surface at z 250
+  area 11235   25.2 away,  50x75 , surface at z 253
+  area 11400   65.1 away, 225x75 , surface at z 256
+  area 14583   67.9 away,  50x75 , surface at z 249
+  area 14588   94.6 away,  75x100, surface at z 228
+  area 14526   95.1 away,  50x100, surface at z 238
+  area 14535  110.9 away, 125x100, surface at z 249
+  area 14587  115.1 away,  50x100, surface at z 220
+  area 13316  115.3 away, 125x100, surface at z 386
+
+Which nav areas cover a grid round it, on 25 unit steps:
+  y= 810  ....###
+  y= 835  ....###
+  y= 860  ....###
+  y= 885  ....###
+  y= 910  #######
+  y= 935  #######
+  y= 960  #######
+             ^ x=1014
+
+mvm-dop and mvm-nza: ScoreNestArea on real areas
+------------------------------------------------
+
+Mannworks, target -96 1600 256, sentry range 1300, 441 approach areas.
+The approach set here is every area within range of the target: the plugin
+narrows that by the BOMB_DROP attribute, which is computed when the mission
+loads and is not in the file, so it is a caller's input rather than a lookup.
+
+Top ten for a held sentry:
+  area 13346: 160.2 (range 99.2 at 986, height 30.0, room 1.2, sight 29.8 of 37% seen, crowding 0.0)
+  area 6618: 158.7 (range 79.0 at 702, height 27.7, room 1.2, sight 50.8 of 63% seen, crowding 0.0)
+  area 6791: 157.5 (range 77.8 at 686, height 27.7, room 1.2, sight 50.8 of 63% seen, crowding 0.0)
+  area 10188: 157.3 (range 98.7 at 991, height 30.0, room 5.0, sight 23.6 of 29% seen, crowding 0.0)
+  area 10049: 157.3 (range 96.1 at 924, height 0.0, room 17.5, sight 43.7 of 55% seen, crowding 0.0)
+  area 10346: 157.0 (range 99.4 at 967, height 30.0, room 3.8, sight 23.9 of 30% seen, crowding 0.0)
+  area 59: 153.2 (range 82.0 at 741, height 24.2, room 11.2, sight 35.7 of 45% seen, crowding 0.0)
+  area 10183: 153.0 (range 93.9 at 1054, height 30.0, room 5.0, sight 24.1 of 30% seen, crowding 0.0)
+  area 10085: 152.4 (range 92.5 at 878, height 30.0, room 5.0, sight 24.9 of 31% seen, crowding 0.0)
+  area 10694: 151.0 (range 98.7 at 992, height 30.0, room 1.2, sight 21.0 of 26% seen, crowding 0.0)
+
+Top ten for a gunslinger:
+  area 14219: 145.0 (range 99.9 at 456, height 0.0, room 2.5, sight 42.6 of 53% seen, crowding 0.0)
+  area 14394: 143.7 (range 97.6 at 423, height 0.0, room 5.0, sight 41.2 of 51% seen, crowding 0.0)
+  area 10051: 143.1 (range 95.6 at 513, height 0.0, room 12.5, sight 35.0 of 44% seen, crowding 0.0)
+  area 14397: 142.3 (range 95.5 at 397, height 0.0, room 5.0, sight 41.7 of 52% seen, crowding 0.0)
+  area 10052: 142.3 (range 97.3 at 490, height 0.0, room 12.5, sight 32.5 of 41% seen, crowding 0.0)
+  area 14207: 142.0 (range 99.4 at 448, height 0.0, room 5.0, sight 37.6 of 47% seen, crowding 0.0)
+  area 14398: 141.9 (range 99.0 at 468, height 0.0, room 2.5, sight 40.5 of 51% seen, crowding 0.0)
+  area 14400: 140.4 (range 97.4 at 488, height 0.0, room 1.2, sight 41.7 of 52% seen, crowding 0.0)
+  area 11285: 140.1 (range 94.7 at 524, height 0.0, room 5.0, sight 40.5 of 51% seen, crowding 0.0)
+  area 14303: 139.7 (range 93.7 at 373, height 0.0, room 6.2, sight 39.7 of 50% seen, crowding 0.0)

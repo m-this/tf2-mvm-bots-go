@@ -237,6 +237,7 @@ type Mesh struct {
 
 	byID     map[AreaID]*Area
 	incoming map[AreaID][]AreaID
+	grid     *grid
 }
 
 // Area returns the area with this id, or nil.

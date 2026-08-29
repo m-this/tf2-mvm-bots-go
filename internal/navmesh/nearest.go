@@ -32,22 +32,22 @@ func (m *Mesh) AreaUnder(pos Vec3, beneathLimit float32) *Area {
 	var best *Area
 	bestZ := float32(0)
 
-	for _, a := range m.Areas {
+	m.grid.at(pos.X, pos.Y, func(a *Area) {
 		if !a.Contains2D(pos.X, pos.Y) {
-			continue
+			return
 		}
 
 		z := a.ZAt(pos.X, pos.Y)
 		if z > pos.Z+HalfHumanHeight {
-			continue
+			return
 		}
 		if z < pos.Z-beneathLimit {
-			continue
+			return
 		}
 		if best == nil || z > bestZ {
 			best, bestZ = a, z
 		}
-	}
+	})
 
 	return best
 }
@@ -72,14 +72,14 @@ func (m *Mesh) NearestArea(pos Vec3, maxDist float32) *Area {
 	var best *Area
 	bestDistSq := maxDist * maxDist
 
-	for _, a := range m.Areas {
+	m.grid.near(pos.X, pos.Y, maxDist, func(a *Area) {
 		d := a.ClosestPoint(pos).Sub(pos)
 		distSq := d.X*d.X + d.Y*d.Y + d.Z*d.Z
 		if distSq >= bestDistSq {
-			continue
+			return
 		}
 		best, bestDistSq = a, distSq
-	}
+	})
 
 	return best
 }
@@ -96,28 +96,28 @@ func (m *Mesh) AreaAt(pos Vec3, tolerance float32) *Area {
 	var best *Area
 	bestGap := tolerance
 
-	for _, a := range m.Areas {
+	m.grid.at(pos.X, pos.Y, func(a *Area) {
 		if !a.Contains2D(pos.X, pos.Y) {
-			continue
+			return
 		}
 		gap := absf(a.ZAt(pos.X, pos.Y) - pos.Z)
 		if gap > bestGap {
-			continue
+			return
 		}
 		best, bestGap = a, gap
-	}
+	})
 	if best != nil {
 		return best
 	}
 
 	bestDist := tolerance
-	for _, a := range m.Areas {
+	m.grid.near(pos.X, pos.Y, tolerance, func(a *Area) {
 		d := a.Distance(pos)
 		if d > bestDist {
-			continue
+			return
 		}
 		best, bestDist = a, d
-	}
+	})
 
 	return best
 }
@@ -126,11 +126,15 @@ func (m *Mesh) AreaAt(pos Vec3, tolerance float32) *Area {
 // nearest first.
 func (m *Mesh) AreasWithin(pos Vec3, radius float32) []*Area {
 	var out []*Area
-	for _, a := range m.Areas {
-		if a.Distance(pos) <= radius {
-			out = append(out, a)
+	seen := make(map[AreaID]bool)
+
+	m.grid.near(pos.X, pos.Y, radius, func(a *Area) {
+		if seen[a.ID] || a.Distance(pos) > radius {
+			return
 		}
-	}
+		seen[a.ID] = true
+		out = append(out, a)
+	})
 
 	sortAreasByDistance(out, pos)
 

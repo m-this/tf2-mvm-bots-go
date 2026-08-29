@@ -46,3 +46,12 @@ func sortAreasByHeightAt(areas []*Area, pos Vec3) {
 		return cmp.Compare(a.ID, b.ID)
 	})
 }
+
+func sortScores(scores []NestScore) {
+	slices.SortFunc(scores, func(a, b NestScore) int {
+		if c := cmp.Compare(b.Total(), a.Total()); c != 0 {
+			return c
+		}
+		return cmp.Compare(a.Area, b.Area)
+	})
+}

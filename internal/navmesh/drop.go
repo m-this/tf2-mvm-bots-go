@@ -194,26 +194,27 @@ func (m *Mesh) unguardedFalls(a *Area, dir Direction) []Fall {
 func (m *Mesh) groundBelow(p Vec3, fromZ float32) (*Area, float32) {
 	var best *Area
 	bestZ := float32(0)
+	wall := false
 
-	for _, a := range m.Areas {
-		if !a.Contains2D(p.X, p.Y) {
-			continue
+	m.grid.at(p.X, p.Y, func(a *Area) {
+		if wall || !a.Contains2D(p.X, p.Y) {
+			return
 		}
 
 		z := a.ZAt(p.X, p.Y)
 		if z > fromZ-StepHeight {
 			// Ground level with the edge, so the edge is a wall.
 			if z >= fromZ-HalfHumanHeight && z <= fromZ+HumanHeight {
-				return nil, 0
+				wall = true
 			}
-			continue
+			return
 		}
 		if best == nil || z > bestZ {
 			best, bestZ = a, z
 		}
-	}
+	})
 
-	if best == nil {
+	if wall || best == nil {
 		return nil, 0
 	}
 
