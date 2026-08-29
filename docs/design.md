@@ -1,7 +1,13 @@
-# Authoring the bot AI in Go
+# Rewriting the plugin in Go
 
-A draft. Nothing here is measured yet, and the first bead is the one that says
-whether the rest is possible at all.
+The aim is that tf2-mvm-bots is written here, in Go, and that the SourcePawn it
+ships is generated. Nothing is hand written in the other repository except what
+is not code.
+
+This document was drafted under a narrower aim, "author the bot AI in Go", and
+the sections below still argue for it. They are kept for the measurements and the
+cost, both of which hold. Where a section has been overtaken it says so at the
+top rather than being edited into agreement with a decision it did not make.
 
 ## The complaint
 
@@ -30,6 +36,12 @@ None of the three is a SourcePawn problem. They are a problem of one fact being
 written down twice, and of the interesting code being unreachable from a test.
 
 ## What Go is for, and what it is not for
+
+**Overtaken, 2026-08-29. This section argued for a narrow aim and the aim is now
+the whole plugin.** It is kept because the reasoning is still the cost estimate:
+what it calls the part a transpiler cannot carry is now the work rather than the
+boundary, and `mvm-bis` is that work. Read `mvm-z83` for the aim and this for
+what it costs.
 
 Not a rewrite of the plugin. The mass of this repository is SM natives, DHooks,
 CBaseNPC actions, gamedata offsets and entity access. A transpiler cannot carry
@@ -61,6 +73,11 @@ Everything that touches the engine stays hand written SourcePawn. Generated code
 is called by it and never calls back into it: a generated function takes a struct
 of plain values and returns a plain value. That rule is what keeps the generator
 small.
+
+That rule is what the wider aim removes, and removing it is the whole cost of the
+change. 436 of the 756 functions contain an engine call, so under this rule they
+were the floor and are now the work. The generator has to grow the thing it was
+designed not to do. See `mvm-bis`.
 
 ## The part that has to be proved first
 
