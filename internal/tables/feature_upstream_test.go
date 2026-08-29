@@ -111,27 +111,34 @@ func TestFeatureTableRoundTrips(t *testing.T) {
 	/* Every feature at the pin must agree exactly. A feature only the table has
 	is work in flight, reported and not failed.
 
-	The bug this proof exists for is a shared name whose enum and convar have
-	drifted apart, and that is what the loop below refuses. A name the plugin
-	has not committed yet cannot have drifted from anything. */
+	It has to sit after every shipped one. The bug this proof exists for is a
+	name inserted in the middle of a parallel enum, which silently renames the
+	convars below it, and an ahead feature inserted in the middle is that bug
+	waiting for the plugin to adopt it. */
 	byName := map[string]upstreamFeature{}
 	for _, f := range upstream {
 		byName[f.name] = f
 	}
+	shipped := make([]tables.Feature, 0, len(upstream))
 	ahead := 0
 	for _, got := range tables.Features {
 		if _, ok := byName[got.Name]; !ok {
 			ahead++
 			t.Logf("the table has %q and the pin does not: work in flight, or a name to drop", got.Name)
+			continue
 		}
+		if ahead > 0 {
+			t.Errorf("%q ships at the pin and sits after %d features that do not: append, never insert", got.Name, ahead)
+		}
+		shipped = append(shipped, got)
 	}
-	if len(upstream) != len(tables.Features)-ahead {
-		t.Fatalf("the pin has %d features, the table has %d of which %d are ahead",
-			len(upstream), len(tables.Features), ahead)
+	if len(upstream) != len(shipped) {
+		t.Fatalf("the pin has %d features, the table has %d of them and %d ahead",
+			len(upstream), len(shipped), ahead)
 	}
 
 	for i, want := range upstream {
-		got := tables.Features[i]
+		got := shipped[i]
 
 		t.Run(want.name, func(t *testing.T) {
 			if got.Name != want.name {

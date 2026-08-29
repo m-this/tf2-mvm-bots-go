@@ -177,19 +177,19 @@ var Features = []Feature{
 			"an empty path until the pack expired. See mvm-zx0.",
 	},
 	{
-		Name:        "engineer_entrance_first",
-		Description: "The engineer puts his teleporter entrance up in spawn before he walks out to build the nest.",
-		On:          false,
-		Note: "Off until a run says otherwise. The entrance used to wait for the nest, so the engineer built\n" +
-			"it, walked to the nest, built there, and walked back to spawn for the entrance. Peppy asked\n" +
-			"for the entrance first and the walk is what the test-bed measures. See mvm-dh8.",
-	},
-	{
 		Name:        "medic_answers_call",
 		Description: "A player who calls for a medic takes the beam, and a player outranks a bot for it either way.",
 		On:          false,
 		Note: "Off until a run says otherwise. Reported twice, by Cowser and by Peppy: a human presses the\n" +
 			"medic call and the bot medic carries on healing whichever bot it had picked, which reads as\n" +
 			"the medic being broken. See mvm-w9b.",
+	},
+	{
+		Name:        "engineer_entrance_first",
+		Description: "The engineer puts his teleporter entrance up in spawn before he walks out to build the nest.",
+		On:          false,
+		Note: "Off until a run says otherwise. The entrance used to wait for the nest, so the engineer built\n" +
+			"it, walked to the nest, built there, and walked back to spawn for the entrance. Peppy asked\n" +
+			"for the entrance first and the walk is what the test-bed measures. See mvm-dh8.",
 	},
 }

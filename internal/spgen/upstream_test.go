@@ -2,56 +2,29 @@ package spgen_test
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/spgen"
+	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
 )
 
-/*
-	The plugin revision the edge is checked against
-
-Read from a git object rather than from the working tree, for the reason
-internal/tables gives: the working tree is edited by whoever is working in that
-repository, and a proof that fails because somebody saved a file is a proof
-people learn to ignore. The helper is duplicated here rather than shared,
-because a _test package cannot be imported.
-*/
-const upstreamRev = "HEAD"
-
-func upstreamDir(t *testing.T) string {
-	t.Helper()
-
-	dir := os.Getenv("MVMBOTS_UPSTREAM")
-	if dir == "" {
-		dir = filepath.Join("..", "..", "..", "tf2-mvm-bots")
-	}
-	if !filepath.IsAbs(dir) {
-		if abs, err := filepath.Abs(dir); err == nil {
-			if _, err := os.Stat(filepath.Join(abs, ".git")); err != nil {
-				dir = filepath.Join("..", "..", dir)
-			}
-		}
-	}
-	if _, err := os.Stat(filepath.Join(dir, ".git")); err != nil {
-		t.Skipf("upstream plugin not a git repository at %s, set MVMBOTS_UPSTREAM: %v", dir, err)
-	}
-	return dir
-}
-
+// readUpstream is the pinned plugin file this proof reads. The pin, and why
+// there is one, is internal/upstream. No plugin repository is a skip; a plugin
+// repository missing the file at the pin is a failure.
 func readUpstream(t *testing.T, path string) string {
 	t.Helper()
 
-	body, err := exec.Command("git", "-C", upstreamDir(t), "show", upstreamRev+":"+path).Output()
-	if err != nil {
-		t.Skipf("git show %s:%s: %v", upstreamRev, path, err)
+	if _, err := upstream.Dir(); err != nil {
+		t.Skipf("no plugin repository, set MVMBOTS_UPSTREAM: %v", err)
 	}
-	return string(body)
+	body, err := upstream.Read(path)
+	if err != nil {
+		t.Fatalf("reading %s at %s: %v", path, upstream.Rev, err)
+	}
+	return body
 }
 
 var suspendFor = regexp.MustCompile(`SuspendFor\((\w+)\(\),\s*"((?:[^"\\]|\\.)*)"\)`)
@@ -63,7 +36,7 @@ func functionBody(t *testing.T, source, signature string) string {
 
 	start := strings.Index(source, signature)
 	if start < 0 {
-		t.Skipf("%s is not in the pinned revision any more", signature)
+		t.Fatalf("%s is not in the pinned revision any more: move the pin deliberately", signature)
 	}
 	depth, open := 0, -1
 	for i := start; i < len(source); i++ {

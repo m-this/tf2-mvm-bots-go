@@ -39,8 +39,8 @@ enum
 	FEATURE_WATCH_IDLE_BOTS,
 	FEATURE_WATCH_LURKING_SNIPERS,
 	FEATURE_AMMO_FAILOVER,
-	FEATURE_ENGINEER_ENTRANCE_FIRST,
 	FEATURE_MEDIC_ANSWERS_CALL,
+	FEATURE_ENGINEER_ENTRANCE_FIRST,
 	FEATURE_COUNT
 }
 
@@ -72,8 +72,8 @@ static const char FEATURE_NAME[FEATURE_COUNT][] =
 	"watch_idle_bots",
 	"watch_lurking_snipers",
 	"ammo_failover",
-	"engineer_entrance_first",
-	"medic_answers_call"
+	"medic_answers_call",
+	"engineer_entrance_first"
 };
 
 static ConVar g_arrFeatureConVars[FEATURE_COUNT];
@@ -180,17 +180,17 @@ void LoadFeatures()
 	g_arrFeatureConVars[FEATURE_AMMO_FAILOVER] = MakeFeature(FEATURE_AMMO_FAILOVER,
 		"A bot whose path to the ammo it picked keeps failing takes the next pack, then gives up, rather than walking at a wall.", false);
 
-	/* Off until a run says otherwise. The entrance used to wait for the nest, so the engineer built
-	it, walked to the nest, built there, and walked back to spawn for the entrance. Peppy asked
-	for the entrance first and the walk is what the test-bed measures. See mvm-dh8. */
-	g_arrFeatureConVars[FEATURE_ENGINEER_ENTRANCE_FIRST] = MakeFeature(FEATURE_ENGINEER_ENTRANCE_FIRST,
-		"The engineer puts his teleporter entrance up in spawn before he walks out to build the nest.", false);
-
 	/* Off until a run says otherwise. Reported twice, by Cowser and by Peppy: a human presses the
 	medic call and the bot medic carries on healing whichever bot it had picked, which reads as
 	the medic being broken. See mvm-w9b. */
 	g_arrFeatureConVars[FEATURE_MEDIC_ANSWERS_CALL] = MakeFeature(FEATURE_MEDIC_ANSWERS_CALL,
 		"A player who calls for a medic takes the beam, and a player outranks a bot for it either way.", false);
+
+	/* Off until a run says otherwise. The entrance used to wait for the nest, so the engineer built
+	it, walked to the nest, built there, and walked back to spawn for the entrance. Peppy asked
+	for the entrance first and the walk is what the test-bed measures. See mvm-dh8. */
+	g_arrFeatureConVars[FEATURE_ENGINEER_ENTRANCE_FIRST] = MakeFeature(FEATURE_ENGINEER_ENTRANCE_FIRST,
+		"The engineer puts his teleporter entrance up in spawn before he walks out to build the nest.", false);
 
 	/* What is on, as one string, for whoever reads the results later
 

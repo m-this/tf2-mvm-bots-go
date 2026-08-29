@@ -1,7 +1,6 @@
 package spgen_test
 
 import (
-	"errors"
 	"testing"
 	"time"
 
@@ -9,18 +8,6 @@ import (
 	"github.com/m-this/tf2-mvm-bots-go/internal/spgen"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spshell"
 )
-
-func toolchain(t *testing.T) spshell.Toolchain {
-	t.Helper()
-	tc, err := spshell.ToolchainFromEnv()
-	if err != nil {
-		if errors.Is(err, spshell.ErrNoToolchain) {
-			t.Skipf("no standalone SourcePawn toolchain: %v", err)
-		}
-		t.Fatal(err)
-	}
-	return tc
-}
 
 // TestGeneratedSourcePawnAgreesWithGo is the deliverable. Every combination
 // the engine can produce is walked through the generated table, under
@@ -31,7 +18,7 @@ func toolchain(t *testing.T) spshell.Toolchain {
 // data and the edge, and calls nothing else. Nothing is sampled, so there is
 // no fraction to argue about.
 func TestGeneratedSourcePawnAgreesWithGo(t *testing.T) {
-	tc := toolchain(t)
+	tc := spshell.ForTest(t)
 	if want := emit(t).Data; !goldenMatches(t, goldenData, want) {
 		t.Fatal("testdata/actionsel.sp is stale: run go test ./internal/spgen -update")
 	}
@@ -122,7 +109,7 @@ const goldenStride = 512
 // TestGoldenTableRoundTrip takes the rows from a Go struct type, emits them as
 // the SourcePawn golden table, and reads one result per row back.
 func TestGoldenTableRoundTrip(t *testing.T) {
-	tc := toolchain(t)
+	tc := spshell.ForTest(t)
 
 	var rows []goldenRow
 	var points []point
@@ -173,7 +160,7 @@ func TestGoldenTableRefusesAFieldWithNoCell(t *testing.T) {
 // reserved word used as a parameter name, a typo in a behaviour name, and a
 // switch over an outcome the enum does not have.
 func TestGeneratedEdgeCompiles(t *testing.T) {
-	tc := toolchain(t)
+	tc := spshell.ForTest(t)
 	out := emit(t)
 	if !goldenMatches(t, goldenData, out.Data) || !goldenMatches(t, goldenDispatch, out.Dispatch) {
 		t.Fatal("the golden SourcePawn is stale: run go test ./internal/spgen -update")

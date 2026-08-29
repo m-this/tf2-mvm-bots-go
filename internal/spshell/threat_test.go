@@ -40,13 +40,7 @@ func TestThreatScoreMatchesSourcePawn(t *testing.T) {
 		{"all zero", spshell.Triple{0, 0, 0}},
 	}
 
-	toolchain, err := spshell.ToolchainFromEnv()
-	if err != nil {
-		if errors.Is(err, spshell.ErrNoToolchain) {
-			t.Skipf("no standalone SourcePawn toolchain: %v", err)
-		}
-		t.Fatal(err)
-	}
+	toolchain := spshell.ForTest(t)
 
 	inputs := make([]spshell.Triple, len(cases))
 	for i, c := range cases {

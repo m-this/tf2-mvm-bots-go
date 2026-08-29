@@ -150,3 +150,27 @@ func literal(v float32) string {
 	}
 	return s
 }
+
+/*
+	WithSourceMod swaps in the compiler the plugin actually ships with
+
+The differential tests compile with the 1.13 spcomp built beside spshell, and
+the plugin builds with SourceMod's 1.12 spcomp64. Same lineage, but a check that
+does not cover what ships is not a check, so mvm-z83.13 asks for both.
+
+Only the compiler changes. The VM stays spshell's, which works because the
+generated table is integer arithmetic: SourceMod's spcomp implicitly includes
+its own float.inc naming the float operators __FLOAT_DIV where spshell binds
+them __float_div, so anything that divides dies under the other one's VM.
+*/
+func (t Toolchain) WithSourceMod(upstream string) (Toolchain, error) {
+	sm := filepath.Join(upstream, "testbed", "build", "spcomp", "addons", "sourcemod", "scripting")
+	t.Spcomp = filepath.Join(sm, "spcomp64")
+	t.IncludeDir = filepath.Join(sm, "include")
+	for _, path := range []string{t.Spcomp, t.IncludeDir} {
+		if _, err := os.Stat(path); err != nil {
+			return Toolchain{}, fmt.Errorf("%w: %s: run testbed/build.sh", ErrNoToolchain, path)
+		}
+	}
+	return t, nil
+}

@@ -32,6 +32,6 @@ var Arms = []Arm{
 	{Name: "watch_idle_bots", ConVar: "sm_redbots_feature_watch_idle_bots", Default: false, About: "The stuck watchdog also rescues a bot that has no behaviour at all, not only one that cannot reach its goal."},
 	{Name: "watch_lurking_snipers", ConVar: "sm_redbots_feature_watch_lurking_snipers", Default: true, About: "The stuck watchdog also rescues a sniper parked nowhere near a spot, which is the one it used to miss."},
 	{Name: "ammo_failover", ConVar: "sm_redbots_feature_ammo_failover", Default: false, About: "A bot whose path to the ammo it picked keeps failing takes the next pack, then gives up, rather than walking at a wall."},
-	{Name: "engineer_entrance_first", ConVar: "sm_redbots_feature_engineer_entrance_first", Default: false, About: "The engineer puts his teleporter entrance up in spawn before he walks out to build the nest."},
 	{Name: "medic_answers_call", ConVar: "sm_redbots_feature_medic_answers_call", Default: false, About: "A player who calls for a medic takes the beam, and a player outranks a bot for it either way."},
+	{Name: "engineer_entrance_first", ConVar: "sm_redbots_feature_engineer_entrance_first", Default: false, About: "The engineer puts his teleporter entrance up in spawn before he walks out to build the nest."},
 }

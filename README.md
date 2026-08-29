@@ -44,6 +44,11 @@ down twice, and of the interesting code being unreachable from a test.
 twice with the two outputs diffed. Generated code that is not reproducible is
 not generated code.
 
+`make toolchain` builds SourcePawn's own compiler and VM at a pinned commit,
+cached under `toolchain/`. Without it the differential tests skip and say so;
+`make check` builds it first and sets `MVMBOTS_REQUIRE_SPSHELL`, so under the
+gate an absent toolchain fails instead of quietly running nothing.
+
 ## What this does not fix
 
 Bots stuck on geometry, nav mesh failures, engineers wedged in props. Reading
