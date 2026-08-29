@@ -44,5 +44,13 @@ public void main()
 		Emit(Go_EnemyNearestToMe(client, 900000.0, false, false, true));
 		Emit(Go_EnemyNearestToMe(client, 900000.0, false, false, false, view_as<TFClassType>(2)));
 		Emit(Go_EnemyNearestToMe(client, 5934.8125));
+
+		/* The two building scans, and the spy's four passes over them.
+		   The first of each uses the default range its callers omit. */
+		Emit(Go_NearestSappableObject(client));
+		Emit(Go_NearestSappableObject(client, 999999.0));
+		Emit(Go_NearestEnemyTeleporter(client));
+		Emit(Go_NearestEnemyTeleporter(client, 1000.0));
+		Emit(Go_BestTargetForSpy(client, 900000.0));
 	}
 }

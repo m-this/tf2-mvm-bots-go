@@ -19,6 +19,20 @@ stock TFTeam GetPlayerEnemyTeam(int client) { return TF2_GetClientTeam(client) =
 stock bool TF2_IsMiniBoss(int client) { return client == 5; }
 stock bool TF2_IsInvulnerable(int client) { return client == 6; }
 stock bool TF2_IsStealthed(int client) { return client == 7; }
+stock bool TF2_IsPlacing(int entity) { return entity == 8; }
+stock bool TF2_IsCarried(int entity) { return entity == 9; }
+stock bool TF2_HasSapper(int entity) { return entity == 10; }
+stock int BaseEntity_GetTeamNumber(int entity) { return GetEntProp(entity, Prop_Send, "m_iTeamNum"); }
+stock bool BaseEntity_IsPlayer(int entity) { return entity > 0 && entity <= MaxClients; }
+stock int TF2_GetNumHealers(int client) { return 0; }
+stock int TF2Util_GetPlayerHealer(int client, int index) { return -1; }
+
+stock float[] GetAbsOrigin(int entity)
+{
+	float origin[3];
+	GetEntPropVector(entity, Prop_Send, "m_vecOrigin", origin);
+	return origin;
+}
 
 stock float[] WorldSpaceCenter(int entity)
 {
@@ -38,4 +52,8 @@ public void OnPluginStart()
 	// The two argument form, which is how util.sp's callers write it.
 	PrintToServer("%d", Go_EnemyNearestToMe(1, 400.0));
 	PrintToServer("%d", Go_EnemyNearestToMe(1, 400.0, true, true, true, TFClass_Sniper));
+	// Both building scans with the default range their callers omit.
+	PrintToServer("%d", Go_NearestSappableObject(1));
+	PrintToServer("%d", Go_NearestEnemyTeleporter(1));
+	PrintToServer("%d", Go_BestTargetForSpy(1, 400.0));
 }

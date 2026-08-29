@@ -111,3 +111,46 @@ func EnemyNearestToMe(client int32, maxDistance float32, giantsOnly bool, ignore
 
 	return bestEntity
 }
+
+// BestTargetForSpy is util.sp:1235, GetBestTargetForSpy: the four passes a spy
+// makes over the enemy team, and then the healer behind whoever it found.
+func BestTargetForSpy(client int32, maxDistance float32) int32 {
+	// The shipped code writes this and overwrites it on the next line. It is
+	// dead there too, and it stays, because the port is behaviour identical
+	// and a tidy that rides along cannot be told from one that is not.
+	target := int32(-1) //nolint:ineffassign,wastedassign // util.sp:1237, kept as shipped
+
+	// Find the nearest enemy engineer
+	target = EnemyNearestToMe(client, maxDistance, false, true, false, engine.ClassEngineer())
+
+	// Find the nearest stunned enemy
+	if target == -1 {
+		target = EnemyNearestToMe(client, maxDistance, false, true, true, engine.ClassUnknown())
+	}
+
+	// Find the nearest enemy giant
+	if target == -1 {
+		target = EnemyNearestToMe(client, maxDistance, true, true, false, engine.ClassUnknown())
+	}
+
+	// Find the nearest enemy
+	if target == -1 {
+		target = EnemyNearestToMe(client, maxDistance, false, true, false, engine.ClassUnknown())
+	}
+
+	// Target their healer first, if they have one
+	if target != -1 {
+		myTeam := engine.GetClientTeam(client)
+
+		for i := int32(0); i < engine.NumHealers(target); i++ {
+			healer := engine.PlayerHealer(target, i)
+
+			if healer != -1 && engine.IsPlayer(healer) && engine.GetClientTeam(healer) != myTeam {
+				target = healer
+				break
+			}
+		}
+	}
+
+	return target
+}

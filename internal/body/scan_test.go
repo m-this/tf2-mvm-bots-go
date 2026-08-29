@@ -29,7 +29,7 @@ func TestPortedScansAgreeWithTheGoTheyCameFrom(t *testing.T) {
 	}
 	cells, err := tc.Run(t.Context(), "testdata/scan_probe.sp", map[string]string{
 		"scan.sp":        string(generated["sourcepawn/scan.sp"]),
-		"scan_world.inc": worldInclude(w) + scanStubs(w),
+		"scan_world.inc": worldInclude(w) + scanStubs(w) + entityInclude(cannedEntities()),
 	})
 	if err != nil {
 		t.Fatalf("running the scan probe under spshell: %v", err)
@@ -41,7 +41,7 @@ func TestPortedScansAgreeWithTheGoTheyCameFrom(t *testing.T) {
 
 // goScanCells runs the Go in the order the probe runs it.
 func goScanCells(w world) []int32 {
-	in := &installed{w: w}
+	in := &installed{w: w, entities: cannedEntities()}
 	defer engine.Install(in.calls())()
 
 	var out []int32
@@ -66,6 +66,13 @@ func goScanCells(w world) []int32 {
 		emit(scan.EnemyNearestToMe(client, 900000.0, false, false, true, engine.ClassUnknown()))
 		emit(scan.EnemyNearestToMe(client, 900000.0, false, false, false, engine.Class(2)))
 		emit(scan.EnemyNearestToMe(client, 5934.8125, false, false, false, engine.ClassUnknown()))
+
+		// The two building scans, and the spy's four passes over them.
+		emit(scan.NearestSappableObject(client, 1000.0))
+		emit(scan.NearestSappableObject(client, 999999.0))
+		emit(scan.NearestEnemyTeleporter(client, 999999.0))
+		emit(scan.NearestEnemyTeleporter(client, 1000.0))
+		emit(scan.BestTargetForSpy(client, 900000.0))
 	}
 	return out
 }
@@ -91,7 +98,8 @@ func scanStubs(w world) string {
    constants the scans name. */
 enum TFClassType
 {
-	TFClass_Unknown = 0
+	TFClass_Unknown = 0,
+	TFClass_Engineer = 9
 };
 
 enum TFTeam

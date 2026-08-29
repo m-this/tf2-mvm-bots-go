@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"strconv"
 	"strings"
 )
 
@@ -88,6 +89,8 @@ func (e *emitter) basicLit(lit *ast.BasicLit) string {
 	switch lit.Kind {
 	case token.INT, token.CHAR:
 		return lit.Value
+	case token.STRING:
+		return e.stringLit(lit)
 	case token.FLOAT:
 		tv := e.info.Types[lit]
 		if tv.Value != nil {
@@ -103,6 +106,30 @@ func (e *emitter) basicLit(lit *ast.BasicLit) string {
 		e.fail(lit.Pos(), "the literal %s has no SourcePawn", lit.Value)
 		return ""
 	}
+}
+
+/*
+	stringLit is the one string the subset has
+
+An entity classname, passed to an extern that wants one. Go and SourcePawn
+escape differently, so rather than translate the escapes, anything that is not
+plain printable text is refused: a classname is plain printable text, and a
+generator that guessed wrong here would produce a plugin that compiles and looks
+for the wrong entity.
+*/
+func (e *emitter) stringLit(lit *ast.BasicLit) string {
+	text, err := strconv.Unquote(lit.Value)
+	if err != nil {
+		e.fail(lit.Pos(), "the string %s does not unquote: %v", lit.Value, err)
+		return ""
+	}
+	for _, r := range text {
+		if r < ' ' || r > '~' || r == '"' || r == '\\' {
+			e.fail(lit.Pos(), "the string %s holds a character this package will not escape for SourcePawn; a classname is plain printable text", lit.Value)
+			return ""
+		}
+	}
+	return strconv.Quote(text)
 }
 
 func (e *emitter) binary(n *ast.BinaryExpr) string {

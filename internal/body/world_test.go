@@ -35,6 +35,14 @@ const (
 	tracePlayerClass
 	tracePlayerTeam
 	tracePlayerEnemyTeam
+	traceObjectType
+	traceEntityTeamNumber
+	traceIsPlacing
+	traceIsCarried
+	traceHasSapper
+	traceNumHealers
+	tracePlayerHealer
+	traceIsPlayer
 )
 
 // world is what the stubs answer, indexed by slot. Slot 0 is never a client and
@@ -95,8 +103,9 @@ func cannedWorld() world {
 
 // installed is the world behind the engine calls, with the trace it records.
 type installed struct {
-	w     world
-	trace []int32
+	w        world
+	entities []entity
+	trace    []int32
 }
 
 // traceCells is the trace array the probe declares. The Go side holds itself to
@@ -141,6 +150,34 @@ func (in *installed) calls() engine.Calls {
 		},
 		PlayerClass: func(c int32) engine.Class { in.record(tracePlayerClass, c); return in.w.class[c] },
 		PlayerTeam:  func(c int32) engine.Team { in.record(tracePlayerTeam, c); return in.w.tfTeam[c] },
+		FindEntityByClassname: func(start int32, classname string) int32 {
+			// Not traced: the walk itself is the loop under test, and
+			// its answers show up in every call that follows.
+			return findEntityByClassname(in.entities, start, classname)
+		},
+		ObjectType: func(e int32) engine.Object {
+			in.record(traceObjectType, e)
+			return entityAt(in.entities, e).object
+		},
+		EntityTeamNumber: func(e int32) int32 {
+			in.record(traceEntityTeamNumber, e)
+			return entityAt(in.entities, e).team
+		},
+		IsPlacing: func(e int32) bool { in.record(traceIsPlacing, e); return entityAt(in.entities, e).placing },
+		IsCarried: func(e int32) bool { in.record(traceIsCarried, e); return entityAt(in.entities, e).carried },
+		HasSapper: func(e int32) bool { in.record(traceHasSapper, e); return entityAt(in.entities, e).sapped },
+		AbsOrigin: func(e int32) [3]float32 { return entityAt(in.entities, e).origin },
+		IsPlayer:  func(e int32) bool { in.record(traceIsPlayer, e); return e <= worldSlots },
+		NumHealers: func(c int32) int32 {
+			in.record(traceNumHealers, c)
+			return c % 3
+		},
+		PlayerHealer: func(c int32, index int32) int32 {
+			in.record(tracePlayerHealer, c)
+			// A healer on the other team, then one on the same team,
+			// so the loop both takes and skips its condition.
+			return (c+index)%worldSlots + 1
+		},
 		PlayerEnemyTeam: func(c int32) engine.Team {
 			in.record(tracePlayerEnemyTeam, c)
 			// Red fights blue, and every other slot is on each.

@@ -343,6 +343,11 @@ func (e *emitter) forStmt(n *ast.ForStmt) {
 	if n.Cond != nil {
 		cond = e.expr(n.Cond)
 	}
+	if init == "" && cond == "" && post == "" {
+		e.line("for (;;)")
+		e.block(n.Body)
+		return
+	}
 	e.line("for (%s; %s; %s)", init, cond, post)
 	e.block(n.Body)
 }

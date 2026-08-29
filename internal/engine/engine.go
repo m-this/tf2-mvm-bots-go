@@ -49,6 +49,11 @@ type Team int32
 //sp:tag TFCond
 type Condition int32
 
+// Object is SourceMod's TFObjectType.
+//
+//sp:tag TFObjectType
+type Object int32
+
 // Calls is the set of answers a body gets. A nil field is a call the caller did
 // not expect the body to make, and reaching it is a failed expectation rather
 // than a zero value quietly standing in for one.
@@ -76,6 +81,16 @@ type Calls struct {
 	PlayerClass            func(client int32) Class
 	PlayerTeam             func(client int32) Team
 	PlayerEnemyTeam        func(client int32) Team
+	FindEntityByClassname  func(start int32, classname string) int32
+	ObjectType             func(entity int32) Object
+	EntityTeamNumber       func(entity int32) int32
+	IsPlacing              func(entity int32) bool
+	IsCarried              func(entity int32) bool
+	HasSapper              func(entity int32) bool
+	AbsOrigin              func(entity int32) [3]float32
+	IsPlayer               func(entity int32) bool
+	NumHealers             func(client int32) int32
+	PlayerHealer           func(client int32, index int32) int32
 }
 
 var installed Calls
@@ -283,4 +298,115 @@ func PlayerEnemyTeam(client int32) Team {
 		missing("GetPlayerEnemyTeam")
 	}
 	return installed.PlayerEnemyTeam(client)
+}
+
+// ClassEngineer is TFClass_Engineer.
+//
+//sp:global TFClass_Engineer
+func ClassEngineer() Class { return 9 }
+
+// ObjectSapper is TFObject_Sapper.
+//
+//sp:global TFObject_Sapper
+func ObjectSapper() Object { return 3 }
+
+// FindEntityByClassname walks the entities of a class, from start, and answers
+// -1 when there are no more.
+//
+//sp:native FindEntityByClassname
+func FindEntityByClassname(start int32, classname string) int32 {
+	if installed.FindEntityByClassname == nil {
+		missing("FindEntityByClassname")
+	}
+	return installed.FindEntityByClassname(start, classname)
+}
+
+// ObjectType is what the building is.
+//
+//sp:native TF2_GetObjectType
+func ObjectType(entity int32) Object {
+	if installed.ObjectType == nil {
+		missing("TF2_GetObjectType")
+	}
+	return installed.ObjectType(entity)
+}
+
+// EntityTeamNumber is the team the entity belongs to.
+//
+//sp:native BaseEntity_GetTeamNumber
+func EntityTeamNumber(entity int32) int32 {
+	if installed.EntityTeamNumber == nil {
+		missing("BaseEntity_GetTeamNumber")
+	}
+	return installed.EntityTeamNumber(entity)
+}
+
+// IsPlacing says whether the building is still a blueprint.
+//
+//sp:native TF2_IsPlacing
+func IsPlacing(entity int32) bool {
+	if installed.IsPlacing == nil {
+		missing("TF2_IsPlacing")
+	}
+	return installed.IsPlacing(entity)
+}
+
+// IsCarried says whether an engineer is holding the building.
+//
+//sp:native TF2_IsCarried
+func IsCarried(entity int32) bool {
+	if installed.IsCarried == nil {
+		missing("TF2_IsCarried")
+	}
+	return installed.IsCarried(entity)
+}
+
+// HasSapper says whether the building is sapped already.
+//
+//sp:native TF2_HasSapper
+func HasSapper(entity int32) bool {
+	if installed.HasSapper == nil {
+		missing("TF2_HasSapper")
+	}
+	return installed.HasSapper(entity)
+}
+
+// AbsOrigin is where the entity is. Its SourcePawn returns the array.
+//
+//sp:plugin GetAbsOrigin returns
+func AbsOrigin(entity int32) [3]float32 {
+	if installed.AbsOrigin == nil {
+		missing("GetAbsOrigin")
+	}
+	return installed.AbsOrigin(entity)
+}
+
+// IsPlayer says whether the entity is a client rather than a building.
+//
+//sp:native BaseEntity_IsPlayer
+func IsPlayer(entity int32) bool {
+	if installed.IsPlayer == nil {
+		missing("BaseEntity_IsPlayer")
+	}
+	return installed.IsPlayer(entity)
+}
+
+// NumHealers is how many medics are healing the player.
+//
+//sp:native TF2_GetNumHealers
+func NumHealers(client int32) int32 {
+	if installed.NumHealers == nil {
+		missing("TF2_GetNumHealers")
+	}
+	return installed.NumHealers(client)
+}
+
+// PlayerHealer is one of the players healing this one.
+//
+//sp:native TF2Util_GetPlayerHealer
+func PlayerHealer(client int32, index int32) int32 {
+	if installed.PlayerHealer == nil {
+		missing("TF2Util_GetPlayerHealer")
+	}
+	return installed.PlayerHealer(client, index)
 }

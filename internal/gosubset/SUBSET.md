@@ -85,7 +85,12 @@ literals for arrays and structs, conversions to accepted types, `len`, `min`,
 `max`, calls to functions declared in the same package, and calls to the
 generated native bindings named in `Config.Natives`.
 
-Refused: string and imaginary literals, `&x`, `*p`, slice expressions, type
+A string literal is accepted in one place only: as an argument to a call. An
+entity classname has to be a real string in SourcePawn and there is no `int32`
+identifier that would do instead. It must be plain printable text, because Go
+and SourcePawn escape differently and this package will not guess.
+
+Refused: a string literal anywhere else, imaginary literals, `&x`, `*p`, slice expressions, type
 assertions, function literals, `make`, `new`, `append`, `copy`, `clear`, `cap`,
 `delete`, `panic`, `recover`, `print`, `println`, `complex`, `real`, `imag`,
 and `&^` (SourcePawn has no AND NOT; write `x & ^y`).

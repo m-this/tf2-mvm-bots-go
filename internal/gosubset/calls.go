@@ -3,6 +3,7 @@ package gosubset
 import (
 	"fmt"
 	"go/ast"
+	"go/token"
 )
 
 func (c *checker) checkCall(e *ast.CallExpr) {
@@ -12,6 +13,13 @@ func (c *checker) checkCall(e *ast.CallExpr) {
 	}
 	c.checkCallee(e.Fun)
 	for _, arg := range e.Args {
+		// A string literal is allowed here and nowhere else. SourcePawn
+		// needs a real string for an entity classname, and there is no
+		// int32 identifier that would do instead; everything else the
+		// subset would use one for stays refused.
+		if lit, ok := arg.(*ast.BasicLit); ok && lit.Kind == token.STRING {
+			continue
+		}
 		c.checkExpr(arg)
 	}
 }
