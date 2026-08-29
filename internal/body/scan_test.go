@@ -87,6 +87,8 @@ func goScanCells(w world) []int32 {
 		emit(scan.NearestSappablePlayerHealingSomeone(client, 900000.0, true, engine.ClassUnknown(), 340.0))
 		emit(scan.EnemyPlayerNearestToPosition(client, here, 900000.0))
 		emit(scan.EnemyPlayerNearestToPosition(client, here, 100.0))
+		emit(scan.NearestCurrencyPack(client, 999999.0))
+		emit(scan.NearestCurrencyPack(client, 1000.0))
 	}
 	return out
 }

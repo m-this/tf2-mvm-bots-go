@@ -58,6 +58,19 @@ public void main()
 	   them: enter the touch, ask, leave the touch, ask again. The state the
 	   two hooks share is what makes the second answer differ from the
 	   first, so asking outside the pair as well is the whole test. */
+	/* Where the two languages disagree about precedence. Every combination
+	   of a few small values, because the wrong grouping is only wrong for
+	   some of them and a single input would have missed it. */
+	for (int a = -3; a <= 3; a++)
+		for (int b = -3; b <= 3; b++)
+			for (int c = 0; c <= 3; c++)
+			{
+				Emit(Go_Shifted(a, b, c));
+				Emit(Go_Ored(a, b, c));
+				Emit(Go_Mixed(a, b, c));
+				Emit(Go_Chained(a, b, c));
+			}
+
 	for (int player = 1; player <= WORLD_SLOTS; player++)
 	{
 		bool value;

@@ -22,6 +22,10 @@ type entity struct {
 	carried bool
 	sapped  bool
 	origin  [3]float32
+	// The two the currency pack scan asks about, which no building has and
+	// every pack does.
+	distributed bool
+	onGround    bool
 }
 
 // cannedEntities is one of each thing the scans skip, plus several they do not,
@@ -39,6 +43,13 @@ func cannedEntities() []entity {
 		// Two buildings in the same place, so <= and < on bestDistance
 		// are told apart here as well as in the client scans.
 		{class: "obj_dispenser", object: 0, team: 3, origin: [3]float32{170, 0, 0}},
+		// The money, which the currency pack scan walks and the building
+		// scans skip: one already handed out, one still in the air, and
+		// two that can be picked up.
+		{class: "item_currency_pack_small", origin: [3]float32{180, 0, 0}, onGround: true},
+		{class: "item_currency_pack_small", origin: [3]float32{190, 0, 0}, distributed: true, onGround: true},
+		{class: "item_currency_pack_large", origin: [3]float32{200, 0, 0}},
+		{class: "item_currency_pack_large", origin: [3]float32{210, 0, 0}, onGround: true},
 	}
 }
 
@@ -102,6 +113,8 @@ enum TFObjectType
 	writeEntBools(&b, "gEntPlacing", entities, func(e entity) bool { return e.placing })
 	writeEntBools(&b, "gEntCarried", entities, func(e entity) bool { return e.carried })
 	writeEntBools(&b, "gEntSapped", entities, func(e entity) bool { return e.sapped })
+	writeEntBools(&b, "gEntDistributed", entities, func(e entity) bool { return e.distributed })
+	writeEntBools(&b, "gEntOnGround", entities, func(e entity) bool { return e.onGround })
 
 	b.WriteString("float gEntOrigin[ENTITY_COUNT][3] =\n{\n")
 	for _, e := range entities {
@@ -152,6 +165,9 @@ stock void BaseEntity_GetAbsOrigin(int entity, float origin[3])
 	fmt.Fprintf(&b, "stock bool TF2_IsPlacing(int entity) { Trace(%d, entity); return gEntPlacing[entity - FIRST_ENTITY]; }\n", traceIsPlacing)
 	fmt.Fprintf(&b, "stock bool TF2_IsCarried(int entity) { Trace(%d, entity); return gEntCarried[entity - FIRST_ENTITY]; }\n", traceIsCarried)
 	fmt.Fprintf(&b, "stock bool TF2_HasSapper(int entity) { Trace(%d, entity); return gEntSapped[entity - FIRST_ENTITY]; }\n", traceHasSapper)
+	b.WriteString("\n#define FL_ONGROUND 1\n\n")
+	fmt.Fprintf(&b, "stock int GetEntProp(int entity, PropType propType, const char[] prop) { Trace(%d, entity); return gEntDistributed[entity - FIRST_ENTITY] ? 1 : 0; }\n", traceEntProp)
+	fmt.Fprintf(&b, "stock int GetEntityFlags(int entity) { Trace(%d, entity); return gEntOnGround[entity - FIRST_ENTITY] ? FL_ONGROUND : 0; }\n", traceEntityFlags)
 	fmt.Fprintf(&b, "stock bool BaseEntity_IsPlayer(int entity) { Trace(%d, entity); return entity <= WORLD_SLOTS; }\n", traceIsPlayer)
 	fmt.Fprintf(&b, "stock int TF2_GetNumHealers(int client) { Trace(%d, client); return client %% 3; }\n", traceNumHealers)
 	fmt.Fprintf(&b, "stock int TF2Util_GetPlayerHealer(int client, int index) { Trace(%d, client); return (client + index) %% WORLD_SLOTS + 1; }\n", tracePlayerHealer)

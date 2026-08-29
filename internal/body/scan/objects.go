@@ -90,3 +90,39 @@ func NearestEnemyTeleporter(client int32, maxDistance float32) int32 {
 
 	return bestEnt
 }
+
+// NearestCurrencyPack is util.sp:1358, GetNearestCurrencyPack: the closest
+// money the bot could pick up. Same loop again, over a different classname.
+//
+//sp:default maxDistance 999999.0
+//sp:name GetNearestCurrencyPack
+func NearestCurrencyPack(client int32, maxDistance float32) int32 {
+	origin := engine.Origin(client)
+
+	bestDistance := float32(999999.0)
+	bestEnt := int32(-1)
+	ent := int32(-1)
+
+	for {
+		ent = engine.FindEntityByClassname(ent, "item_currency*")
+		if ent == -1 {
+			break
+		}
+		// This pack has already been distributed to the team
+		if engine.EntProp(ent, engine.PropSend(), "m_bDistributed") == 1 {
+			continue
+		}
+		// Wait for it to reach the ground the first
+		if engine.EntityFlags(ent)&engine.FlagOnGround() == 0 {
+			continue
+		}
+		distance := engine.VectorDistance(origin, AbsOrigin(ent))
+
+		if distance <= bestDistance && distance <= maxDistance {
+			bestDistance = distance
+			bestEnt = ent
+		}
+	}
+
+	return bestEnt
+}

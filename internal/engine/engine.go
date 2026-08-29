@@ -106,6 +106,8 @@ type Calls struct {
 	EntPropEnt             func(entity int32, propType PropType, prop string) int32
 	ActiveWeapon           func(client int32) int32
 	WeaponID               func(weapon int32) Weapon
+	EntProp                func(entity int32, propType PropType, prop string) int32
+	EntityFlags            func(entity int32) int32
 }
 
 var installed Calls
@@ -485,3 +487,29 @@ func WeaponID(weapon int32) Weapon {
 	}
 	return installed.WeaponID(weapon)
 }
+
+// EntProp reads an integer from one of the entity's property tables.
+//
+//sp:native GetEntProp
+func EntProp(entity int32, propType PropType, prop string) int32 {
+	if installed.EntProp == nil {
+		missing("GetEntProp")
+	}
+	return installed.EntProp(entity, propType, prop)
+}
+
+// EntityFlags is the entity's flag word, which says among other things whether
+// it has landed.
+//
+//sp:native GetEntityFlags
+func EntityFlags(entity int32) int32 {
+	if installed.EntityFlags == nil {
+		missing("GetEntityFlags")
+	}
+	return installed.EntityFlags(entity)
+}
+
+// FlagOnGround is FL_ONGROUND.
+//
+//sp:global FL_ONGROUND
+func FlagOnGround() int32 { return 1 }

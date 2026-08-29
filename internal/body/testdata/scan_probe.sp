@@ -66,5 +66,11 @@ public void main()
 		Emit(GetNearestSappablePlayerHealingSomeone(client, 900000.0, true, TFClass_Unknown, 340.0));
 		Emit(GetEnemyPlayerNearestToPosition(client, here, 900000.0));
 		Emit(GetEnemyPlayerNearestToPosition(client, here, 100.0));
+
+		/* The money, which walks the same loop over a different classname
+		   and asks two questions no building answers. The first uses the
+		   default range its callers omit. */
+		Emit(GetNearestCurrencyPack(client));
+		Emit(GetNearestCurrencyPack(client, 1000.0));
 	}
 }

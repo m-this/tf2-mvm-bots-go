@@ -43,6 +43,19 @@ func goCells(w world) []int32 {
 	for weapon := int32(0); weapon <= worldSlots; weapon++ {
 		emit(roster.LoadedRounds(weapon))
 	}
+	// c is the shift amount and stays at or above zero: a negative one is
+	// undefined in SourcePawn and a panic in Go, so it is not a case where
+	// the two could be compared at all.
+	for a := int32(-3); a <= 3; a++ {
+		for b := int32(-3); b <= 3; b++ {
+			for c := int32(0); c <= 3; c++ {
+				emit(roster.Shifted(a, b, c))
+				emit(roster.Ored(a, b, c))
+				emit(roster.Mixed(a, b, c))
+				emit(roster.Chained(a, b, c))
+			}
+		}
+	}
 	for player := int32(1); player <= worldSlots; player++ {
 		supercede, _ := roster.IsBotPre(player)
 		emit(boolCell(supercede))

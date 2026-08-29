@@ -128,3 +128,45 @@ func TeamCentre(maxClients int32, team int32) (centre [3]float32) {
 	}
 	return centre
 }
+
+/*
+Where Go and SourcePawn disagree about precedence.
+
+Measured, not assumed. With a, b, c = 3, 5, 2, `a + b << c` is 23 in Go and 32
+under spcomp, and `a | b ^ c` is 5 and 7: spcomp puts the shift below the sum
+and the xor above the or, and Go does neither. It also binds & tighter than ==,
+which C does not, so guessing the rules from C gets it wrong in both directions.
+
+Both of those compile in either language and answer differently. The generator
+parenthesises an operand whose operator differs from its parent's, and these are
+here so that a change to that rule is a failing test rather than a plugin that
+quietly does something else.
+
+They are in the probe rather than in a golden file because a golden says the
+text did not move and this says the two languages answer the same.
+*/
+
+// Shifted is the sum against the shift, which is one of the two that differ.
+func Shifted(a int32, b int32, c int32) int32 {
+	return a + b<<c
+}
+
+// Ored is the or against the xor, which is the other.
+func Ored(a int32, b int32, c int32) int32 {
+	return a | b ^ c
+}
+
+// Mixed walks the pairs that happen to agree, so the rule is not only tested
+// where it changes something.
+func Mixed(a int32, b int32, c int32) int32 {
+	masked := a&b | c
+	xored := a ^ b&c
+	summed := a + b*c
+	return masked + xored + summed
+}
+
+// Chained is one operator throughout, which groups the same way in both and so
+// needs no parentheses at all.
+func Chained(a int32, b int32, c int32) int32 {
+	return a + b + c
+}

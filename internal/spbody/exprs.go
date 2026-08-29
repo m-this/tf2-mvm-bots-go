@@ -135,12 +135,39 @@ func (e *emitter) stringLit(lit *ast.BasicLit) string {
 	return strconv.Quote(text)
 }
 
+/*
+	binary, and the parentheses that are not optional
+
+Go and SourcePawn do not agree on precedence, and the disagreement was measured
+rather than assumed, because guessing it from C got it wrong twice. With
+a, b, c = 3, 5, 2:
+
+	a + b << c    Go 23, spcomp 32
+	a | b ^ c     Go 5,  spcomp 7
+	a & b | c     both 3
+	flags & mask == 0   both the same, spcomp binds & tighter than ==, unlike C
+
+Two of those compile in either language and answer differently, which is the
+worst kind of wrong this generator can be. Rather than carry a table of which
+pairs agree, an operand that is itself a binary expression with a different
+operator is parenthesised, always. The grouping then says what the Go said. Same
+operator on both sides needs nothing: it groups the same way either way, and
+a + b + c reads better without.
+*/
 func (e *emitter) binary(n *ast.BinaryExpr) string {
 	if n.Op == token.AND_NOT {
 		e.fail(n.OpPos, "the &^ operator; SourcePawn has no AND NOT, write x & ~y")
 		return ""
 	}
-	return fmt.Sprintf("%s %s %s", e.expr(n.X), n.Op, e.expr(n.Y))
+	return fmt.Sprintf("%s %s %s", e.operand(n.X, n.Op), n.Op, e.operand(n.Y, n.Op))
+}
+
+func (e *emitter) operand(x ast.Expr, parent token.Token) string {
+	text := e.expr(x)
+	if inner, ok := x.(*ast.BinaryExpr); ok && inner.Op != parent {
+		return "(" + text + ")"
+	}
+	return text
 }
 
 func (e *emitter) unary(n *ast.UnaryExpr) string {

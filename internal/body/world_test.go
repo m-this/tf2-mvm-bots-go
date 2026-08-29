@@ -47,6 +47,8 @@ const (
 	traceEntPropEnt
 	traceActiveWeapon
 	traceWeaponID
+	traceEntProp
+	traceEntityFlags
 )
 
 // world is what the stubs answer, indexed by slot. Slot 0 is never a client and
@@ -216,6 +218,20 @@ func (in *installed) calls() engine.Calls {
 		HasSapper: func(e int32) bool { in.record(traceHasSapper, e); return entityAt(in.entities, e).sapped },
 		AbsOrigin: func(e int32) [3]float32 { return entityAt(in.entities, e).origin },
 		IsPlayer:  func(e int32) bool { in.record(traceIsPlayer, e); return e <= worldSlots },
+		EntProp: func(e int32, _ engine.PropType, _ string) int32 {
+			in.record(traceEntProp, e)
+			if entityAt(in.entities, e).distributed {
+				return 1
+			}
+			return 0
+		},
+		EntityFlags: func(e int32) int32 {
+			in.record(traceEntityFlags, e)
+			if entityAt(in.entities, e).onGround {
+				return engine.FlagOnGround()
+			}
+			return 0
+		},
 		NumHealers: func(c int32) int32 {
 			in.record(traceNumHealers, c)
 			return c % 3
