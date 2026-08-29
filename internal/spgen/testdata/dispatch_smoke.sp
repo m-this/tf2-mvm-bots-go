@@ -8,28 +8,17 @@
    enum.
 
    Everything below is a stand-in. Nothing here is generated and nothing here
-   ships. */
+   ships.
+
+   The symbols SourceMod itself declares are not here, they are in smoke_env,
+   which the test writes: stubbed for the standalone compiler, and the real
+   SourceMod headers for the compiler the plugin ships with. Declaring them
+   here would compile under one and collide under the other, which is why the
+   edge was checked by one compiler only. See mvm-z83.43. */
 #pragma semicolon 1
 #pragma newdecls required
 
-enum Action
-{
-	Plugin_Continue = 0,
-	Plugin_Handled = 3
-};
-
-enum RoundState
-{
-	RoundState_Init = 0
-};
-
-enum TFClassType
-{
-	TFClass_Unknown = 0
-};
-
-#define INVALID_ACTION 0
-#define MAXPLAYERS 65
+#include <smoke_env>
 
 methodmap BehaviorAction
 {
@@ -40,14 +29,6 @@ methodmap BehaviorAction
 			return Plugin_Continue;
 
 		return Plugin_Handled;
-	}
-}
-
-methodmap ConVar
-{
-	property bool BoolValue
-	{
-		public get() { return true; }
 	}
 }
 
@@ -65,8 +46,6 @@ bool g_bShoppedThisBreak[MAXPLAYERS + 1];
 bool g_bHasUpgraded[MAXPLAYERS + 1];
 int g_iBuyUpgradesNumber[MAXPLAYERS + 1];
 
-stock RoundState GameRules_GetRoundState() { return RoundState_Init; }
-stock TFClassType TF2_GetPlayerClass(int client) { return view_as<TFClassType>(client); }
 stock void SetPlayerReady(int client, bool ready) { g_iBuyUpgradesNumber[client] = ready ? 1 : 0; }
 
 stock bool CTFBotCollectMoney_IsPossible(int client) { return client > 0; }

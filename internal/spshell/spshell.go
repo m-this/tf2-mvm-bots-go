@@ -54,18 +54,41 @@ func (t Toolchain) Run(ctx context.Context, sourcePath string, includes map[stri
 	}
 	defer func() { _ = os.RemoveAll(dir) }()
 
-	for name, body := range includes {
-		path := filepath.Join(dir, name)
-		if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
-			return nil, fmt.Errorf("writing %s: %w", path, err)
-		}
-	}
-
 	smx := filepath.Join(dir, "golden.smx")
-	if err := t.compile(ctx, sourcePath, smx, dir); err != nil {
+	if err := t.build(ctx, sourcePath, smx, dir, includes); err != nil {
 		return nil, err
 	}
 	return t.run(ctx, smx)
+}
+
+// build writes the injected includes and compiles, which is everything Run and
+// Compile share.
+func (t Toolchain) build(ctx context.Context, sourcePath, smx, dir string, includes map[string]string) error {
+	for name, body := range includes {
+		path := filepath.Join(dir, name)
+		if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+			return fmt.Errorf("writing %s: %w", path, err)
+		}
+	}
+	return t.compile(ctx, sourcePath, smx, dir)
+}
+
+/*
+	Compile builds sourcePath and throws the plugin away
+
+For the generated edge, which calls into the engine and so cannot run anywhere
+but a game server. Compiling is the whole check there: a reserved word used as a
+parameter name, a typo in a behaviour name and a switch over an outcome the enum
+does not have are all compile errors.
+*/
+func (t Toolchain) Compile(ctx context.Context, sourcePath string, includes map[string]string) error {
+	dir, err := os.MkdirTemp("", "spshell")
+	if err != nil {
+		return fmt.Errorf("temp dir: %w", err)
+	}
+	defer func() { _ = os.RemoveAll(dir) }()
+
+	return t.build(ctx, sourcePath, filepath.Join(dir, "out.smx"), dir, includes)
 }
 
 // Triple is one golden input: the three floats a decision function takes.

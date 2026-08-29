@@ -53,3 +53,24 @@ func TestBothCompilersAgreeOnTheGeneratedTable(t *testing.T) {
 	}
 	t.Logf("%d cells, two compilers, no disagreement", len(byLocal))
 }
+
+/*
+	TestTheGeneratedEdgeCompilesUnderBothCompilers
+
+The table above is data. The edge is the file that calls into the plugin, and it
+is what a typo in a behaviour name or a switch over a missing outcome would show
+up in, so checking it under one compiler and shipping it with the other left the
+part that can actually be wrong uncovered.
+
+It cannot run: it calls the engine. Compiling is the whole check.
+*/
+func TestTheGeneratedEdgeCompilesUnderBothCompilers(t *testing.T) {
+	local := spshell.ForTest(t)
+	shipped, err := local.WithSourceMod(upstream.SkipOrFail(t))
+	if err != nil {
+		t.Skipf("no SourceMod compiler: %v", err)
+	}
+	if err := shipped.Compile(t.Context(), "testdata/dispatch_smoke.sp", sourceModEnv); err != nil {
+		t.Fatalf("compiling the generated edge with SourceMod's spcomp64: %v", err)
+	}
+}

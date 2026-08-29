@@ -165,7 +165,56 @@ func TestGeneratedEdgeCompiles(t *testing.T) {
 	if !goldenMatches(t, goldenData, out.Data) || !goldenMatches(t, goldenDispatch, out.Dispatch) {
 		t.Fatal("the golden SourcePawn is stale: run go test ./internal/spgen -update")
 	}
-	if _, err := tc.Run(t.Context(), "testdata/dispatch_smoke.sp", nil); err != nil {
+	if err := tc.Compile(t.Context(), "testdata/dispatch_smoke.sp", stubbedEnv); err != nil {
 		t.Fatalf("compiling the generated edge: %v", err)
 	}
 }
+
+/*
+	stubbedEnv and sourceModEnv are the two halves of the smoke harness
+
+The symbols SourceMod declares itself have to come from one place or the other
+and never both: declaring them in the smoke file compiles under the standalone
+compiler and collides under SourceMod's, which is why the edge was checked by
+one compiler only.
+*/
+var stubbedEnv = map[string]string{"smoke_env.inc": `
+enum Action
+{
+	Plugin_Continue = 0,
+	Plugin_Handled = 3
+};
+
+enum RoundState
+{
+	RoundState_Init = 0
+};
+
+enum TFClassType
+{
+	TFClass_Unknown = 0
+};
+
+#define INVALID_ACTION 0
+#define MAXPLAYERS 65
+
+methodmap ConVar
+{
+	property bool BoolValue
+	{
+		public get() { return true; }
+	}
+}
+
+stock RoundState GameRules_GetRoundState() { return RoundState_Init; }
+stock TFClassType TF2_GetPlayerClass(int client) { return view_as<TFClassType>(client); }
+`}
+
+// sourceModEnv is the real headers. tf2_stocks rather than tf2, because
+// TF2_GetPlayerClass is a stock there and the edge calls it.
+var sourceModEnv = map[string]string{"smoke_env.inc": `
+#include <sourcemod>
+#include <sdktools>
+#include <tf2_stocks>
+#define INVALID_ACTION 0
+`}
