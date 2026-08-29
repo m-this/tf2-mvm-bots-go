@@ -6,7 +6,7 @@ package actionsel
 // every combination reaches the same call site as the shipped chain, in the
 // same order, and the one combination the shipped chain strands is stranded
 // here too.
-func Select(state RoundState, class Class, f Flags) Action {
+func Select(state RoundState, class Class, f Facts) Action {
 	switch state {
 	case RoundBetweenRounds:
 		return selectBetweenRounds(class, f)
@@ -16,27 +16,27 @@ func Select(state RoundState, class Class, f Flags) Action {
 	return ActionWaitOutsideRound
 }
 
-func selectBetweenRounds(class Class, f Flags) Action {
-	if f.MoneyToCollect {
+func selectBetweenRounds(class Class, f Facts) Action {
+	if f.Ask(MoneyToCollect) {
 		return ActionCollectMoneyIsPossible
 	}
-	if !f.InUpgradeZone && !f.ShoppedThisBreak && !f.MovingToFront {
-		if f.UpgradesEnabled {
+	if !f.Ask(InUpgradeZone) && !f.Ask(ShoppedThisBreak) && !f.Ask(MovingToFront) {
+		if f.Ask(UpgradesEnabled) {
 			return ActionGotoUpgradeBetweenRounds
 		}
 		return ActionMoveToFrontSkipUpgrading
 	}
-	if (shouldTakeUpPosition(class, f) || f.SniperStalled) && !f.MovingToFront {
+	if (shouldTakeUpPosition(class, f) || f.Ask(SniperStalled)) && !f.Ask(MovingToFront) {
 		return ActionMoveToFrontShoppingDone
 	}
-	if f.MovingToFront {
+	if f.Ask(MovingToFront) {
 		return ActionKeepWalkingToFront
 	}
 	return ActionKeepOwnBreakBehaviour
 }
 
-func selectRoundRunning(class Class, f Flags) Action {
-	if f.UpgradesEnabled && (!f.HasUpgraded || f.UpgradeMidRound) && !f.InUpgradeZone {
+func selectRoundRunning(class Class, f Facts) Action {
+	if f.Ask(UpgradesEnabled) && (!f.Ask(HasUpgraded) || f.Ask(UpgradeMidRound)) && !f.Ask(InUpgradeZone) {
 		return ActionGotoUpgradeBuyNow
 	}
 
@@ -44,20 +44,20 @@ func selectRoundRunning(class Class, f Flags) Action {
 	case ClassMedic:
 		return ActionKeepHealing
 	case ClassScout:
-		if f.MoneyToCollect {
+		if f.Ask(MoneyToCollect) {
 			return ActionCollectMoneyCollecting
 		}
-		if f.GiantToMark {
+		if f.Ask(GiantToMark) {
 			return ActionMarkGiant
 		}
-		if f.TankTargetFound {
+		if f.Ask(TankTargetFound) {
 			return ActionAttackTankScout
 		}
-		if f.AttackTargetFound {
+		if f.Ask(AttackTargetFound) {
 			return ActionDefenderAttackScout
 		}
 	case ClassSniper:
-		if f.HasSniperRifle && !f.SniperStalled {
+		if f.Ask(HasSniperRifle) && !f.Ask(SniperStalled) {
 			return ActionKeepSnipingPosition
 		}
 		return ActionDefenderAttackSniper
@@ -66,36 +66,36 @@ func selectRoundRunning(class Class, f Flags) Action {
 	case ClassSpy:
 		return ActionSpyLurk
 	case ClassHeavy:
-		if f.AttackTargetFound {
+		if f.Ask(AttackTargetFound) {
 			return ActionDefenderAttackIsPossible
 		}
-		if f.TankTargetFound {
+		if f.Ask(TankTargetFound) {
 			return ActionAttackTank
 		}
-		if f.NearbyMoney {
+		if f.Ask(NearbyMoney) {
 			return ActionCollectNearMoney
 		}
 	case ClassDemoMan:
-		if f.TankTargetFound {
+		if f.Ask(TankTargetFound) {
 			return ActionAttackTank
 		}
-		if f.AttackTargetFound {
+		if f.Ask(AttackTargetFound) {
 			return ActionDefenderAttackIsPossible
 		}
-		if f.StickyTrapPossible {
+		if f.Ask(StickyTrapPossible) {
 			return ActionStickyTrap
 		}
-		if f.NearbyMoney {
+		if f.Ask(NearbyMoney) {
 			return ActionCollectNearMoney
 		}
 	case ClassSoldier, ClassPyro:
-		if f.TankTargetFound {
+		if f.Ask(TankTargetFound) {
 			return ActionAttackTank
 		}
-		if f.AttackTargetFound {
+		if f.Ask(AttackTargetFound) {
 			return ActionDefenderAttackIsPossible
 		}
-		if f.NearbyMoney {
+		if f.Ask(NearbyMoney) {
 			return ActionCollectNearMoney
 		}
 	}
@@ -111,12 +111,12 @@ func selectRoundRunning(class Class, f Flags) Action {
 
 // shouldTakeUpPosition is ShouldTakeUpPosition: whether the break ends with
 // this one walking to where the robots come out.
-func shouldTakeUpPosition(class Class, f Flags) bool {
+func shouldTakeUpPosition(class Class, f Facts) bool {
 	switch class {
 	case ClassEngineer, ClassSpy:
 		return false
 	case ClassSniper:
-		return !f.HasSniperRifle
+		return !f.Ask(HasSniperRifle)
 	}
 	return true
 }

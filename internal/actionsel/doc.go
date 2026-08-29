@@ -18,6 +18,9 @@
 // test-bed. CTFBotDefenderAttack with "Scout: Attacking robots" and
 // CTFBotDefenderAttack with "CTFBotAttack_IsPossible" are two outcomes.
 //
-// The whole package is inside the internal/gosubset subset, checked by the
-// test, because internal/spgen generates the SourcePawn it replaces.
+// The package is ordinary Go. What the plugin gets is a table, extracted by
+// Explore running Select rather than by translating its syntax, so the only
+// thing asked of the decision is that it be deterministic and finite. The
+// subset in internal/gosubset does not apply here; it is for a body that has
+// to become SourcePawn arithmetic over inputs too wide to tabulate.
 package actionsel

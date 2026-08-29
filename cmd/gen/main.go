@@ -28,12 +28,12 @@ func main() {
 // files is the whole output. A generator that emits a file not listed here does
 // not exist as far as the reproducibility check is concerned.
 func files() (map[string][]byte, error) {
-	sel, err := spgen.EmitActionSel("internal/actionsel")
+	sel, err := spgen.EmitActionSel()
 	if err != nil {
 		return nil, fmt.Errorf("emitting action selection: %w", err)
 	}
 	return map[string][]byte{
-		"sourcepawn/actionsel.sp":          []byte(sel.Pure),
+		"sourcepawn/actionsel.sp":          []byte(sel.Data),
 		"sourcepawn/actionsel_dispatch.sp": []byte(sel.Dispatch),
 		"sourcepawn/features.sp":           tables.SourcePawnFeatures(),
 		"sourcepawn/wave_write.sp":         tables.SourcePawnWaveWriter(),

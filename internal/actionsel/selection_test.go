@@ -8,16 +8,30 @@ import (
 	"github.com/m-this/tf2-mvm-bots-go/internal/gosubset"
 )
 
-// TestSelectionIsInsideTheSubset holds the package to the subset the body
-// generator translates, because the point of writing the choice here is that
-// it becomes the SourcePawn it replaces.
-func TestSelectionIsInsideTheSubset(t *testing.T) {
+/*
+	This package is deliberately NOT held to the translation subset
+
+It used to be, on the assumption that the decision had to be translated into
+SourcePawn statement by statement. It does not. The plugin calls ActionSel_Walk
+and never calls the translated function: what ships is a TABLE, extracted by
+running this Go and answering each question it asks both ways.
+
+Data has no syntax to translate, so the only thing this package owes the
+generator is that it be deterministic and finite. Everything else Go offers is
+available here, and Explore in trace.go uses maps, slices, append, methods and
+panic precisely because they are the clear way to write it.
+
+The subset still exists and still earns its keep for a body that must become
+SourcePawn arithmetic over inputs too wide to tabulate, which is where nest
+scoring and threat priority will land. It does not apply here.
+*/
+func TestThisPackageIsNotHeldToTheSubset(t *testing.T) {
 	diags, err := gosubset.CheckDir(".", gosubset.DefaultConfig())
 	if err != nil {
 		t.Fatalf("checking the package: %v", err)
 	}
-	if err := gosubset.Join(diags); err != nil {
-		t.Fatal(err)
+	if gosubset.Join(diags) == nil {
+		t.Log("the package happens to fit the subset today; nothing requires it to")
 	}
 }
 
@@ -95,7 +109,7 @@ func TestSelectIsTotal(t *testing.T) {
 	assertTotal(t, "Select", Select)
 }
 
-func assertTotal(t *testing.T, who string, choose func(RoundState, Class, Flags) Action) {
+func assertTotal(t *testing.T, who string, choose func(RoundState, Class, Facts) Action) {
 	t.Helper()
 	const reportAtMost = 10
 	holes := 0
@@ -117,7 +131,7 @@ func assertTotal(t *testing.T, who string, choose func(RoundState, Class, Flags)
 // TestExhaustivenessCatchesAPunchedHole proves the assertion above can fail,
 // and that it fails naming the combination rather than a count.
 func TestExhaustivenessCatchesAPunchedHole(t *testing.T) {
-	holed := func(state RoundState, class Class, f Flags) Action {
+	holed := func(state RoundState, class Class, f Facts) Action {
 		a := Select(state, class, f)
 		if state == RoundBetweenRounds && class == ClassSpy && a == ActionKeepOwnBreakBehaviour {
 			return ActionNone

@@ -23,15 +23,16 @@ func toolchain(t *testing.T) spshell.Toolchain {
 }
 
 // TestGeneratedSourcePawnAgreesWithGo is the deliverable. Every combination
-// the engine can produce goes through the generated SourcePawn, under
-// SourcePawn's own VM, and through the Go it was generated from, and the two
-// have to answer the same thing every time.
+// the engine can produce is walked through the generated table, under
+// SourcePawn's own VM, and through the Go it was built from, and the two have
+// to answer the same thing every time.
 //
-// Two answers per combination: the pure port, and the outcome the lazy table
-// walks to. Nothing is sampled, so there is no fraction to argue about.
+// It walks the table because the table is what ships: the plugin includes the
+// data and the edge, and calls nothing else. Nothing is sampled, so there is
+// no fraction to argue about.
 func TestGeneratedSourcePawnAgreesWithGo(t *testing.T) {
 	tc := toolchain(t)
-	if want := emit(t).Pure; !goldenMatches(t, goldenPure, want) {
+	if want := emit(t).Data; !goldenMatches(t, goldenData, want) {
 		t.Fatal("testdata/actionsel.sp is stale: run go test ./internal/spgen -update")
 	}
 
@@ -45,18 +46,18 @@ func TestGeneratedSourcePawnAgreesWithGo(t *testing.T) {
 	i, mismatches := 0, 0
 	const reportAtMost = 10
 	for p := range sweep {
-		if i+2 > len(cells) {
+		if i >= len(cells) {
 			t.Fatalf("spshell answered %d cells, and the sweep is not finished at %s", len(cells), p)
 		}
 		want := int32(actionsel.Select(p.state, p.class, p.flags()))
-		pure, walked := cells[i], cells[i+1]
-		i += 2
-		if pure == want && walked == want {
+		walked := cells[i]
+		i++
+		if walked == want {
 			continue
 		}
 		mismatches++
 		if mismatches <= reportAtMost {
-			t.Errorf("%s: Go says %d, the generated function says %d, the table walks to %d", p, want, pure, walked)
+			t.Errorf("%s: Go says %d, the table walks to %d", p, want, walked)
 		}
 	}
 	if mismatches > reportAtMost {
@@ -65,7 +66,7 @@ func TestGeneratedSourcePawnAgreesWithGo(t *testing.T) {
 	if i != len(cells) {
 		t.Errorf("spshell answered %d cells, the sweep wanted %d", len(cells), i)
 	}
-	t.Logf("compared %d combinations, %d answers, in %s under spshell", i/2, i, elapsed.Round(time.Millisecond))
+	t.Logf("compared %d combinations in %s under spshell", i, elapsed.Round(time.Millisecond))
 }
 
 func goldenMatches(t *testing.T, path, want string) bool {
@@ -142,18 +143,13 @@ func TestGoldenTableRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("running the golden table under spshell: %v", err)
 	}
-	if len(cells) != 2*len(rows) {
+	if len(cells) != len(rows) {
 		t.Fatalf("spshell answered %d cells for %d rows", len(cells), len(rows))
 	}
 
 	for i, p := range points {
-		wantPort := int32(actionsel.Select(p.state, p.class, p.flags()))
-		wantFilled := int32(actionsel.SelectFilled(p.state, p.class, p.flags()))
-		if cells[2*i] != wantPort {
-			t.Errorf("row %d, %s: Select is %d in SourcePawn, %d in Go", i, p, cells[2*i], wantPort)
-		}
-		if cells[2*i+1] != wantFilled {
-			t.Errorf("row %d, %s: SelectFilled is %d in SourcePawn, %d in Go", i, p, cells[2*i+1], wantFilled)
+		if want := int32(actionsel.Select(p.state, p.class, p.flags())); cells[i] != want {
+			t.Errorf("row %d, %s: the table walks to %d in SourcePawn, Select answers %d", i, p, cells[i], want)
 		}
 	}
 	t.Logf("%d golden rows of %d fields, %d results read back", len(rows), len(spgen.ActionSelPredicates)+2, len(cells))
@@ -179,7 +175,7 @@ func TestGoldenTableRefusesAFieldWithNoCell(t *testing.T) {
 func TestGeneratedEdgeCompiles(t *testing.T) {
 	tc := toolchain(t)
 	out := emit(t)
-	if !goldenMatches(t, goldenPure, out.Pure) || !goldenMatches(t, goldenDispatch, out.Dispatch) {
+	if !goldenMatches(t, goldenData, out.Data) || !goldenMatches(t, goldenDispatch, out.Dispatch) {
 		t.Fatal("the golden SourcePawn is stale: run go test ./internal/spgen -update")
 	}
 	if _, err := tc.Run(t.Context(), "testdata/dispatch_smoke.sp", nil); err != nil {

@@ -6,7 +6,7 @@ package actionsel
 // It is a candidate fix and it is deliberately not the function the plugin's
 // table is generated from, so that turning it on is one switch with one
 // measurement behind it rather than something that arrived with the port.
-func SelectFilled(state RoundState, class Class, f Flags) Action {
+func SelectFilled(state RoundState, class Class, f Facts) Action {
 	a := Select(state, class, f)
 	if a == ActionStrandedAsShipped {
 		return ActionGuardPoint

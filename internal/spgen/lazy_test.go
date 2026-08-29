@@ -7,40 +7,35 @@ import (
 	"github.com/m-this/tf2-mvm-bots-go/internal/spgen"
 )
 
-// TestPredicateOrderMatchesTheStruct fails when a field is added to
-// actionsel.Flags without a call written for it, which would otherwise emit a
-// table whose ids mean something the edge does not know how to answer.
-func TestPredicateOrderMatchesTheStruct(t *testing.T) {
-	p, err := spgen.Load("../actionsel")
-	if err != nil {
-		t.Fatal(err)
+// TestPredicateOrderMatchesTheDecision fails when a question is added to
+// actionsel with no call written for it, which would otherwise emit a table
+// whose ids mean something the edge does not know how to answer.
+func TestPredicateOrderMatchesTheDecision(t *testing.T) {
+	all := actionsel.Predicates()
+	if len(all) != len(spgen.ActionSelPredicates) {
+		t.Fatalf("actionsel asks %d questions, the edge answers %d", len(all), len(spgen.ActionSelPredicates))
 	}
-	fields, err := p.StructFields("Flags")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(fields) != len(spgen.ActionSelPredicates) {
-		t.Fatalf("Flags has %d fields, the edge answers %d", len(fields), len(spgen.ActionSelPredicates))
-	}
-	for i, f := range fields {
-		if spgen.ActionSelPredicates[i].Field != f {
-			t.Errorf("predicate %d is %s, the struct's field is %s", i, spgen.ActionSelPredicates[i].Field, f)
+	for i, p := range all {
+		if got := spgen.ActionSelPredicates[i]; got.Field != p.String() || got.Call != p.Call() {
+			t.Errorf("predicate %d is %s/%s, the decision asks %s/%s", i, got.Field, got.Call, p, p.Call())
 		}
 	}
 }
 
+func actionSelTable(t *testing.T) spgen.Table {
+	t.Helper()
+	table, err := spgen.ActionSelTable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return table
+}
+
 // TestLazyWalkAgreesWithSelect walks the whole domain: the table has to answer
-// what the pure function answers, on every combination, or the plugin and the
+// what the decision answers, on every combination, or the plugin and the
 // differential test are testing two different decisions.
 func TestLazyWalkAgreesWithSelect(t *testing.T) {
-	pkg, err := spgen.Load("../actionsel")
-	if err != nil {
-		t.Fatal(err)
-	}
-	table, err := pkg.Table(spgen.ActionSelLazy)
-	if err != nil {
-		t.Fatal(err)
-	}
+	table := actionSelTable(t)
 
 	compared := 0
 	for p := range sweep {
@@ -58,52 +53,38 @@ func TestLazyWalkAgreesWithSelect(t *testing.T) {
 }
 
 // TestTheWalkAsksNothingExtra is the behaviour-equivalence claim that matters
-// for the port. Filling the struct eagerly would call three predicates that
-// have side effects, so the walk has to ask for a subsequence of what the
-// source itself reads on that same input: in the same order, and never for
-// something the source never reached.
+// for the port. Filling the predicates eagerly would call three that have side
+// effects, so the walk has to ask a subsequence of what the decision itself
+// reads on that same input: in the same order, and never something the
+// decision never reached.
+//
+// The order it is held to comes from actionsel.AskOrder, which runs Select and
+// records what it asks. It is the real evaluation order rather than one read
+// off the source, so this is a stronger claim than it was.
 func TestTheWalkAsksNothingExtra(t *testing.T) {
-	pkg, err := spgen.Load("../actionsel")
-	if err != nil {
-		t.Fatal(err)
-	}
-	table, err := pkg.Table(spgen.ActionSelLazy)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	names := make([]string, 0, len(spgen.ActionSelPredicates))
-	for _, p := range spgen.ActionSelPredicates {
-		names = append(names, p.Field)
-	}
+	table := actionSelTable(t)
 
 	compared, extra := 0, 0
 	for p := range sweep {
-		source, out, err := pkg.Asked(spgen.ActionSelLazy, p.axes(), knownOf(p.bits))
-		if err != nil {
-			t.Fatalf("%s: %v", p, err)
-		}
-		if out != int32(actionsel.Select(p.state, p.class, p.flags())) {
-			t.Fatalf("%s: the interpreter answers %d, the compiled Go answers %d", p, out, int32(actionsel.Select(p.state, p.class, p.flags())))
-		}
+		source := actionsel.AskOrder(p.state, p.class, p.flags())
 		_, asked, err := table.Walk(p.axes(), func(id int32) bool { return p.bits&(1<<id) != 0 })
 		if err != nil {
 			t.Fatalf("%s: %v", p, err)
 		}
-		walked := make([]string, 0, len(asked))
+		walked := make([]actionsel.Predicate, 0, len(asked))
 		for _, id := range asked {
-			walked = append(walked, names[id])
+			walked = append(walked, actionsel.Predicate(id))
 		}
 		if !spgen.IsSubsequence(walked, source) {
 			extra++
 			if extra <= 5 {
-				t.Errorf("%s: the walk asks %v, the source asks %v", p, walked, source)
+				t.Errorf("%s: the walk asks %v, the decision asks %v", p, walked, source)
 			}
 		}
 		compared++
 	}
 	if extra > 5 {
-		t.Errorf("%d further combinations where the walk asks for more than the source", extra-5)
+		t.Errorf("%d further combinations where the walk asks for more than the decision", extra-5)
 	}
-	t.Logf("the walk asked no predicate the source did not, over %d combinations", compared)
+	t.Logf("the walk asked no predicate the decision did not, over %d combinations", compared)
 }

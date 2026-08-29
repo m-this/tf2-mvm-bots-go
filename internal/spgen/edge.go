@@ -1,5 +1,7 @@
 package spgen
 
+import "github.com/m-this/tf2-mvm-bots-go/internal/actionsel"
+
 // The edge is the one place a decision id is paired with what the plugin does
 // about it. It is written here once and emitted twice: as the SourcePawn that
 // asks a predicate, and as the SourcePawn that hands out a behaviour. Nothing
@@ -7,30 +9,32 @@ package spgen
 // exists.
 
 // Predicate is one of the facts the decision reads, and the SourcePawn that
-// answers it. Order is the order of the fields in actionsel.Flags, because
-// that order is the id the table hands the walk.
+// answers it. Both come from actionsel.Predicate, which is the one place a
+// question is named and paired with the call that answers it. Order is the
+// order the ids run in.
 type Predicate struct {
 	Field string
 	Call  string
 }
 
-// ActionSelPredicates answers each field of actionsel.Flags with the call
-// GetDesiredBotAction makes for it today, verbatim.
-var ActionSelPredicates = []Predicate{
-	{"MoneyToCollect", "CTFBotCollectMoney_IsPossible(client)"},
-	{"InUpgradeZone", "TF2_IsInUpgradeZone(client)"},
-	{"ShoppedThisBreak", "g_bShoppedThisBreak[client]"},
-	{"MovingToFront", `ActionsManager.LookupEntityActionByName(client, "DefenderMoveToFront") != INVALID_ACTION`},
-	{"UpgradesEnabled", "redbots_manager_bot_use_upgrades.BoolValue"},
-	{"HasUpgraded", "g_bHasUpgraded[client]"},
-	{"UpgradeMidRound", "ShouldUpgradeMidRound(client)"},
-	{"HasSniperRifle", "HasSniperRifle(client)"},
-	{"SniperStalled", "IsSniperStalled(client)"},
-	{"AttackTargetFound", "CTFBotDefenderAttack_SelectTarget(client)"},
-	{"TankTargetFound", "CTFBotAttackTank_SelectTarget(client)"},
-	{"GiantToMark", "CTFBotMarkGiant_IsPossible(client)"},
-	{"NearbyMoney", "CTFBotCollectNearMoney_SelectTarget(client)"},
-	{"StickyTrapPossible", "CTFBotStickyTrap_IsPossible(client)"},
+// ActionSelPredicates is every question the decision can ask, in id order.
+var ActionSelPredicates = actionSelPredicates()
+
+func actionSelPredicates() []Predicate {
+	all := actionsel.Predicates()
+	out := make([]Predicate, 0, len(all))
+	for _, p := range all {
+		out = append(out, Predicate{Field: p.String(), Call: p.Call()})
+	}
+	return out
+}
+
+func predicateFields() []string {
+	out := make([]string, 0, len(ActionSelPredicates))
+	for _, p := range ActionSelPredicates {
+		out = append(out, p.Field)
+	}
+	return out
 }
 
 // Outcome is one call site of GetDesiredBotAction: the behaviour it suspends

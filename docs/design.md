@@ -228,3 +228,35 @@ different machines measures the machines.
 Two capabilities were considered and argued against. A Go side wave simulation,
 because faster plausible readings are worse than none. A deterministic full run
 seed, because the server, the population and the physics are not ours to seed.
+
+
+## The subset was applied where it was not needed
+
+Corrected after the maintainer asked why the Go had to be a restricted subset.
+It did not.
+
+The plugin calls `ActionSel_Walk`, which walks a table, and never called the
+translated function at all. Data has no syntax to translate, so a decision over
+a finite domain only has to be deterministic and enumerable, not transpilable.
+The subset came from SourceGo's framing, where Go is the source and SourcePawn
+is the target, and it was applied to a case whose output was never code.
+
+`internal/actionsel` is now ordinary Go: a `Predicate` enum, a `Facts` interface
+the decision asks lazily, maps, slices, `append`, methods, `panic` and `recover`
+where they are the clear way to write it. The table is extracted by RUNNING the
+decision against a `Facts` that refuses a question it has not been told about;
+the refusal names the question, the explorer answers it both ways and recurs.
+
+That is not only tidier, it is a stronger claim. The table used to come from
+interpreting the Go syntax tree, which was a second implementation of the same
+decision and could drift from it, and the ask-order proof compared the walk
+against that same interpretation, so a bug shared by both was invisible. The
+ground truth is now the decision itself executing.
+
+It deleted 1444 lines of Go and 221 lines of generated SourcePawn, and the
+emitted table is byte for byte what it was.
+
+The subset still earns its keep, and it has no consumer today. Nest scoring and
+threat priority take continuous floats and cannot be tabulated: those need
+generated arithmetic, and that is what `internal/gosubset` is for. It is kept
+for that, unused, deliberately.

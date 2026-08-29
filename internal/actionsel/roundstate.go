@@ -18,3 +18,15 @@ const (
 	RoundBonus
 	RoundBetweenRounds
 )
+
+// numRoundStates is one past the last state, so RoundStates covers the enum.
+const numRoundStates = RoundBetweenRounds + 1
+
+// RoundStates is every round state, in declared order.
+func RoundStates() []RoundState {
+	all := make([]RoundState, 0, numRoundStates)
+	for s := RoundInit; s < numRoundStates; s++ {
+		all = append(all, s)
+	}
+	return all
+}

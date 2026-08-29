@@ -14,26 +14,33 @@ public void main()
 {
 	for (int row = 0; row < GINPUTS_ROWS; row++)
 	{
-		ActionSel_Flags f;
-		f.MoneyToCollect = gInputs[row][GINPUTS_MoneyToCollect] != 0;
-		f.InUpgradeZone = gInputs[row][GINPUTS_InUpgradeZone] != 0;
-		f.ShoppedThisBreak = gInputs[row][GINPUTS_ShoppedThisBreak] != 0;
-		f.MovingToFront = gInputs[row][GINPUTS_MovingToFront] != 0;
-		f.UpgradesEnabled = gInputs[row][GINPUTS_UpgradesEnabled] != 0;
-		f.HasUpgraded = gInputs[row][GINPUTS_HasUpgraded] != 0;
-		f.UpgradeMidRound = gInputs[row][GINPUTS_UpgradeMidRound] != 0;
-		f.HasSniperRifle = gInputs[row][GINPUTS_HasSniperRifle] != 0;
-		f.SniperStalled = gInputs[row][GINPUTS_SniperStalled] != 0;
-		f.AttackTargetFound = gInputs[row][GINPUTS_AttackTargetFound] != 0;
-		f.TankTargetFound = gInputs[row][GINPUTS_TankTargetFound] != 0;
-		f.GiantToMark = gInputs[row][GINPUTS_GiantToMark] != 0;
-		f.NearbyMoney = gInputs[row][GINPUTS_NearbyMoney] != 0;
-		f.StickyTrapPossible = gInputs[row][GINPUTS_StickyTrapPossible] != 0;
+		int bits;
+		bits |= gInputs[row][GINPUTS_MoneyToCollect] << ActionSel_PredMoneyToCollect;
+		bits |= gInputs[row][GINPUTS_InUpgradeZone] << ActionSel_PredInUpgradeZone;
+		bits |= gInputs[row][GINPUTS_ShoppedThisBreak] << ActionSel_PredShoppedThisBreak;
+		bits |= gInputs[row][GINPUTS_MovingToFront] << ActionSel_PredMovingToFront;
+		bits |= gInputs[row][GINPUTS_UpgradesEnabled] << ActionSel_PredUpgradesEnabled;
+		bits |= gInputs[row][GINPUTS_HasUpgraded] << ActionSel_PredHasUpgraded;
+		bits |= gInputs[row][GINPUTS_UpgradeMidRound] << ActionSel_PredUpgradeMidRound;
+		bits |= gInputs[row][GINPUTS_HasSniperRifle] << ActionSel_PredHasSniperRifle;
+		bits |= gInputs[row][GINPUTS_SniperStalled] << ActionSel_PredSniperStalled;
+		bits |= gInputs[row][GINPUTS_AttackTargetFound] << ActionSel_PredAttackTargetFound;
+		bits |= gInputs[row][GINPUTS_TankTargetFound] << ActionSel_PredTankTargetFound;
+		bits |= gInputs[row][GINPUTS_GiantToMark] << ActionSel_PredGiantToMark;
+		bits |= gInputs[row][GINPUTS_NearbyMoney] << ActionSel_PredNearbyMoney;
+		bits |= gInputs[row][GINPUTS_StickyTrapPossible] << ActionSel_PredStickyTrapPossible;
 
-		ActionSel_RoundState state = view_as<ActionSel_RoundState>(gInputs[row][GINPUTS_State]);
-		ActionSel_Class botClass = view_as<ActionSel_Class>(gInputs[row][GINPUTS_Class]);
+		int node = ActionSel_Root[gInputs[row][GINPUTS_State]][gInputs[row][GINPUTS_Class]];
+		for (int step = 0; step <= ActionSel_PredicateCount; step++)
+		{
+			if (ActionSel_NodePredicate[node] == -1)
+				break;
 
-		printnum(view_as<int>(ActionSel_Select(state, botClass, f)));
-		printnum(view_as<int>(ActionSel_SelectFilled(state, botClass, f)));
+			if ((bits & (1 << ActionSel_NodePredicate[node])) != 0)
+				node = ActionSel_NodeWhenTrue[node];
+			else
+				node = ActionSel_NodeWhenFalse[node];
+		}
+		printnum(ActionSel_NodeWhenTrue[node]);
 	}
 }

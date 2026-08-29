@@ -11,17 +11,17 @@ import (
 
 var update = flag.Bool("update", false, "rewrite the golden SourcePawn from internal/actionsel")
 
-// goldenPure is the file the plugin includes and the differential test
+// goldenData is the file the plugin includes and the differential test
 // compiles. It is committed so that a change to the decision shows up as a
 // diff in SourcePawn, which is the form the reviewer has to trust.
 const (
-	goldenPure     = "testdata/actionsel.sp"
+	goldenData     = "testdata/actionsel.sp"
 	goldenDispatch = "testdata/actionsel_dispatch.sp"
 )
 
 func emit(t *testing.T) spgen.ActionSel {
 	t.Helper()
-	out, err := spgen.EmitActionSel("../actionsel")
+	out, err := spgen.EmitActionSel()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,7 +30,7 @@ func emit(t *testing.T) spgen.ActionSel {
 
 func TestGoldenSourcePawnIsUpToDate(t *testing.T) {
 	out := emit(t)
-	for path, want := range map[string]string{goldenPure: out.Pure, goldenDispatch: out.Dispatch} {
+	for path, want := range map[string]string{goldenData: out.Data, goldenDispatch: out.Dispatch} {
 		if *update {
 			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 				t.Fatal(err)
@@ -54,8 +54,8 @@ func TestGoldenSourcePawnIsUpToDate(t *testing.T) {
 // iterated without sorting looks like from the outside.
 func TestGenerationIsReproducible(t *testing.T) {
 	a, b := emit(t), emit(t)
-	if a.Pure != b.Pure || a.Dispatch != b.Dispatch {
-		t.Error("two generations of the same package differ")
+	if a.Data != b.Data || a.Dispatch != b.Dispatch {
+		t.Error("two builds of the same decision differ")
 	}
 }
 

@@ -39,15 +39,6 @@ func flagsOf(bits uint32) actionsel.Flags {
 	}
 }
 
-// knownOf is the same bits as the map the interpreter takes.
-func knownOf(bits uint32) map[string]bool {
-	known := make(map[string]bool, predCount)
-	for i, p := range spgen.ActionSelPredicates {
-		known[p.Field] = bits&(1<<uint(i)) != 0
-	}
-	return known
-}
-
 type point struct {
 	state actionsel.RoundState
 	class actionsel.Class
