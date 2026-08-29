@@ -41,6 +41,33 @@ func ToolchainFromEnv() (Toolchain, error) {
 	return t, nil
 }
 
+// Run compiles sourcePath and returns the cells the plugin printed, one per
+// printnum call, in order.
+//
+// includes are written into a directory put ahead of the SourcePawn include
+// tree, so a generated golden table or a generated body is included by name
+// without anything being left on disk afterwards.
+func (t Toolchain) Run(ctx context.Context, sourcePath string, includes map[string]string) ([]int32, error) {
+	dir, err := os.MkdirTemp("", "spshell")
+	if err != nil {
+		return nil, fmt.Errorf("temp dir: %w", err)
+	}
+	defer func() { _ = os.RemoveAll(dir) }()
+
+	for name, body := range includes {
+		path := filepath.Join(dir, name)
+		if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+			return nil, fmt.Errorf("writing %s: %w", path, err)
+		}
+	}
+
+	smx := filepath.Join(dir, "golden.smx")
+	if err := t.compile(ctx, sourcePath, smx, dir); err != nil {
+		return nil, err
+	}
+	return t.run(ctx, smx)
+}
+
 // Triple is one golden input: the three floats a decision function takes.
 type Triple [3]float32
 
@@ -51,22 +78,17 @@ type Triple [3]float32
 // each result with printnum(view_as<int>(score)), so what comes back is the
 // exact bit pattern rather than a rounded printf.
 func (t Toolchain) ScoreTriples(ctx context.Context, sourcePath string, inputs []Triple) ([]float32, error) {
-	dir, err := os.MkdirTemp("", "spshell")
+	cells, err := t.Run(ctx, sourcePath, map[string]string{"golden_inputs.inc": inputsInclude(inputs)})
 	if err != nil {
-		return nil, fmt.Errorf("temp dir: %w", err)
-	}
-	defer func() { _ = os.RemoveAll(dir) }()
-
-	inc := filepath.Join(dir, "golden_inputs.inc")
-	if err := os.WriteFile(inc, []byte(inputsInclude(inputs)), 0o600); err != nil {
-		return nil, fmt.Errorf("writing %s: %w", inc, err)
-	}
-
-	smx := filepath.Join(dir, "golden.smx")
-	if err := t.compile(ctx, sourcePath, smx, dir); err != nil {
 		return nil, err
 	}
-	return t.run(ctx, smx)
+	scores := make([]float32, 0, len(cells))
+	for _, c := range cells {
+		// The plugin prints view_as<int>(score), so this reinterprets the
+		// cell's bits rather than converting a number, which is the point.
+		scores = append(scores, math.Float32frombits(uint32(c))) //nolint:gosec // G115: a cell is 32 bits either way
+	}
+	return scores, nil
 }
 
 func (t Toolchain) compile(ctx context.Context, sourcePath, smx, includeDir string) error {
@@ -79,7 +101,7 @@ func (t Toolchain) compile(ctx context.Context, sourcePath, smx, includeDir stri
 	return nil
 }
 
-func (t Toolchain) run(ctx context.Context, smx string) ([]float32, error) {
+func (t Toolchain) run(ctx context.Context, smx string) ([]int32, error) {
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, t.Spshell, smx)
 	cmd.Stdout = &stdout
@@ -91,23 +113,21 @@ func (t Toolchain) run(ctx context.Context, smx string) ([]float32, error) {
 	if stderr.Len() != 0 {
 		return nil, fmt.Errorf("spshell %s: %s", smx, strings.TrimSpace(stderr.String()))
 	}
-	return parseBits(stdout.String())
+	return parseCells(stdout.String())
 }
 
-func parseBits(out string) ([]float32, error) {
-	lines := strings.Fields(out)
-	scores := make([]float32, 0, len(lines))
-	for _, line := range lines {
-		bits, err := strconv.ParseInt(line, 10, 32)
+func parseCells(out string) ([]int32, error) {
+	fields := strings.Fields(out)
+	cells := make([]int32, 0, len(fields))
+	for _, f := range fields {
+		v, err := strconv.ParseInt(f, 10, 32)
 		if err != nil {
-			return nil, fmt.Errorf("spshell printed %q, wanted a float's bits: %w", line, err)
+			return nil, fmt.Errorf("spshell printed %q, wanted a cell: %w", f, err)
 		}
 		// ParseInt with bitSize 32 bounds this to int32, so the cast is lossless.
-		// It reinterprets the cell's bits rather than converting a number, which is
-		// the whole point of printing them.
-		scores = append(scores, math.Float32frombits(uint32(int32(bits)))) //nolint:gosec // G115: bounded by ParseInt above
+		cells = append(cells, int32(v))
 	}
-	return scores, nil
+	return cells, nil
 }
 
 func inputsInclude(inputs []Triple) string {

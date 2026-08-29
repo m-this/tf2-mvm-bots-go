@@ -9,15 +9,16 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/m-this/tf2-mvm-bots-go/internal/bindgen"
 	"github.com/m-this/tf2-mvm-bots-go/internal/tables"
 )
 
 func main() {
 	out := flag.String("out", "gen", "directory to write generated files into")
-	flag.String("upstream", "../tf2-mvm-bots", "the plugin repository, read for round-trip checks")
+	upstream := flag.String("upstream", "../tf2-mvm-bots", "the plugin repository, read for the include tree")
 	flag.Parse()
 
-	if err := run(*out); err != nil {
+	if err := run(*out, *upstream); err != nil {
 		fmt.Fprintln(os.Stderr, "gen:", err)
 		os.Exit(1)
 	}
@@ -34,7 +35,43 @@ func files() map[string][]byte {
 	}
 }
 
-func run(out string) error {
+/*
+	The include tree the bindings are generated from
+
+It lives inside the plugin's test-bed build directory because that is what
+build.sh already downloads and caches. Bindings generated from includes older
+than the compiler are bindings for the wrong API, which is mvm-z83.21.
+*/
+func includeRoot(upstream string) string {
+	return filepath.Join(upstream, "testbed", "build")
+}
+
+// writeBindings emits the SourceMod API as Go. Absent includes are not an
+// error: a fresh clone has not run build.sh yet, and the rest of the output
+// does not depend on them.
+func writeBindings(out, upstream string) error {
+	root := includeRoot(upstream)
+	if _, err := os.Stat(root); err != nil {
+		fmt.Fprintf(os.Stderr, "gen: no include tree at %s, skipping bindings\n", root)
+		return nil
+	}
+
+	res, err := bindgen.Generate(bindgen.Options{Root: root, Package: "sm"})
+	if err != nil {
+		return fmt.Errorf("generating bindings: %w", err)
+	}
+	dir := filepath.Join(out, "go", "sm")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("making %s: %w", dir, err)
+	}
+	if err := bindgen.Write(dir, res); err != nil {
+		return fmt.Errorf("writing bindings: %w", err)
+	}
+	fmt.Fprintf(os.Stderr, "gen: %d binding files, %d refusals\n", len(res.Files), len(res.Refusals))
+	return nil
+}
+
+func run(out, upstream string) error {
 	if err := os.RemoveAll(out); err != nil {
 		return fmt.Errorf("clearing %s: %w", out, err)
 	}
@@ -47,5 +84,5 @@ func run(out string) error {
 			return fmt.Errorf("writing %s: %w", path, err)
 		}
 	}
-	return nil
+	return writeBindings(out, upstream)
 }

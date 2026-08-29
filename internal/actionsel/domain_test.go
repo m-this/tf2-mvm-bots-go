@@ -35,30 +35,36 @@ var classNames = map[Class]string{
 }
 
 var actionNames = map[Action]string{
-	ActionNone:                        "None",
-	ActionCollectMoney:                "CollectMoney",
-	ActionGotoUpgrade:                 "GotoUpgrade",
-	ActionMoveToFront:                 "MoveToFront",
-	ActionMoveToFrontSkippingUpgrades: "MoveToFrontSkippingUpgrades",
-	ActionMarkGiant:                   "MarkGiant",
-	ActionAttackTank:                  "AttackTank",
-	ActionDefenderAttack:              "DefenderAttack",
-	ActionStickyTrap:                  "StickyTrap",
-	ActionCollectNearMoney:            "CollectNearMoney",
-	ActionEngineerIdle:                "EngineerIdle",
-	ActionSpyLurk:                     "SpyLurk",
-	ActionGuardPoint:                  "GuardPoint",
-	ActionKeepWalkingToFront:          "KeepWalkingToFront",
-	ActionKeepOwnBreakBehaviour:       "KeepOwnBreakBehaviour",
-	ActionKeepSnipingPosition:         "KeepSnipingPosition",
-	ActionKeepHealing:                 "KeepHealing",
-	ActionKeepWaitingForClass:         "KeepWaitingForClass",
-	ActionWaitOutsideRound:            "WaitOutsideRound",
+	ActionNone:                     "None",
+	ActionCollectMoneyIsPossible:   "CollectMoneyIsPossible",
+	ActionGotoUpgradeBetweenRounds: "GotoUpgradeBetweenRounds",
+	ActionMoveToFrontSkipUpgrading: "MoveToFrontSkipUpgrading",
+	ActionMoveToFrontShoppingDone:  "MoveToFrontShoppingDone",
+	ActionGotoUpgradeBuyNow:        "GotoUpgradeBuyNow",
+	ActionCollectMoneyCollecting:   "CollectMoneyCollecting",
+	ActionMarkGiant:                "MarkGiant",
+	ActionAttackTankScout:          "AttackTankScout",
+	ActionDefenderAttackScout:      "DefenderAttackScout",
+	ActionDefenderAttackSniper:     "DefenderAttackSniper",
+	ActionEngineerIdle:             "EngineerIdle",
+	ActionSpyLurk:                  "SpyLurk",
+	ActionDefenderAttackIsPossible: "DefenderAttackIsPossible",
+	ActionAttackTank:               "AttackTank",
+	ActionCollectNearMoney:         "CollectNearMoney",
+	ActionStickyTrap:               "StickyTrap",
+	ActionGuardPoint:               "GuardPoint",
+	ActionKeepWalkingToFront:       "KeepWalkingToFront",
+	ActionKeepOwnBreakBehaviour:    "KeepOwnBreakBehaviour",
+	ActionKeepSnipingPosition:      "KeepSnipingPosition",
+	ActionKeepHealing:              "KeepHealing",
+	ActionKeepWaitingForClass:      "KeepWaitingForClass",
+	ActionWaitOutsideRound:         "WaitOutsideRound",
+	ActionStrandedAsShipped:        "StrandedAsShipped",
 }
 
-// deliberateNothing is the set of actions that mean "somebody else already
-// owns this bot". A Shipped Plugin_Continue whose Select answer is one of
-// these is a documented decision; anything else is a bot with no behaviour.
+// deliberateNothing is the set of outcomes where the shipped chain says
+// nothing because something else already owns the bot. ActionStrandedAsShipped
+// is not one of them: it is the same Plugin_Continue with nobody behind it.
 var deliberateNothing = map[Action]bool{
 	ActionKeepWalkingToFront:    true,
 	ActionKeepOwnBreakBehaviour: true,
