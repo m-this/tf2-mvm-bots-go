@@ -42,6 +42,11 @@ down twice, and of the interesting code being unreachable from a test.
 - `internal/body/scan` — util.sp's client loop, ported one function at a time.
   The duplication it holds is collapsed once every variant is here, not on the
   way across.
+- `internal/spaction`, `internal/action` — a behaviour. A Go package with the
+  callbacks becomes the `BehaviorAction` subclass, the constructor and the
+  wiring; the bodies come from `internal/spbody`, which is why this part is
+  small. `internal/action/spysap` is the first one across, compared against the
+  file it replaces on every callback's declaration and call sequence.
 - `internal/body` — the bodies themselves, one package each, and the list that
   says which are generated. `internal/body/roster` is the first, and it is
   proved twice: run under spshell against the same canned world as the Go, call

@@ -110,6 +110,16 @@ port has not reached yet, an `SDKCall` or an address read.
 a call the extern package does not declare is refused here rather than emitted
 as something plausible.
 
+## Method calls
+
+Accepted here and judged by the emitter. SourceMod's API for a nextbot is
+methodmaps: `myBot.GetVisionInterface()` has no plain function behind it, so
+refusing every method call refused the engine.
+
+This checker cannot decide the rule, because deciding it means knowing what the
+receiver is. `internal/spbody` does know, and accepts a method the extern package
+declares on a type carrying an `//sp:tag`. Everything else it refuses by name.
+
 ## The unit of checking is the directory
 
 `CheckDir` collects the package-level types and functions of every non-test
