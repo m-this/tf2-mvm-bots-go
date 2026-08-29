@@ -16,8 +16,10 @@ const RequireEnv = "MVMBOTS_REQUIRE_SPSHELL"
 A developer with no clang and no network gets a skip that names what is missing.
 The gate gets a failure, because a differential test that silently does not run
 is the same as not having one.
+
+testing.TB rather than *testing.T, because the float literal fuzz needs it too.
 */
-func ForTest(t *testing.T) Toolchain {
+func ForTest(t testing.TB) Toolchain {
 	t.Helper()
 	tc, err := ToolchainFromEnv()
 	if err == nil {
