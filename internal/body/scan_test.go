@@ -58,6 +58,14 @@ func goScanCells(w world) []int32 {
 		// the generated declaration says it is.
 		emit(scan.NearestEnemyCount(client, 100000.0, false))
 		emit(scan.NearestEnemyCount(client, 5934.8125, false))
+
+		// FindEnemyNearestToMe, over the filters its callers switch on.
+		emit(scan.EnemyNearestToMe(client, 900000.0, false, false, false, engine.ClassUnknown()))
+		emit(scan.EnemyNearestToMe(client, 900000.0, true, false, false, engine.ClassUnknown()))
+		emit(scan.EnemyNearestToMe(client, 900000.0, false, true, false, engine.ClassUnknown()))
+		emit(scan.EnemyNearestToMe(client, 900000.0, false, false, true, engine.ClassUnknown()))
+		emit(scan.EnemyNearestToMe(client, 900000.0, false, false, false, engine.Class(2)))
+		emit(scan.EnemyNearestToMe(client, 5934.8125, false, false, false, engine.ClassUnknown()))
 	}
 	return out
 }
@@ -73,6 +81,30 @@ func scanStubs(w world) string {
 	writeBools(&b, "gStealth", w.stealth[:])
 	writeBools(&b, "gExposed", w.exposed[:])
 	writeVectors(&b, "gCentre", w.centre[:])
+	writeBools(&b, "gGiant", w.giant[:])
+	writeBools(&b, "gDazed", w.dazed[:])
+	writeInts(&b, "gClass", classCells(w))
+	writeInts(&b, "gTfTeam", teamCells(w))
+	b.WriteString(`
+/* The three SourceMod tags the ported signature keeps. Declared here because
+   SourceMod's own includes are not in the standalone SourcePawn, with only the
+   constants the scans name. */
+enum TFClassType
+{
+	TFClass_Unknown = 0
+};
+
+enum TFTeam
+{
+	TFTeam_Unassigned = 0
+};
+
+enum TFCond
+{
+	TFCond_Dazed = 17
+};
+
+`)
 	fmt.Fprintf(&b, "\nstock bool IsSentryBusterRobot(int client) { Trace(%d, client); return gBuster[client]; }\n", traceIsSentryBusterRobot)
 	fmt.Fprintf(&b, "stock bool TF2_IsInvulnerable(int client) { Trace(%d, client); return gUber[client]; }\n", traceIsInvulnerable)
 	fmt.Fprintf(&b, "stock bool TF2_IsStealthed(int client) { Trace(%d, client); return gStealth[client]; }\n", traceIsStealthed)
@@ -105,5 +137,26 @@ stock float GetVectorDistance(const float a[3], const float b[3])
 	return sum;
 }
 `, traceWorldSpaceCenter, traceVectorDistance)
+	fmt.Fprintf(&b, "stock bool TF2_IsMiniBoss(int client) { Trace(%d, client); return gGiant[client]; }\n", traceIsMiniBoss)
+	fmt.Fprintf(&b, "stock bool TF2_IsPlayerInCondition(int client, TFCond condition) { Trace(%d, client); return condition == TFCond_Dazed && gDazed[client]; }\n", traceIsPlayerInCondition)
+	fmt.Fprintf(&b, "stock TFClassType TF2_GetPlayerClass(int client) { Trace(%d, client); return view_as<TFClassType>(gClass[client]); }\n", tracePlayerClass)
+	fmt.Fprintf(&b, "stock TFTeam TF2_GetClientTeam(int client) { Trace(%d, client); return view_as<TFTeam>(gTfTeam[client]); }\n", tracePlayerTeam)
+	fmt.Fprintf(&b, "stock TFTeam GetPlayerEnemyTeam(int client) { Trace(%d, client); return gTfTeam[client] == 2 ? view_as<TFTeam>(3) : view_as<TFTeam>(2); }\n", tracePlayerEnemyTeam)
 	return b.String()
+}
+
+func classCells(w world) []int32 {
+	out := make([]int32, len(w.class))
+	for i, c := range w.class {
+		out[i] = int32(c)
+	}
+	return out
+}
+
+func teamCells(w world) []int32 {
+	out := make([]int32, len(w.tfTeam))
+	for i, t := range w.tfTeam {
+		out[i] = int32(t)
+	}
+	return out
 }

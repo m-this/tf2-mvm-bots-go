@@ -33,6 +33,22 @@ package engine
 
 import "fmt"
 
+// Class is SourceMod's TFClassType, named here so a ported signature keeps the
+// tag its callers pass rather than widening to int.
+//
+//sp:tag TFClassType
+type Class int32
+
+// Team is SourceMod's TFTeam, for the same reason.
+//
+//sp:tag TFTeam
+type Team int32
+
+// Condition is SourceMod's TFCond.
+//
+//sp:tag TFCond
+type Condition int32
+
 // Calls is the set of answers a body gets. A nil field is a call the caller did
 // not expect the body to make, and reaching it is a failed expectation rather
 // than a zero value quietly standing in for one.
@@ -47,12 +63,19 @@ type Calls struct {
 	VectorDistance func(a [3]float32, b [3]float32) float32
 
 	// The plugin's own, still hand-written SourcePawn. Each one is work the
-	// port has not reached, and each goes the day it does.
+	// port has not reached, and each goes the day it does. The TF2_ names
+	// beside them are not: they come from SourceMod and from the vendored
+	// stocklib include, which this repository is not going to rewrite.
 	IsSentryBusterRobot    func(client int32) bool
 	IsInvulnerable         func(client int32) bool
 	IsStealthed            func(client int32) bool
 	IsCloakedPlayerExposed func(client int32) bool
 	WorldSpaceCenter       func(entity int32) [3]float32
+	IsMiniBoss             func(client int32) bool
+	IsPlayerInCondition    func(client int32, condition Condition) bool
+	PlayerClass            func(client int32) Class
+	PlayerTeam             func(client int32) Team
+	PlayerEnemyTeam        func(client int32) Team
 }
 
 var installed Calls
@@ -163,7 +186,7 @@ func IsSentryBusterRobot(client int32) bool {
 
 // IsInvulnerable says whether the player cannot be hurt right now.
 //
-//sp:plugin TF2_IsInvulnerable
+//sp:native TF2_IsInvulnerable
 func IsInvulnerable(client int32) bool {
 	if installed.IsInvulnerable == nil {
 		missing("TF2_IsInvulnerable")
@@ -173,7 +196,7 @@ func IsInvulnerable(client int32) bool {
 
 // IsStealthed says whether the player is cloaked.
 //
-//sp:plugin TF2_IsStealthed
+//sp:native TF2_IsStealthed
 func IsStealthed(client int32) bool {
 	if installed.IsStealthed == nil {
 		missing("TF2_IsStealthed")
@@ -200,4 +223,64 @@ func WorldSpaceCenter(entity int32) [3]float32 {
 		missing("WorldSpaceCenter")
 	}
 	return installed.WorldSpaceCenter(entity)
+}
+
+// ClassUnknown is TFClass_Unknown, the class a slot has before it picks one.
+//
+//sp:global TFClass_Unknown
+func ClassUnknown() Class { return 0 }
+
+// ConditionDazed is TFCond_Dazed, which is what a stun leaves behind.
+//
+//sp:global TFCond_Dazed
+func ConditionDazed() Condition { return 17 }
+
+// IsMiniBoss says whether the robot is a giant.
+//
+//sp:native TF2_IsMiniBoss
+func IsMiniBoss(client int32) bool {
+	if installed.IsMiniBoss == nil {
+		missing("TF2_IsMiniBoss")
+	}
+	return installed.IsMiniBoss(client)
+}
+
+// IsPlayerInCondition says whether the player carries the condition.
+//
+//sp:native TF2_IsPlayerInCondition
+func IsPlayerInCondition(client int32, condition Condition) bool {
+	if installed.IsPlayerInCondition == nil {
+		missing("TF2_IsPlayerInCondition")
+	}
+	return installed.IsPlayerInCondition(client, condition)
+}
+
+// PlayerClass is the class the player is playing.
+//
+//sp:native TF2_GetPlayerClass
+func PlayerClass(client int32) Class {
+	if installed.PlayerClass == nil {
+		missing("TF2_GetPlayerClass")
+	}
+	return installed.PlayerClass(client)
+}
+
+// PlayerTeam is the team the player is on, as a tag rather than an index.
+//
+//sp:native TF2_GetClientTeam
+func PlayerTeam(client int32) Team {
+	if installed.PlayerTeam == nil {
+		missing("TF2_GetClientTeam")
+	}
+	return installed.PlayerTeam(client)
+}
+
+// PlayerEnemyTeam is the team the player is fighting.
+//
+//sp:plugin GetPlayerEnemyTeam
+func PlayerEnemyTeam(client int32) Team {
+	if installed.PlayerEnemyTeam == nil {
+		missing("GetPlayerEnemyTeam")
+	}
+	return installed.PlayerEnemyTeam(client)
 }

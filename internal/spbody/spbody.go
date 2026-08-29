@@ -20,6 +20,9 @@ type Config struct {
 	// Externs are the functions the body calls and this package does not
 	// translate, by the qualified name the body writes: "engine.GetClientTeam".
 	Externs map[string]Extern
+	// Tags are the types a body names and this package does not declare,
+	// by the qualified Go name: "engine.Class" is SourcePawn's TFClassType.
+	Tags map[string]string
 	// Import maps an import path to the identifier the body writes it as,
 	// so a selector can be resolved back to an extern without go/types
 	// having to name the package twice.

@@ -18,6 +18,9 @@ So a body may declare them, on the Go function, as
 
 	//sp:default bGiantsOnly false
 
+The value is written into the SourcePawn verbatim, so it is spelled the way
+SourcePawn spells it: TFClass_Unknown, not the Go name for the same constant.
+
 The Go side is unaffected: a Go caller passes every argument, so nothing about
 the behaviour depends on a default. It is a compatibility shim for the
 SourcePawn that has not been ported yet, and it goes when the callers do.

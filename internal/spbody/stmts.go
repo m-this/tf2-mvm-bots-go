@@ -152,8 +152,20 @@ where it is written.
 */
 func (e *emitter) arrayCall(define bool, lhs, rhs ast.Expr) bool {
 	call, ok := rhs.(*ast.CallExpr)
-	if !ok || !e.isArrayValue(rhs) || e.returnsArrayValue(call) {
+	if !ok || !e.isArrayValue(rhs) {
 		return false
+	}
+	if e.returnsArrayValue(call) {
+		// spcomp takes the float[] form as the right hand side of an
+		// assignment and not as an initialiser, so the declaration and
+		// the assignment are two lines.
+		if define {
+			e.declareTarget(lhs)
+		} else {
+			e.checkWritable(lhs)
+		}
+		e.line("%s = %s;", e.expr(lhs), e.expr(rhs))
+		return true
 	}
 	if tv, isType := e.info.Types[call.Fun]; isType && tv.IsType() {
 		return false // a conversion, which is not a call at all

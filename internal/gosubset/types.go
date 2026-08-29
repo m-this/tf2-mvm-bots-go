@@ -55,8 +55,10 @@ func (c *checker) checkType(expr ast.Expr) {
 		c.refuse(t.Pos(), "a variadic parameter",
 			"take a fixed-length array and a count")
 	case *ast.SelectorExpr:
-		c.refuse(t.Pos(), "a type from another package",
-			"declare the type in this package; the generator translates only what it can see")
+		// A type from the extern package is a SourcePawn tag that
+		// already exists, named there so a ported signature keeps it.
+		// Anything else has nothing for the generator to emit.
+		c.checkSelector(t)
 	case *ast.IndexExpr, *ast.IndexListExpr:
 		c.refuse(expr.Pos(), "a generic type instantiation",
 			"write the concrete type; SourcePawn has no type parameters")

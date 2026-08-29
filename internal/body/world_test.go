@@ -12,7 +12,7 @@ import (
 // worldSlots is how many client slots the canned world has. Small on purpose:
 // the proof here is that two translations of one function agree, and a wider
 // sweep would say the same thing more slowly.
-const worldSlots = 8
+const worldSlots = 12
 
 // The trace ids. One per engine call, and the emitted trace is the sequence of
 // them with the argument that was asked about, so a body that answered right by
@@ -30,6 +30,11 @@ const (
 	traceIsStealthed
 	traceIsCloakedPlayerExposed
 	traceWorldSpaceCenter
+	traceIsMiniBoss
+	traceIsPlayerInCondition
+	tracePlayerClass
+	tracePlayerTeam
+	tracePlayerEnemyTeam
 )
 
 // world is what the stubs answer, indexed by slot. Slot 0 is never a client and
@@ -47,6 +52,10 @@ type world struct {
 	stealth  [worldSlots + 1]bool
 	exposed  [worldSlots + 1]bool
 	centre   [worldSlots + 1][3]float32
+	giant    [worldSlots + 1]bool
+	dazed    [worldSlots + 1]bool
+	class    [worldSlots + 1]engine.Class
+	tfTeam   [worldSlots + 1]engine.Team
 }
 
 // cannedWorld is one world with every case the bodies branch on in it: a slot
@@ -54,20 +63,33 @@ type world struct {
 // ammo, and a clip the SDKCall answers as negative.
 func cannedWorld() world {
 	var w world
+	// Every predicate is decorrelated from every other on purpose. A world
+	// where being alive and being on the enemy team are the same parity
+	// filters out every candidate at once and says nothing about the loop.
 	for i := 1; i <= worldSlots; i++ {
 		w.inGame[i] = i != 3
-		w.alive[i] = i%2 == 1
+		w.alive[i] = i != 5
 		w.defender[i] = i <= 4
 		w.team[i] = int32(i % 3)
 		w.hasAmmo[i] = i != 5
 		w.clip[i] = int32(i) - 2
 		w.origin[i] = [3]float32{float32(i) * 64.5, float32(i) * -3.25, float32(i)}
 		w.buster[i] = i == 7
-		w.uber[i] = i%4 == 0
+		w.uber[i] = i == 4 || i == 10
+		// Slot 2 is cloaked and unseen, slot 6 is cloaked and exposed, so
+		// both sides of that pair of questions are walked.
 		w.stealth[i] = i == 2 || i == 6
 		w.exposed[i] = i == 6
 		w.centre[i] = [3]float32{float32(i) * 64.5, float32(i) * -3.25, float32(i) + 41.0}
+		w.giant[i] = i%3 == 0
+		w.dazed[i] = i%5 == 0
+		w.class[i] = engine.Class(i % 4)
+		w.tfTeam[i] = engine.Team(2 + (i/2)%2)
 	}
+	// Two enemies of slot 1 in the same place. FindEnemyNearestToMe compares
+	// with <=, so the later of two equally close ones is what it picks, and a
+	// world with no tie in it cannot tell that apart from <.
+	w.centre[11] = w.centre[10]
 	return w
 }
 
@@ -111,6 +133,21 @@ func (in *installed) calls() engine.Calls {
 		WorldSpaceCenter: func(e int32) [3]float32 {
 			in.record(traceWorldSpaceCenter, e)
 			return in.w.centre[e]
+		},
+		IsMiniBoss: func(c int32) bool { in.record(traceIsMiniBoss, c); return in.w.giant[c] },
+		IsPlayerInCondition: func(c int32, cond engine.Condition) bool {
+			in.record(traceIsPlayerInCondition, c)
+			return cond == engine.ConditionDazed() && in.w.dazed[c]
+		},
+		PlayerClass: func(c int32) engine.Class { in.record(tracePlayerClass, c); return in.w.class[c] },
+		PlayerTeam:  func(c int32) engine.Team { in.record(tracePlayerTeam, c); return in.w.tfTeam[c] },
+		PlayerEnemyTeam: func(c int32) engine.Team {
+			in.record(tracePlayerEnemyTeam, c)
+			// Red fights blue, and every other slot is on each.
+			if in.w.tfTeam[c] == 2 {
+				return 3
+			}
+			return 2
 		},
 	}
 }

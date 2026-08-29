@@ -46,6 +46,16 @@ func basicTag(t *types.Basic) (string, error) {
 
 func (e *emitter) namedTag(t *types.Named) (string, []int64, error) {
 	name := t.Obj().Name()
+	if pkg := t.Obj().Pkg(); pkg != nil && pkg != e.pkg {
+		// A type the extern package declares stands for a SourcePawn tag
+		// that already exists. Emitting our own enum for it would give
+		// the plugin two names for one thing.
+		tag, declared := e.cfg.Tags[pkg.Name()+"."+name]
+		if !declared {
+			return "", nil, fmt.Errorf("the type %s.%s has no //sp:tag saying what it is called in SourcePawn", pkg.Name(), name)
+		}
+		return tag, nil, nil
+	}
 	switch u := t.Underlying().(type) {
 	case *types.Struct:
 		return e.cfg.Prefix + name, nil, nil

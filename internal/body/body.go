@@ -43,7 +43,7 @@ var All = []Body{
 
 // Generate emits every body, keyed by its output path.
 func Generate(root string) (map[string][]byte, error) {
-	externs, err := spbody.ExternsFromDir(filepath.Join(root, ExternDir))
+	declared, err := spbody.ExternsFromDir(filepath.Join(root, ExternDir))
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,8 @@ func Generate(root string) (map[string][]byte, error) {
 	for _, b := range All {
 		g, err := spbody.GenerateDir(filepath.Join(root, b.Dir), spbody.Config{
 			Prefix:  b.Prefix,
-			Externs: externs,
+			Externs: declared.Funcs,
+			Tags:    declared.Tags,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("generating %s: %w", b.Dir, err)
@@ -73,7 +74,7 @@ func Generate(root string) (map[string][]byte, error) {
 	// The day it does, the extern has to go: a function owned in both places
 	// is the duplication the epic exists to remove, and nothing else would
 	// notice, because both would compile.
-	for qualified, x := range externs {
+	for qualified, x := range declared.Funcs {
 		if !x.Plugin {
 			continue
 		}
@@ -87,13 +88,16 @@ func Generate(root string) (map[string][]byte, error) {
 // SubsetConfig is what gosubset accepts in a body: the extern package, by the
 // names it actually declares, and nothing else.
 func SubsetConfig(root string) (gosubset.Config, error) {
-	externs, err := spbody.ExternsFromDir(filepath.Join(root, ExternDir))
+	declared, err := spbody.ExternsFromDir(filepath.Join(root, ExternDir))
 	if err != nil {
 		return gosubset.Config{}, err
 	}
 	cfg := gosubset.DefaultConfig()
-	names := make([]string, 0, len(externs))
-	for qualified := range externs {
+	names := make([]string, 0, len(declared.Funcs)+len(declared.Tags))
+	for qualified := range declared.Funcs {
+		names = append(names, qualified[len(externPackage)+1:])
+	}
+	for qualified := range declared.Tags {
 		names = append(names, qualified[len(externPackage)+1:])
 	}
 	cfg.Packages[modulePath+"/"+ExternDir] = names

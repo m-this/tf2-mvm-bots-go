@@ -54,3 +54,60 @@ func NearestEnemyCount(client int32, maxDistance float32, ignoreUber bool) int32
 
 	return count
 }
+
+// EnemyNearestToMe is util.sp:1183, FindEnemyNearestToMe: the closest enemy
+// within max_distance, or -1. The four filters after the team check are the
+// ones its callers switch on.
+//
+//sp:default giantsOnly false
+//sp:default ignoreUber false
+//sp:default stunnedOnly false
+//sp:default class TFClass_Unknown
+func EnemyNearestToMe(client int32, maxDistance float32, giantsOnly bool, ignoreUber bool, stunnedOnly bool, class engine.Class) int32 {
+	origin := engine.WorldSpaceCenter(client)
+
+	bestDistance := float32(999999.0)
+	bestEntity := int32(-1)
+	enemyTeam := engine.PlayerEnemyTeam(client)
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if i == client {
+			continue
+		}
+		if !engine.IsClientInGame(i) {
+			continue
+		}
+		if !engine.IsPlayerAlive(i) {
+			continue
+		}
+		if engine.PlayerTeam(i) != enemyTeam {
+			continue
+		}
+		if engine.IsSentryBusterRobot(i) {
+			continue
+		}
+		if giantsOnly && !engine.IsMiniBoss(i) {
+			continue
+		}
+		if ignoreUber && engine.IsInvulnerable(i) {
+			continue
+		}
+		if stunnedOnly && !engine.IsPlayerInCondition(i, engine.ConditionDazed()) {
+			continue
+		}
+		if class > engine.ClassUnknown() && engine.PlayerClass(i) != class {
+			continue
+		}
+		if engine.IsStealthed(i) && !engine.IsCloakedPlayerExposed(i) {
+			continue
+		}
+		distance := engine.VectorDistance(engine.WorldSpaceCenter(i), origin)
+
+		if distance <= bestDistance && distance <= maxDistance {
+			bestDistance = distance
+			bestEntity = i
+		}
+	}
+
+	return bestEntity
+}

@@ -35,5 +35,14 @@ public void main()
 		   2's centre, so the comparison at the end of the loop is tested
 		   on its boundary and not only either side of it. */
 		Emit(Go_NearestEnemyCount(client, 5934.8125, false));
+
+		/* FindEnemyNearestToMe, over the filters its callers switch on.
+		   The last two use the defaults, which is how util.sp calls it. */
+		Emit(Go_EnemyNearestToMe(client, 900000.0));
+		Emit(Go_EnemyNearestToMe(client, 900000.0, true));
+		Emit(Go_EnemyNearestToMe(client, 900000.0, false, true));
+		Emit(Go_EnemyNearestToMe(client, 900000.0, false, false, true));
+		Emit(Go_EnemyNearestToMe(client, 900000.0, false, false, false, view_as<TFClassType>(2)));
+		Emit(Go_EnemyNearestToMe(client, 5934.8125));
 	}
 }
