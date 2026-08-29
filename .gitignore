@@ -6,3 +6,4 @@
 *.db
 .beads-credential-key
 .beads/proxieddb/
+/.gen.first/

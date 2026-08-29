@@ -1,4 +1,6 @@
 GO ?= go
+GOLANGCI_VERSION ?= latest
+GOLANGCI := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_VERSION)
 UPSTREAM ?= ../tf2-mvm-bots
 
 .PHONY: help gen check test lint vet clean hooks
@@ -9,17 +11,21 @@ help:
 gen:
 	$(GO) run ./cmd/gen -upstream $(UPSTREAM) -out gen
 
-check: vet lint test gen
-	@git diff --quiet -- gen || { echo "generated output is not reproducible"; exit 1; }
+check: vet lint test
+	$(GO) run ./cmd/gen -upstream $(UPSTREAM) -out gen
+	@cp -r gen .gen.first && $(GO) run ./cmd/gen -upstream $(UPSTREAM) -out gen \
+		&& diff -r .gen.first gen >/dev/null \
+		|| { rm -rf .gen.first; echo "generated output is not reproducible"; exit 1; }
+	@rm -rf .gen.first
 
 test:
-	$(GO) test -race ./...
+	MVMBOTS_UPSTREAM=$(UPSTREAM) $(GO) test -race ./...
 
 vet:
 	$(GO) vet ./...
 
 lint:
-	$(GO) run golang.org/x/tools/cmd/... 2>/dev/null || true
+	$(GO) run $(GOLANGCI) run
 
 clean:
 	rm -rf gen bin

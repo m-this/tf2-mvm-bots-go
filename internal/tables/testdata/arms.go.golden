@@ -1,0 +1,37 @@
+// Code generated from internal/tables/feature.go. DO NOT EDIT.
+
+package arms
+
+// Arm is one feature the test-bed can switch off for a comparison.
+type Arm struct {
+	Name    string
+	ConVar  string
+	Default bool
+	About   string
+}
+
+// Arms is every switch the mod ships, in enum order.
+var Arms = []Arm{
+	{Name: "threat_priority", ConVar: "sm_redbots_feature_threat_priority", Default: true, About: "Shoot the Medic, then the Sniper and Engineer, then giants, rather than whatever is nearest."},
+	{Name: "dispenser_guard", ConVar: "sm_redbots_feature_dispenser_guard", Default: true, About: "A hurt or dry bot holds the bomb from a friendly dispenser instead of leaving to find a health pack."},
+	{Name: "spy_glance", ConVar: "sm_redbots_feature_spy_glance", Default: true, About: "Bots look behind themselves while the team knows a Spy is about."},
+	{Name: "sticky_stack", ConVar: "sm_redbots_feature_sticky_stack", Default: true, About: "Sticky traps stack on one spot for a giant rather than carpeting ground for a crowd."},
+	{Name: "nest_zones", ConVar: "sm_redbots_feature_nest_zones", Default: true, About: "Engineers spread across the zones a map names, so one holds inside and one holds out."},
+	{Name: "ready_when_prepared", ConVar: "sm_redbots_feature_ready_when_prepared", Default: true, About: "An engineer readies at a level three nest and a medic at a full charge, not before."},
+	{Name: "wave_resistances", ConVar: "sm_redbots_feature_wave_resistances", Default: true, About: "Buy the resistance the coming wave's robots call for, rather than ranking resistances last."},
+	{Name: "engineer_disposable", ConVar: "sm_redbots_feature_engineer_disposable", Default: false, About: "The engineer buys the disposable sentry and stands a mini beside his nest."},
+	{Name: "attack_strafe", ConVar: "sm_redbots_feature_attack_strafe", Default: true, About: "A bot that has arrived at its firing position keeps sidestepping instead of standing still."},
+	{Name: "soldier_closes_in", ConVar: "sm_redbots_feature_soldier_closes_in", Default: true, About: "A rocket is fought at a grenade's distance rather than twelve hundred units out."},
+	{Name: "medic_pockets_biggest", ConVar: "sm_redbots_feature_medic_pockets_biggest", Default: true, About: "The game's medic is pointed at the biggest body. Off leaves him whoever he picked."},
+	{Name: "demo_tank_pipes", ConVar: "sm_redbots_feature_demo_tank_pipes", Default: true, About: "The demoman answers a tank with pipes. Off lets him lay stickies on the hull."},
+	{Name: "demo_sticky_self_veto", ConVar: "sm_redbots_feature_demo_sticky_self_veto", Default: true, About: "A bomb of his own close enough to hurt him stops the detonator. Off presses it anyway."},
+	{Name: "hold_the_nest", ConVar: "sm_redbots_feature_hold_the_nest", Default: false, About: "Wait for the wave beside the engineer's sentry instead of at the robots' gate."},
+	{Name: "medic_shield", ConVar: "sm_redbots_feature_medic_shield", Default: true, About: "Let the medic put up the projectile shield, and buy the rage that fills it."},
+	{Name: "path_length_cap", ConVar: "sm_redbots_feature_path_length_cap", Default: false, About: "Stop a path search that has walked far enough, instead of letting an unreachable goal cost the whole mesh."},
+	{Name: "engineer_climbs", ConVar: "sm_redbots_feature_engineer_climbs", Default: false, About: "The engineer crouch jumps onto a teleporter spot above him, and falls back to the nest ring rather than to his feet."},
+	{Name: "watch_idle_bots", ConVar: "sm_redbots_feature_watch_idle_bots", Default: false, About: "The stuck watchdog also rescues a bot that has no behaviour at all, not only one that cannot reach its goal."},
+	{Name: "watch_lurking_snipers", ConVar: "sm_redbots_feature_watch_lurking_snipers", Default: true, About: "The stuck watchdog also rescues a sniper parked nowhere near a spot, which is the one it used to miss."},
+	{Name: "ammo_failover", ConVar: "sm_redbots_feature_ammo_failover", Default: false, About: "A bot whose path to the ammo it picked keeps failing takes the next pack, then gives up, rather than walking at a wall."},
+	{Name: "engineer_entrance_first", ConVar: "sm_redbots_feature_engineer_entrance_first", Default: false, About: "The engineer puts his teleporter entrance up in spawn before he walks out to build the nest."},
+	{Name: "medic_answers_call", ConVar: "sm_redbots_feature_medic_answers_call", Default: false, About: "A player who calls for a medic takes the beam, and a player outranks a bot for it either way."},
+}

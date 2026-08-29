@@ -1,0 +1,40 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - copyloopvar
+    - errorlint
+    - gocritic
+    - gosec
+    - misspell
+    - nilerr
+    - prealloc
+    - revive
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - wastedassign
+
+  exclusions:
+    rules:
+      # Reading a file whose path came from a flag, and running the compiler we
+      # were pointed at, are what this program is for. There is no untrusted
+      # input: the paths come from the Makefile and the includes are in the
+      # repository. G115 stays on, because a conversion that silently wraps is
+      # a wrong generated constant.
+      - linters: [gosec]
+        text: "G(204|304|703):"
+      # Golden files are source. They are read by people and by git.
+      - linters: [gosec]
+        text: "G306:"
+        path: _test\.go
+
+formatters:
+  enable:
+    - gofumpt
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
