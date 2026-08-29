@@ -176,3 +176,42 @@ generation succeeds and the output compiles. One `make check` is the gate and CI
 runs Make targets rather than raw commands, so the gate runs the same locally.
 
 This repository has no Makefile today, only `testbed/build.sh`. It gets one.
+
+## What the bug record says, read afterwards
+
+Two reviews of all 75 beads are beside this file, `closed-bugs-vs-design.md` and
+`open-bugs-vs-design.md`. They were written after the draft above and they
+correct it.
+
+Over the 31 closed beads that are real defects: prevented 0, caught earlier 10,
+does nothing 21. Not one closed bug is the `features.sp` name drift this
+document opens with. That bug happened once, before the bead record starts, and
+the feature table has already killed it. Of the fourteen open P1s, the design as
+drafted helps two, and only to measure.
+
+The draft's last section said this design does not make the bots walk. The
+record says that is most of the work.
+
+Three corrections follow.
+
+**Action selection was missed.** `GetDesiredBotAction` and
+`ShouldTakeUpPosition` decide which behaviour a bot gets. They are pure, they
+fit the subset, and four closed bugs are the same function answering nothing for
+an input nobody enumerated. Every hole shipped as a bot standing still. The
+plugin patches this today with three hand rolled watchdogs, one per case, which
+treat the symptom. A hole in a decision table is something Go can refuse to
+compile, and asserting exhaustiveness over class times phase times flags is the
+single highest value thing here.
+
+**The cheap parts carry the value.** Three of the ten caught cases are the noise
+floor and the golden harness rather than the generator. The measurement work,
+the feature fired counters, the recorded run environment and the checked map
+configs cost little and catch more than the transpiler does. They come first.
+
+**The variance was never statistical.** Paging, an mtime that copied a live
+mapped `.so`, and unequal machine load. A noise floor measured across two
+different machines measures the machines.
+
+Two capabilities were considered and argued against. A Go side wave simulation,
+because faster plausible readings are worse than none. A deterministic full run
+seed, because the server, the population and the physics are not ours to seed.
