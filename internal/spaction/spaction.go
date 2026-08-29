@@ -70,6 +70,13 @@ var callbacks = map[string]callback{
 		Params: "INextBot nextbot, CKnownEntity knownEntity, QueryResultType& result",
 		Names:  []string{"nextbot", "knownEntity", "result"},
 	},
+	// The engine asking which of two threats matters more. The answer is the
+	// by-reference one; the return only says the behaviour had an opinion.
+	"SelectMoreDangerousThreat": {
+		Wire: "SelectMoreDangerousThreat", Returns: "Action",
+		Params: "INextBot nextbot, int entity, CKnownEntity threat1, CKnownEntity threat2, CKnownEntity& knownEntity",
+		Names:  []string{"nextbot", "entity", "threat1", "threat2", "knownEntity"},
+	},
 	"IsHindrance": {
 		Wire: "IsHindrance", Returns: "Action",
 		Params: "INextBot nextbot, int entity, QueryResultType& result",
@@ -107,7 +114,10 @@ var callbacks = map[string]callback{
 
 // order is the order the constructor wires them in, which is the order the
 // plugin writes and so the order a reviewer expects.
-var order = []string{"OnStart", "Update", "OnEnd", "OnSuspend", "OnResume", "ShouldAttack", "IsHindrance"}
+var order = []string{
+	"OnStart", "Update", "OnEnd", "OnSuspend", "OnResume",
+	"SelectMoreDangerousThreat", "ShouldAttack", "IsHindrance",
+}
 
 // Action is one behaviour: what it is registered as, what its functions are
 // called, and which callbacks it has.

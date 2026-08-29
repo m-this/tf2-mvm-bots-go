@@ -45,6 +45,12 @@ func TestAdoptedFilesMatchTheGenerator(t *testing.T) {
 		filepath.Join("testbed", "stats", "generated", "wave_write.sp"):         tables.SourcePawnWaveWriter(),
 	}
 
+	// The behaviours come from the list rather than being named here, so a
+	// port that adds one cannot forget to guard it.
+	for _, action := range body.Actions {
+		adopted[filepath.Join("source", "redbots3", "generated", filepath.Base(action.Out))] = bodies[action.Out]
+	}
+
 	for name, want := range adopted {
 		t.Run(name, func(t *testing.T) {
 			got, err := os.ReadFile(filepath.Join(root, name))
