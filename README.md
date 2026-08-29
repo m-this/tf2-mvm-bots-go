@@ -30,6 +30,18 @@ down twice, and of the interesting code being unreachable from a test.
   declaration fails rather than under-reports.
 - `internal/gosubset` — the checker that refuses any construct the body
   generator does not support, with a line number and the replacement to write.
+- `internal/spbody` — the body generator: a Go package that passes the subset
+  becomes SourcePawn, engine calls included. It type checks with go/types
+  first, so a width, a named type and an array length are read off the type
+  rather than guessed.
+- `internal/engine` — the one package a body may import. One Go function per
+  engine call, each carrying the directive that says whether SourcePawn writes
+  it as a native, an SDKCall or an address read. Nothing here means anything in
+  a Go process: the differential test installs the answers.
+- `internal/body` — the bodies themselves, one package each, and the list that
+  says which are generated. `internal/body/roster` is the first, and it is
+  proved twice: run under spshell against the same canned world as the Go, call
+  traces compared, and its DHook callbacks compiled with the shipped compiler.
 - `internal/actionsel` — action selection as a total function over 1425408
   reachable combinations, with exhaustiveness asserted. It found a hole that
   was shipping.

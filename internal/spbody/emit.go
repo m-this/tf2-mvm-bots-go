@@ -1,0 +1,267 @@
+package spbody
+
+import (
+	"errors"
+	"fmt"
+	"go/ast"
+	"go/constant"
+	"go/token"
+	"go/types"
+	"sort"
+	"strings"
+)
+
+// maxErrors stops a file the generator cannot read at all from producing a
+// report nobody will read.
+const maxErrors = 50
+
+// helper is one of the two builtins SourcePawn does not have, written out.
+type helper struct {
+	tag string
+	op  string
+}
+
+type emitter struct {
+	fset *token.FileSet
+	cfg  Config
+	info *types.Info
+	pkg  *types.Package
+
+	b      strings.Builder
+	hooks  strings.Builder
+	inHook bool
+	errs   []error
+	indent int
+
+	// outParams are the results after the first, which SourcePawn takes as
+	// by-reference parameters. Set for the function being emitted.
+	outParams []string
+	// resultName is the named first result, which SourcePawn has no name
+	// for: it becomes a local, so a naked return has a value.
+	resultName string
+	resultDecl string
+	// helpers are the builtins that had to be written out, because
+	// SourcePawn has neither min nor max.
+	helpers map[string]helper
+
+	// byRef are the parameters SourcePawn passes by reference whatever the
+	// source says: arrays and enum structs. Assigning to one changes the
+	// caller's value in SourcePawn and not in Go, so it is refused.
+	byRef map[string]bool
+}
+
+func (e *emitter) fail(pos token.Pos, format string, args ...any) {
+	if len(e.errs) >= maxErrors {
+		return
+	}
+	e.errs = append(e.errs, fmt.Errorf("%s: %s", e.fset.Position(pos), fmt.Sprintf(format, args...)))
+}
+
+func (e *emitter) err() error {
+	if len(e.errs) == 0 {
+		return nil
+	}
+	return fmt.Errorf("spbody: %d construct(s) with no SourcePawn:\n%w", len(e.errs), errors.Join(e.errs...))
+}
+
+func (e *emitter) out() *strings.Builder {
+	if e.inHook {
+		return &e.hooks
+	}
+	return &e.b
+}
+
+// blank ends a declaration. Separate from line so the one place a write to the
+// builder is discarded is here.
+func (e *emitter) blank() {
+	_, _ = e.out().WriteString("\n")
+}
+
+func (e *emitter) line(format string, args ...any) {
+	b := e.out()
+	b.WriteString(strings.Repeat("\t", e.indent))
+	fmt.Fprintf(b, format, args...)
+	b.WriteByte('\n')
+}
+
+func (e *emitter) run(files []*ast.File) {
+	e.helpers = make(map[string]helper)
+	for _, f := range files {
+		if isGenerated(f) {
+			continue
+		}
+		for _, decl := range f.Decls {
+			e.decl(decl)
+		}
+	}
+}
+
+// prologue is the helpers the body needed, in name order so the output is the
+// same twice running.
+func (e *emitter) prologue() string {
+	if len(e.helpers) == 0 {
+		return ""
+	}
+	names := make([]string, 0, len(e.helpers))
+	for name := range e.helpers {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	var b strings.Builder
+	for _, name := range names {
+		h := e.helpers[name]
+		fmt.Fprintf(&b, "stock %s %s(%s a, %s b)\n{\n\tif (a %s b)\n\t{\n\t\treturn a;\n\t}\n\treturn b;\n}\n\n", h.tag, name, h.tag, h.tag, h.op)
+	}
+	return b.String()
+}
+
+func (e *emitter) decl(decl ast.Decl) {
+	switch d := decl.(type) {
+	case *ast.FuncDecl:
+		e.funcDecl(d)
+	case *ast.GenDecl:
+		e.genDecl(d)
+	default:
+		e.fail(decl.Pos(), "an unrecognised declaration")
+	}
+}
+
+func (e *emitter) genDecl(d *ast.GenDecl) {
+	switch d.Tok {
+	case token.IMPORT:
+	case token.TYPE:
+		for _, spec := range d.Specs {
+			e.typeSpec(spec.(*ast.TypeSpec))
+		}
+	case token.CONST:
+		e.constDecl(d)
+	default:
+		e.fail(d.Pos(), "a package-level %s declaration; a body owns no state", d.Tok)
+	}
+}
+
+// typeSpec emits a named struct as an enum struct and a named integer as an
+// enum. The enum's constants come from the const declarations, not from here,
+// because their order is the order they were written in.
+func (e *emitter) typeSpec(spec *ast.TypeSpec) {
+	obj, ok := e.info.Defs[spec.Name].(*types.TypeName)
+	if !ok {
+		e.fail(spec.Pos(), "the type %s has no definition", spec.Name.Name)
+		return
+	}
+	named, ok := obj.Type().(*types.Named)
+	if !ok {
+		e.fail(spec.Pos(), "the type %s is an alias; declare a defined type", spec.Name.Name)
+		return
+	}
+	st, isStruct := named.Underlying().(*types.Struct)
+	if !isStruct {
+		return // an enum, emitted with its constants
+	}
+	e.line("enum struct %s%s", e.cfg.Prefix, spec.Name.Name)
+	e.line("{")
+	e.indent++
+	for i := range st.NumFields() {
+		f := st.Field(i)
+		tag, dims, err := e.spType(f.Type())
+		if err != nil {
+			e.fail(spec.Pos(), "field %s: %v", f.Name(), err)
+			continue
+		}
+		e.line("%s;", declare(tag, e.ident(spec.Pos(), f.Name()), dims))
+	}
+	e.indent--
+	e.line("}")
+	e.blank()
+}
+
+// constDecl emits one const block. A block whose constants share a named
+// integer type is that type's enum; anything else is a define, because a
+// define is the only constant SourcePawn accepts as an array length.
+func (e *emitter) constDecl(d *ast.GenDecl) {
+	type entry struct {
+		name  string
+		value string
+	}
+	var group []entry
+	tagName := ""
+	for _, spec := range d.Specs {
+		vs := spec.(*ast.ValueSpec)
+		for _, name := range vs.Names {
+			if name.Name == "_" {
+				continue
+			}
+			c, ok := e.info.Defs[name].(*types.Const)
+			if !ok {
+				e.fail(name.Pos(), "the constant %s has no value the type checker could fold", name.Name)
+				continue
+			}
+			lit, err := e.constLiteral(c)
+			if err != nil {
+				e.fail(name.Pos(), "the constant %s: %v", name.Name, err)
+				continue
+			}
+			if named, ok := c.Type().(*types.Named); ok {
+				if tagName != "" && tagName != named.Obj().Name() {
+					e.fail(name.Pos(), "one const block declares constants of %s and of %s; write one block per enum", tagName, named.Obj().Name())
+					continue
+				}
+				tagName = named.Obj().Name()
+			}
+			group = append(group, entry{name: e.ident(name.Pos(), name.Name), value: lit})
+		}
+	}
+	if len(group) == 0 {
+		return
+	}
+	if tagName == "" {
+		for _, c := range group {
+			e.line("#define %s%s (%s)", e.cfg.Prefix, c.name, c.value)
+		}
+		e.blank()
+		return
+	}
+	e.line("enum %s%s", e.cfg.Prefix, tagName)
+	e.line("{")
+	e.indent++
+	for i, c := range group {
+		comma := ","
+		if i == len(group)-1 {
+			comma = ""
+		}
+		e.line("%s%s = %s%s", e.cfg.Prefix, c.name, c.value, comma)
+	}
+	e.indent--
+	e.line("};")
+	e.blank()
+}
+
+func (e *emitter) constLiteral(c *types.Const) (string, error) {
+	tag, _, err := e.spType(c.Type())
+	if err != nil {
+		return "", err
+	}
+	return literalOf(c.Val(), tag)
+}
+
+func literalOf(v constant.Value, tag string) (string, error) {
+	switch tag {
+	case "bool":
+		if constant.BoolVal(v) {
+			return "true", nil
+		}
+		return "false", nil
+	case "float":
+		f, ok := constant.Float32Val(v)
+		if !ok {
+			return "", fmt.Errorf("%s does not fit a 32 bit SourcePawn float", v)
+		}
+		return floatLiteral(f), nil
+	default:
+		i, ok := constant.Int64Val(constant.ToInt(v))
+		if !ok {
+			return "", fmt.Errorf("%s is not an integer a cell holds", v)
+		}
+		return fmt.Sprintf("%d", i), nil
+	}
+}

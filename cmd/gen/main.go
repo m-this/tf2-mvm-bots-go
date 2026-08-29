@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/bindgen"
+	"github.com/m-this/tf2-mvm-bots-go/internal/body"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spgen"
 	"github.com/m-this/tf2-mvm-bots-go/internal/tables"
 )
@@ -27,12 +28,16 @@ func main() {
 
 // files is the whole output. A generator that emits a file not listed here does
 // not exist as far as the reproducibility check is concerned.
-func files() (map[string][]byte, error) {
+func files(root string) (map[string][]byte, error) {
 	sel, err := spgen.EmitActionSel()
 	if err != nil {
 		return nil, fmt.Errorf("emitting action selection: %w", err)
 	}
-	return map[string][]byte{
+	bodies, err := body.Generate(root)
+	if err != nil {
+		return nil, fmt.Errorf("emitting bodies: %w", err)
+	}
+	out := map[string][]byte{
 		"sourcepawn/actionsel.sp":          []byte(sel.Data),
 		"sourcepawn/actionsel_dispatch.sp": []byte(sel.Dispatch),
 		"sourcepawn/attributes.sp":         tables.SourcePawnAttributes(),
@@ -42,7 +47,14 @@ func files() (map[string][]byte, error) {
 		"go/arms/arms.go":                  tables.GoFeatureArms("arms"),
 		"go/attr/attr.go":                  tables.GoAttributes("attr"),
 		"go/wave/wave.go":                  tables.GoWaveParser("wave"),
-	}, nil
+	}
+	for name, source := range bodies {
+		if _, taken := out[name]; taken {
+			return nil, fmt.Errorf("two generators write %s", name)
+		}
+		out[name] = source
+	}
+	return out, nil
 }
 
 /*
@@ -90,7 +102,7 @@ func run(out, upstream string) error {
 	if err := os.RemoveAll(out); err != nil {
 		return fmt.Errorf("clearing %s: %w", out, err)
 	}
-	emitted, err := files()
+	emitted, err := files(".")
 	if err != nil {
 		return err
 	}

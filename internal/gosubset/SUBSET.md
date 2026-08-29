@@ -7,9 +7,13 @@ construct produces a plugin that compiles and is wrong.
 ## What a body is
 
 A generated body is one function, called by hand-written SourcePawn, taking
-plain values and returning plain values. It never calls back into the engine
-except through a generated native binding. It owns no state and it allocates
-nothing.
+plain values and returning plain values. It reaches the engine only through the
+extern package, `internal/engine`. It owns no state and it allocates nothing.
+
+Owning no state is the rule that still costs the most: the plugin keeps its
+answers in package globals, so a body that needs one reaches it the way it
+reaches an engine call. When package-level state moves here the rule changes,
+and until then the extern package is where the seam is.
 
 ## Types
 
@@ -81,6 +85,13 @@ None, unless `Config.Packages` maps the path and the identifier. The default
 maps a handful of `math` functions onto the SourcePawn float builtins. Since
 `math` is `float64` and a SourcePawn float is 32-bit, a `float32` body writes
 its own helper or calls a native binding instead.
+
+The one import a real body has is `internal/engine`, which is how it calls the
+engine: one Go function per call, carrying the directive that says whether
+SourcePawn writes it as a native, an `SDKCall` or an address read.
+`internal/body.SubsetConfig` reads those declarations and maps the package, so
+a call the extern package does not declare is refused here rather than emitted
+as something plausible.
 
 ## The unit of checking is the directory
 
