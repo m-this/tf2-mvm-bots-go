@@ -1,6 +1,13 @@
 package gosubset_test
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"maps"
+	"os"
+	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -175,5 +182,199 @@ func TestNothingRefusedIsNilError(t *testing.T) {
 
 	if err := gosubset.Join(nil); err != nil {
 		t.Fatalf("want nil, got %v", err)
+	}
+}
+
+// parseFiles turns named sources into one package's files, so a test can say
+// what is declared where.
+func parseFiles(t *testing.T, srcs map[string]string) (*token.FileSet, []*ast.File) {
+	t.Helper()
+	fset := token.NewFileSet()
+	files := make([]*ast.File, 0, len(srcs))
+	for _, name := range slices.Sorted(maps.Keys(srcs)) {
+		f, err := parser.ParseFile(fset, name, srcs[name], parser.SkipObjectResolution)
+		if err != nil {
+			t.Fatalf("parsing %s: %v", name, err)
+		}
+		files = append(files, f)
+	}
+	return fset, files
+}
+
+// TestMultiFilePackage is the reason CheckDir exists: a package split the way
+// a package should be split has to check clean. The fixture is the shipped
+// action selection code in the three files it should have been.
+func TestMultiFilePackage(t *testing.T) {
+	t.Parallel()
+
+	dir := filepath.Join("testdata", "actionsel")
+	diags, err := gosubset.CheckDir(dir, gosubset.DefaultConfig())
+	if err != nil {
+		t.Fatalf("checking %s: %v", dir, err)
+	}
+	if len(diags) > 0 {
+		t.Fatalf("a legitimately multi-file package was refused:\n%s", gosubset.Join(diags))
+	}
+}
+
+// TestSingleFileCannotSeeThePackage pins the limit CheckFile documents: on its
+// own, a file of a real package is refused for the names its siblings declare.
+// It is what CheckDir exists to avoid, so it must stay observable.
+func TestSingleFileCannotSeeThePackage(t *testing.T) {
+	t.Parallel()
+
+	path := filepath.Join("testdata", "actionsel", "shipped.go")
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, path, nil, parser.SkipObjectResolution)
+	if err != nil {
+		t.Fatalf("parsing %s: %v", path, err)
+	}
+	diags := gosubset.CheckFile(fset, f, gosubset.DefaultConfig())
+	if len(diags) == 0 {
+		t.Fatal("a single file of a package cannot know Class or shouldTakeUpPosition; it must refuse them")
+	}
+	joined := gosubset.Join(diags).Error()
+	for _, want := range []string{"the unknown type Class", "the unknown function shouldTakeUpPosition"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("single-file refusal does not name %q:\n%s", want, joined)
+		}
+	}
+}
+
+// TestUnknownNamesAcrossFiles is the one that matters: collecting names over
+// the whole directory must not turn the checker into a rubber stamp. Every
+// case declares a two-file package where the second file reaches for a name no
+// file declares, and every case must still be refused.
+func TestUnknownNamesAcrossFiles(t *testing.T) {
+	t.Parallel()
+
+	const declared = "package decisions\n\ntype Known int32\n\nfunc known(x int32) int32 { return x }\n"
+
+	tests := []struct {
+		name string
+		use  string
+		want string
+	}{
+		{
+			"call to a function no file declares",
+			"package decisions\n\nfunc f(x int32) int32 { return unknownFn(x) }\n",
+			"a call to the unknown function unknownFn",
+		},
+		{
+			"parameter of a type no file declares",
+			"package decisions\n\nfunc f(x Unknown) int32 { return 0 }\n",
+			"the unknown type Unknown",
+		},
+		{
+			"result of a type no file declares",
+			"package decisions\n\nfunc f() Unknown { return 0 }\n",
+			"the unknown type Unknown",
+		},
+		{
+			"struct field of a type no file declares",
+			"package decisions\n\ntype T struct {\n\tF Unknown\n}\n",
+			"the unknown type Unknown",
+		},
+		{
+			"conversion to a type no file declares",
+			"package decisions\n\nfunc f(x int32) int32 { return int32(Unknown(x)) }\n",
+			"a call to the unknown function Unknown",
+		},
+		{
+			"composite literal of a type no file declares",
+			"package decisions\n\nfunc f() Known { return Unknown{} }\n",
+			"the unknown type Unknown",
+		},
+		{
+			"local var of a type no file declares",
+			"package decisions\n\nfunc f() {\n\tvar u Unknown\n\t_ = u\n}\n",
+			"the unknown type Unknown",
+		},
+		{
+			"array element of a type no file declares",
+			"package decisions\n\nfunc f(xs [4]Unknown) Known { return Known(0) }\n",
+			"the unknown type Unknown",
+		},
+		{
+			"a name a sibling file declares is still not a licence for its neighbours",
+			"package decisions\n\nfunc f(x Known) Known { return Known(known(int32(x))) }\n\nfunc g(y Unknown) {}\n",
+			"the unknown type Unknown",
+		},
+		{
+			"a refused construct is still refused in the second file",
+			"package decisions\n\nfunc f(m map[int32]Known) {}\n",
+			"a map type",
+		},
+	}
+
+	cfg := gosubset.DefaultConfig()
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			fset, files := parseFiles(t, map[string]string{"a_declared.go": declared, "b_use.go": tc.use})
+			diags := gosubset.CheckFiles(fset, files, cfg)
+			if len(diags) == 0 {
+				t.Fatalf("accepted %s; widening collection must not accept unknown names", tc.name)
+			}
+			joined := gosubset.Join(diags).Error()
+			if !strings.Contains(joined, tc.want) {
+				t.Fatalf("refusal does not name %q:\n%s", tc.want, joined)
+			}
+		})
+	}
+}
+
+// TestCrossFileNamesAreKnown is the positive half: the names a sibling file
+// declares are accepted in call, type and conversion position.
+func TestCrossFileNamesAreKnown(t *testing.T) {
+	t.Parallel()
+
+	srcs := map[string]string{
+		"a_types.go": "package decisions\n\ntype Score int32\n\ntype Candidate struct {\n\tS Score\n}\n",
+		"b_funcs.go": "package decisions\n\nfunc weigh(s Score) Score { return s * 2 }\n",
+		"c_use.go":   "package decisions\n\nfunc pick(c Candidate) Score {\n\treturn weigh(Score(int32(c.S) + 1))\n}\n",
+	}
+	fset, files := parseFiles(t, srcs)
+	if diags := gosubset.CheckFiles(fset, files, gosubset.DefaultConfig()); len(diags) > 0 {
+		t.Fatalf("refused cross-file names that are in the subset:\n%s", gosubset.Join(diags))
+	}
+}
+
+// TestImportsDoNotLeakBetweenFiles: an import name is file-scoped, so one
+// file's `import "math"` must not license math.Abs in the next file.
+func TestImportsDoNotLeakBetweenFiles(t *testing.T) {
+	t.Parallel()
+
+	srcs := map[string]string{
+		"a_imports.go": "package decisions\n\nimport \"math\"\n\nfunc g(x float64) float64 { return math.Abs(x) }\n",
+		"b_bare.go":    "package decisions\n\nfunc h(x float64) float64 { return math.Abs(x) }\n",
+	}
+	fset, files := parseFiles(t, srcs)
+	diags := gosubset.CheckFiles(fset, files, gosubset.DefaultConfig())
+	if len(diags) != 1 {
+		t.Fatalf("want one refusal for the file that did not import math, got %d:\n%s", len(diags), gosubset.Join(diags))
+	}
+	if diags[0].Pos.Filename != "b_bare.go" {
+		t.Fatalf("the refusal must land in b_bare.go, got %s", diags[0].Pos)
+	}
+}
+
+// TestCheckDirRefusesTwoPackages: CheckDir merges package-level names, so it
+// has to be looking at one package.
+func TestCheckDirRefusesTwoPackages(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	write := func(name, src string) {
+		t.Helper()
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(src), 0o600); err != nil {
+			t.Fatalf("writing %s: %v", name, err)
+		}
+	}
+	write("a.go", "package one\n\nfunc f() {}\n")
+	write("b.go", "package two\n\nfunc g() {}\n")
+
+	if _, err := gosubset.CheckDir(dir, gosubset.DefaultConfig()); err == nil {
+		t.Fatal("two package names in one directory must be an error, not a merged name set")
 	}
 }

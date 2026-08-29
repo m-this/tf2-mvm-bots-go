@@ -82,6 +82,21 @@ maps a handful of `math` functions onto the SourcePawn float builtins. Since
 `math` is `float64` and a SourcePawn float is 32-bit, a `float32` body writes
 its own helper or calls a native binding instead.
 
+## The unit of checking is the directory
+
+`CheckDir` collects the package-level types and functions of every non-test
+`.go` file in the directory before it checks any of them, so a package may be
+split across as many files as it needs. A directory holding two package names
+is an error rather than a merged name set. `CheckFiles` is the same thing over
+files a caller has already parsed.
+
+`CheckFile` and `CheckSource` check one file, and one file is all they know.
+Package-level names come from that file alone, so a call to a function or a use
+of a type declared in a sibling file is refused as unknown. That is correct for
+a single self-contained body and wrong for a package: check a package with
+`CheckDir`. Imports stay file-scoped either way, so one file importing `math`
+does not let the next one write `math.Abs`.
+
 ## Why `range` is accepted without type information
 
 The checker is syntactic. It is still sound for `range`, because the type rules
@@ -100,3 +115,6 @@ no import may introduce one. The same argument makes `len` safe.
 - Whether a named function actually exists with the arity used. The checker
   knows package-level names, not signatures; the Go compiler is the second gate
   and it runs anyway.
+- Local names. An identifier in expression position is not looked up, so a
+  misspelled variable is the Go compiler's to catch. Only call position and
+  type position are checked against the collected names.

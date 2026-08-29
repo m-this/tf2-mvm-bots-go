@@ -45,8 +45,17 @@ func (c *checker) refuse(pos token.Pos, construct, fix string) {
 	c.diags = append(c.diags, Diagnostic{Pos: c.fset.Position(pos), Construct: construct, Fix: fix})
 }
 
+// beginFile drops the previous file's imports. An import name is file-scoped
+// in Go, so carrying it into the next file would accept a selector that file
+// never imported.
+func (c *checker) beginFile() {
+	c.imports = make(map[string]string)
+}
+
 // collect records the package-level names a body may refer to, so that an
-// unknown identifier in call or type position can be refused by name.
+// unknown identifier in call or type position can be refused by name. It runs
+// over every file of the package before any file is checked, because the
+// declaration and its use need not be in the same file.
 func (c *checker) collect(f *ast.File) {
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
