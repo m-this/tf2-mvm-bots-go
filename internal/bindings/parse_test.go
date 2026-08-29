@@ -1,6 +1,7 @@
 package bindings
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -257,19 +258,75 @@ typeset Timer
 
 func TestEmitTypesetGivesEverySignatureAName(t *testing.T) {
 	f := Parse("t.inc", []byte(
-		"typeset Timer\n{\n\tfunction Action (Handle timer);\n\tfunction void (Handle timer, any data);\n};"))
+		"typeset Timer\n{\n\t// OnFired\n\tfunction Action (Handle timer);\n\tfunction void (Handle timer, any data);\n};"))
 	out, err := Emit(f, Options{Package: "sp"})
 	if err != nil {
 		t.Fatalf("emitting: %v", err)
 	}
 	for _, want := range []string{
 		"type Timer struct{ Ref int32 }",
-		"type TimerSig1 func(timer Handle) Action",
-		"type TimerSig2 func(timer Handle, data int32)",
+		"type TimerOnFired func(timer Handle) Action",
+		"type TimerSig",
 	} {
 		if !strings.Contains(string(out.Source), want) {
 			t.Errorf("emitted source is missing %q:\n%s", want, out.Source)
 		}
+	}
+}
+
+/*
+	TestInsertingASignatureRenamesNothingElse
+
+The bug this naming exists for. Sig1 to Sig29 numbered the signatures by their
+position in the include, so a signature added upstream in the middle renamed
+every one after it, silently, the way a name inserted in features.sp renamed
+three convars.
+*/
+func TestInsertingASignatureRenamesNothingElse(t *testing.T) {
+	const before = "typeset Timer\n{\n\tfunction Action (Handle timer);\n\tfunction void (Handle timer, any data);\n};"
+	const after = "typeset Timer\n{\n\tfunction Action (Handle timer);\n\tfunction int (Handle timer, float delay);\n\tfunction void (Handle timer, any data);\n};"
+
+	names := func(src string) []string {
+		out, err := Emit(Parse("t.inc", []byte(src)), Options{Package: "sp"})
+		if err != nil {
+			t.Fatalf("emitting: %v", err)
+		}
+		var got []string
+		for line := range strings.SplitSeq(string(out.Source), "\n") {
+			if name, _, ok := strings.Cut(strings.TrimPrefix(line, "type "), " func("); ok && line != name {
+				got = append(got, name)
+			}
+		}
+		return got
+	}
+
+	was, now := names(before), names(after)
+	if len(now) != len(was)+1 {
+		t.Fatalf("inserting one signature went from %d names to %d: %v then %v", len(was), len(now), was, now)
+	}
+	for _, name := range was {
+		if !slices.Contains(now, name) {
+			t.Errorf("%q was renamed by an insert above it: %v became %v", name, was, now)
+		}
+	}
+}
+
+// TestARepeatedSignatureIsOneType covers the shape two of the real typesets
+// have: NativeCall declares (Handle, int) returning int twice under different
+// comments. One signature is one Go type, so the repeat is dropped rather than
+// emitted twice or refused.
+func TestARepeatedSignatureIsOneType(t *testing.T) {
+	out, err := Emit(Parse("t.inc", []byte(
+		"typeset Timer\n{\n\tfunction Action (Handle timer);\n\tfunction Action (Handle timer);\n};")),
+		Options{Package: "sp"})
+	if err != nil {
+		t.Fatalf("emitting: %v", err)
+	}
+	if got := strings.Count(string(out.Source), "func(timer Handle) Action"); got != 1 {
+		t.Errorf("the repeated signature was emitted %d times, want 1:\n%s", got, out.Source)
+	}
+	if len(out.Refusals) != 0 {
+		t.Errorf("a repeat is not a refusal, got %v", out.Refusals)
 	}
 }
 
