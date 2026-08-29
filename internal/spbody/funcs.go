@@ -78,6 +78,7 @@ func (e *emitter) funcDecl(d *ast.FuncDecl) {
 		e.fail(d.Pos(), "a method; write a plain function taking the receiver first")
 		return
 	}
+	e.returnsValue = returnsArray(d)
 	ret, params, err := e.signature(d, sig)
 	if err != nil {
 		e.fail(d.Pos(), "%v", err)
@@ -108,6 +109,7 @@ func (e *emitter) funcDecl(d *ast.FuncDecl) {
 	e.blank()
 	e.outParams, e.byRef = nil, nil
 	e.resultName, e.resultDecl = "", ""
+	e.returnsValue = false
 	if hasDHook(d) {
 		e.dhookWrapper(d, sig)
 	}
@@ -128,12 +130,25 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 		if terr != nil {
 			return "", nil, terr
 		}
-		if len(dims) > 0 {
+		switch {
+		case len(dims) > 0 && !e.returnsValue:
 			// SourcePawn returns a cell, so an array result is a
 			// parameter the caller supplies and the body fills.
 			// That is the idiom the plugin already writes.
 			e.returnsArray = true
-		} else {
+		case len(dims) > 0:
+			// The float[] form, asked for by //sp:returns. The
+			// result is an ordinary local here and the caller gets
+			// a copy.
+			ret = tag + "[]"
+			first = 1
+			name := r.Name()
+			if name == "" || name == "_" {
+				return "", nil, errUnnamedResult
+			}
+			e.resultName = e.ident(d.Pos(), name)
+			e.resultDecl = declare(tag, e.resultName, dims)
+		default:
 			ret = tag
 			first = 1
 			if name := r.Name(); name != "" && name != "_" {

@@ -44,6 +44,12 @@ type emitter struct {
 	// cannot return: it became a trailing parameter and there is no return
 	// value at all.
 	returnsArray bool
+	// returnsValue says the body carries //sp:returns, so an array result is
+	// returned rather than filled.
+	returnsValue bool
+	// valueReturners are the functions in this package that do, so a call to
+	// one is emitted as an expression and not rewritten.
+	valueReturners map[string]bool
 	// emitted are the SourcePawn function names this emission declares.
 	emitted []string
 	// state is every package-level var, in declaration order, so Reset puts
@@ -95,6 +101,17 @@ func (e *emitter) line(format string, args ...any) {
 
 func (e *emitter) run(files []*ast.File) {
 	e.helpers = make(map[string]helper)
+	e.valueReturners = make(map[string]bool)
+	for _, f := range files {
+		if isGenerated(f) {
+			continue
+		}
+		for _, decl := range f.Decls {
+			if fn, ok := decl.(*ast.FuncDecl); ok && returnsArray(fn) {
+				e.valueReturners[fn.Name.Name] = true
+			}
+		}
+	}
 	// SourcePawn reads top to bottom for everything but a function call, so
 	// the declarations come out in dependency order rather than source
 	// order: the defines an array length may use, then the enums and enum

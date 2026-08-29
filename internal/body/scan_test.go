@@ -151,15 +151,12 @@ enum TFWeaponType
 	fmt.Fprintf(&b, "stock bool TF2_IsStealthed(int client) { Trace(%d, client); return gStealth[client]; }\n", traceIsStealthed)
 	fmt.Fprintf(&b, "stock bool IsCloakedPlayerExposed(int client) { Trace(%d, client); return gExposed[client]; }\n", traceIsCloakedPlayerExposed)
 	fmt.Fprintf(&b, `
-stock float[] WorldSpaceCenter(int entity)
+stock void BaseEntity_WorldSpaceCenter(int entity, float centre[3])
 {
 	Trace(%d, entity);
 
-	float centre[3];
 	for (int axis = 0; axis < 3; axis++)
 		centre[axis] = gCentre[entity][axis];
-
-	return centre;
 }
 
 stock float GetVectorDistance(const float a[3], const float b[3])

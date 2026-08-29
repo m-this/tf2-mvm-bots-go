@@ -88,3 +88,22 @@ func Clamp(v int32, low int32, high int32) int32 {
 	out = min(max(v, low), high)
 	return out
 }
+
+// Middle is the other vector shape: SourcePawn returns the array, which is what
+// util.sp's WorldSpaceCenter does and what its callers use inline.
+//
+//sp:returns
+func Middle(s Sample) (middle [3]float32) {
+	middle[0] = s.Score
+	middle[1] = 0.0
+	middle[2] = float32(s.Client)
+	return middle
+}
+
+// Reach shows the call site: assigned, never used to initialise, because spcomp
+// takes one and not the other.
+func Reach(s Sample) float32 {
+	var middle [3]float32
+	middle = Middle(s)
+	return middle[0] + middle[2]
+}

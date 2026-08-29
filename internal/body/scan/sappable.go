@@ -51,7 +51,7 @@ func NearestSappablePlayer(client int32, maxDistance float32, giantsOnly bool, c
 		if !PlayerSappable(i) {
 			continue
 		}
-		distance := engine.VectorDistance(engine.WorldSpaceCenter(i), origin)
+		distance := engine.VectorDistance(WorldSpaceCenter(i), origin)
 
 		if distance <= bestDistance && distance <= maxDistance {
 			bestDistance = distance
@@ -82,7 +82,7 @@ func FarthestSappablePlayer(client int32, maxDistance float32, giantsOnly bool, 
 		if !PlayerSappable(i) {
 			continue
 		}
-		distance := engine.VectorDistance(engine.WorldSpaceCenter(i), origin)
+		distance := engine.VectorDistance(WorldSpaceCenter(i), origin)
 
 		if distance >= bestDistance && distance <= maxDistance {
 			bestDistance = distance
@@ -117,7 +117,7 @@ func NearestSappablePlayerHealingSomeone(client int32, maxDistance float32, gian
 		if !PlayerSappable(i) {
 			continue
 		}
-		distance := engine.VectorDistance(engine.WorldSpaceCenter(i), origin)
+		distance := engine.VectorDistance(WorldSpaceCenter(i), origin)
 
 		if distance <= bestDistance && distance <= maxDistance {
 			bestDistance = distance
@@ -186,7 +186,7 @@ func EnemyPlayerNearestToPosition(client int32, position [3]float32, maxDistance
 		if engine.IsSentryBusterRobot(i) {
 			continue
 		}
-		distance := engine.VectorDistance(engine.WorldSpaceCenter(i), position)
+		distance := engine.VectorDistance(WorldSpaceCenter(i), position)
 
 		if distance <= bestDistance && distance <= maxDistance {
 			bestDistance = distance

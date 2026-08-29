@@ -243,13 +243,12 @@ func IsCloakedPlayerExposed(client int32) bool {
 	return installed.IsCloakedPlayerExposed(client)
 }
 
-// WorldSpaceCenter is the middle of the entity, which is what the plugin
-// measures ranges from. Its SourcePawn returns the array.
+// EntityWorldSpaceCenter is stocklib's: it fills the array it is given.
 //
-//sp:plugin WorldSpaceCenter returns
-func WorldSpaceCenter(entity int32) [3]float32 {
+//sp:native BaseEntity_WorldSpaceCenter
+func EntityWorldSpaceCenter(entity int32) (centre [3]float32) {
 	if installed.WorldSpaceCenter == nil {
-		missing("WorldSpaceCenter")
+		missing("BaseEntity_WorldSpaceCenter")
 	}
 	return installed.WorldSpaceCenter(entity)
 }
@@ -385,12 +384,12 @@ func HasSapper(entity int32) bool {
 	return installed.HasSapper(entity)
 }
 
-// AbsOrigin is where the entity is. Its SourcePawn returns the array.
+// EntityAbsOrigin is stocklib's: it fills the array it is given.
 //
-//sp:plugin GetAbsOrigin returns
-func AbsOrigin(entity int32) [3]float32 {
+//sp:native BaseEntity_GetAbsOrigin
+func EntityAbsOrigin(entity int32) (origin [3]float32) {
 	if installed.AbsOrigin == nil {
-		missing("GetAbsOrigin")
+		missing("BaseEntity_GetAbsOrigin")
 	}
 	return installed.AbsOrigin(entity)
 }

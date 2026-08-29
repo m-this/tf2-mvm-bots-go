@@ -106,3 +106,19 @@ stock int Go_Clamp(int v, int low = 0, int high = 100)
 	return out;
 }
 
+stock float[] Go_Middle(Go_Sample s)
+{
+	float middle[3];
+	middle[0] = s.Score;
+	middle[1] = 0.0;
+	middle[2] = float(s.Client);
+	return middle;
+}
+
+stock float Go_Reach(Go_Sample s)
+{
+	float middle[3];
+	middle = Go_Middle(s);
+	return middle[0] + middle[2];
+}
+

@@ -47,7 +47,7 @@ func NearestEnemyCount(client int32, maxDistance float32, ignoreUber bool) int32
 		if engine.IsStealthed(i) && !engine.IsCloakedPlayerExposed(i) {
 			continue
 		}
-		if engine.VectorDistance(engine.WorldSpaceCenter(i), origin) <= maxDistance {
+		if engine.VectorDistance(WorldSpaceCenter(i), origin) <= maxDistance {
 			count++
 		}
 	}
@@ -64,7 +64,7 @@ func NearestEnemyCount(client int32, maxDistance float32, ignoreUber bool) int32
 //sp:default stunnedOnly false
 //sp:default class TFClass_Unknown
 func EnemyNearestToMe(client int32, maxDistance float32, giantsOnly bool, ignoreUber bool, stunnedOnly bool, class engine.Class) int32 {
-	origin := engine.WorldSpaceCenter(client)
+	origin := WorldSpaceCenter(client)
 
 	bestDistance := float32(999999.0)
 	bestEntity := int32(-1)
@@ -101,7 +101,7 @@ func EnemyNearestToMe(client int32, maxDistance float32, giantsOnly bool, ignore
 		if engine.IsStealthed(i) && !engine.IsCloakedPlayerExposed(i) {
 			continue
 		}
-		distance := engine.VectorDistance(engine.WorldSpaceCenter(i), origin)
+		distance := engine.VectorDistance(WorldSpaceCenter(i), origin)
 
 		if distance <= bestDistance && distance <= maxDistance {
 			bestDistance = distance

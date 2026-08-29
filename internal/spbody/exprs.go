@@ -185,12 +185,15 @@ func (e *emitter) globalExtern(call *ast.CallExpr) (Extern, bool) {
 // returnsArrayValue says the call is an extern whose SourcePawn returns the
 // array, which is the one array-valued expression that is not rewritten.
 func (e *emitter) returnsArrayValue(call *ast.CallExpr) bool {
-	sel, ok := call.Fun.(*ast.SelectorExpr)
-	if !ok {
+	switch fun := call.Fun.(type) {
+	case *ast.SelectorExpr:
+		x, isExtern := e.externOf(fun)
+		return isExtern && x.ReturnsArray
+	case *ast.Ident:
+		return e.valueReturners[fun.Name]
+	default:
 		return false
 	}
-	x, isExtern := e.externOf(sel)
-	return isExtern && x.ReturnsArray
 }
 
 func (e *emitter) externOf(n *ast.SelectorExpr) (Extern, bool) {

@@ -24,6 +24,32 @@ answers. A hook that returns nothing never supercedes.
 
 const dhookDirective = "//sp:dhook"
 
+/*
+	returnsDirective makes a body return its array rather than fill a parameter
+
+The default is the parameter, because that is what a caller can assign to and
+what most of the plugin writes. A handful of functions are the other form:
+util.sp's WorldSpaceCenter is float[] and every one of its callers uses it inline
+as an argument, so porting it to the parameter form would rewrite call sites
+this port has not reached yet.
+
+spcomp will not let a caller initialise a sized array from one of these, only
+assign to it, which is what the call site emitter does.
+*/
+const returnsDirective = "//sp:returns"
+
+func returnsArray(d *ast.FuncDecl) bool {
+	if d.Doc == nil {
+		return false
+	}
+	for _, c := range d.Doc.List {
+		if strings.TrimSpace(c.Text) == returnsDirective {
+			return true
+		}
+	}
+	return false
+}
+
 func hasDHook(d *ast.FuncDecl) bool {
 	if d.Doc == nil {
 		return false

@@ -140,13 +140,10 @@ stock int FindEntityByClassname(int start, const char[] classname)
 	return -1;
 }
 
-stock float[] GetAbsOrigin(int entity)
+stock void BaseEntity_GetAbsOrigin(int entity, float origin[3])
 {
-	float origin[3];
 	for (int axis = 0; axis < 3; axis++)
 		origin[axis] = gEntOrigin[entity - FIRST_ENTITY][axis];
-
-	return origin;
 }
 
 `)

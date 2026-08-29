@@ -39,7 +39,7 @@ func NearestSappableObject(client int32, maxDistance float32) int32 {
 		if engine.HasSapper(ent) {
 			continue
 		}
-		distance := engine.VectorDistance(origin, engine.AbsOrigin(ent))
+		distance := engine.VectorDistance(origin, AbsOrigin(ent))
 
 		if distance <= bestDistance && distance <= maxDistance {
 			bestDistance = distance
@@ -78,7 +78,7 @@ func NearestEnemyTeleporter(client int32, maxDistance float32) int32 {
 		if engine.HasSapper(ent) {
 			continue
 		}
-		distance := engine.VectorDistance(origin, engine.AbsOrigin(ent))
+		distance := engine.VectorDistance(origin, AbsOrigin(ent))
 
 		if distance <= bestDistance && distance <= maxDistance {
 			bestDistance = distance

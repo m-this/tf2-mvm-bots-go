@@ -18,4 +18,5 @@ public void main()
 	printnum(Go_Clamp(9));
 	printnum(view_as<int>(Go_Note(1, Go_PriorityBusy)));
 	printnum(view_as<int>(Go_Offset(s)));
+	printnum(view_as<int>(Go_Reach(s)));
 }

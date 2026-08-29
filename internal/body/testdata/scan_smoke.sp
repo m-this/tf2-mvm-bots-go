@@ -37,19 +37,18 @@ enum TFWeaponType
 
 stock TFWeaponType TF2Util_GetWeaponID(int weapon) { return view_as<TFWeaponType>(TF_WEAPON_MEDIGUN); }
 
-stock float[] GetAbsOrigin(int entity)
+/* stocklib's, which is a vendored include and not on the path here. Both fill
+   the array they are given; the float[] forms the plugin used to have are now
+   generated. */
+stock void BaseEntity_GetAbsOrigin(int entity, float origin[3])
 {
-	float origin[3];
 	GetEntPropVector(entity, Prop_Send, "m_vecOrigin", origin);
-	return origin;
 }
 
-stock float[] WorldSpaceCenter(int entity)
+stock void BaseEntity_WorldSpaceCenter(int entity, float centre[3])
 {
-	float centre[3];
 	GetClientAbsOrigin(entity, centre);
 	centre[2] += 41.0;
-	return centre;
 }
 
 #include "scan.sp"
