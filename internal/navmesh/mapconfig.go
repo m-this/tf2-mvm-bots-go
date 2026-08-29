@@ -26,6 +26,17 @@ const (
 	NestTankOnly   SpotKind = "NestTankOnly"
 )
 
+// IsGround reports whether spots of this kind name a piece of ground rather than
+// a place to look from.
+//
+// It matters because the two are written at different heights. A building spot
+// is where a building goes and so is on the floor, within a step of the nav
+// mesh. A sniper spot is copied from where a player stood looking, which is a
+// player's eye: 45 units up crouched and 68 standing. Every sniper spot in every
+// shipped config sits between 38 and 70 units above the mesh, which is that
+// offset and not a fault.
+func (k SpotKind) IsGround() bool { return k != SniperSpot }
+
 // Spot is one declared position in a map config, with the index it was written
 // under so a finding names the same entry a person would edit.
 type Spot struct {
