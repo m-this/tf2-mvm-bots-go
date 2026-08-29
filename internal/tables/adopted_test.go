@@ -38,6 +38,7 @@ func TestAdoptedFilesMatchTheGenerator(t *testing.T) {
 		filepath.Join("source", "redbots3", "generated", "features.sp"):        tables.SourcePawnFeatures(),
 		filepath.Join("source", "redbots3", "generated", "threat_priority.sp"): spgen.EmitThreatPriority(),
 		filepath.Join("source", "redbots3", "generated", "scan.sp"):            bodies["sourcepawn/scan.sp"],
+		filepath.Join("source", "redbots3", "generated", "spysap.sp"):          bodies["sourcepawn/spysap.sp"],
 		filepath.Join("testbed", "stats", "generated", "wave_write.sp"):        tables.SourcePawnWaveWriter(),
 	}
 
