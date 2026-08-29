@@ -9,13 +9,18 @@ charge, which is why so much of this is about weapon slots and charge levels.
 
 // MedicCalls are the answers.
 type MedicCalls struct {
-	ClientHealth          func(client int32) int32
-	EntPropFloat          func(entity int32, propType PropType, prop string) float32
-	IsRangeGreaterThanEx  func(bot Bot, position [3]float32, distance float32) bool
-	IsTaunting            func(client int32) bool
-	IsPlayerMoving        func(client int32) bool
-	CanWeaponAddUberOnHit func(weapon int32) bool
-	EnemyNearestToMe      func(client int32, maxDistance float32, giantsOnly bool, ignoreUber bool, stunnedOnly bool, class Class) int32
+	ClientHealth           func(client int32) int32
+	EntPropFloat           func(entity int32, propType PropType, prop string) float32
+	IsRangeGreaterThanEx   func(bot Bot, position [3]float32, distance float32) bool
+	IsTaunting             func(client int32) bool
+	IsPlayerMoving         func(client int32) bool
+	CanWeaponAddUberOnHit  func(weapon int32) bool
+	EnemyNearestToMe       func(client int32, maxDistance float32, giantsOnly bool, ignoreUber bool, stunnedOnly bool, class Class) int32
+	DamageAmount           func(d Damage) float32
+	IsRangeLessThanEx      func(bot Bot, position [3]float32, distance float32) bool
+	IsPathToVectorPossible func(client int32, position [3]float32) bool
+	NearestReviveMarker    func(client int32, maxDistance float32) int32
+	AbsOrigin              func(entity int32) [3]float32
 }
 
 var medics MedicCalls
@@ -112,3 +117,75 @@ func EnemyNearestToMe(client int32, maxDistance float32, giantsOnly bool, ignore
 	}
 	return medics.EnemyNearestToMe(client, maxDistance, giantsOnly, ignoreUber, stunnedOnly, class)
 }
+
+// Damage is CBaseNPC's CTakeDamageInfo, what the engine hands a behaviour when
+// something hits the bot.
+//
+//sp:tag CTakeDamageInfo
+type Damage int32
+
+// WeaponMedigunRange is WEAPON_MEDIGUN_RANGE, how far the beam reaches.
+//
+//sp:global WEAPON_MEDIGUN_RANGE
+func WeaponMedigunRange() float32 { return 450.0 }
+
+// DamageOf reads the damage record out of the address the engine passed.
+//
+//sp:native CTakeDamageInfo
+func DamageOf(address int32) Damage { return Damage(address) }
+
+// Amount is how much damage it was.
+//
+//sp:method GetDamage
+func (d Damage) Amount() float32 {
+	if medics.DamageAmount == nil {
+		missing("CTakeDamageInfo.GetDamage")
+	}
+	return medics.DamageAmount(d)
+}
+
+// IsRangeLessThanEx says whether the bot is closer than that to a position.
+//
+//sp:method IsRangeLessThanEx
+func (b Bot) IsRangeLessThanEx(position [3]float32, distance float32) bool {
+	if medics.IsRangeLessThanEx == nil {
+		missing("INextBot.IsRangeLessThanEx")
+	}
+	return medics.IsRangeLessThanEx(b, position, distance)
+}
+
+// IsPathToVectorPossible says whether the bot could actually walk there, which
+// is a whole nav mesh search and not the cheap predicate it reads as.
+//
+//sp:plugin IsPathToVectorPossible
+func IsPathToVectorPossible(client int32, position [3]float32) bool {
+	if medics.IsPathToVectorPossible == nil {
+		missing("IsPathToVectorPossible")
+	}
+	return medics.IsPathToVectorPossible(client, position)
+}
+
+// NearestReviveMarker is the closest reanimator a medic could pick up.
+//
+//sp:plugin GetNearestReviveMarker
+func NearestReviveMarker(client int32, maxDistance float32) int32 {
+	if medics.NearestReviveMarker == nil {
+		missing("GetNearestReviveMarker")
+	}
+	return medics.NearestReviveMarker(client, maxDistance)
+}
+
+// AbsOriginOf is util.sp's GetAbsOrigin, ported: internal/body/scan generates it.
+//
+//sp:body GetAbsOrigin returns
+func AbsOriginOf(entity int32) [3]float32 {
+	if medics.AbsOrigin == nil {
+		missing("GetAbsOrigin")
+	}
+	return medics.AbsOrigin(entity)
+}
+
+// WeaponSlotPrimary is TFWeaponSlot_Primary.
+//
+//sp:global TFWeaponSlot_Primary
+func WeaponSlotPrimary() int32 { return 0 }
