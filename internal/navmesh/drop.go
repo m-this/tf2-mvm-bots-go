@@ -30,6 +30,11 @@ const (
 	BrinkMinWidth float32 = 24
 )
 
+// ExitDropRadius is how far from a teleporter exit counts as beside it. A player
+// arrives facing an arbitrary way and already moving, so it is wider than the
+// building.
+const ExitDropRadius float32 = 150
+
 // Fall is one place the ground goes down: an edge of an area with lower ground
 // on the other side.
 //

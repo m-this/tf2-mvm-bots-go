@@ -50,12 +50,13 @@ type PointVerdict struct {
 	// mesh lets a bot walk into and never routes it out of.
 	DeadEnd bool
 
-	// InHole is true when the coordinate has no area over it but meshed ground
-	// all round it within a snap's reach. It is a gap in the mesh, and it is the
-	// worst place a spot can be: a bot cannot stand on nav there, so a path to
-	// it ends at the edge of the hole and the arrival test never comes true,
-	// while a spot declared inside one sends him there every time.
-	InHole bool
+	// Footing is where the coordinate stands relative to the ground round it:
+	// on it, over it, in a hole in it, or nowhere near it. SurroundHeight is
+	// the height that decides it, and it is read even when Footing is
+	// FootingGround because a spot can sit on one area and still stand a storey
+	// over everything else near it.
+	Footing        Footing
+	SurroundHeight float32
 }
 
 // PlayerWidth is a Team Fortress 2 player's bounding box across, from the
@@ -78,23 +79,19 @@ const (
 // is one worth looking at, and an unsuspicious one is only a statement that the
 // mesh has nothing to say.
 func (v PointVerdict) Suspicious() bool {
-	return v.InHole || v.DeadEnd || v.AllExitsFall || len(v.Stacked) > stackedDeep ||
+	return v.Footing == FootingPocket || v.DeadEnd || v.AllExitsFall || len(v.Stacked) > stackedDeep ||
 		(v.Under != nil && v.NarrowestSide < pinchWidth)
 }
 
 // String is the verdict as one report line.
 func (v PointVerdict) String() string {
 	if v.Under == nil {
-		where := "off the mesh"
-		if v.InHole {
-			where = "in a hole in the mesh"
-		}
-		return fmt.Sprintf("%.0f %.0f %.0f: %s, nearest surface %.0f away",
-			v.Pos.X, v.Pos.Y, v.Pos.Z, where, v.NearestDistance)
+		return fmt.Sprintf("%.0f %.0f %.0f: %s, %.0f over the ground round it, nearest surface %.0f away",
+			v.Pos.X, v.Pos.Y, v.Pos.Z, v.Footing, height(v.SurroundHeight), v.NearestDistance)
 	}
-	return fmt.Sprintf("%.0f %.0f %.0f: area %d, %.0fx%.0f, %d in %d out, %d stacked, %d falls out%s",
+	return fmt.Sprintf("%.0f %.0f %.0f: area %d, %.0fx%.0f, %.0f over the ground round it, %d in %d out, %d stacked, %d falls out%s",
 		v.Pos.X, v.Pos.Y, v.Pos.Z, v.Under.ID, v.Under.SizeX(), v.Under.SizeY(),
-		v.InDegree, v.OutDegree, len(v.Stacked), len(v.Exits), deadEndNote(v))
+		height(v.SurroundHeight), v.InDegree, v.OutDegree, len(v.Stacked), len(v.Exits), deadEndNote(v))
 }
 
 func deadEndNote(v PointVerdict) string {
@@ -127,8 +124,9 @@ func (m *Mesh) CheckPoint(pos Vec3) PointVerdict {
 	})
 	sortAreasByHeightAt(v.Stacked, pos)
 
+	v.SurroundHeight, v.Footing = footingAt(m, pos, v.Under)
+
 	if v.Under == nil {
-		v.InHole = v.NearestDistance <= BeneathLimit
 		return v
 	}
 
@@ -146,6 +144,25 @@ func (m *Mesh) CheckPoint(pos Vec3) PointVerdict {
 	v.AllExitsFall = v.OutDegree > 0 && routed == v.OutDegree
 
 	return v
+}
+
+// footingAt reads the coordinate against the ground round it rather than
+// against the footprint under it. The order of the tests is the whole point of
+// mvm-z83.32: a coordinate standing over its surround is raised whether or not
+// an area's footprint happens to reach under it, and only a coordinate level
+// with its surround and with nothing under it is in a hole.
+func footingAt(m *Mesh, pos Vec3, under *Area) (float32, Footing) {
+	height, ok := m.SurroundHeight(pos, BuildStandSearch)
+	switch {
+	case !ok:
+		return 0, FootingOffMesh
+	case height > RaisedStep:
+		return height, FootingRaised
+	case under == nil:
+		return height, FootingPocket
+	default:
+		return height, FootingGround
+	}
 }
 
 // nearestSurfaceDistance is the fallback for a position with nothing within a

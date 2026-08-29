@@ -59,8 +59,8 @@ func TestMannworksWedgeIsInAHole(t *testing.T) {
 	if v.Under != nil {
 		t.Fatalf("the wedge coordinate stands on area %d, so the hole has been filled", v.Under.ID)
 	}
-	if !v.InHole {
-		t.Fatalf("the wedge is not in a hole, it is %.0f from any surface", v.NearestDistance)
+	if v.Footing != FootingPocket {
+		t.Fatalf("the wedge is %s, %.0f over the ground round it", v.Footing, v.SurroundHeight)
 	}
 	if !v.Suspicious() {
 		t.Fatal("the mesh has nothing to say about the wedge")

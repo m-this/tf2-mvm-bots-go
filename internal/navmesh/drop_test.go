@@ -2,11 +2,6 @@ package navmesh
 
 import "testing"
 
-// ExitDropRadius is how far from a teleporter exit counts as beside it. A player
-// arrives facing an arbitrary way and already moving, so it is wider than the
-// building.
-const ExitDropRadius float32 = 150
-
 // TestFallsOnKnownGeometry pins the two kinds of fall on ground picked because
 // the answer can be read off the mesh by hand.
 func TestFallsOnKnownGeometry(t *testing.T) {

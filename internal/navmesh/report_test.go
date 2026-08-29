@@ -26,7 +26,8 @@ func TestReport(t *testing.T) {
 	reportHeader(&b, cfgs)
 	reportSnap(&b, t, cfgs)
 	reportDrops(&b, t, cfgs)
-	reportHoles(&b, t, cfgs)
+	reportFooting(&b, t, cfgs)
+	reportFindings(&b, t, cfgs)
 	reportWedges(&b, t)
 	reportScores(&b, t)
 
@@ -71,8 +72,9 @@ func reportHeader(b *strings.Builder, cfgs []*MapConfig) {
 	fmt.Fprintf(b, "The meshes are nav version %d subversion %d, out of the game's own\n",
 		SupportedVersion, SupportedSubVersion)
 	fmt.Fprintf(b, "tf2_misc_dir.vpk. The %d without are community maps whose .nav files are\n", len(without))
-	fmt.Fprint(b, "not in the dedicated server install, so nothing below can say anything\n")
-	fmt.Fprint(b, "about them.\n\nNot checked:\n")
+	fmt.Fprint(b, "not in the dedicated server install, so nothing geometric below is said\n")
+	fmt.Fprint(b, "about them. The two rules that count config entries rather than read the\n")
+	fmt.Fprint(b, "mesh do cover them, and are the last section.\n\nNo mesh:\n")
 	for _, name := range without {
 		fmt.Fprintf(b, "  %s\n", name)
 	}
@@ -83,9 +85,14 @@ func reportSnap(b *strings.Builder, t *testing.T, cfgs []*MapConfig) {
 
 	fmt.Fprint(b, "Every declared spot, with the gap to the nearest nav surface and what the\n")
 	fmt.Fprint(b, "eight BuildStandPoint sides do with it. \"elsewhere\" counts the sides that\n")
-	fmt.Fprint(b, "were accepted onto ground other than the spot's own area.\n\n")
-	fmt.Fprintf(b, "%-16s %-16s %-22s %6s %6s %10s %6s\n",
-		"map", "spot", "origin", "offset", "sides", "elsewhere", "drop")
+	fmt.Fprint(b, "were accepted onto ground other than the spot's own area, and \"drop\" is how\n")
+	fmt.Fprint(b, "far below the spot the shallowest and the deepest of those sides land.\n\n")
+	fmt.Fprint(b, "\"over\" is the height of the spot above the ground round it, and it is the\n")
+	fmt.Fprint(b, "column the verdict is drawn from rather than a number to read: a spot with\n")
+	fmt.Fprint(b, "every side a storey down and nothing at its own level is a spot the building\n")
+	fmt.Fprint(b, "silently moves off.\n\n")
+	fmt.Fprintf(b, "%-16s %-16s %-22s %6s %6s %10s %13s %6s\n",
+		"map", "spot", "origin", "offset", "sides", "elsewhere", "drop", "over")
 
 	for _, c := range cfgs {
 		if !haveNav(c.Map) {
@@ -97,14 +104,15 @@ func reportSnap(b *strings.Builder, t *testing.T, cfgs []*MapConfig) {
 			v := m.CheckSnap(s, s.Origin, BuildTryPoints, BuildReach, HalfHumanHeight)
 			p := m.CheckPoint(s.Origin)
 
-			fmt.Fprintf(b, "%-16s %-16s %-22s %6.0f %6s %10d %6.0f\n",
+			fmt.Fprintf(b, "%-16s %-16s %-22s %6.0f %6s %10d %13s %6.0f\n",
 				c.Map,
 				string(s.Kind)+" "+s.Index,
 				fmt.Sprintf("%.0f %.0f %.0f", s.Origin.X, s.Origin.Y, s.Origin.Z),
 				p.NearestDistance,
 				fmt.Sprintf("%d/%d", v.Accepted, len(v.Sides)),
 				v.Elsewhere,
-				v.WorstDrop)
+				fmt.Sprintf("%.0f to %.0f", v.LeastDrop, v.WorstDrop),
+				p.SurroundHeight)
 		}
 	}
 }
@@ -143,7 +151,7 @@ func reportDrops(b *strings.Builder, t *testing.T, cfgs []*MapConfig) {
 
 	fmt.Fprint(b, "\nAnd the whole mesh, for scale: every fall on each map, and how much of the\n")
 	fmt.Fprint(b, "map has a teleporter exit ring point beside one. The exit ring is what the\n")
-	fmt.Fprintf(b, "engineer falls back to when the named spot beats him, %.0f units out from his\n", exitRingRadius)
+	fmt.Fprintf(b, "engineer falls back to when the named spot beats him, %.0f units out from his\n", ExitRingRadius)
 	fmt.Fprint(b, "nest on eight sides, and nothing vets it.\n\n")
 	fmt.Fprintf(b, "%-16s %7s %7s %7s %7s %14s\n", "map", "falls", "hurts", "kills", "areas", "risky ring")
 
@@ -165,7 +173,7 @@ func reportDrops(b *strings.Builder, t *testing.T, cfgs []*MapConfig) {
 
 		risky := 0
 		for _, a := range m.Areas {
-			if ringIsRisky(m, a.Center()) {
+			if _, ok := ringWorstFall(m, a.Center()); ok {
 				risky++
 			}
 		}
@@ -175,29 +183,24 @@ func reportDrops(b *strings.Builder, t *testing.T, cfgs []*MapConfig) {
 	}
 }
 
-// exitRingRadius is TELEPORTER_EXIT_RADIUS_SAFE, BUSTER_BLAST_RANGE plus a
-// hundred, from engineerbuildteleporter.sp.
-const exitRingRadius float32 = 500
+func reportFooting(b *strings.Builder, t *testing.T, cfgs []*MapConfig) {
+	section(b, "mvm-z83.32: declared spots not level with the ground round them")
 
-func ringIsRisky(m *Mesh, nest Vec3) bool {
-	for side := range BuildTryPoints {
-		sp := m.BuildStandPoint(nest, nest, side, BuildTryPoints, exitRingRadius)
-		if !sp.OK() {
-			continue
-		}
-		if m.CheckDrop(Spot{Kind: "ExitRing", Origin: sp.Stand}, ExitDropRadius, HalfHumanHeight).Hurts() {
-			return true
-		}
-	}
-	return false
-}
-
-func reportHoles(b *strings.Builder, t *testing.T, cfgs []*MapConfig) {
-	section(b, "Declared spots with no nav area over them")
-
-	fmt.Fprint(b, "A spot in a hole is worse than a spot off the mesh by the same distance: a\n")
-	fmt.Fprint(b, "path to it ends at the edge of the hole, so the arrival test never comes\n")
-	fmt.Fprint(b, "true, and every attempt sends the bot back to the same place.\n\n")
+	fmt.Fprint(b, "These used to be reported as one thing, \"in a hole in the mesh\", on the one\n")
+	fmt.Fprint(b, "test of whether the mesh has a footprint under the coordinate. They are three\n")
+	fmt.Fprint(b, "things, and the footprint is not what separates them.\n\n")
+	fmt.Fprint(b, "A spot raised over the ground round it is on top of something: a rock, a\n")
+	fmt.Fprint(b, "roof, a container. Deliberate authoring, and it costs the bot nothing to\n")
+	fmt.Fprintf(b, "arrive, because every stand side snaps to the floor at its foot. Whether it\n")
+	fmt.Fprint(b, "is honoured is the mvm-fgs question above, not this one.\n\n")
+	fmt.Fprint(b, "A spot level with the ground round it is in a hole at ground level, with\n")
+	fmt.Fprint(b, "nothing lower to snap down to. That is the one that strands a bot: a path to\n")
+	fmt.Fprint(b, "it ends at the edge of the hole, the arrival test never comes true, and every\n")
+	fmt.Fprint(b, "attempt sends him back to the same place.\n\n")
+	fmt.Fprint(b, "A spot with no ground within a snap of it at all is off the mesh, and no\n")
+	fmt.Fprint(b, "bot reaches it by any route.\n\n")
+	fmt.Fprintf(b, "The line between the first two is %.0f units, a body's step. The rock tops\n", RaisedStep)
+	fmt.Fprint(b, "read 60 to 79 and the holes read -4 to 4, so nothing sits near it.\n\n")
 
 	for _, c := range cfgs {
 		if !haveNav(c.Map) {
@@ -206,16 +209,49 @@ func reportHoles(b *strings.Builder, t *testing.T, cfgs []*MapConfig) {
 		m := loadMap(t, c.Map)
 
 		for _, s := range c.Spots {
-			if !s.Kind.IsGround() {
+			v := m.CheckPoint(s.Origin)
+			if v.Footing == FootingGround {
 				continue
 			}
-			v := m.CheckPoint(s.Origin)
-			if v.Under != nil {
+			if !s.Kind.IsGround() && v.Footing == FootingRaised {
+				// A sniper spot is written at a player's eye, so it is
+				// raised by construction and says nothing.
 				continue
 			}
 			fmt.Fprintf(b, "%-16s %-16s %v\n", c.Map, string(s.Kind)+" "+s.Index, v)
 		}
 	}
+}
+
+func reportFindings(b *strings.Builder, t *testing.T, cfgs []*MapConfig) {
+	section(b, "mvm-z83.25: the configs as a checked table")
+
+	fmt.Fprint(b, "Every rule, and every config it is broken by. The rules that count entries\n")
+	fmt.Fprint(b, "need no nav mesh, so they are the only thing said here about the twenty\n")
+	fmt.Fprint(b, "community maps; the rest are read on the seven meshes.\n\n")
+
+	for _, r := range Rules {
+		scope := "all 27 configs"
+		if r.NeedsMesh() {
+			scope = "the 7 with a mesh"
+		}
+		fmt.Fprintf(b, "  %-22s %-9s over %s\n", r, r.Severity(), scope)
+	}
+	fmt.Fprint(b, "\n")
+
+	found := 0
+	for _, c := range cfgs {
+		var m *Mesh
+		if haveNav(c.Map) {
+			m = loadMap(t, c.Map)
+		}
+		for _, f := range CheckConfig(m, c) {
+			fmt.Fprintf(b, "%v\n", f)
+			found++
+		}
+	}
+
+	fmt.Fprintf(b, "\n%d findings.\n", found)
 }
 
 func reportWedges(b *strings.Builder, t *testing.T) {

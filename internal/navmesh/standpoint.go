@@ -154,14 +154,33 @@ type SnapVerdict struct {
 	OnIntended int
 
 	// WorstDrop is the largest height by which an accepted side's ground sits
-	// below the spot. A spot on a rock reads here.
+	// below the spot, and LeastDrop the smallest. Both are zero when no side
+	// was accepted.
+	//
+	// LeastDrop is the one that separates a spot on a rock from a spot on
+	// ordinary ground whose ring happens to reach the next tile along. A large
+	// WorstDrop only says one side of the spot falls away. A large LeastDrop
+	// says there is nowhere at the spot's own level to stand at all, which is
+	// mvm-wxp: he takes the best of eight and still builds a storey down.
 	WorstDrop float32
+	LeastDrop float32
 }
 
 // Wrong reports whether every side that was accepted landed somewhere other than
 // the spot's own area. That is the mvm-fgs shape exactly: he is offered ground,
 // walks to it, and cannot build from it.
 func (v SnapVerdict) Wrong() bool { return v.Accepted > 0 && v.OnIntended == 0 }
+
+// Relocated reports whether the building silently moves: every accepted side
+// landed on other ground, and even the shallowest of them is more than a step
+// below the spot, so the man is never offered anything at the spot's own level.
+//
+// The height is what makes this a fault rather than a detail. Half the shipped
+// dispenser spots have all eight sides land on a neighbouring area, because a
+// ring ninety units out crosses a mesh cut on twenty-five; those sides are level
+// with the spot and he builds where he was told. Wrong on its own does not
+// separate the two, which is the mvm-z83.32 blind spot in its third instance.
+func (v SnapVerdict) Relocated() bool { return v.Wrong() && v.LeastDrop > RaisedStep }
 
 // Stranded reports whether no side was accepted at all.
 func (v SnapVerdict) Stranded() bool { return v.Accepted == 0 }
@@ -172,8 +191,8 @@ func (v SnapVerdict) String() string {
 	if v.Intended != nil {
 		intended = fmt.Sprintf("area %d", v.Intended.ID)
 	}
-	return fmt.Sprintf("%s: intended %s, %d/%d sides accepted, %d elsewhere, worst drop %.0f",
-		v.Spot, intended, v.Accepted, len(v.Sides), v.Elsewhere, v.WorstDrop)
+	return fmt.Sprintf("%s: intended %s, %d/%d sides accepted, %d elsewhere, drop %.0f to %.0f",
+		v.Spot, intended, v.Accepted, len(v.Sides), v.Elsewhere, v.LeastDrop, v.WorstDrop)
 }
 
 // CheckSnap runs the whole ring of BuildStandPoint attempts against one spot and
@@ -205,8 +224,12 @@ func (m *Mesh) CheckSnap(spot Spot, from Vec3, attempts int, reach, tolerance fl
 			v.Elsewhere++
 		}
 
-		if drop := spot.Origin.Z - side.Stand.Z; drop > v.WorstDrop {
+		drop := spot.Origin.Z - side.Stand.Z
+		if drop > v.WorstDrop {
 			v.WorstDrop = drop
+		}
+		if v.Accepted == 1 || drop < v.LeastDrop {
+			v.LeastDrop = drop
 		}
 	}
 
