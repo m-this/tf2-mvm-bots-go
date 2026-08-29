@@ -11,14 +11,16 @@ import (
 var update = flag.Bool("update", false, "rewrite the golden files from the current output")
 
 // goldenCases pin the emitter against real includes: the two extension
-// headers the plugin leans on hardest, a CBaseNPC header full of inheriting
-// methodmaps, and a plain SourceMod one.
+// headers the plugin leans on hardest, the processors header whose two
+// typesets carry every behaviour callback the plugin writes, a CBaseNPC
+// header full of inheriting methodmaps, and a plain SourceMod one.
 var goldenCases = []struct {
 	name    string
 	include string
 }{
 	{"tf2utils", "src/tf2utils/scripting/include/tf2utils.inc"},
 	{"actions", "src/actions/sourcemod/include/actions.inc"},
+	{"actions_processors", "src/actions/sourcemod/include/actions_processors.inc"},
 	{"locomotion", "src/cbasenpc/scripting/include/cbasenpc/nextbot/locomotion.inc"},
 	{"tf2", "spcomp/addons/sourcemod/scripting/include/tf2.inc"},
 }

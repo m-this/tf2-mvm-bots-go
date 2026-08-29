@@ -171,5 +171,25 @@ type File struct {
 	EnumStructs []EnumStruct
 	Defines     []Define
 	Typedefs    []Typedef
+	Typesets    []Typeset
 	Refusals    []Refusal
+}
+
+// TypesetVariant is one of the call signatures a typeset allows under its
+// name. Doc is the comment above it, which in the actions headers names the
+// callbacks the signature serves.
+type TypesetVariant struct {
+	Return Type
+	Params []Param
+	Doc    string
+	Pos    Pos
+}
+
+// Typeset is a `typeset X { function ...; ... }` block: one name standing for
+// several call signatures, chosen by the compiler at the assignment site.
+type Typeset struct {
+	Name     string
+	Variants []TypesetVariant
+	Doc      string
+	Pos      Pos
 }

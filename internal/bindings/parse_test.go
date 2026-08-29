@@ -205,7 +205,7 @@ func TestParseRefusesLoudly(t *testing.T) {
 		src        string
 		wantReason string
 	}{
-		{"typeset", "typeset Timer\n{\n\tfunction Action (Handle t);\n\tfunction Action (Handle t, any d);\n};", "several signatures"},
+		{"typeset member that is not a signature", "typeset Timer\n{\n\tint x;\n};", "not a function signature"},
 		{"destructor", "methodmap Handle __nullable__ {\n\tpublic native ~Handle();\n}", "destructor"},
 		{"operator overload", "stock float operator*(float a, float b) { return a; }", "operator overload"},
 		{"function-like macro", "#define TEAM_ARRAY(%0, %1) (%0 + %1)", "function-like macro"},
@@ -220,5 +220,106 @@ func TestParseRefusesLoudly(t *testing.T) {
 				t.Errorf("reason = %q, want it to mention %q", f.Refusals[0].Reason, tc.wantReason)
 			}
 		})
+	}
+}
+
+func TestParseTypeset(t *testing.T) {
+	src := `
+typeset Timer
+{
+	function Action (Handle timer);
+
+	/* with data */
+	function Action (Handle timer, any data);
+};
+`
+	f := Parse("t.inc", []byte(src))
+	if len(f.Refusals) != 0 {
+		t.Fatalf("refusals: %v", f.Refusals)
+	}
+	if len(f.Typesets) != 1 {
+		t.Fatalf("got %d typesets, want 1", len(f.Typesets))
+	}
+	ts := f.Typesets[0]
+	if ts.Name != "Timer" || len(ts.Variants) != 2 {
+		t.Fatalf("typeset = %q with %d variants, want Timer with 2", ts.Name, len(ts.Variants))
+	}
+	if got := ts.Variants[1].Doc; got != "with data" {
+		t.Errorf("second variant doc = %q, want %q", got, "with data")
+	}
+	if got := len(ts.Variants[1].Params); got != 2 {
+		t.Errorf("second variant has %d params, want 2", got)
+	}
+	if got := ts.Variants[0].Return.Name; got != "Action" {
+		t.Errorf("return = %q, want Action", got)
+	}
+}
+
+func TestEmitTypesetGivesEverySignatureAName(t *testing.T) {
+	f := Parse("t.inc", []byte(
+		"typeset Timer\n{\n\tfunction Action (Handle timer);\n\tfunction void (Handle timer, any data);\n};"))
+	out, err := Emit(f, Options{Package: "sp"})
+	if err != nil {
+		t.Fatalf("emitting: %v", err)
+	}
+	for _, want := range []string{
+		"type Timer struct{ Ref int32 }",
+		"type TimerSig1 func(timer Handle) Action",
+		"type TimerSig2 func(timer Handle, data int32)",
+	} {
+		if !strings.Contains(string(out.Source), want) {
+			t.Errorf("emitted source is missing %q:\n%s", want, out.Source)
+		}
+	}
+}
+
+func TestEmitVariadicNative(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		src  string
+		want string
+	}{
+		{
+			name: "trailing cells",
+			src:  "native void PrintToChat(int client, const char[] format, any ...);",
+			want: "func PrintToChat(client int32, format string, args ...int32)",
+		},
+		{
+			name: "name already taken by an earlier parameter",
+			src:  "native void Log(const char[] args, any ...);",
+			want: "func Log(args string, args_ ...int32)",
+		},
+		{
+			name: "no other parameters",
+			src:  "native void Fail(any ...);",
+			want: "func Fail(args ...int32)",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			out, err := Emit(Parse("t.inc", []byte(tc.src)), Options{Package: "sp"})
+			if err != nil {
+				t.Fatalf("emitting: %v", err)
+			}
+			if !strings.Contains(string(out.Source), tc.want) {
+				t.Errorf("emitted source is missing %q:\n%s", tc.want, out.Source)
+			}
+		})
+	}
+}
+
+func TestEmitRefusesADuplicateNameFromAnotherFile(t *testing.T) {
+	one, err := Emit(Parse("a.inc", []byte("native int Foo();")), Options{Package: "sp"})
+	if err != nil {
+		t.Fatalf("emitting a.inc: %v", err)
+	}
+	two, err := Emit(Parse("b.inc", []byte("native int Foo();")), Options{Package: "sp", Names: one.Names})
+	if err != nil {
+		t.Fatalf("emitting b.inc: %v", err)
+	}
+	if len(two.Refusals) != 1 || !strings.Contains(two.Refusals[0].Reason, "already used") {
+		t.Fatalf("refusals = %v, want the second Foo turned down", two.Refusals)
+	}
+	if strings.Contains(string(two.Source), "func Foo") {
+		t.Error("b.inc emitted a second Foo, which is a package that does not compile")
 	}
 }

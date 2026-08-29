@@ -19,6 +19,8 @@ type token struct {
 	text string
 	line int32
 	doc  string // block or line comment immediately above, already trimmed
+	off  int    // byte offset of the token in the source
+	end  int    // byte offset one past the token
 }
 
 // maxTokens bounds the lexer so a malformed file cannot spin forever. The
@@ -52,21 +54,25 @@ func (l *lexer) next() (token, bool) {
 	if l.pos >= len(l.src) {
 		return token{}, false
 	}
+	start := l.pos
 	c := l.src[l.pos]
+	var t token
 	switch {
 	case c == '#' && atLineStart:
-		return l.emit(tokDirective, l.directive()), true
+		t = l.emit(tokDirective, l.directive())
 	case isIdentStart(c):
-		return l.emit(tokIdent, l.span(isIdentPart)), true
+		t = l.emit(tokIdent, l.span(isIdentPart))
 	case c >= '0' && c <= '9':
-		return l.emit(tokNumber, l.span(isNumberPart)), true
+		t = l.emit(tokNumber, l.span(isNumberPart))
 	case c == '"':
-		return l.emit(tokString, l.quoted('"')), true
+		t = l.emit(tokString, l.quoted('"'))
 	case c == '\'':
-		return l.emit(tokChar, l.quoted('\'')), true
+		t = l.emit(tokChar, l.quoted('\''))
 	default:
-		return l.emit(tokPunct, l.punct()), true
+		t = l.emit(tokPunct, l.punct())
 	}
+	t.off, t.end = start, l.pos
+	return t, true
 }
 
 func (l *lexer) emit(k tokKind, text string) token {

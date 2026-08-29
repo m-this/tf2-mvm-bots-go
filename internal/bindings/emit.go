@@ -15,6 +15,12 @@ type Options struct {
 	// The emitter needs them to fold `#define` bodies and enum initialisers
 	// that refer across files; without them those declarations are refused.
 	Constants map[string]int64
+	// Names are the identifiers other includes emitted into the same Go
+	// package, keyed by receiver type with "" for package scope. Emitting
+	// several includes into one package needs them: two files declaring the
+	// same name is a package that does not compile, and the second one has
+	// to be refused rather than written.
+	Names map[string]map[string]bool
 }
 
 // Emission is the result of rendering one include.
@@ -24,6 +30,9 @@ type Emission struct {
 	// Constants are the integer constants this file resolved, including the
 	// ones passed in. Feed them to the includes that depend on this one.
 	Constants map[string]int64
+	// Names are the identifiers claimed so far, including the ones passed
+	// in. Feed them to the next include emitted into the same package.
+	Names map[string]map[string]bool
 }
 
 // Emit renders one parsed include as a Go source file. An error means the
@@ -32,12 +41,15 @@ func Emit(f *File, opt Options) (Emission, error) {
 	e := &emitter{
 		file:   f,
 		pkg:    opt.Package,
-		taken:  map[string]map[string]bool{},
+		taken:  make(map[string]map[string]bool, len(opt.Names)),
 		consts: make(map[string]int64, len(opt.Constants)),
 	}
 	maps.Copy(e.consts, opt.Constants)
+	for recv, names := range opt.Names {
+		e.taken[recv] = maps.Clone(names)
+	}
 	e.run()
-	out := Emission{Source: e.b.Bytes(), Refusals: e.refusals, Constants: e.consts}
+	out := Emission{Source: e.b.Bytes(), Refusals: e.refusals, Constants: e.consts, Names: e.taken}
 	src, err := format.Source(e.b.Bytes())
 	if err != nil {
 		return out, fmt.Errorf("formatting emitted Go for %s: %w", f.Path, err)
@@ -75,6 +87,9 @@ func (e *emitter) run() {
 	}
 	for _, td := range e.file.Typedefs {
 		e.typedef(td)
+	}
+	for _, ts := range e.file.Typesets {
+		e.typeset(ts)
 	}
 	for _, mm := range e.file.Methodmaps {
 		e.methodmap(mm)
@@ -159,6 +174,9 @@ func (e *emitter) methodmap(mm Methodmap) {
 	}
 }
 
+// The receiver is named `this`, which is what SourcePawn calls it inside a
+// methodmap and therefore a name no parameter in the tree can carry. A
+// shorter receiver collides: nav.inc has a method whose parameter is `x`.
 func (e *emitter) method(recv string, m Method) {
 	params, result, err := signature(m.Params, m.Return)
 	if err != nil {
@@ -192,7 +210,7 @@ func (e *emitter) method(recv string, m Method) {
 	if note := defaultsNote(m.Params); note != "" {
 		fmt.Fprintf(&e.b, "%s\n", note)
 	}
-	fmt.Fprintf(&e.b, "func (x %s) %s(%s) %s { %s }\n\n", recv, name, params, result, stub(recv+"."+m.Name))
+	fmt.Fprintf(&e.b, "func (this %s) %s(%s) %s { %s }\n\n", recv, name, params, result, stub(recv+"."+m.Name))
 }
 
 func (e *emitter) property(recv string, p Property) {
@@ -204,11 +222,11 @@ func (e *emitter) property(recv string, p Property) {
 	name := goIdent(p.Name)
 	if p.Get && e.claim(recv, name, p.Pos) {
 		e.doc(p.Doc)
-		fmt.Fprintf(&e.b, "func (x %s) %s() %s { %s }\n\n", recv, name, typ, stub(recv+"."+p.Name))
+		fmt.Fprintf(&e.b, "func (this %s) %s() %s { %s }\n\n", recv, name, typ, stub(recv+"."+p.Name))
 	}
 	setter := "Set" + strings.ToUpper(p.Name[:1]) + p.Name[1:]
 	if p.Set && e.claim(recv, setter, p.Pos) {
-		fmt.Fprintf(&e.b, "func (x %s) %s(v %s) { %s }\n\n", recv, setter, typ, stub(recv+"."+p.Name+" set"))
+		fmt.Fprintf(&e.b, "func (this %s) %s(v %s) { %s }\n\n", recv, setter, typ, stub(recv+"."+p.Name+" set"))
 	}
 }
 

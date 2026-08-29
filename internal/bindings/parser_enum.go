@@ -179,14 +179,68 @@ func (p *parser) typedef() {
 }
 
 // typeset declares one name with several call signatures. Go has no such
-// type, so the name is refused rather than collapsed onto one signature.
+// type, so the name becomes an opaque function reference, which is what the
+// SourcePawn value is, and each signature is emitted beside it under a
+// derived name so a caller can still say which shape it means.
 func (p *parser) typeset() {
 	start := p.cur()
-	p.advance()
-	name := ""
-	if p.cur().kind == tokIdent {
-		name = p.cur().text
+	p.advance() // "typeset"
+	if p.cur().kind != tokIdent {
+		p.refuse(Pos{p.name, start.line}, "typeset", p.textFrom(start.line), "missing name")
+		p.skipDeclaration()
+		return
 	}
-	p.refuse(Pos{p.name, start.line}, "typeset", name, "typeset has several signatures under one name")
-	p.skipDeclaration()
+	ts := Typeset{Name: p.cur().text, Doc: start.doc, Pos: Pos{p.name, start.line}}
+	p.advance()
+	if !p.accept("{") {
+		p.refuse(ts.Pos, "typeset", p.textFrom(start.line), "missing body")
+		p.skipDeclaration()
+		return
+	}
+	for range maxMembers {
+		if p.done() || p.accept("}") {
+			p.accept(";")
+			p.file.Typesets = append(p.file.Typesets, ts)
+			return
+		}
+		before := p.at
+		p.typesetVariant(&ts)
+		if p.at == before {
+			p.advance()
+		}
+	}
+	p.file.Typesets = append(p.file.Typesets, ts)
+}
+
+// typesetVariant parses one `function <type> (params);` member.
+func (p *parser) typesetVariant(ts *Typeset) {
+	if p.cur().kind == tokDirective {
+		p.advance()
+		return
+	}
+	start := p.cur()
+	if !p.accept("function") {
+		p.refuse(Pos{p.name, start.line}, "typeset member", p.textFrom(start.line),
+			"member of "+ts.Name+" is not a function signature")
+		p.skipDeclaration()
+		return
+	}
+	ret, ok := p.parseReturnType()
+	if !ok {
+		p.refuse(Pos{p.name, start.line}, "typeset member", p.textFrom(start.line),
+			"unreadable return type in "+ts.Name)
+		p.skipDeclaration()
+		return
+	}
+	params, ok := p.parseParams()
+	if !ok {
+		p.refuse(Pos{p.name, start.line}, "typeset member", p.textFrom(start.line),
+			"unreadable parameter list in "+ts.Name)
+		p.skipDeclaration()
+		return
+	}
+	p.accept(";")
+	ts.Variants = append(ts.Variants, TypesetVariant{
+		Return: ret, Params: params, Doc: start.doc, Pos: Pos{p.name, start.line},
+	})
 }

@@ -47,42 +47,69 @@ const (
 // @noreturn
 type ActionsIteratorCallback func(action BehaviorAction)
 
+// ActionComponentFn is a function reference. Its call signatures are ActionComponentFnSig1..ActionComponentFnSig3.
+type ActionComponentFn struct{ Ref int32 }
+
+// @brief Called for requesting initial action as first action of component/behavior
+//
+// @param component		Action component handle
+// @param entity		Entity index
+//
+// @return				Initial action
+type ActionComponentFnSig1 func(component ActionComponent, entity int32) BehaviorAction
+
+// @brief Base component callback definition
+//
+// @param component		Action component handle
+// @param entity		Entity index
+//
+// @noreturn
+type ActionComponentFnSig2 func(component ActionComponent, entity int32)
+
+// @brief Update component callback definition
+//
+// @param component		Action component handle
+// @param entity		Entity index
+//
+// @return				Plugin_Continue to ignore, Plugin_Handled to block update
+type ActionComponentFnSig3 func(component ActionComponent, entity int32) Action
+
 type ActionResult struct{ Ref int32 }
 
-func (x ActionResult) GetReason(destination []byte, maxlength int32) {
+func (this ActionResult) GetReason(destination []byte, maxlength int32) {
 	panic("bindings: ActionResult.GetReason is SourcePawn and has no Go body")
 }
 
-func (x ActionResult) SetReason(reason string) {
+func (this ActionResult) SetReason(reason string) {
 	panic("bindings: ActionResult.SetReason is SourcePawn and has no Go body")
 }
 
 // @brief Checks if result is requesting change
 //
 // @return					true if it is requesting, false otherwise
-func (x ActionResult) IsRequestingChange() bool {
+func (this ActionResult) IsRequestingChange() bool {
 	panic("bindings: ActionResult.IsRequestingChange is SourcePawn and has no Go body")
 }
 
 // @brief Property to get/set result type
 //
 // @return					Result type (see ActionResultType)
-func (x ActionResult) type_() ActionResultType {
+func (this ActionResult) type_() ActionResultType {
 	panic("bindings: ActionResult.type is SourcePawn and has no Go body")
 }
 
-func (x ActionResult) SetType(v ActionResultType) {
+func (this ActionResult) SetType(v ActionResultType) {
 	panic("bindings: ActionResult.type set is SourcePawn and has no Go body")
 }
 
 // @brief Property to get/set result action
 //
 // @return					Result action
-func (x ActionResult) action() BehaviorAction {
+func (this ActionResult) action() BehaviorAction {
 	panic("bindings: ActionResult.action is SourcePawn and has no Go body")
 }
 
-func (x ActionResult) SetAction(v BehaviorAction) {
+func (this ActionResult) SetAction(v BehaviorAction) {
 	panic("bindings: ActionResult.action set is SourcePawn and has no Go body")
 }
 
@@ -91,11 +118,11 @@ type ActionDesiredResult struct{ ActionResult }
 // @brief Property to get/set result priority
 //
 // @return					Result priority
-func (x ActionDesiredResult) priority() EventResultPriorityType {
+func (this ActionDesiredResult) priority() EventResultPriorityType {
 	panic("bindings: ActionDesiredResult.priority is SourcePawn and has no Go body")
 }
 
-func (x ActionDesiredResult) SetPriority(v EventResultPriorityType) {
+func (this ActionDesiredResult) SetPriority(v EventResultPriorityType) {
 	panic("bindings: ActionDesiredResult.priority set is SourcePawn and has no Go body")
 }
 
@@ -191,41 +218,41 @@ func NewActionComponent(entity int32, fnInitialAction ActionComponentFn, fnUpdat
 	panic("bindings: ActionComponent() is SourcePawn and has no Go body")
 }
 
-func (x ActionComponent) GetName(buffer []byte, maxlength int32) int32 {
+func (this ActionComponent) GetName(buffer []byte, maxlength int32) int32 {
 	panic("bindings: ActionComponent.GetName is SourcePawn and has no Go body")
 }
 
-func (x ActionComponent) SetName(name []byte) {
+func (this ActionComponent) SetName(name []byte) {
 	panic("bindings: ActionComponent.SetName is SourcePawn and has no Go body")
 }
 
 // @brief Returns current behavior action
 //
 // @return Current action
-func (x ActionComponent) CurrentAction() BehaviorAction {
+func (this ActionComponent) CurrentAction() BehaviorAction {
 	panic("bindings: ActionComponent.CurrentAction is SourcePawn and has no Go body")
 }
 
 // @brief Returns component physical address
-func (x ActionComponent) Address() int32 {
+func (this ActionComponent) Address() int32 {
 	panic("bindings: ActionComponent.Address is SourcePawn and has no Go body")
 }
 
 // @brief Returns component actor
 // @remark Returns 0 if component is inactive
-func (x ActionComponent) Actor() int32 {
+func (this ActionComponent) Actor() int32 {
 	panic("bindings: ActionComponent.Actor is SourcePawn and has no Go body")
 }
 
-func (x ActionComponent) SetUpdate(v ActionComponentFn) {
+func (this ActionComponent) SetUpdate(v ActionComponentFn) {
 	panic("bindings: ActionComponent.Update set is SourcePawn and has no Go body")
 }
 
-func (x ActionComponent) SetUpkeep(v ActionComponentFn) {
+func (this ActionComponent) SetUpkeep(v ActionComponentFn) {
 	panic("bindings: ActionComponent.Upkeep set is SourcePawn and has no Go body")
 }
 
-func (x ActionComponent) SetReset(v ActionComponentFn) {
+func (this ActionComponent) SetReset(v ActionComponentFn) {
 	panic("bindings: ActionComponent.Reset set is SourcePawn and has no Go body")
 }
 
@@ -236,51 +263,51 @@ func NewBehaviorAction(action int32) BehaviorAction {
 }
 
 // SourcePawn defaults: maxlength=ACTION_NAME_LENGTH
-func (x BehaviorAction) GetName(destination []byte, maxlength int32) int32 {
+func (this BehaviorAction) GetName(destination []byte, maxlength int32) int32 {
 	panic("bindings: BehaviorAction.GetName is SourcePawn and has no Go body")
 }
 
-func (x BehaviorAction) Continue() Action {
+func (this BehaviorAction) Continue() Action {
 	panic("bindings: BehaviorAction.Continue is SourcePawn and has no Go body")
 }
 
 // SourcePawn defaults: reason=NULL_STRING
-func (x BehaviorAction) ChangeTo(action BehaviorAction, reason string) Action {
+func (this BehaviorAction) ChangeTo(action BehaviorAction, reason string) Action {
 	panic("bindings: BehaviorAction.ChangeTo is SourcePawn and has no Go body")
 }
 
 // SourcePawn defaults: reason=NULL_STRING
-func (x BehaviorAction) SuspendFor(action BehaviorAction, reason string) Action {
+func (this BehaviorAction) SuspendFor(action BehaviorAction, reason string) Action {
 	panic("bindings: BehaviorAction.SuspendFor is SourcePawn and has no Go body")
 }
 
 // SourcePawn defaults: reason=NULL_STRING
-func (x BehaviorAction) Done(reason string) Action {
+func (this BehaviorAction) Done(reason string) Action {
 	panic("bindings: BehaviorAction.Done is SourcePawn and has no Go body")
 }
 
 // SourcePawn defaults: priority=RESULT_TRY
-func (x BehaviorAction) TryContinue(priority EventResultPriorityType) Action {
+func (this BehaviorAction) TryContinue(priority EventResultPriorityType) Action {
 	panic("bindings: BehaviorAction.TryContinue is SourcePawn and has no Go body")
 }
 
 // SourcePawn defaults: priority=RESULT_TRY, reason=NULL_STRING
-func (x BehaviorAction) TryChangeTo(action BehaviorAction, priority EventResultPriorityType, reason string) Action {
+func (this BehaviorAction) TryChangeTo(action BehaviorAction, priority EventResultPriorityType, reason string) Action {
 	panic("bindings: BehaviorAction.TryChangeTo is SourcePawn and has no Go body")
 }
 
 // SourcePawn defaults: priority=RESULT_TRY, reason=NULL_STRING
-func (x BehaviorAction) TrySuspendFor(action BehaviorAction, priority EventResultPriorityType, reason string) Action {
+func (this BehaviorAction) TrySuspendFor(action BehaviorAction, priority EventResultPriorityType, reason string) Action {
 	panic("bindings: BehaviorAction.TrySuspendFor is SourcePawn and has no Go body")
 }
 
 // SourcePawn defaults: priority=RESULT_TRY, reason=NULL_STRING
-func (x BehaviorAction) TryDone(priority EventResultPriorityType, reason string) Action {
+func (this BehaviorAction) TryDone(priority EventResultPriorityType, reason string) Action {
 	panic("bindings: BehaviorAction.TryDone is SourcePawn and has no Go body")
 }
 
 // SourcePawn defaults: priority=RESULT_TRY, reason=NULL_STRING
-func (x BehaviorAction) TryToSustain(priority EventResultPriorityType, reason string) Action {
+func (this BehaviorAction) TryToSustain(priority EventResultPriorityType, reason string) Action {
 	panic("bindings: BehaviorAction.TryToSustain is SourcePawn and has no Go body")
 }
 
@@ -293,7 +320,7 @@ func (x BehaviorAction) TryToSustain(priority EventResultPriorityType, reason st
 //
 // @error				Invalid action passed
 // @return				Stored data
-func (x BehaviorAction) GetUserData(key string) int32 {
+func (this BehaviorAction) GetUserData(key string) int32 {
 	panic("bindings: BehaviorAction.GetUserData is SourcePawn and has no Go body")
 }
 
@@ -307,7 +334,7 @@ func (x BehaviorAction) GetUserData(key string) int32 {
 //
 // @error				Invalid action passed
 // @noreturn
-func (x BehaviorAction) GetUserDataVector(key string, out *[3]float32) {
+func (this BehaviorAction) GetUserDataVector(key string, out *[3]float32) {
 	panic("bindings: BehaviorAction.GetUserDataVector is SourcePawn and has no Go body")
 }
 
@@ -322,7 +349,7 @@ func (x BehaviorAction) GetUserDataVector(key string, out *[3]float32) {
 //
 // @error				Invalid action passed
 // @noreturn
-func (x BehaviorAction) GetUserDataString(key string, buffer []byte, length int32) {
+func (this BehaviorAction) GetUserDataString(key string, buffer []byte, length int32) {
 	panic("bindings: BehaviorAction.GetUserDataString is SourcePawn and has no Go body")
 }
 
@@ -335,7 +362,7 @@ func (x BehaviorAction) GetUserDataString(key string, buffer []byte, length int3
 //
 // @error				Invalid action passed
 // @noreturn
-func (x BehaviorAction) SetUserData(key string, data int32) {
+func (this BehaviorAction) SetUserData(key string, data int32) {
 	panic("bindings: BehaviorAction.SetUserData is SourcePawn and has no Go body")
 }
 
@@ -348,7 +375,7 @@ func (x BehaviorAction) SetUserData(key string, data int32) {
 //
 // @error				Invalid action passed
 // @noreturn
-func (x BehaviorAction) SetUserDataVector(key string, vector [3]float32) {
+func (this BehaviorAction) SetUserDataVector(key string, vector [3]float32) {
 	panic("bindings: BehaviorAction.SetUserDataVector is SourcePawn and has no Go body")
 }
 
@@ -361,7 +388,7 @@ func (x BehaviorAction) SetUserDataVector(key string, vector [3]float32) {
 //
 // @error				Invalid action passed
 // @noreturn
-func (x BehaviorAction) SetUserDataString(key string, string string) {
+func (this BehaviorAction) SetUserDataString(key string, string string) {
 	panic("bindings: BehaviorAction.SetUserDataString is SourcePawn and has no Go body")
 }
 
@@ -374,7 +401,7 @@ func (x BehaviorAction) SetUserDataString(key string, string string) {
 //
 // @error				Invalid action passed
 // @return				Stored data
-func (x BehaviorAction) GetUserDataIdentity(key string) int32 {
+func (this BehaviorAction) GetUserDataIdentity(key string) int32 {
 	panic("bindings: BehaviorAction.GetUserDataIdentity is SourcePawn and has no Go body")
 }
 
@@ -388,7 +415,7 @@ func (x BehaviorAction) GetUserDataIdentity(key string) int32 {
 //
 // @error				Invalid action passed
 // @noreturn
-func (x BehaviorAction) GetUserDataIdentityVector(key string, out *[3]float32) {
+func (this BehaviorAction) GetUserDataIdentityVector(key string, out *[3]float32) {
 	panic("bindings: BehaviorAction.GetUserDataIdentityVector is SourcePawn and has no Go body")
 }
 
@@ -403,7 +430,7 @@ func (x BehaviorAction) GetUserDataIdentityVector(key string, out *[3]float32) {
 //
 // @error				Invalid action passed
 // @noreturn
-func (x BehaviorAction) GetUserDataIdentityString(key string, buffer []byte, length int32) {
+func (this BehaviorAction) GetUserDataIdentityString(key string, buffer []byte, length int32) {
 	panic("bindings: BehaviorAction.GetUserDataIdentityString is SourcePawn and has no Go body")
 }
 
@@ -415,7 +442,7 @@ func (x BehaviorAction) GetUserDataIdentityString(key string, buffer []byte, len
 // @param data			Data to store
 //
 // @noreturn
-func (x BehaviorAction) SetUserDataIdentity(key string, data int32) {
+func (this BehaviorAction) SetUserDataIdentity(key string, data int32) {
 	panic("bindings: BehaviorAction.SetUserDataIdentity is SourcePawn and has no Go body")
 }
 
@@ -428,7 +455,7 @@ func (x BehaviorAction) SetUserDataIdentity(key string, data int32) {
 //
 // @error				Invalid action passed
 // @noreturn
-func (x BehaviorAction) SetUserDataIdentityVector(key string, vector [3]float32) {
+func (this BehaviorAction) SetUserDataIdentityVector(key string, vector [3]float32) {
 	panic("bindings: BehaviorAction.SetUserDataIdentityVector is SourcePawn and has no Go body")
 }
 
@@ -441,15 +468,15 @@ func (x BehaviorAction) SetUserDataIdentityVector(key string, vector [3]float32)
 //
 // @error				Invalid action passed
 // @noreturn
-func (x BehaviorAction) SetUserDataIdentityString(key string, string string) {
+func (this BehaviorAction) SetUserDataIdentityString(key string, string string) {
 	panic("bindings: BehaviorAction.SetUserDataIdentityString is SourcePawn and has no Go body")
 }
 
-func (x BehaviorAction) GetHandleEntity(offset int32) int32 {
+func (this BehaviorAction) GetHandleEntity(offset int32) int32 {
 	panic("bindings: BehaviorAction.GetHandleEntity is SourcePawn and has no Go body")
 }
 
-func (x BehaviorAction) SetHandleEntity(offset int32, entity int32) {
+func (this BehaviorAction) SetHandleEntity(offset int32, entity int32) {
 	panic("bindings: BehaviorAction.SetHandleEntity is SourcePawn and has no Go body")
 }
 
@@ -460,12 +487,12 @@ func (x BehaviorAction) SetHandleEntity(offset int32, entity int32) {
 //
 // @return				Stored data
 // SourcePawn defaults: type_=NumberType_Int32
-func (x BehaviorAction) Get(offset int32, type_ NumberType) int32 {
+func (this BehaviorAction) Get(offset int32, type_ NumberType) int32 {
 	panic("bindings: BehaviorAction.Get is SourcePawn and has no Go body")
 }
 
 // SourcePawn defaults: type_=NumberType_Int32
-func (x BehaviorAction) Set(offset int32, data int32, type_ NumberType) {
+func (this BehaviorAction) Set(offset int32, data int32, type_ NumberType) {
 	panic("bindings: BehaviorAction.Set is SourcePawn and has no Go body")
 }
 
@@ -475,7 +502,7 @@ func (x BehaviorAction) Set(offset int32, data int32, type_ NumberType) {
 // @param vec			Vector to set from
 //
 // @noreturn
-func (x BehaviorAction) SetVector(offset int32, vec [3]float32) {
+func (this BehaviorAction) SetVector(offset int32, vec [3]float32) {
 	panic("bindings: BehaviorAction.SetVector is SourcePawn and has no Go body")
 }
 
@@ -485,7 +512,7 @@ func (x BehaviorAction) SetVector(offset int32, vec [3]float32) {
 // @param out			Vector to load to
 //
 // @noreturn
-func (x BehaviorAction) GetVector(offset int32, out *[3]float32) {
+func (this BehaviorAction) GetVector(offset int32, out *[3]float32) {
 	panic("bindings: BehaviorAction.GetVector is SourcePawn and has no Go body")
 }
 
@@ -494,26 +521,26 @@ func (x BehaviorAction) GetVector(offset int32, out *[3]float32) {
 // @param name			Name to check against
 //
 // @return 				true actions matches name, false otherwise
-func (x BehaviorAction) Matches(match string) bool {
+func (this BehaviorAction) Matches(match string) bool {
 	panic("bindings: BehaviorAction.Matches is SourcePawn and has no Go body")
 }
 
 // SourcePawn defaults: type_=CONTINUE, action=INVALID_ACTION, priority=RESULT_TRY, reason=NULL_STRING
-func (x BehaviorAction) StorePendingEventResult(type_ ActionResultType, action BehaviorAction, priority EventResultPriorityType, reason string) {
+func (this BehaviorAction) StorePendingEventResult(type_ ActionResultType, action BehaviorAction, priority EventResultPriorityType, reason string) {
 	panic("bindings: BehaviorAction.StorePendingEventResult is SourcePawn and has no Go body")
 }
 
 // @brief Property to get/set parent action
 //
 // @return				Parent action
-func (x BehaviorAction) Parent() BehaviorAction {
+func (this BehaviorAction) Parent() BehaviorAction {
 	panic("bindings: BehaviorAction.Parent is SourcePawn and has no Go body")
 }
 
 // @brief Property to get/set child action
 //
 // @return				Child action
-func (x BehaviorAction) Child() BehaviorAction {
+func (this BehaviorAction) Child() BehaviorAction {
 	panic("bindings: BehaviorAction.Child is SourcePawn and has no Go body")
 }
 
@@ -521,7 +548,7 @@ func (x BehaviorAction) Child() BehaviorAction {
 // @note if we are suspender then this will return a suspended action
 //
 // @return				Under action
-func (x BehaviorAction) Under() BehaviorAction {
+func (this BehaviorAction) Under() BehaviorAction {
 	panic("bindings: BehaviorAction.Under is SourcePawn and has no Go body")
 }
 
@@ -529,7 +556,7 @@ func (x BehaviorAction) Under() BehaviorAction {
 // @note if we are suspended action then this will return a suspender
 //
 // @return				Above action
-func (x BehaviorAction) Above() BehaviorAction {
+func (this BehaviorAction) Above() BehaviorAction {
 	panic("bindings: BehaviorAction.Above is SourcePawn and has no Go body")
 }
 
@@ -537,18 +564,18 @@ func (x BehaviorAction) Above() BehaviorAction {
 // @note  returns 0 if action hasn't been started yet
 //
 // @return				Action actor
-func (x BehaviorAction) Actor() int32 {
+func (this BehaviorAction) Actor() int32 {
 	panic("bindings: BehaviorAction.Actor is SourcePawn and has no Go body")
 }
 
 // @brief Property to get/set suspended state of action
 //
 // @return				true if suspended, false otherwise
-func (x BehaviorAction) IsSuspended() bool {
+func (this BehaviorAction) IsSuspended() bool {
 	panic("bindings: BehaviorAction.IsSuspended is SourcePawn and has no Go body")
 }
 
-func (x BehaviorAction) SetIsSuspended(v bool) {
+func (this BehaviorAction) SetIsSuspended(v bool) {
 	panic("bindings: BehaviorAction.IsSuspended set is SourcePawn and has no Go body")
 }
 
@@ -556,11 +583,11 @@ func (x BehaviorAction) SetIsSuspended(v bool) {
 // @note if this returns true then OnStart handled has already been called or is about to be called next frame
 //
 // @return				true if started, false otherwise
-func (x BehaviorAction) IsStarted() bool {
+func (this BehaviorAction) IsStarted() bool {
 	panic("bindings: BehaviorAction.IsStarted is SourcePawn and has no Go body")
 }
 
-func (x BehaviorAction) SetIsStarted(v bool) {
+func (this BehaviorAction) SetIsStarted(v bool) {
 	panic("bindings: BehaviorAction.IsStarted set is SourcePawn and has no Go body")
 }
 

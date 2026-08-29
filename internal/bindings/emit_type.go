@@ -96,11 +96,22 @@ func goParamType(t Type) (string, error) {
 
 // signature renders a Go parameter list and result for one native, method or
 // typedef, or refuses with a reason.
+//
+// SourcePawn's trailing `any ...` is a run of cells, which is what Go's
+// variadic is, so it is rendered rather than refused. It has to be last, and
+// SourcePawn's own grammar puts it last.
 func signature(params []Param, ret Type) (string, string, error) {
 	var b strings.Builder
 	for i, pm := range params {
 		if pm.Variadic {
-			return "", "", fmt.Errorf("variadic parameter %q", pm.Name)
+			if i != len(params)-1 {
+				return "", "", fmt.Errorf("variadic parameter %q is not last", pm.Name)
+			}
+			if i > 0 {
+				b.WriteString(", ")
+			}
+			fmt.Fprintf(&b, "%s ...int32", variadicName(params))
+			break
 		}
 		typ, err := goParamType(pm.Type)
 		if err != nil {
@@ -122,6 +133,23 @@ func signature(params []Param, ret Type) (string, string, error) {
 		return "", "", fmt.Errorf("return type: %w", err)
 	}
 	return b.String(), result, nil
+}
+
+// variadicName picks a name for the trailing cells that no earlier parameter
+// already carries.
+func variadicName(params []Param) string {
+	name := "args"
+	for taken := true; taken; {
+		taken = false
+		for i, pm := range params[:len(params)-1] {
+			if paramName(pm, i) == name {
+				name += "_"
+				taken = true
+				break
+			}
+		}
+	}
+	return name
 }
 
 func paramName(pm Param, i int) string {
