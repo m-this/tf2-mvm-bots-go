@@ -57,19 +57,30 @@ func parseDirective(fn *ast.FuncDecl) (Extern, bool, error) {
 			continue
 		}
 		fields := strings.Fields(strings.TrimPrefix(c.Text, directive))
-		if len(fields) != 2 {
-			return Extern{}, false, fmt.Errorf("the directive %q needs a kind and one name", c.Text)
+		if len(fields) < 2 || len(fields) > 3 {
+			return Extern{}, false, fmt.Errorf("the directive %q needs a kind, one name and at most one flag", c.Text)
 		}
 		kind, name := fields[0], fields[1]
+		returnsArray := false
+		if len(fields) == 3 {
+			if fields[2] != "returns" {
+				return Extern{}, false, fmt.Errorf("the directive flag %q is not returns", fields[2])
+			}
+			returnsArray = true
+		}
 		switch kind {
 		case "native":
-			return Extern{Func: name}, true, nil
+			return Extern{Func: name, ReturnsArray: returnsArray}, true, nil
+		case "global":
+			return Extern{Func: name, Global: true}, true, nil
+		case "plugin":
+			return Extern{Func: name, Plugin: true, ReturnsArray: returnsArray}, true, nil
 		case "sdkcall":
-			return Extern{Func: "SDKCall", Lead: []string{name}}, true, nil
+			return Extern{Func: "SDKCall", Lead: []string{name}, ReturnsArray: returnsArray}, true, nil
 		case "address":
-			return Extern{Func: "LoadFromAddress", Lead: []string{name}}, true, nil
+			return Extern{Func: "LoadFromAddress", Lead: []string{name}, ReturnsArray: returnsArray}, true, nil
 		default:
-			return Extern{}, false, fmt.Errorf("the directive kind %q is not native, sdkcall or address", kind)
+			return Extern{}, false, fmt.Errorf("the directive kind %q is not native, global, plugin, sdkcall or address", kind)
 		}
 	}
 	return Extern{}, false, nil

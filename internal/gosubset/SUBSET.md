@@ -97,9 +97,10 @@ maps a handful of `math` functions onto the SourcePawn float builtins. Since
 `math` is `float64` and a SourcePawn float is 32-bit, a `float32` body writes
 its own helper or calls a native binding instead.
 
-The one import a real body has is `internal/engine`, which is how it calls the
-engine: one Go function per call, carrying the directive that says whether
-SourcePawn writes it as a native, an `SDKCall` or an address read.
+The one import a real body has is `internal/engine`, which is how it reaches
+anything it does not own: one Go function per call, carrying the directive that
+says whether SourcePawn writes it as a native, a variable, a plugin function the
+port has not reached yet, an `SDKCall` or an address read.
 `internal/body.SubsetConfig` reads those declarations and maps the package, so
 a call the extern package does not declare is refused here rather than emitted
 as something plausible.

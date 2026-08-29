@@ -152,7 +152,7 @@ where it is written.
 */
 func (e *emitter) arrayCall(define bool, lhs, rhs ast.Expr) bool {
 	call, ok := rhs.(*ast.CallExpr)
-	if !ok || !e.isArrayValue(rhs) {
+	if !ok || !e.isArrayValue(rhs) || e.returnsArrayValue(call) {
 		return false
 	}
 	if tv, isType := e.info.Types[call.Fun]; isType && tv.IsType() {

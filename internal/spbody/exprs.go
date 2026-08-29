@@ -28,7 +28,7 @@ func (e *emitter) expr(x ast.Expr) string {
 	case *ast.SelectorExpr:
 		return e.selector(n)
 	case *ast.CallExpr:
-		if e.isArrayValue(n) {
+		if e.isArrayValue(n) && !e.returnsArrayValue(n) {
 			if tv, isType := e.info.Types[n.Fun]; !isType || !tv.IsType() {
 				e.fail(n.Pos(), "a call returning an array used as a value; SourcePawn fills a parameter, so assign it to a name on a line of its own")
 				return ""
@@ -146,6 +146,26 @@ func (e *emitter) qualified(n *ast.SelectorExpr) string {
 	return n.Sel.Name
 }
 
+func (e *emitter) globalExtern(call *ast.CallExpr) (Extern, bool) {
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return Extern{}, false
+	}
+	x, isExtern := e.externOf(sel)
+	return x, isExtern && x.Global
+}
+
+// returnsArrayValue says the call is an extern whose SourcePawn returns the
+// array, which is the one array-valued expression that is not rewritten.
+func (e *emitter) returnsArrayValue(call *ast.CallExpr) bool {
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return false
+	}
+	x, isExtern := e.externOf(sel)
+	return isExtern && x.ReturnsArray
+}
+
 func (e *emitter) externOf(n *ast.SelectorExpr) (Extern, bool) {
 	id, ok := n.X.(*ast.Ident)
 	if !ok {
@@ -166,6 +186,13 @@ func (e *emitter) callWith(call *ast.CallExpr, extra []string) string {
 	}
 	if name, ok := e.builtinHelper(call); ok {
 		return name
+	}
+	if x, ok := e.globalExtern(call); ok {
+		if len(call.Args) != 0 || len(extra) != 0 {
+			e.fail(call.Pos(), "%s is a SourcePawn variable and takes no arguments", x.Func)
+			return ""
+		}
+		return x.Func
 	}
 	args := make([]string, 0, len(call.Args)+len(extra))
 	for _, a := range call.Args {

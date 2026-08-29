@@ -84,6 +84,7 @@ func (e *emitter) funcDecl(d *ast.FuncDecl) {
 		return
 	}
 	e.byRef = byRefParams(sig)
+	e.emitted = append(e.emitted, e.cfg.Prefix+d.Name.Name)
 	e.line("stock %s %s%s(%s)", ret, e.cfg.Prefix, e.ident(d.Name.Pos(), d.Name.Name), strings.Join(params, ", "))
 	e.line("{")
 	e.indent++

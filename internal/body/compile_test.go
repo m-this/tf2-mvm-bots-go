@@ -9,14 +9,16 @@ import (
 )
 
 /*
-	TestGeneratedDHooksCompileUnderTheShippedCompiler
+	TestTheGeneratedFilesCompileUnderTheShippedCompiler
 
-The bodies are proved by running. The DHook callbacks around them are proved by
-compiling, and it has to be the compiler the plugin ships with and the DHooks
-include the plugin ships with: a callback shape the standalone SourcePawn would
-accept and SourceMod would not is exactly the failure this covers.
+The bodies are proved by running, under the standalone SourcePawn, with the
+engine stubbed. What that cannot reach is everything SourceMod owns: DHookParam
+and MRESReturn, the real GetVectorDistance, a default the plugin's own call
+sites rely on. So the generated files are also compiled with the compiler and
+the includes the plugin ships with, which is where a shape the standalone would
+accept and SourceMod would not shows up.
 */
-func TestGeneratedDHooksCompileUnderTheShippedCompiler(t *testing.T) {
+func TestTheGeneratedFilesCompileUnderTheShippedCompiler(t *testing.T) {
 	local := spshell.ForTest(t)
 	shipped, err := local.WithSourceMod(upstream.SkipOrFail(t))
 	if err != nil {
@@ -27,10 +29,14 @@ func TestGeneratedDHooksCompileUnderTheShippedCompiler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generating the bodies: %v", err)
 	}
-	if err := shipped.Compile(t.Context(), "testdata/roster_smoke.sp", map[string]string{
+	files := map[string]string{
 		"roster.sp":        string(generated["sourcepawn/roster.sp"]),
 		"roster_dhooks.sp": string(generated["sourcepawn/roster_dhooks.sp"]),
-	}); err != nil {
-		t.Fatalf("compiling the generated DHook callbacks: %v", err)
+		"scan.sp":          string(generated["sourcepawn/scan.sp"]),
+	}
+	for _, smoke := range []string{"testdata/roster_smoke.sp", "testdata/scan_smoke.sp"} {
+		if err := shipped.Compile(t.Context(), smoke, files); err != nil {
+			t.Errorf("compiling %s: %v", smoke, err)
+		}
 	}
 }

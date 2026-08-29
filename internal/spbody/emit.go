@@ -44,6 +44,8 @@ type emitter struct {
 	// cannot return: it became a trailing parameter and there is no return
 	// value at all.
 	returnsArray bool
+	// emitted are the SourcePawn function names this emission declares.
+	emitted []string
 	// state is every package-level var, in declaration order, so Reset puts
 	// them back in the order they were declared.
 	state []stateVar

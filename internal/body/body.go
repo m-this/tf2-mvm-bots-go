@@ -38,6 +38,7 @@ type Body struct {
 // All is every body. Adding one here is what makes it generated.
 var All = []Body{
 	{Dir: "internal/body/roster", Out: "sourcepawn/roster.sp", Hooks: "sourcepawn/roster_dhooks.sp", Prefix: "Go_"},
+	{Dir: "internal/body/scan", Out: "sourcepawn/scan.sp", Prefix: "Go_"},
 }
 
 // Generate emits every body, keyed by its output path.
@@ -47,6 +48,7 @@ func Generate(root string) (map[string][]byte, error) {
 		return nil, err
 	}
 	out := make(map[string][]byte, len(All))
+	owned := make(map[string]string)
 	for _, b := range All {
 		g, err := spbody.GenerateDir(filepath.Join(root, b.Dir), spbody.Config{
 			Prefix:  b.Prefix,
@@ -54,6 +56,9 @@ func Generate(root string) (map[string][]byte, error) {
 		})
 		if err != nil {
 			return nil, fmt.Errorf("generating %s: %w", b.Dir, err)
+		}
+		for _, name := range g.Emitted {
+			owned[name] = b.Dir
 		}
 		out[b.Out] = []byte(g.Source)
 		if g.Hooks == "" {
@@ -63,6 +68,18 @@ func Generate(root string) (map[string][]byte, error) {
 			return nil, fmt.Errorf("%s declares a DHook and names no file to put it in", b.Dir)
 		}
 		out[b.Hooks] = []byte(g.Hooks)
+	}
+	// A plugin extern names SourcePawn this repository has not written yet.
+	// The day it does, the extern has to go: a function owned in both places
+	// is the duplication the epic exists to remove, and nothing else would
+	// notice, because both would compile.
+	for qualified, x := range externs {
+		if !x.Plugin {
+			continue
+		}
+		if dir, ported := owned[x.Func]; ported {
+			return nil, fmt.Errorf("%s is declared as a plugin extern and %s generates %s; delete the extern and call it directly", qualified, dir, x.Func)
+		}
 	}
 	return out, nil
 }

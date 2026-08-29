@@ -39,6 +39,9 @@ down twice, and of the interesting code being unreachable from a test.
   engine call, each carrying the directive that says whether SourcePawn writes
   it as a native, an SDKCall or an address read. Nothing here means anything in
   a Go process: the differential test installs the answers.
+- `internal/body/scan` — util.sp's client loop, ported one function at a time.
+  The duplication it holds is collapsed once every variant is here, not on the
+  way across.
 - `internal/body` — the bodies themselves, one package each, and the list that
   says which are generated. `internal/body/roster` is the first, and it is
   proved twice: run under spshell against the same canned world as the Go, call

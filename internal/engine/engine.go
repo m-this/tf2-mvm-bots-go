@@ -9,8 +9,20 @@ declaration and cannot drift apart.
 Three kinds of call, and the directive names which:
 
 	//sp:native NAME     a SourceMod native, called by name
+	//sp:global NAME     a SourcePawn variable, not a call at all
+	//sp:plugin NAME     a plugin function the port has not reached yet
 	//sp:sdkcall HANDLE  SDKCall through a handle prepared at load
 	//sp:address NAME    a read through a raw address
+
+A directive may end in the flag "returns", which says the SourcePawn declaration
+returns its array rather than filling a parameter with it. That is the float[]
+form, and spcomp will not assign one to a sized array, so neither will this: such
+a call can only be an argument to something else.
+
+A plugin extern is temporary by construction. It names SourcePawn this
+repository is going to own, and when it does the extern goes and the call
+becomes an ordinary one. internal/body refuses an extern that names a function a
+body already generates, so the two can never both be there.
 
 In a Go process none of them mean anything, so the default answer to all of them
 is a panic. Install puts a set of answers behind them, which is what the
@@ -31,6 +43,16 @@ type Calls struct {
 	HasAmmo        func(weapon int32) bool
 	Clip1          func(weapon int32) int32
 	Origin         func(client int32) [3]float32
+	MaxClients     func() int32
+	VectorDistance func(a [3]float32, b [3]float32) float32
+
+	// The plugin's own, still hand-written SourcePawn. Each one is work the
+	// port has not reached, and each goes the day it does.
+	IsSentryBusterRobot    func(client int32) bool
+	IsInvulnerable         func(client int32) bool
+	IsStealthed            func(client int32) bool
+	IsCloakedPlayerExposed func(client int32) bool
+	WorldSpaceCenter       func(entity int32) [3]float32
 }
 
 var installed Calls
@@ -106,4 +128,76 @@ func Origin(client int32) (origin [3]float32) {
 		missing("GetClientAbsOrigin")
 	}
 	return installed.Origin(client)
+}
+
+// MaxClients is the highest client slot the server has.
+//
+//sp:global MaxClients
+func MaxClients() int32 {
+	if installed.MaxClients == nil {
+		missing("MaxClients")
+	}
+	return installed.MaxClients()
+}
+
+// VectorDistance is how far apart two points are.
+//
+//sp:native GetVectorDistance
+func VectorDistance(a [3]float32, b [3]float32) float32 {
+	if installed.VectorDistance == nil {
+		missing("GetVectorDistance")
+	}
+	return installed.VectorDistance(a, b)
+}
+
+// IsSentryBusterRobot says whether the robot is a sentry buster, which is
+// usually not a threat worth counting.
+//
+//sp:plugin IsSentryBusterRobot
+func IsSentryBusterRobot(client int32) bool {
+	if installed.IsSentryBusterRobot == nil {
+		missing("IsSentryBusterRobot")
+	}
+	return installed.IsSentryBusterRobot(client)
+}
+
+// IsInvulnerable says whether the player cannot be hurt right now.
+//
+//sp:plugin TF2_IsInvulnerable
+func IsInvulnerable(client int32) bool {
+	if installed.IsInvulnerable == nil {
+		missing("TF2_IsInvulnerable")
+	}
+	return installed.IsInvulnerable(client)
+}
+
+// IsStealthed says whether the player is cloaked.
+//
+//sp:plugin TF2_IsStealthed
+func IsStealthed(client int32) bool {
+	if installed.IsStealthed == nil {
+		missing("TF2_IsStealthed")
+	}
+	return installed.IsStealthed(client)
+}
+
+// IsCloakedPlayerExposed says whether a cloaked player can be seen anyway.
+//
+//sp:plugin IsCloakedPlayerExposed
+func IsCloakedPlayerExposed(client int32) bool {
+	if installed.IsCloakedPlayerExposed == nil {
+		missing("IsCloakedPlayerExposed")
+	}
+	return installed.IsCloakedPlayerExposed(client)
+}
+
+// WorldSpaceCenter is the middle of the entity, which is what the plugin
+// measures ranges from. Its SourcePawn returns the array.
+//
+//sp:plugin WorldSpaceCenter returns
+func WorldSpaceCenter(entity int32) [3]float32 {
+	if installed.WorldSpaceCenter == nil {
+		missing("WorldSpaceCenter")
+	}
+	return installed.WorldSpaceCenter(entity)
 }
