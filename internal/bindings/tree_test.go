@@ -7,24 +7,25 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
 )
 
-// upstream is the plugin repository holding the include tree. The Makefile
-// passes it as MVMBOTS_UPSTREAM; the default is where it sits beside this one.
-func upstream() string {
-	if root := os.Getenv("MVMBOTS_UPSTREAM"); root != "" {
-		return root
-	}
-	return "../../../tf2-mvm-bots"
-}
+// includeRoot is the include tree inside the plugin's test-bed build
+// directory. The plugin repository is resolved by internal/upstream, which
+// reads a relative MVMBOTS_UPSTREAM from the repository root rather than from
+// this package: doing it here got it wrong, and these proofs skipped in silence.
+func includeRoot(t *testing.T) string {
+	t.Helper()
 
-func includeRoot() string { return filepath.Join(upstream(), "testbed", "build") }
+	return filepath.Join(upstream.SkipOrFail(t), "testbed", "build")
+}
 
 // includeFiles lists every .inc under the tree, skipping the prebuilt copies
 // which duplicate src/ declaration for declaration.
 func includeFiles(t *testing.T) []string {
 	t.Helper()
-	root := includeRoot()
+	root := includeRoot(t)
 	if _, err := os.Stat(root); err != nil {
 		t.Skipf("include tree not present: %v", err)
 	}

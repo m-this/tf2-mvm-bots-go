@@ -17,9 +17,7 @@ import (
 func readUpstream(t *testing.T, path string) string {
 	t.Helper()
 
-	if _, err := upstream.Dir(); err != nil {
-		t.Skipf("no plugin repository, set MVMBOTS_UPSTREAM: %v", err)
-	}
+	upstream.SkipOrFail(t)
 	body, err := upstream.Read(path)
 	if err != nil {
 		t.Fatalf("reading %s at %s: %v", path, upstream.Rev, err)

@@ -28,7 +28,7 @@ var goldenCases = []struct {
 func TestGolden(t *testing.T) {
 	for _, tc := range goldenCases {
 		t.Run(tc.name, func(t *testing.T) {
-			path := filepath.Join(includeRoot(), tc.include)
+			path := filepath.Join(includeRoot(t), tc.include)
 			if _, err := os.Stat(path); err != nil {
 				t.Skipf("include not present: %v", err)
 			}

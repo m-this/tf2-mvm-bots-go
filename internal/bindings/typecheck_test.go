@@ -24,7 +24,7 @@ var undeclared = regexp.MustCompile(`undefined: ([A-Za-z_][A-Za-z0-9_]*)`)
 func TestEmittedGoTypeChecks(t *testing.T) {
 	for _, tc := range goldenCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f, err := ParseFile(filepath.Join(includeRoot(), tc.include))
+			f, err := ParseFile(filepath.Join(includeRoot(t), tc.include))
 			if err != nil {
 				t.Skipf("include not present: %v", err)
 			}

@@ -20,11 +20,7 @@ compiler and nothing else.
 */
 func TestBothCompilersAgreeOnTheGeneratedTable(t *testing.T) {
 	local := spshell.ForTest(t)
-	dir, err := upstream.Dir()
-	if err != nil {
-		t.Skipf("no plugin repository, set MVMBOTS_UPSTREAM: %v", err)
-	}
-	shipped, err := local.WithSourceMod(dir)
+	shipped, err := local.WithSourceMod(upstream.SkipOrFail(t))
 	if err != nil {
 		t.Skipf("no SourceMod compiler: %v", err)
 	}

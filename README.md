@@ -49,6 +49,11 @@ cached under `toolchain/`. Without it the differential tests skip and say so;
 `make check` builds it first and sets `MVMBOTS_REQUIRE_SPSHELL`, so under the
 gate an absent toolchain fails instead of quietly running nothing.
 
+It sets `MVMBOTS_REQUIRE_UPSTREAM` for the same reason. Three packages resolved
+the path to the plugin repository themselves, got it wrong, and skipped: the
+binding and nav mesh proofs reported `ok` in under a second while running none
+of them.
+
 ## What this does not fix
 
 Bots stuck on geometry, nav mesh failures, engineers wedged in props. Reading

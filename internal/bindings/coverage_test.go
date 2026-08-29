@@ -6,9 +6,15 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
 )
 
-func pluginRoot() string { return filepath.Join(upstream(), "source") }
+func pluginRoot(t *testing.T) string {
+	t.Helper()
+
+	return filepath.Join(upstream.SkipOrFail(t), "source")
+}
 
 // callSite matches an identifier used as a call. The plugin's own helpers and
 // the include declarations share this shape, so the set is a superset of the
@@ -21,7 +27,7 @@ var pluginDefinition = regexp.MustCompile(`(?m)^(?:public |static |stock |native
 
 func pluginSources(t *testing.T) []string {
 	t.Helper()
-	root := pluginRoot()
+	root := pluginRoot(t)
 	if _, err := os.Stat(root); err != nil {
 		t.Skipf("plugin source not present: %v", err)
 	}

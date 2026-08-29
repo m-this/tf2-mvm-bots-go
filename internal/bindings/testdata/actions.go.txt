@@ -47,7 +47,7 @@ const (
 // @noreturn
 type ActionsIteratorCallback func(action BehaviorAction)
 
-// ActionComponentFn is a function reference. Its call signatures are ActionComponentFnSig1..ActionComponentFnSig3.
+// ActionComponentFn is a function reference, with 3 call signatures: ActionComponentFnSig5d56, ActionComponentFnSig9182, ActionComponentFnSig7890.
 type ActionComponentFn struct{ Ref int32 }
 
 // @brief Called for requesting initial action as first action of component/behavior
@@ -56,7 +56,7 @@ type ActionComponentFn struct{ Ref int32 }
 // @param entity		Entity index
 //
 // @return				Initial action
-type ActionComponentFnSig1 func(component ActionComponent, entity int32) BehaviorAction
+type ActionComponentFnSig5d56 func(component ActionComponent, entity int32) BehaviorAction
 
 // @brief Base component callback definition
 //
@@ -64,7 +64,7 @@ type ActionComponentFnSig1 func(component ActionComponent, entity int32) Behavio
 // @param entity		Entity index
 //
 // @noreturn
-type ActionComponentFnSig2 func(component ActionComponent, entity int32)
+type ActionComponentFnSig9182 func(component ActionComponent, entity int32)
 
 // @brief Update component callback definition
 //
@@ -72,7 +72,7 @@ type ActionComponentFnSig2 func(component ActionComponent, entity int32)
 // @param entity		Entity index
 //
 // @return				Plugin_Continue to ignore, Plugin_Handled to block update
-type ActionComponentFnSig3 func(component ActionComponent, entity int32) Action
+type ActionComponentFnSig7890 func(component ActionComponent, entity int32) Action
 
 type ActionResult struct{ Ref int32 }
 

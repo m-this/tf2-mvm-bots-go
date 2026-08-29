@@ -2,118 +2,115 @@
 
 package sp
 
-// ActionHandler is a function reference. Its call signatures are ActionHandlerSig1..ActionHandlerSig29.
+// ActionHandler is a function reference, with 28 call signatures: ActionHandlerOnStart, ActionHandlerOnUpdate, ActionHandlerOnEnd, ActionHandlerSig829d, ActionHandlerInitialContainedAction, ActionHandlerOnLeaveGround, ActionHandlerOnContact, ActionHandlerOnMoveToSuccess, ActionHandlerOnMoveToFailure, ActionHandlerOnStuck, ActionHandlerOnAnimationActivityComplete, ActionHandlerOnAnimationEvent, ActionHandlerOnInjured, ActionHandlerOnOtherKilled, ActionHandlerOnSound, ActionHandlerOnSpokeConcept, ActionHandlerOnNavAreaChanged, ActionHandlerOnPickUp, ActionHandlerOnCommandApproachVector, ActionHandlerOnCommandApproachEntity, ActionHandlerOnCommandRetreat, ActionHandlerOnCommandPause, ActionHandlerOnCommandString, ActionHandlerIsAbleToBlockMovementOf, ActionHandlerOnTerritoryContested, ActionHandlerOnWin, ActionHandlerOnWeaponFired, ActionHandlerOnActorEmoted.
 type ActionHandler struct{ Ref int32 }
 
 // OnStart, OnSuspend, OnResume
-type ActionHandlerSig1 func(action int32, actor int32, priorAction int32, result ActionResult) Action
+type ActionHandlerOnStart func(action int32, actor int32, priorAction int32, result ActionResult) Action
 
 // OnUpdate
-type ActionHandlerSig2 func(action int32, actor int32, interval float32, result ActionResult) Action
+type ActionHandlerOnUpdate func(action int32, actor int32, interval float32, result ActionResult) Action
 
 // OnEnd
-type ActionHandlerSig3 func(action int32, actor int32, nextAction int32, result ActionResult)
+type ActionHandlerOnEnd func(action int32, actor int32, nextAction int32, result ActionResult)
 
-type ActionHandlerSig4 func(action int32, actor int32, nextAction int32, result ActionResult) Action
+type ActionHandlerSig829d func(action int32, actor int32, nextAction int32, result ActionResult) Action
 
 // InitialContainedAction
-type ActionHandlerSig5 func(action int32, actor int32, child *int32) Action
+type ActionHandlerInitialContainedAction func(action int32, actor int32, child *int32) Action
 
 // OnLeaveGround, OnLandOnGround, OnDrop, OnShoved, OnBlinded, OnHitByVomitJar, OnCommandAttack
-type ActionHandlerSig6 func(action int32, actor int32, entity int32, result ActionDesiredResult) Action
+type ActionHandlerOnLeaveGround func(action int32, actor int32, entity int32, result ActionDesiredResult) Action
 
 // OnContact
-type ActionHandlerSig7 func(action int32, actor int32, entity int32, trace int32, result ActionDesiredResult) Action
+type ActionHandlerOnContact func(action int32, actor int32, entity int32, trace int32, result ActionDesiredResult) Action
 
 // OnMoveToSuccess
-type ActionHandlerSig8 func(action int32, actor int32, path int32, result ActionDesiredResult) Action
+type ActionHandlerOnMoveToSuccess func(action int32, actor int32, path int32, result ActionDesiredResult) Action
 
 // OnMoveToFailure
-type ActionHandlerSig9 func(action int32, actor int32, path int32, type_ int32, result ActionDesiredResult) Action
+type ActionHandlerOnMoveToFailure func(action int32, actor int32, path int32, type_ int32, result ActionDesiredResult) Action
 
 // OnStuck, OnUnStuck, OnPostureChanged, OnIgnite, OnModelChanged, OnEnteredSpit, OnCommandAssault, OnCommandResume
-type ActionHandlerSig10 func(action int32, actor int32, result ActionDesiredResult) Action
+type ActionHandlerOnStuck func(action int32, actor int32, result ActionDesiredResult) Action
 
 // OnAnimationActivityComplete, OnAnimationActivityInterrupted
-type ActionHandlerSig11 func(action int32, actor int32, activity int32, result ActionDesiredResult) Action
+type ActionHandlerOnAnimationActivityComplete func(action int32, actor int32, activity int32, result ActionDesiredResult) Action
 
 // OnAnimationEvent
-type ActionHandlerSig12 func(action int32, actor int32, animevent int32, result ActionDesiredResult) Action
+type ActionHandlerOnAnimationEvent func(action int32, actor int32, animevent int32, result ActionDesiredResult) Action
 
 // OnInjured, OnKilled
-type ActionHandlerSig13 func(action int32, actor int32, takedamageinfo int32, result ActionDesiredResult) Action
+type ActionHandlerOnInjured func(action int32, actor int32, takedamageinfo int32, result ActionDesiredResult) Action
 
 // OnOtherKilled
-type ActionHandlerSig14 func(action int32, actor int32, other int32, takedamageinfo int32, result ActionDesiredResult) Action
-
-// OnSight, OnLostSight, OnThreatChanged
-type ActionHandlerSig15 func(action int32, actor int32, entity int32, result ActionDesiredResult) Action
+type ActionHandlerOnOtherKilled func(action int32, actor int32, other int32, takedamageinfo int32, result ActionDesiredResult) Action
 
 // OnSound
-type ActionHandlerSig16 func(action int32, actor int32, entity int32, pos [3]float32, keyvalues int32, result ActionDesiredResult) Action
+type ActionHandlerOnSound func(action int32, actor int32, entity int32, pos [3]float32, keyvalues int32, result ActionDesiredResult) Action
 
 // OnSpokeConcept
-type ActionHandlerSig17 func(action int32, actor int32, who int32, concept int32, response int32, unknown int32, result ActionDesiredResult) Action
+type ActionHandlerOnSpokeConcept func(action int32, actor int32, who int32, concept int32, response int32, unknown int32, result ActionDesiredResult) Action
 
 // OnNavAreaChanged
-type ActionHandlerSig18 func(action int32, actor int32, newArea int32, oldArea int32, result ActionDesiredResult) Action
+type ActionHandlerOnNavAreaChanged func(action int32, actor int32, newArea int32, oldArea int32, result ActionDesiredResult) Action
 
 // OnPickUp
-type ActionHandlerSig19 func(action int32, actor int32, entity int32, giver int32, result ActionDesiredResult) Action
+type ActionHandlerOnPickUp func(action int32, actor int32, entity int32, giver int32, result ActionDesiredResult) Action
 
 // OnCommandApproachVector
-type ActionHandlerSig20 func(action int32, actor int32, pos [3]float32, range_ float32, result ActionDesiredResult) Action
+type ActionHandlerOnCommandApproachVector func(action int32, actor int32, pos [3]float32, range_ float32, result ActionDesiredResult) Action
 
 // OnCommandApproachEntity
-type ActionHandlerSig21 func(action int32, actor int32, goal int32, result ActionDesiredResult) Action
+type ActionHandlerOnCommandApproachEntity func(action int32, actor int32, goal int32, result ActionDesiredResult) Action
 
 // OnCommandRetreat
-type ActionHandlerSig22 func(action int32, actor int32, threat int32, range_ float32, result ActionDesiredResult) Action
+type ActionHandlerOnCommandRetreat func(action int32, actor int32, threat int32, range_ float32, result ActionDesiredResult) Action
 
 // OnCommandPause
-type ActionHandlerSig23 func(action int32, actor int32, duration float32, result ActionDesiredResult) Action
+type ActionHandlerOnCommandPause func(action int32, actor int32, duration float32, result ActionDesiredResult) Action
 
 // OnCommandString
-type ActionHandlerSig24 func(action int32, actor int32, command string, result ActionDesiredResult) Action
+type ActionHandlerOnCommandString func(action int32, actor int32, command string, result ActionDesiredResult) Action
 
 // IsAbleToBlockMovementOf
-type ActionHandlerSig25 func(action int32, actor int32, nextbot int32, result ActionDesiredResult) Action
+type ActionHandlerIsAbleToBlockMovementOf func(action int32, actor int32, nextbot int32, result ActionDesiredResult) Action
 
 // OnTerritoryContested, OnTerritoryCaptured, OnTerritoryLost
-type ActionHandlerSig26 func(action int32, actor int32, territory int32) Action
+type ActionHandlerOnTerritoryContested func(action int32, actor int32, territory int32) Action
 
 // OnWin, OnLose
-type ActionHandlerSig27 func(action int32, actor int32) Action
+type ActionHandlerOnWin func(action int32, actor int32) Action
 
 // OnWeaponFired
-type ActionHandlerSig28 func(action int32, actor int32, who int32, weapon int32) Action
+type ActionHandlerOnWeaponFired func(action int32, actor int32, who int32, weapon int32) Action
 
 // OnActorEmoted
-type ActionHandlerSig29 func(action int32, actor int32, emoter int32, emote int32) Action
+type ActionHandlerOnActorEmoted func(action int32, actor int32, emoter int32, emote int32) Action
 
-// ActionContextualHandler is a function reference. Its call signatures are ActionContextualHandlerSig1..ActionContextualHandlerSig7.
+// ActionContextualHandler is a function reference, with 7 call signatures: ActionContextualHandlerShouldPickUp, ActionContextualHandlerShouldHurry, ActionContextualHandlerShouldAttack, ActionContextualHandlerSelectTargetPoint, ActionContextualHandlerIsPositionAllowed, ActionContextualHandlerQueryCurrentPath, ActionContextualHandlerSelectMoreDangerousThreat.
 type ActionContextualHandler struct{ Ref int32 }
 
 // ShouldPickUp, IsHindrance
-type ActionContextualHandlerSig1 func(action int32, nextbot int32, entity int32, result *QueryResultType) Action
+type ActionContextualHandlerShouldPickUp func(action int32, nextbot int32, entity int32, result *QueryResultType) Action
 
 // ShouldHurry, ShouldRetreat
-type ActionContextualHandlerSig2 func(action int32, nextbot int32, result *QueryResultType) Action
+type ActionContextualHandlerShouldHurry func(action int32, nextbot int32, result *QueryResultType) Action
 
 // ShouldAttack
-type ActionContextualHandlerSig3 func(action int32, nextbot int32, knownEntity int32, result *QueryResultType) Action
+type ActionContextualHandlerShouldAttack func(action int32, nextbot int32, knownEntity int32, result *QueryResultType) Action
 
 // SelectTargetPoint
-type ActionContextualHandlerSig4 func(action int32, nextbot int32, entity int32, vec *[3]float32) Action
+type ActionContextualHandlerSelectTargetPoint func(action int32, nextbot int32, entity int32, vec *[3]float32) Action
 
 // IsPositionAllowed
-type ActionContextualHandlerSig5 func(action int32, nextbot int32, vec *[3]float32, result *QueryResultType) Action
+type ActionContextualHandlerIsPositionAllowed func(action int32, nextbot int32, vec *[3]float32, result *QueryResultType) Action
 
 // QueryCurrentPath
-type ActionContextualHandlerSig6 func(action int32, nextbot int32, path *int32) Action
+type ActionContextualHandlerQueryCurrentPath func(action int32, nextbot int32, path *int32) Action
 
 // SelectMoreDangerousThreat
-type ActionContextualHandlerSig7 func(action int32, nextbot int32, entity int32, threat1 int32, threat2 int32, knownEntity *int32) Action
+type ActionContextualHandlerSelectMoreDangerousThreat func(action int32, nextbot int32, entity int32, threat1 int32, threat2 int32, knownEntity *int32) Action
 
 type ActionProcessor struct{ Ref int32 }
 

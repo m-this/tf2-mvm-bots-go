@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
 )
 
 // shippedMaps is every Valve MvM map the mod has a config for and whose nav
@@ -36,12 +38,7 @@ func loadMap(t *testing.T, name string) *Mesh {
 func configDir(t *testing.T) string {
 	t.Helper()
 
-	upstream := os.Getenv("MVMBOTS_UPSTREAM")
-	if upstream == "" {
-		t.Skip("MVMBOTS_UPSTREAM is unset, so the map configs are not reachable")
-	}
-
-	dir := filepath.Join(upstream, "configs", "defenderbots", "map")
+	dir := filepath.Join(upstream.SkipOrFail(t), "configs", "defenderbots", "map")
 	if _, err := os.Stat(dir); err != nil {
 		t.Skipf("no map configs at %s", dir)
 	}

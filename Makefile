@@ -22,7 +22,7 @@ gen:
 # The target-specific variable reaches test through the prerequisite, which is
 # the whole point: the gate runs the same tests and refuses to skip the ones
 # that need spcomp.
-check: REQUIRE := MVMBOTS_REQUIRE_SPSHELL=1
+check: REQUIRE := MVMBOTS_REQUIRE_SPSHELL=1 MVMBOTS_REQUIRE_UPSTREAM=1
 check: toolchain vet lint test
 	$(GO) run ./cmd/gen -upstream $(UPSTREAM) -out gen
 	@cp -r gen .gen.first && $(GO) run ./cmd/gen -upstream $(UPSTREAM) -out gen \

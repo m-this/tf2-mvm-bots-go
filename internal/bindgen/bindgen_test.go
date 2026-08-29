@@ -8,23 +8,30 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
 )
 
-// upstream is the plugin repository holding the include tree, the same
-// MVMBOTS_UPSTREAM the Makefile passes to the bindings tests.
-func upstream() string {
-	if root := os.Getenv("MVMBOTS_UPSTREAM"); root != "" {
-		return root
-	}
-	return "../../../tf2-mvm-bots"
+// includeRoot is the include tree inside the plugin's test-bed build
+// directory. The plugin repository is resolved by internal/upstream, which is
+// where a relative MVMBOTS_UPSTREAM is read from the repository root rather
+// than from this package: doing it here got it wrong, and every proof below
+// skipped in silence.
+func includeRoot(t *testing.T) string {
+	t.Helper()
+	return filepath.Join(pluginDir(t), "testbed", "build")
 }
 
-func includeRoot() string { return filepath.Join(upstream(), "testbed", "build") }
+func pluginDir(t *testing.T) string {
+	t.Helper()
+
+	return upstream.SkipOrFail(t)
+}
 
 // generate runs the driver over the real tree, skipping when it is absent.
 func generate(t *testing.T) *Result {
 	t.Helper()
-	root := includeRoot()
+	root := includeRoot(t)
 	if _, err := os.Stat(root); err != nil {
 		t.Skipf("include tree not present: %v", err)
 	}
@@ -217,7 +224,7 @@ func TestResolvePrefersTheNearestCopy(t *testing.T) {
 // far enough to mean the driver stopped emitting.
 func TestUnbound(t *testing.T) {
 	res := generate(t)
-	root := filepath.Join(upstream(), "source")
+	root := filepath.Join(pluginDir(t), "source")
 	if _, err := os.Stat(root); err != nil {
 		t.Skipf("plugin source not present: %v", err)
 	}

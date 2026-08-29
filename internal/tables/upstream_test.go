@@ -12,9 +12,7 @@ import (
 func readUpstream(t *testing.T, parts ...string) string {
 	t.Helper()
 
-	if _, err := upstream.Dir(); err != nil {
-		t.Skipf("no plugin repository, set MVMBOTS_UPSTREAM: %v", err)
-	}
+	upstream.SkipOrFail(t)
 	body, err := upstream.Read(parts...)
 	if err != nil {
 		t.Fatalf("reading %v at %s: %v", parts, upstream.Rev, err)
