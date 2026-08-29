@@ -68,7 +68,7 @@ func EnemyNearestToMe(client int32, maxDistance float32, giantsOnly bool, ignore
 
 	bestDistance := float32(999999.0)
 	bestEntity := int32(-1)
-	enemyTeam := engine.PlayerEnemyTeam(client)
+	enemyTeam := PlayerEnemyTeam(client)
 
 	for i := int32(1); i <= engine.MaxClients(); i++ {
 		if i == client {

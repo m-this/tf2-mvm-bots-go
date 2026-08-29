@@ -199,7 +199,7 @@ stock bool TF2_IsPlayerInCondition(int client, TFCond condition)
 	fmt.Fprintf(&b, "stock int GetEntPropEnt(int weapon, PropType propType, const char[] prop) { Trace(%d, weapon); return gHealing[weapon - 200] ? 1 : -1; }\n", traceEntPropEnt)
 	fmt.Fprintf(&b, "stock int BaseCombatCharacter_GetActiveWeapon(int client) { Trace(%d, client); return gWeapon[client]; }\n", traceActiveWeapon)
 	fmt.Fprintf(&b, "stock TFWeaponType TF2Util_GetWeaponID(int weapon) { Trace(%d, weapon); return gMedigun[weapon - 200] ? TF_WEAPON_MEDIGUN : TF_WEAPON_NONE; }\n", traceWeaponID)
-	fmt.Fprintf(&b, "stock TFTeam GetPlayerEnemyTeam(int client) { Trace(%d, client); return gTfTeam[client] == 2 ? view_as<TFTeam>(3) : view_as<TFTeam>(2); }\n", tracePlayerEnemyTeam)
+	fmt.Fprintf(&b, "stock TFTeam TF2_GetEnemyTeam(TFTeam team) { Trace(%d, view_as<int>(team)); return team == view_as<TFTeam>(2) ? view_as<TFTeam>(3) : view_as<TFTeam>(2); }\n", traceEnemyTeam)
 	return b.String()
 }
 

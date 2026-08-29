@@ -43,12 +43,22 @@ var All = []Body{
 
 // Generate emits every body, keyed by its output path.
 func Generate(root string) (map[string][]byte, error) {
+	return GenerateWith(root, "")
+}
+
+// GenerateWith is Generate with one extra SourcePawn name pretended to be
+// generated, which is how the double-ownership refusal is tested without
+// keeping a body around whose only job is to be refused.
+func GenerateWith(root string, alsoOwned string) (map[string][]byte, error) {
 	declared, err := spbody.ExternsFromDir(filepath.Join(root, ExternDir))
 	if err != nil {
 		return nil, err
 	}
 	out := make(map[string][]byte, len(All))
 	owned := make(map[string]string)
+	if alsoOwned != "" {
+		owned[alsoOwned] = "a caller's test"
+	}
 	for _, b := range All {
 		g, err := spbody.GenerateDir(filepath.Join(root, b.Dir), spbody.Config{
 			Prefix:  b.Prefix,

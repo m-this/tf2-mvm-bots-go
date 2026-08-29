@@ -90,7 +90,7 @@ type Calls struct {
 	IsPlayerInCondition    func(client int32, condition Condition) bool
 	PlayerClass            func(client int32) Class
 	PlayerTeam             func(client int32) Team
-	PlayerEnemyTeam        func(client int32) Team
+	EnemyTeam              func(team Team) Team
 	FindEntityByClassname  func(start int32, classname string) int32
 	ObjectType             func(entity int32) Object
 	EntityTeamNumber       func(entity int32) int32
@@ -304,14 +304,14 @@ func PlayerTeam(client int32) Team {
 	return installed.PlayerTeam(client)
 }
 
-// PlayerEnemyTeam is the team the player is fighting.
+// EnemyTeam is the team fighting this one.
 //
-//sp:plugin GetPlayerEnemyTeam
-func PlayerEnemyTeam(client int32) Team {
-	if installed.PlayerEnemyTeam == nil {
-		missing("GetPlayerEnemyTeam")
+//sp:native TF2_GetEnemyTeam
+func EnemyTeam(team Team) Team {
+	if installed.EnemyTeam == nil {
+		missing("TF2_GetEnemyTeam")
 	}
-	return installed.PlayerEnemyTeam(client)
+	return installed.EnemyTeam(team)
 }
 
 // ClassEngineer is TFClass_Engineer.

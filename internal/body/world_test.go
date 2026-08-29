@@ -34,7 +34,7 @@ const (
 	traceIsPlayerInCondition
 	tracePlayerClass
 	tracePlayerTeam
-	tracePlayerEnemyTeam
+	traceEnemyTeam
 	traceObjectType
 	traceEntityTeamNumber
 	traceIsPlacing
@@ -226,10 +226,10 @@ func (in *installed) calls() engine.Calls {
 			// so the loop both takes and skips its condition.
 			return (c+index)%worldSlots + 1
 		},
-		PlayerEnemyTeam: func(c int32) engine.Team {
-			in.record(tracePlayerEnemyTeam, c)
-			// Red fights blue, and every other slot is on each.
-			if in.w.tfTeam[c] == 2 {
+		EnemyTeam: func(team engine.Team) engine.Team {
+			in.record(traceEnemyTeam, int32(team))
+			// Red fights blue and blue fights red.
+			if team == 2 {
 				return 3
 			}
 			return 2

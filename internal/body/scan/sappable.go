@@ -40,7 +40,7 @@ func PlayerHealingSomething(client int32) bool {
 func NearestSappablePlayer(client int32, maxDistance float32, giantsOnly bool, class engine.Class, speedCheck float32) int32 {
 	origin := engine.Origin(client)
 
-	enemyTeam := engine.PlayerEnemyTeam(client)
+	enemyTeam := PlayerEnemyTeam(client)
 	bestDistance := float32(999999.0)
 	bestEntity := int32(-1)
 
@@ -71,7 +71,7 @@ func NearestSappablePlayer(client int32, maxDistance float32, giantsOnly bool, c
 func FarthestSappablePlayer(client int32, maxDistance float32, giantsOnly bool, class engine.Class, speedCheck float32) int32 {
 	origin := engine.Origin(client)
 
-	enemyTeam := engine.PlayerEnemyTeam(client)
+	enemyTeam := PlayerEnemyTeam(client)
 	bestDistance := float32(0.0)
 	bestEntity := int32(-1)
 
@@ -103,7 +103,7 @@ func FarthestSappablePlayer(client int32, maxDistance float32, giantsOnly bool, 
 func NearestSappablePlayerHealingSomeone(client int32, maxDistance float32, giantsOnly bool, class engine.Class, speedCheck float32) int32 {
 	origin := engine.Origin(client)
 
-	enemyTeam := engine.PlayerEnemyTeam(client)
+	enemyTeam := PlayerEnemyTeam(client)
 	bestDistance := float32(999999.0)
 	bestEntity := int32(-1)
 
@@ -166,7 +166,7 @@ func sappableCandidate(client int32, i int32, enemyTeam engine.Team, giantsOnly 
 // GetEnemyPlayerNearestToPosition: the shortest of the loops, measuring from a
 // position the caller supplies rather than from where the client stands.
 func EnemyPlayerNearestToPosition(client int32, position [3]float32, maxDistance float32) int32 {
-	enemyTeam := engine.PlayerEnemyTeam(client)
+	enemyTeam := PlayerEnemyTeam(client)
 	bestDistance := float32(999999.0)
 	bestEntity := int32(-1)
 
