@@ -111,10 +111,23 @@ testable and the experiments trustworthy. It does not make the bots walk.
 ## Why not fork SourceGo
 
 The goal is right: hand write only the SourcePawn that has to be SourcePawn.
-The measurements say that floor is low. In 24.7k lines there are 121 SDKCall
-sites, 34 DHook sites and about 70 raw address or entity-data reads. Under 250
-places genuinely touch the engine in a way a generator cannot. Everything else
-is arithmetic, property reads and action plumbing.
+
+CORRECTION, from `parity.md`, written later. The paragraph that stood here said
+that floor was low: 121 SDKCall sites, 34 DHook sites and about 70 raw address
+reads, so under 250 places. That count is real and the unit is wrong. It counts
+three call kinds and it counts sites, when what decides whether a function can
+be generated is whether the function contains any engine call at all.
+
+Measured properly: 1389 lines contain an engine call once nav, traces,
+GetEntProp, the TF2Util and Econ families, hooks and timers are included, and
+436 of 756 functions contain at least one, holding 14942 lines. 320 functions
+are already pure, 249 become pure with a hoist, and 187 functions holding 10053
+lines have three or more engine calls each. The realistic hand-written floor is
+about 10800 lines, 44 percent of the plugin, against the roughly 1200 this
+paragraph implied. Low by about nine times.
+
+The generatable share is 9856 lines, 40 percent. That is worth having. It is
+not "everything except 250 places".
 
 Forking SourceGo is the expensive route to that floor.
 
