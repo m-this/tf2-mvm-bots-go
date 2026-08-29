@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/m-this/tf2-mvm-bots-go/internal/sp"
 )
 
 // ErrNoToolchain says spcomp, spshell or the include tree was not configured.
@@ -163,34 +165,9 @@ func inputsInclude(inputs []Triple) string {
 	return b.String()
 }
 
-/*
-	literal writes v as a SourcePawn float literal
-
-Shortest decimal that reads back as the same float32, in the form spcomp's lexer
-takes. Its rules are narrower than Go's, and getting them wrong is silent: a
-literal read back as a different float is a wrong answer in every generated
-function that carries it, with no diagnostic anywhere.
-
-Plain decimal for anything Go writes that way. Exponent form for the rest,
-because 'f' form is where this went wrong: FLT_MAX as 39 digits compiled to
-0x5f794ad1, about 1.8e19, and spcomp said nothing.
-
-Two rules for the exponent form. The mantissa needs a point with a digit each
-side, so 1e-45 is "number literal has invalid digits" and 1.0e-45 is the
-smallest denormal. And a positive exponent carries no sign, so 3.4028235e+38 is
-"exponential must be followed by integer".
-*/
-func literal(v float32) string {
-	s := strconv.FormatFloat(float64(v), 'g', -1, 32)
-	mantissa, exponent, hasExponent := strings.Cut(s, "e")
-	if !strings.ContainsRune(mantissa, '.') {
-		mantissa += ".0"
-	}
-	if !hasExponent {
-		return mantissa
-	}
-	return mantissa + "e" + strings.TrimPrefix(exponent, "+")
-}
+// literal writes v as a SourcePawn float literal. The rules, and why they are
+// not obvious, are internal/sp.
+func literal(v float32) string { return sp.FloatLiteral(v) }
 
 /*
 	WithSourceMod swaps in the compiler the plugin actually ships with

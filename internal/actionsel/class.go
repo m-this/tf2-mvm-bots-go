@@ -1,30 +1,25 @@
 package actionsel
 
-// Class is TFClassType from tf2.inc, in its declared order.
-type Class int32
+import "github.com/m-this/tf2-mvm-bots-go/internal/tf"
+
+// Class is the game's TFClassType, which internal/tf owns because
+// internal/threat branches on the same enum. Aliased rather than re-declared:
+// two copies of one enum is the bug this repository exists to remove.
+type Class = tf.Class
 
 // The ten classes, in declared order.
 const (
-	ClassUnknown Class = iota
-	ClassScout
-	ClassSniper
-	ClassSoldier
-	ClassDemoMan
-	ClassMedic
-	ClassHeavy
-	ClassPyro
-	ClassSpy
-	ClassEngineer
+	ClassUnknown  = tf.ClassUnknown
+	ClassScout    = tf.ClassScout
+	ClassSniper   = tf.ClassSniper
+	ClassSoldier  = tf.ClassSoldier
+	ClassDemoMan  = tf.ClassDemoMan
+	ClassMedic    = tf.ClassMedic
+	ClassHeavy    = tf.ClassHeavy
+	ClassPyro     = tf.ClassPyro
+	ClassSpy      = tf.ClassSpy
+	ClassEngineer = tf.ClassEngineer
 )
 
-// numClasses is one past the last class, so Classes covers exactly the enum.
-const numClasses = ClassEngineer + 1
-
 // Classes is every class, in declared order.
-func Classes() []Class {
-	all := make([]Class, 0, numClasses)
-	for c := ClassUnknown; c < numClasses; c++ {
-		all = append(all, c)
-	}
-	return all
-}
+func Classes() []Class { return tf.Classes() }

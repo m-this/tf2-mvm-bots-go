@@ -37,6 +37,7 @@ func files() (map[string][]byte, error) {
 		"sourcepawn/actionsel_dispatch.sp": []byte(sel.Dispatch),
 		"sourcepawn/attributes.sp":         tables.SourcePawnAttributes(),
 		"sourcepawn/features.sp":           tables.SourcePawnFeatures(),
+		"sourcepawn/threat_priority.sp":    spgen.EmitThreatPriority(),
 		"sourcepawn/wave_write.sp":         tables.SourcePawnWaveWriter(),
 		"go/arms/arms.go":                  tables.GoFeatureArms("arms"),
 		"go/attr/attr.go":                  tables.GoAttributes("attr"),
