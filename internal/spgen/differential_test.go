@@ -206,6 +206,18 @@ methodmap ConVar
 	}
 }
 
+/* SourceMod's own, needed by the generated attribute lookup. Comparing to the
+   terminator rather than looping to it, so the semantics match: two names are
+   equal when they end together with nothing different before it. */
+stock bool StrEqual(const char[] a, const char[] b)
+{
+	int i = 0;
+	while (a[i] != 0 && a[i] == b[i])
+		i++;
+
+	return a[i] == b[i];
+}
+
 stock RoundState GameRules_GetRoundState() { return RoundState_Init; }
 stock TFClassType TF2_GetPlayerClass(int client) { return view_as<TFClassType>(client); }
 `}

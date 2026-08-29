@@ -35,9 +35,11 @@ func files() (map[string][]byte, error) {
 	return map[string][]byte{
 		"sourcepawn/actionsel.sp":          []byte(sel.Data),
 		"sourcepawn/actionsel_dispatch.sp": []byte(sel.Dispatch),
+		"sourcepawn/attributes.sp":         tables.SourcePawnAttributes(),
 		"sourcepawn/features.sp":           tables.SourcePawnFeatures(),
 		"sourcepawn/wave_write.sp":         tables.SourcePawnWaveWriter(),
 		"go/arms/arms.go":                  tables.GoFeatureArms("arms"),
+		"go/attr/attr.go":                  tables.GoAttributes("attr"),
 		"go/wave/wave.go":                  tables.GoWaveParser("wave"),
 	}, nil
 }

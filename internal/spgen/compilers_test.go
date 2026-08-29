@@ -1,9 +1,12 @@
 package spgen_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/spshell"
+	"github.com/m-this/tf2-mvm-bots-go/internal/tables"
 	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
 )
 
@@ -72,5 +75,48 @@ func TestTheGeneratedEdgeCompilesUnderBothCompilers(t *testing.T) {
 	}
 	if err := shipped.Compile(t.Context(), "testdata/dispatch_smoke.sp", sourceModEnv); err != nil {
 		t.Fatalf("compiling the generated edge with SourceMod's spcomp64: %v", err)
+	}
+}
+
+/*
+	TestGeneratedAttributeLookupAnswersTheDeclaredIDs
+
+The attribute table is the one generated file whose whole job is a name to id
+map, so the check is that the map it emits is the map the Go declared. Every
+name goes through AttributeID under SourcePawn's own VM, plus a name the table
+does not hold and an empty one, which both have to come back ATTRIBUTE_NONE.
+*/
+func TestGeneratedAttributeLookupAnswersTheDeclaredIDs(t *testing.T) {
+	tc := spshell.ForTest(t)
+
+	var names strings.Builder
+	names.WriteString("char gProbeNames[][] =\n{\n")
+	for _, a := range tables.Attributes {
+		fmt.Fprintf(&names, "\t%q,\n", a.Name)
+	}
+	// The two misses: a name the schema could have and the table does not
+	// hold, and the empty string, which a caller with no attribute passes.
+	names.WriteString("\t\"a name the schema has and the ranking does not\",\n\t\"\",\n};\n")
+
+	cells, err := tc.Run(t.Context(), "testdata/attributes_smoke.sp", map[string]string{
+		"smoke_env.inc":   stubbedEnv["smoke_env.inc"],
+		"probe_names.inc": names.String(),
+		"attributes.sp":   string(tables.SourcePawnAttributes()),
+	})
+	if err != nil {
+		t.Fatalf("running the attribute lookup: %v", err)
+	}
+	if want := len(tables.Attributes) + 2; len(cells) != want {
+		t.Fatalf("%d answers for %d names plus the two misses", len(cells), want)
+	}
+	for i, a := range tables.Attributes {
+		if cells[i] != a.ID {
+			t.Errorf("%q looked up as %d, the table declares %d", a.Name, cells[i], a.ID)
+		}
+	}
+	for i, cell := range cells[len(tables.Attributes):] {
+		if cell != 0 {
+			t.Errorf("miss %d answered %d, want ATTRIBUTE_NONE", i, cell)
+		}
 	}
 }
