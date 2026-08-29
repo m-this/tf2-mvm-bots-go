@@ -51,7 +51,7 @@ func includeRoot(upstream string) string {
 // does not depend on them.
 func writeBindings(out, upstream string) error {
 	root := includeRoot(upstream)
-	if _, err := os.Stat(root); err != nil {
+	if !isDir(root) {
 		fmt.Fprintf(os.Stderr, "gen: no include tree at %s, skipping bindings\n", root)
 		return nil
 	}
@@ -69,6 +69,11 @@ func writeBindings(out, upstream string) error {
 	}
 	fmt.Fprintf(os.Stderr, "gen: %d binding files, %d refusals\n", len(res.Files), len(res.Refusals))
 	return nil
+}
+
+func isDir(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
 }
 
 func run(out, upstream string) error {
