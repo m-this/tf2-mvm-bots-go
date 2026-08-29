@@ -33,14 +33,22 @@ neither is a difference in what runs. The body-level proof is the differential
 test the pure bodies get, and an action cannot have one.
 */
 func TestGeneratedActionMatchesTheShippedOne(t *testing.T) {
-	root := upstream.SkipOrFail(t)
+	upstream.SkipOrFail(t)
 
 	generated, err := body.Generate("../..")
 	if err != nil {
 		t.Fatalf("generating: %v", err)
 	}
 	got := string(generated["sourcepawn/spysap.sp"])
-	shipped := readUpstreamFile(t, root, "source", "redbots3", "behavior", "spysap.sp")
+
+	// At the pin, not in the working tree. The working tree no longer has a
+	// hand written spysap.sp: the port took it, which is the whole point,
+	// and a comparison that read the tree would have quietly stopped
+	// comparing anything the moment it succeeded.
+	shipped, err := upstream.Read("source", "redbots3", "behavior", "spysap.sp")
+	if err != nil {
+		t.Fatalf("reading the shipped behaviour at %s: %v", upstream.Rev, err)
+	}
 
 	for _, name := range []string{"OnStart", "Update", "OnEnd", "OnSuspend", "OnResume"} {
 		t.Run(name, func(t *testing.T) {
