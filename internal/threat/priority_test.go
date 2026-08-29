@@ -141,3 +141,53 @@ func TestAnOutOfGamePlayerIsNotATarget(t *testing.T) {
 		}
 	}
 }
+
+/*
+	TestGiantAndCarrierAreDeadForANonPlayer
+
+The property the edge needs, and it is not a tidiness claim: it is what lets the
+edge pass false rather than call for them.
+
+The shipped chain reads TF2_IsMiniBoss and TF2_HasTheFlag only after the player
+test has passed, so for anything that is not an in-game player it never asks.
+An edge that fills the record eagerly does ask, and both throw: measured, 3933
+exceptions in four waves, on tank_boss and obj_attachment_sapper. See
+mvm-z83.46.
+
+So the edge guards them, and this says the guard changes no answer.
+*/
+func TestGiantAndCarrierAreDeadForANonPlayer(t *testing.T) {
+	t.Parallel()
+
+	for got := range threat.Threats {
+		if got.IsPlayer && got.InGame {
+			continue
+		}
+		blank := got
+		blank.Giant, blank.Carrier = false, false
+		if want, guarded := threat.PriorityOf(got), threat.PriorityOf(blank); want != guarded {
+			t.Fatalf("%+v answers %s, and with giant and carrier zeroed it answers %s", got, want, guarded)
+		}
+	}
+}
+
+/*
+	TestClassIsDeadForANonPlayer
+
+The same for the class, which the edge also cannot ask for: TF2_GetPlayerClass
+on a non-player is the same kind of read.
+*/
+func TestClassIsDeadForANonPlayer(t *testing.T) {
+	t.Parallel()
+
+	for got := range threat.Threats {
+		if got.IsPlayer && got.InGame {
+			continue
+		}
+		blank := got
+		blank.Class = tf.ClassUnknown
+		if want, guarded := threat.PriorityOf(got), threat.PriorityOf(blank); want != guarded {
+			t.Fatalf("%+v answers %s, and with the class blanked it answers %s", got, want, guarded)
+		}
+	}
+}
