@@ -34,12 +34,15 @@ func TestAdoptedFilesMatchTheGenerator(t *testing.T) {
 		t.Fatalf("generating the bodies: %v", err)
 	}
 
+	// Every generated file the plugin includes, whether it came from a table,
+	// a body or an action. Adding one here is what keeps it from drifting.
 	adopted := map[string][]byte{
-		filepath.Join("source", "redbots3", "generated", "features.sp"):        tables.SourcePawnFeatures(),
-		filepath.Join("source", "redbots3", "generated", "threat_priority.sp"): spgen.EmitThreatPriority(),
-		filepath.Join("source", "redbots3", "generated", "scan.sp"):            bodies["sourcepawn/scan.sp"],
-		filepath.Join("source", "redbots3", "generated", "spysap.sp"):          bodies["sourcepawn/spysap.sp"],
-		filepath.Join("testbed", "stats", "generated", "wave_write.sp"):        tables.SourcePawnWaveWriter(),
+		filepath.Join("source", "redbots3", "generated", "features.sp"):         tables.SourcePawnFeatures(),
+		filepath.Join("source", "redbots3", "generated", "threat_priority.sp"):  spgen.EmitThreatPriority(),
+		filepath.Join("source", "redbots3", "generated", "scan.sp"):             bodies["sourcepawn/scan.sp"],
+		filepath.Join("source", "redbots3", "generated", "spysap.sp"):           bodies["sourcepawn/spysap.sp"],
+		filepath.Join("source", "redbots3", "generated", "collectnearmoney.sp"): bodies["sourcepawn/collectnearmoney.sp"],
+		filepath.Join("testbed", "stats", "generated", "wave_write.sp"):         tables.SourcePawnWaveWriter(),
 	}
 
 	for name, want := range adopted {

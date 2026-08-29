@@ -34,13 +34,24 @@ type Body struct {
 	// Prefix goes in front of every emitted name. Go_ says at the call site
 	// that the function came from here and is not to be edited.
 	Prefix string
+	// Shipped is the file this replaces, at the pinned revision, relative to
+	// the plugin repository. The comparison reads it there rather than in
+	// the working tree, because the port deletes it.
+	Shipped string
 }
 
 // Actions are the behaviours: a Go package each, emitted as the BehaviorAction
 // subclass the plugin includes. They are bodies with a shape around them, so
 // they go through the same extern declarations and the same ownership rule.
 var Actions = []Body{
-	{Dir: "internal/action/spysap", Out: "sourcepawn/spysap.sp", Prefix: "Go_"},
+	{
+		Dir: "internal/action/spysap", Out: "sourcepawn/spysap.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/behavior/spysap.sp",
+	},
+	{
+		Dir: "internal/action/collectnearmoney", Out: "sourcepawn/collectnearmoney.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/behavior/collectnearmoney.sp",
+	},
 }
 
 // All is every body. Adding one here is what makes it generated.

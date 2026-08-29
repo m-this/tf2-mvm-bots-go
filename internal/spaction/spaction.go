@@ -67,12 +67,12 @@ var callbacks = map[string]callback{
 	// whether the answer was changed at all.
 	"ShouldAttack": {
 		Wire: "ShouldAttack", Returns: "Action",
-		Params: "INextBot nextbot, CKnownEntity knownEntity, QueryResultType &result",
+		Params: "INextBot nextbot, CKnownEntity knownEntity, QueryResultType& result",
 		Names:  []string{"nextbot", "knownEntity", "result"},
 	},
 	"IsHindrance": {
 		Wire: "IsHindrance", Returns: "Action",
-		Params: "INextBot nextbot, int entity, QueryResultType &result",
+		Params: "INextBot nextbot, int entity, QueryResultType& result",
 		Names:  []string{"nextbot", "entity", "result"},
 	},
 	"OnStart": {

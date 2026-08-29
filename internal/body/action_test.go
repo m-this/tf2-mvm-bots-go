@@ -1,12 +1,14 @@
 package body_test
 
 import (
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/body"
+	"github.com/m-this/tf2-mvm-bots-go/internal/spaction"
 	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
 )
 
@@ -39,26 +41,39 @@ func TestGeneratedActionMatchesTheShippedOne(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generating: %v", err)
 	}
-	got := string(generated["sourcepawn/spysap.sp"])
+	for _, action := range body.Actions {
+		t.Run(action.Dir, func(t *testing.T) {
+			compareAction(t, action, string(generated[action.Out]))
+		})
+	}
+}
 
-	// At the pin, not in the working tree. The working tree no longer has a
-	// hand written spysap.sp: the port took it, which is the whole point,
-	// and a comparison that read the tree would have quietly stopped
-	// comparing anything the moment it succeeded.
-	shipped, err := upstream.Read("source", "redbots3", "behavior", "spysap.sp")
+func compareAction(t *testing.T, action body.Body, got string) {
+	t.Helper()
+
+	// At the pin, not in the working tree. The working tree no longer has
+	// the hand written file: the port took it, which is the whole point, and
+	// a comparison that read the tree would have quietly stopped comparing
+	// anything the moment it succeeded.
+	shipped, err := upstream.Read(strings.Split(action.Shipped, "/")...)
 	if err != nil {
 		t.Fatalf("reading the shipped behaviour at %s: %v", upstream.Rev, err)
 	}
 
-	for _, name := range []string{"OnStart", "Update", "OnEnd", "OnSuspend", "OnResume"} {
+	declared, err := spaction.Read(filepath.Join("../..", action.Dir))
+	if err != nil {
+		t.Fatalf("reading the action: %v", err)
+	}
+
+	for _, name := range declared.Has {
 		t.Run(name, func(t *testing.T) {
-			want, ok := callbackOf(shipped, "CTFBotSpySap_"+name)
+			want, ok := callbackOf(shipped, declared.Prefix+"_"+name)
 			if !ok {
-				t.Fatalf("the shipped file has no CTFBotSpySap_%s", name)
+				t.Fatalf("the shipped file has no %s_%s", declared.Prefix, name)
 			}
-			have, ok := callbackOf(got, "CTFBotSpySap_"+name)
+			have, ok := callbackOf(got, declared.Prefix+"_"+name)
 			if !ok {
-				t.Fatalf("the generated file has no CTFBotSpySap_%s", name)
+				t.Fatalf("the generated file has no %s_%s", declared.Prefix, name)
 			}
 			if wantDecl, haveDecl := declOf(want), declOf(have); wantDecl != haveDecl {
 				t.Errorf("the declaration is not the engine's:\nshipped:   %s\ngenerated: %s", wantDecl, haveDecl)

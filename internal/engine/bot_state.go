@@ -15,9 +15,14 @@ into a subscript the generator writes itself.
 
 // StateCalls are the shared arrays, as answers a test installs.
 type StateCalls struct {
-	Path          func(actor int32) Path
-	RepathTime    func(actor int32) float32
-	SetRepathTime func(actor int32, when float32)
+	Path                func(actor int32) Path
+	RepathTime          func(actor int32) float32
+	SetRepathTime       func(actor int32, when float32)
+	CurrencyPack        func(actor int32) int32
+	SetCurrencyPack     func(actor int32, pack int32)
+	RepathToPos         func(actor int32, bot Bot, goal [3]float32)
+	IsValidCurrencyPack func(pack int32) bool
+	NearestCurrencyPack func(client int32, maxDistance float32) int32
 }
 
 var state StateCalls
@@ -92,4 +97,56 @@ func (p Path) Update(bot Bot) {
 	if state.Path == nil {
 		missing("PathFollower.Update")
 	}
+}
+
+// CurrencyPackOf is the money pack the bot has picked to go and get. It is
+// declared in collectmoney.sp, which is not ported yet, so it is reached rather
+// than owned.
+//
+//sp:slot m_iCurrencyPack
+func CurrencyPackOf(actor int32) int32 {
+	if state.CurrencyPack == nil {
+		missing("m_iCurrencyPack")
+	}
+	return state.CurrencyPack(actor)
+}
+
+// SetCurrencyPack says which pack the bot is going for, and -1 for none.
+//
+//sp:slotset m_iCurrencyPack
+func SetCurrencyPack(actor int32, pack int32) {
+	if state.SetCurrencyPack == nil {
+		missing("m_iCurrencyPack")
+	}
+	state.SetCurrencyPack(actor, pack)
+}
+
+// RepathToPos asks the game for a route to a point.
+//
+//sp:plugin RepathToPos
+func RepathToPos(actor int32, bot Bot, goal [3]float32) {
+	if state.RepathToPos == nil {
+		missing("RepathToPos")
+	}
+	state.RepathToPos(actor, bot, goal)
+}
+
+// IsValidCurrencyPack says whether the pack is still there to be picked up.
+//
+//sp:plugin IsValidCurrencyPack
+func IsValidCurrencyPack(pack int32) bool {
+	if state.IsValidCurrencyPack == nil {
+		missing("IsValidCurrencyPack")
+	}
+	return state.IsValidCurrencyPack(pack)
+}
+
+// NearestCurrencyPack is util.sp's, ported: internal/body/scan generates it.
+//
+//sp:body GetNearestCurrencyPack
+func NearestCurrencyPack(client int32, maxDistance float32) int32 {
+	if state.NearestCurrencyPack == nil {
+		missing("GetNearestCurrencyPack")
+	}
+	return state.NearestCurrencyPack(client, maxDistance)
 }
