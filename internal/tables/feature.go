@@ -185,6 +185,14 @@ var Features = []Feature{
 			"the medic being broken. See mvm-w9b.",
 	},
 	{
+		Name:        "generated_threat_priority",
+		Description: "Rank threats with the table generated from the Go, rather than with the hand written chain.",
+		On:          false,
+		Note: "Off until a run says otherwise, and this one is meant to change nothing. It is the port in\n" +
+			"mvm-z83.6 wired up: the two are proved identical over the whole domain under SourcePawn's own\n" +
+			"VM, so an arm that moves is the edge filling the record wrong, not the decision.",
+	},
+	{
 		Name:        "engineer_entrance_first",
 		Description: "The engineer puts his teleporter entrance up in spawn before he walks out to build the nest.",
 		On:          false,
