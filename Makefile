@@ -3,7 +3,7 @@ GOLANGCI_VERSION ?= latest
 GOLANGCI := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_VERSION)
 UPSTREAM ?= ../tf2-mvm-bots
 
-.PHONY: help gen check test lint vet clean hooks
+.PHONY: help gen check test lint vet clean
 
 help:
 	@grep -E '^[a-z-]+:' Makefile | cut -d: -f1 | grep -v help
@@ -29,6 +29,3 @@ lint:
 
 clean:
 	rm -rf gen bin
-
-hooks:
-	bd hooks install
