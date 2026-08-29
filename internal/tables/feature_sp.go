@@ -74,7 +74,25 @@ static ConVar MakeFeature(int id, const char[] description, bool on = true)
 	The switch exists to turn something off and measure the difference, and that is the whole point
 	of it: a behaviour that has not cleared the spread of the arm it was measured against is not
 	yet a behaviour this mod claims. See the rule in docs/testbed-metrics.md. */
-	return CreateConVar(name, on ? "1" : "0", description, FCVAR_NOTIFY);
+	ConVar cv = CreateConVar(name, on ? "1" : "0", description, FCVAR_NOTIFY);
+
+	/* Republish whenever one of these moves, rather than only when a wave begins
+
+	The published list used to go stale between a switch being set and the next wave, and the
+	statistics plugin reads it in its own handler for that wave. Whichever of the two hooks first
+	is whichever SourceMod loaded first, so an arm set by rcon after the map load, which is when
+	the test-bed sets one, was recorded as not set for the whole of the first wave.
+
+	That is worse than an empty list. An empty list says nothing; a stale one says the arm was off
+	and files the wave under the other side of the comparison. */
+	cv.AddChangeHook(Feature_OnChanged);
+
+	return cv;
+}
+
+static void Feature_OnChanged(ConVar convar, const char[] before, const char[] after)
+{
+	PublishActiveFeatures();
 }
 
 void LoadFeatures()

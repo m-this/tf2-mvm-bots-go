@@ -1,6 +1,7 @@
 package tables_test
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -248,4 +249,82 @@ func parseGoTags(t *testing.T, src []byte, typeName string) []string {
 		t.Fatalf("no struct %s", typeName)
 	}
 	return out
+}
+
+/*
+	TestGeneratedWaveWriterIsTheWholeShippedFunction
+
+The round trip above proves the fields. It says nothing about the rest of the
+function, and the rest of the function is where the generator was wrong: it
+stopped at WriteLine(line) and dropped the perf line, the engineer lines and the
+reset of g_flWaveStart. Adopting that file would have taken the frame times out
+of every run and let the next round reset write a row of zeros.
+
+So this compares the whole of WriteWaveResult with the whole of the shipped one,
+with comments and line breaks normalised away, because those are the two things
+the generator is allowed to move.
+*/
+func TestGeneratedWaveWriterIsTheWholeShippedFunction(t *testing.T) {
+	t.Parallel()
+
+	shipped, ok := waveResultFunc(readUpstream(t, "testbed", "stats", "mvmbots_stats.sp"))
+	if !ok {
+		t.Fatal("no WriteWaveResult in the shipped mvmbots_stats.sp")
+	}
+	generated, ok := waveResultFunc(string(tables.SourcePawnWaveWriter()))
+	if !ok {
+		t.Fatal("no WriteWaveResult in the generated wave writer")
+	}
+	if shipped != generated {
+		t.Errorf("the generated WriteWaveResult is not the shipped one:\nshipped:   %s",
+			firstDifference(shipped, generated))
+	}
+}
+
+// waveResultFunc pulls WriteWaveResult out of a file and normalises it: the
+// adjacent string literals FormatEx sees as one are joined, comments go, and
+// runs of whitespace become one space.
+func waveResultFunc(src string) (string, bool) {
+	i := strings.Index(src, "static void WriteWaveResult")
+	if i < 0 {
+		return "", false
+	}
+	j := strings.Index(src[i:], "\n}\n")
+	if j < 0 {
+		return "", false
+	}
+	body := src[i : i+j+3]
+	body = reContinuation.ReplaceAllString(body, "")
+	body = reBlockComment.ReplaceAllString(body, "")
+	body = reLineComment.ReplaceAllString(body, "")
+	return strings.TrimSpace(reSpaceRun.ReplaceAllString(body, " ")), true
+}
+
+var (
+	reContinuation = regexp.MustCompile(`"\s*\n\s*\.\.\.\s*"`)
+	reBlockComment = regexp.MustCompile(`(?s)/\*.*?\*/`)
+	reLineComment  = regexp.MustCompile(`//[^\n]*`)
+	reSpaceRun     = regexp.MustCompile(`\s+`)
+)
+
+// firstDifference names where two normalised functions part company, because a
+// diff of two thousand characters on one line is not a report anybody reads.
+func firstDifference(a, b string) string {
+	for i := range min(len(a), len(b)) {
+		if a[i] != b[i] {
+			return fmt.Sprintf("%q\n%s%q", around(a, i), strings.Repeat(" ", 11), around(b, i))
+		}
+	}
+	if len(a) == len(b) {
+		return "no difference"
+	}
+	longer, at := a, len(b)
+	if len(b) > len(a) {
+		longer, at = b, len(a)
+	}
+	return fmt.Sprintf("one ends where the other continues, at %d: %q", at, around(longer, at))
+}
+
+func around(s string, i int) string {
+	return s[max(0, i-70):min(len(s), i+70)]
 }
