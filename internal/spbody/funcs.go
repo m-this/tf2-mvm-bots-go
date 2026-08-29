@@ -141,6 +141,7 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 			}
 		}
 	}
+	var names []string
 	for i := range sig.Params().Len() {
 		p := sig.Params().At(i)
 		tag, dims, terr := e.spType(p.Type())
@@ -151,8 +152,10 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 		if name == "" || name == "_" {
 			return "", nil, errUnnamedParam
 		}
+		names = append(names, name)
 		params = append(params, declare(tag, e.ident(d.Pos(), name), dims))
 	}
+	params = e.applyDefaults(d, names, params, e.defaultsOf(d))
 	e.outParams = nil
 	for i := first; i < results.Len(); i++ {
 		r := results.At(i)

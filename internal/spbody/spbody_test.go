@@ -65,6 +65,7 @@ func TestRefusals(t *testing.T) {
 		{"unknown_extern", "is not an extern this emission was given"},
 		{"enum_without_constants", "declares no constants"},
 		{"array_call_as_value", "used as a value"},
+		{"default_before_plain", "has no default and follows one that does"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.dir, func(t *testing.T) {

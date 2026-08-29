@@ -99,7 +99,7 @@ stock float Go_Offset(Go_Sample s)
 	return centre[0] + centre[1];
 }
 
-stock int Go_Clamp(int v, int low, int high)
+stock int Go_Clamp(int v, int low = 0, int high = 100)
 {
 	int out;
 	out = Go_min_int(Go_max_int(v, low), high);

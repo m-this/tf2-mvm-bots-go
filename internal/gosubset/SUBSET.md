@@ -54,6 +54,10 @@ Refused, with the fix:
   therefore a declaration and a call, and a call returning an array used inside
   a larger expression is refused.
 - `const`, including `iota` blocks.
+- `//sp:default <parameter> <value>` on a function, which gives the emitted
+  SourcePawn parameter a default. Go has none, so a Go caller passes everything
+  and no behaviour depends on it: it is there so the plugin's existing call
+  sites still compile while they are being ported, and it goes when they do.
 - `type`, at package level only.
 - Package-level `var`, whose initialiser is a constant or an array literal of
   constants. It becomes a SourcePawn global.

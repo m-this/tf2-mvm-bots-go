@@ -78,7 +78,11 @@ func Offset(s Sample) float32 {
 	return centre[0] + centre[1]
 }
 
-// Clamp shows min and max, and the local declaration with no initialiser.
+// Clamp shows min and max, the local declaration with no initialiser, and the
+// defaults the SourcePawn callers of the ported functions rely on.
+//
+//sp:default low 0
+//sp:default high 100
 func Clamp(v int32, low int32, high int32) int32 {
 	var out int32
 	out = min(max(v, low), high)
