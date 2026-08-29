@@ -62,18 +62,6 @@ var actionNames = map[Action]string{
 	ActionStrandedAsShipped:        "StrandedAsShipped",
 }
 
-// deliberateNothing is the set of outcomes where the shipped chain says
-// nothing because something else already owns the bot. ActionStrandedAsShipped
-// is not one of them: it is the same Plugin_Continue with nobody behind it.
-var deliberateNothing = map[Action]bool{
-	ActionKeepWalkingToFront:    true,
-	ActionKeepOwnBreakBehaviour: true,
-	ActionKeepSnipingPosition:   true,
-	ActionKeepHealing:           true,
-	ActionKeepWaitingForClass:   true,
-	ActionWaitOutsideRound:      true,
-}
-
 // flagBit maps one bit of the enumeration to one field of Flags.
 func flagBit(bits uint32) Flags {
 	return Flags{

@@ -170,3 +170,19 @@ func TestGoldenTableRefusesAFieldWithNoCell(t *testing.T) {
 		t.Fatal("an int64 field was accepted, and there is no cell for it")
 	}
 }
+
+// TestGeneratedEdgeCompiles compiles the edge against stubs of the plugin
+// symbols it calls. The edge cannot run under spshell, because it is the one
+// generated file that calls into the engine, but compiling it catches a
+// reserved word used as a parameter name, a typo in a behaviour name, and a
+// switch over an outcome the enum does not have.
+func TestGeneratedEdgeCompiles(t *testing.T) {
+	tc := toolchain(t)
+	out := emit(t)
+	if !goldenMatches(t, goldenPure, out.Pure) || !goldenMatches(t, goldenDispatch, out.Dispatch) {
+		t.Fatal("the golden SourcePawn is stale: run go test ./internal/spgen -update")
+	}
+	if _, err := tc.Run(t.Context(), "testdata/dispatch_smoke.sp", nil); err != nil {
+		t.Fatalf("compiling the generated edge: %v", err)
+	}
+}

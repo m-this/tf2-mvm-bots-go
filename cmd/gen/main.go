@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/bindgen"
+	"github.com/m-this/tf2-mvm-bots-go/internal/spgen"
 	"github.com/m-this/tf2-mvm-bots-go/internal/tables"
 )
 
@@ -26,13 +27,19 @@ func main() {
 
 // files is the whole output. A generator that emits a file not listed here does
 // not exist as far as the reproducibility check is concerned.
-func files() map[string][]byte {
-	return map[string][]byte{
-		"sourcepawn/features.sp":   tables.SourcePawnFeatures(),
-		"sourcepawn/wave_write.sp": tables.SourcePawnWaveWriter(),
-		"go/arms/arms.go":          tables.GoFeatureArms("arms"),
-		"go/wave/wave.go":          tables.GoWaveParser("wave"),
+func files() (map[string][]byte, error) {
+	sel, err := spgen.EmitActionSel("internal/actionsel")
+	if err != nil {
+		return nil, fmt.Errorf("emitting action selection: %w", err)
 	}
+	return map[string][]byte{
+		"sourcepawn/actionsel.sp":          []byte(sel.Pure),
+		"sourcepawn/actionsel_dispatch.sp": []byte(sel.Dispatch),
+		"sourcepawn/features.sp":           tables.SourcePawnFeatures(),
+		"sourcepawn/wave_write.sp":         tables.SourcePawnWaveWriter(),
+		"go/arms/arms.go":                  tables.GoFeatureArms("arms"),
+		"go/wave/wave.go":                  tables.GoWaveParser("wave"),
+	}, nil
 }
 
 /*
@@ -80,7 +87,11 @@ func run(out, upstream string) error {
 	if err := os.RemoveAll(out); err != nil {
 		return fmt.Errorf("clearing %s: %w", out, err)
 	}
-	for name, body := range files() {
+	emitted, err := files()
+	if err != nil {
+		return err
+	}
+	for name, body := range emitted {
 		path := filepath.Join(out, name)
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			return fmt.Errorf("making %s: %w", filepath.Dir(path), err)

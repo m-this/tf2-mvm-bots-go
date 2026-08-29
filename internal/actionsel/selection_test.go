@@ -169,7 +169,7 @@ func TestStrandedCombinationsAreExactlyTheShippedOnes(t *testing.T) {
 		}
 	}
 
-	var got []string
+	got := make([]string, 0, len(countOf))
 	for k, n := range countOf {
 		got = append(got, fmt.Sprintf("%s, %d combinations, for example %s", k, n, firstOf[k]))
 	}

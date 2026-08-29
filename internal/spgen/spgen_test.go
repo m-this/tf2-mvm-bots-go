@@ -146,7 +146,7 @@ func Total(s Sample, class int32) int32 {
 		"enum Gen_Weight\n{\n\tGen_WeightLow = 0,\n\tGen_WeightHigh = 1\n};",
 		"enum struct Gen_Sample\n{\n\tint Count;\n\tfloat Score;\n\tbool Live;\n\tint Recent[4];\n}",
 		"stock int Gen_Total(Gen_Sample s, int class_)",
-		"for (int i = 0; (i < sizeof(s.Recent)); i++)",
+		"for (int i = 0; i < sizeof(s.Recent); i++)",
 		"total <<= 1;",
 		"case 0, 1:",
 		"default:",

@@ -45,7 +45,7 @@ func TestLazyWalkAgreesWithSelect(t *testing.T) {
 	compared := 0
 	for p := range sweep {
 		want := actionsel.Select(p.state, p.class, p.flags())
-		got, _, err := table.Walk(p.axes(), func(id int32) bool { return p.bits&(1<<uint(id)) != 0 })
+		got, _, err := table.Walk(p.axes(), func(id int32) bool { return p.bits&(1<<id) != 0 })
 		if err != nil {
 			t.Fatalf("%s: %v", p, err)
 		}
@@ -86,7 +86,7 @@ func TestTheWalkAsksNothingExtra(t *testing.T) {
 		if out != int32(actionsel.Select(p.state, p.class, p.flags())) {
 			t.Fatalf("%s: the interpreter answers %d, the compiled Go answers %d", p, out, int32(actionsel.Select(p.state, p.class, p.flags())))
 		}
-		_, asked, err := table.Walk(p.axes(), func(id int32) bool { return p.bits&(1<<uint(id)) != 0 })
+		_, asked, err := table.Walk(p.axes(), func(id int32) bool { return p.bits&(1<<id) != 0 })
 		if err != nil {
 			t.Fatalf("%s: %v", p, err)
 		}

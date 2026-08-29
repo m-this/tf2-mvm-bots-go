@@ -12,6 +12,26 @@
 // native, so the hand-written SourcePawn fills the inputs and maps the result
 // onto the real action. That is the design's never-call-back rule and it is
 // why this generator needs no binding table.
+//
+// # What spgen implements, against what gosubset accepts
+//
+// gosubset is the wider gate and spgen is the narrower one. Everything below
+// is accepted by gosubset and refused here, with a position:
+//
+//   - float64, int64 and uint64, which do not fit a 32-bit cell
+//   - several results, which pass3 of SourceGo turns into by-reference
+//     parameters and this generator does not emit yet
+//   - range loops, which pass9 covers and nothing here needs
+//   - any import at all, so a package is self-contained
+//   - a conversion between a float and an int, because the rounding is a
+//     decision the author owes in Go rather than one a generator guesses
+//   - an if or a switch with an init statement, a for with no condition,
+//     multiple assignment, and a named type over a basic type with no
+//     constants
+//
+// Names. Every emitted identifier carries Config.Prefix, because Action,
+// RoundState and Address are SourceMod's names already; a local whose Go name
+// is a SourcePawn keyword gets a trailing underscore.
 package spgen
 
 import (
