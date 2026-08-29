@@ -18,6 +18,7 @@ import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
 // within max_distance of the client, not counting the client.
 //
 //sp:default ignoreUber false
+//sp:name GetNearestEnemyCount
 func NearestEnemyCount(client int32, maxDistance float32, ignoreUber bool) int32 {
 	origin := engine.Origin(client)
 
@@ -63,6 +64,7 @@ func NearestEnemyCount(client int32, maxDistance float32, ignoreUber bool) int32
 //sp:default ignoreUber false
 //sp:default stunnedOnly false
 //sp:default class TFClass_Unknown
+//sp:name FindEnemyNearestToMe
 func EnemyNearestToMe(client int32, maxDistance float32, giantsOnly bool, ignoreUber bool, stunnedOnly bool, class engine.Class) int32 {
 	origin := WorldSpaceCenter(client)
 
@@ -114,6 +116,8 @@ func EnemyNearestToMe(client int32, maxDistance float32, giantsOnly bool, ignore
 
 // BestTargetForSpy is util.sp:1235, GetBestTargetForSpy: the four passes a spy
 // makes over the enemy team, and then the healer behind whoever it found.
+//
+//sp:name GetBestTargetForSpy
 func BestTargetForSpy(client int32, maxDistance float32) int32 {
 	// The shipped code writes this and overwrites it on the next line. It is
 	// dead there too, and it stays, because the port is behaviour identical

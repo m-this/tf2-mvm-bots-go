@@ -67,6 +67,15 @@ func (e *emitter) zero(out outParam) {
 	e.line("}")
 }
 
+// emittedName is what the function is called in SourcePawn: the plugin's own
+// name when the body claims one, and the prefixed Go name otherwise.
+func (e *emitter) emittedName(d *ast.FuncDecl) string {
+	if name, claimed := e.spNames[d.Name.Name]; claimed {
+		return e.ident(d.Name.Pos(), name)
+	}
+	return e.cfg.Prefix + e.ident(d.Name.Pos(), d.Name.Name)
+}
+
 func (e *emitter) funcDecl(d *ast.FuncDecl) {
 	obj, ok := e.info.Defs[d.Name].(*types.Func)
 	if !ok {
@@ -85,8 +94,9 @@ func (e *emitter) funcDecl(d *ast.FuncDecl) {
 		return
 	}
 	e.byRef = byRefParams(sig)
-	e.emitted = append(e.emitted, e.cfg.Prefix+d.Name.Name)
-	e.line("stock %s %s%s(%s)", ret, e.cfg.Prefix, e.ident(d.Name.Pos(), d.Name.Name), strings.Join(params, ", "))
+	name := e.emittedName(d)
+	e.emitted = append(e.emitted, name)
+	e.line("stock %s %s(%s)", ret, name, strings.Join(params, ", "))
 	e.line("{")
 	e.indent++
 	// A named first result is a local in SourcePawn, declared before the

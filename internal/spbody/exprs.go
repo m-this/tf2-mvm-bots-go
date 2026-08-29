@@ -293,6 +293,9 @@ func (e *emitter) callee(fun ast.Expr) (name string, lead []string, err error) {
 		if obj == nil || obj.Parent() != e.pkg.Scope() {
 			return "", nil, fmt.Errorf("a call to %s, which this package does not declare", f.Name)
 		}
+		if name, claimed := e.spNames[f.Name]; claimed {
+			return name, nil, nil
+		}
 		return e.cfg.Prefix + f.Name, nil, nil
 	default:
 		return "", nil, fmt.Errorf("a call to something that is not a name")

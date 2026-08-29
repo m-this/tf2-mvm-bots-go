@@ -38,6 +38,36 @@ assign to it, which is what the call site emitter does.
 */
 const returnsDirective = "//sp:returns"
 
+/*
+	nameDirective gives a body the name the plugin already calls it by
+
+A port takes over a function the plugin has, and every caller of it is hand
+written SourcePawn this port has not reached. util.sp's GetAbsOrigin has 84 call
+sites and WorldSpaceCenter has 76: emitting them under a new name would mean
+editing all of them in the same commit as the port, which is the flag day the
+epic exists to avoid, and a rename is a diff nobody can read past.
+
+So the Go reads as Go and the SourcePawn keeps the plugin's name. Adoption is
+then include the generated file and delete the hand written original, and spcomp
+says so loudly if the original is still there.
+*/
+const nameDirective = "//sp:name"
+
+// spName is the name the emitted function carries, and whether the body asked
+// for one. A body that does not is prefixed like everything else.
+func spName(d *ast.FuncDecl) (string, bool) {
+	if d.Doc == nil {
+		return "", false
+	}
+	for _, c := range d.Doc.List {
+		fields := strings.Fields(c.Text)
+		if len(fields) == 2 && fields[0] == nameDirective {
+			return fields[1], true
+		}
+	}
+	return "", false
+}
+
 func returnsArray(d *ast.FuncDecl) bool {
 	if d.Doc == nil {
 		return false
@@ -83,7 +113,7 @@ func (e *emitter) dhookWrapper(d *ast.FuncDecl, sig *types.Signature) {
 		}
 	}
 
-	name := e.cfg.Prefix + d.Name.Name
+	name := e.emittedName(d)
 	e.line("public MRESReturn DHook_%s(int pThis, DHookReturn hReturn, DHookParam hParams)", name)
 	e.line("{")
 	e.indent++

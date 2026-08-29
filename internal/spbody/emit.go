@@ -50,6 +50,10 @@ type emitter struct {
 	// valueReturners are the functions in this package that do, so a call to
 	// one is emitted as an expression and not rewritten.
 	valueReturners map[string]bool
+	// spNames maps a Go function name onto the SourcePawn name it is
+	// emitted under, so a call to a body that claimed the plugin's name
+	// with //sp:name is emitted under that name too.
+	spNames map[string]string
 	// emitted are the SourcePawn function names this emission declares.
 	emitted []string
 	// state is every package-level var, in declaration order, so Reset puts
@@ -102,13 +106,21 @@ func (e *emitter) line(format string, args ...any) {
 func (e *emitter) run(files []*ast.File) {
 	e.helpers = make(map[string]helper)
 	e.valueReturners = make(map[string]bool)
+	e.spNames = make(map[string]string)
 	for _, f := range files {
 		if isGenerated(f) {
 			continue
 		}
 		for _, decl := range f.Decls {
-			if fn, ok := decl.(*ast.FuncDecl); ok && returnsArray(fn) {
+			fn, ok := decl.(*ast.FuncDecl)
+			if !ok {
+				continue
+			}
+			if returnsArray(fn) {
 				e.valueReturners[fn.Name.Name] = true
+			}
+			if name, claimed := spName(fn); claimed {
+				e.spNames[fn.Name.Name] = name
 			}
 		}
 	}

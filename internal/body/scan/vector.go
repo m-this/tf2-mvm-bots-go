@@ -18,6 +18,7 @@ the externs that named them are gone: internal/body refuses to have both.
 // plugin measures ranges from rather than the feet.
 //
 //sp:returns
+//sp:name WorldSpaceCenter
 func WorldSpaceCenter(entity int32) (centre [3]float32) {
 	centre = engine.EntityWorldSpaceCenter(entity)
 	return centre
@@ -26,6 +27,7 @@ func WorldSpaceCenter(entity int32) (centre [3]float32) {
 // AbsOrigin is util.sp:542. Where the entity is.
 //
 //sp:returns
+//sp:name GetAbsOrigin
 func AbsOrigin(entity int32) (origin [3]float32) {
 	origin = engine.EntityAbsOrigin(entity)
 	return origin

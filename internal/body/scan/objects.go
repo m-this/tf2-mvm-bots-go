@@ -11,6 +11,7 @@ import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
 // enemy building a spy could sap.
 //
 //sp:default maxDistance 1000.0
+//sp:name GetNearestSappableObject
 func NearestSappableObject(client int32, maxDistance float32) int32 {
 	origin := engine.Origin(client)
 	myTeam := engine.GetClientTeam(client)
@@ -53,6 +54,7 @@ func NearestSappableObject(client int32, maxDistance float32) int32 {
 // NearestEnemyTeleporter is util.sp:1363, GetNearestEnemyTeleporter.
 //
 //sp:default maxDistance 999999.0
+//sp:name GetNearestEnemyTeleporter
 func NearestEnemyTeleporter(client int32, maxDistance float32) int32 {
 	origin := engine.Origin(client)
 	myTeam := engine.GetClientTeam(client)

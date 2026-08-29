@@ -27,44 +27,44 @@ public void main()
 	   the parameter the SourcePawn callers omit. */
 	for (int client = 1; client <= WORLD_SLOTS; client++)
 	{
-		Emit(Go_NearestEnemyCount(client, 200.0, false));
-		Emit(Go_NearestEnemyCount(client, 200.0, true));
-		Emit(Go_NearestEnemyCount(client, 100000.0, false));
-		Emit(Go_NearestEnemyCount(client, 100000.0));
+		Emit(GetNearestEnemyCount(client, 200.0, false));
+		Emit(GetNearestEnemyCount(client, 200.0, true));
+		Emit(GetNearestEnemyCount(client, 100000.0, false));
+		Emit(GetNearestEnemyCount(client, 100000.0));
 		/* Exactly the squared distance between slot 1's origin and slot
 		   2's centre, so the comparison at the end of the loop is tested
 		   on its boundary and not only either side of it. */
-		Emit(Go_NearestEnemyCount(client, 5934.8125, false));
+		Emit(GetNearestEnemyCount(client, 5934.8125, false));
 
 		/* FindEnemyNearestToMe, over the filters its callers switch on.
 		   The last two use the defaults, which is how util.sp calls it. */
-		Emit(Go_EnemyNearestToMe(client, 900000.0));
-		Emit(Go_EnemyNearestToMe(client, 900000.0, true));
-		Emit(Go_EnemyNearestToMe(client, 900000.0, false, true));
-		Emit(Go_EnemyNearestToMe(client, 900000.0, false, false, true));
-		Emit(Go_EnemyNearestToMe(client, 900000.0, false, false, false, view_as<TFClassType>(2)));
-		Emit(Go_EnemyNearestToMe(client, 5934.8125));
+		Emit(FindEnemyNearestToMe(client, 900000.0));
+		Emit(FindEnemyNearestToMe(client, 900000.0, true));
+		Emit(FindEnemyNearestToMe(client, 900000.0, false, true));
+		Emit(FindEnemyNearestToMe(client, 900000.0, false, false, true));
+		Emit(FindEnemyNearestToMe(client, 900000.0, false, false, false, view_as<TFClassType>(2)));
+		Emit(FindEnemyNearestToMe(client, 5934.8125));
 
 		/* The two building scans, and the spy's four passes over them.
 		   The first of each uses the default range its callers omit. */
-		Emit(Go_NearestSappableObject(client));
-		Emit(Go_NearestSappableObject(client, 999999.0));
-		Emit(Go_NearestEnemyTeleporter(client));
-		Emit(Go_NearestEnemyTeleporter(client, 1000.0));
-		Emit(Go_BestTargetForSpy(client, 900000.0));
+		Emit(GetNearestSappableObject(client));
+		Emit(GetNearestSappableObject(client, 999999.0));
+		Emit(GetNearestEnemyTeleporter(client));
+		Emit(GetNearestEnemyTeleporter(client, 1000.0));
+		Emit(GetBestTargetForSpy(client, 900000.0));
 
 		/* The spy's four, over the two filters the callers vary and the
 		   speed check that is off unless a caller asks for it. */
 		float here[3];
 		here[0] = 200.0;
-		Emit(Go_NearestSappablePlayer(client, 900000.0));
-		Emit(Go_NearestSappablePlayer(client, 900000.0, true));
-		Emit(Go_NearestSappablePlayer(client, 900000.0, false, view_as<TFClassType>(2), 340.0));
-		Emit(Go_FarthestSappablePlayer(client, 900000.0));
-		Emit(Go_FarthestSappablePlayer(client, 900000.0, false, TFClass_Unknown, 340.0));
-		Emit(Go_NearestSappablePlayerHealingSomeone(client, 900000.0));
-		Emit(Go_NearestSappablePlayerHealingSomeone(client, 900000.0, true, TFClass_Unknown, 340.0));
-		Emit(Go_EnemyPlayerNearestToPosition(client, here, 900000.0));
-		Emit(Go_EnemyPlayerNearestToPosition(client, here, 100.0));
+		Emit(GetNearestSappablePlayer(client, 900000.0));
+		Emit(GetNearestSappablePlayer(client, 900000.0, true));
+		Emit(GetNearestSappablePlayer(client, 900000.0, false, view_as<TFClassType>(2), 340.0));
+		Emit(GetFarthestSappablePlayer(client, 900000.0));
+		Emit(GetFarthestSappablePlayer(client, 900000.0, false, TFClass_Unknown, 340.0));
+		Emit(GetNearestSappablePlayerHealingSomeone(client, 900000.0));
+		Emit(GetNearestSappablePlayerHealingSomeone(client, 900000.0, true, TFClass_Unknown, 340.0));
+		Emit(GetEnemyPlayerNearestToPosition(client, here, 900000.0));
+		Emit(GetEnemyPlayerNearestToPosition(client, here, 100.0));
 	}
 }

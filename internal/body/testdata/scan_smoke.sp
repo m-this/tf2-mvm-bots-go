@@ -56,20 +56,20 @@ stock void BaseEntity_WorldSpaceCenter(int entity, float centre[3])
 public void OnPluginStart()
 {
 	// The three argument form is what util.sp's callers write.
-	PrintToServer("%d", Go_NearestEnemyCount(1, 400.0));
-	PrintToServer("%d", Go_NearestEnemyCount(1, 400.0, true));
+	PrintToServer("%d", GetNearestEnemyCount(1, 400.0));
+	PrintToServer("%d", GetNearestEnemyCount(1, 400.0, true));
 	// The two argument form, which is how util.sp's callers write it.
-	PrintToServer("%d", Go_EnemyNearestToMe(1, 400.0));
-	PrintToServer("%d", Go_EnemyNearestToMe(1, 400.0, true, true, true, TFClass_Sniper));
+	PrintToServer("%d", FindEnemyNearestToMe(1, 400.0));
+	PrintToServer("%d", FindEnemyNearestToMe(1, 400.0, true, true, true, TFClass_Sniper));
 	// Both building scans with the default range their callers omit.
-	PrintToServer("%d", Go_NearestSappableObject(1));
-	PrintToServer("%d", Go_NearestEnemyTeleporter(1));
-	PrintToServer("%d", Go_BestTargetForSpy(1, 400.0));
+	PrintToServer("%d", GetNearestSappableObject(1));
+	PrintToServer("%d", GetNearestEnemyTeleporter(1));
+	PrintToServer("%d", GetBestTargetForSpy(1, 400.0));
 	// The spy's four, with the defaults their callers omit.
-	PrintToServer("%d", Go_NearestSappablePlayer(1, 400.0));
-	PrintToServer("%d", Go_FarthestSappablePlayer(1, 400.0, true));
-	PrintToServer("%d", Go_NearestSappablePlayerHealingSomeone(1, 400.0, false, TFClass_Medic, 300.0));
+	PrintToServer("%d", GetNearestSappablePlayer(1, 400.0));
+	PrintToServer("%d", GetFarthestSappablePlayer(1, 400.0, true));
+	PrintToServer("%d", GetNearestSappablePlayerHealingSomeone(1, 400.0, false, TFClass_Medic, 300.0));
 
 	float here[3];
-	PrintToServer("%d", Go_EnemyPlayerNearestToPosition(1, here, 400.0));
+	PrintToServer("%d", GetEnemyPlayerNearestToPosition(1, here, 400.0));
 }

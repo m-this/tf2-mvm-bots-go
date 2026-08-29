@@ -7,6 +7,8 @@ import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
 // which way the comparison points and what it starts at.
 
 // PlayerSappable is util.sp:1437, IsPlayerSappable.
+//
+//sp:name IsPlayerSappable
 func PlayerSappable(client int32) bool {
 	if engine.IsPlayerInCondition(client, engine.ConditionSapped()) {
 		return false
@@ -21,6 +23,8 @@ func PlayerSappable(client int32) bool {
 }
 
 // PlayerHealingSomething is util.sp:1690, IsPlayerHealingSomething.
+//
+//sp:name IsPlayerHealingSomething
 func PlayerHealingSomething(client int32) bool {
 	weapon := engine.ActiveWeapon(client)
 
@@ -37,6 +41,7 @@ func PlayerHealingSomething(client int32) bool {
 //sp:default giantsOnly false
 //sp:default class TFClass_Unknown
 //sp:default speedCheck 0.0
+//sp:name GetNearestSappablePlayer
 func NearestSappablePlayer(client int32, maxDistance float32, giantsOnly bool, class engine.Class, speedCheck float32) int32 {
 	origin := engine.Origin(client)
 
@@ -68,6 +73,7 @@ func NearestSappablePlayer(client int32, maxDistance float32, giantsOnly bool, c
 //sp:default giantsOnly false
 //sp:default class TFClass_Unknown
 //sp:default speedCheck 0.0
+//sp:name GetFarthestSappablePlayer
 func FarthestSappablePlayer(client int32, maxDistance float32, giantsOnly bool, class engine.Class, speedCheck float32) int32 {
 	origin := engine.Origin(client)
 
@@ -100,6 +106,7 @@ func FarthestSappablePlayer(client int32, maxDistance float32, giantsOnly bool, 
 //sp:default giantsOnly false
 //sp:default class TFClass_Unknown
 //sp:default speedCheck 0.0
+//sp:name GetNearestSappablePlayerHealingSomeone
 func NearestSappablePlayerHealingSomeone(client int32, maxDistance float32, giantsOnly bool, class engine.Class, speedCheck float32) int32 {
 	origin := engine.Origin(client)
 
@@ -165,6 +172,8 @@ func sappableCandidate(client int32, i int32, enemyTeam engine.Team, giantsOnly 
 // EnemyPlayerNearestToPosition is util.sp:1550,
 // GetEnemyPlayerNearestToPosition: the shortest of the loops, measuring from a
 // position the caller supplies rather than from where the client stands.
+//
+//sp:name GetEnemyPlayerNearestToPosition
 func EnemyPlayerNearestToPosition(client int32, position [3]float32, maxDistance float32) int32 {
 	enemyTeam := PlayerEnemyTeam(client)
 	bestDistance := float32(999999.0)

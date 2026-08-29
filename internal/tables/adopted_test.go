@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/m-this/tf2-mvm-bots-go/internal/body"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spgen"
 	"github.com/m-this/tf2-mvm-bots-go/internal/tables"
 	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
@@ -28,9 +29,15 @@ func TestAdoptedFilesMatchTheGenerator(t *testing.T) {
 
 	root := upstream.SkipOrFail(t)
 
+	bodies, err := body.Generate("../..")
+	if err != nil {
+		t.Fatalf("generating the bodies: %v", err)
+	}
+
 	adopted := map[string][]byte{
 		filepath.Join("source", "redbots3", "generated", "features.sp"):        tables.SourcePawnFeatures(),
 		filepath.Join("source", "redbots3", "generated", "threat_priority.sp"): spgen.EmitThreatPriority(),
+		filepath.Join("source", "redbots3", "generated", "scan.sp"):            bodies["sourcepawn/scan.sp"],
 		filepath.Join("testbed", "stats", "generated", "wave_write.sp"):        tables.SourcePawnWaveWriter(),
 	}
 
