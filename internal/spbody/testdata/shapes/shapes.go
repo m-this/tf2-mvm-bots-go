@@ -63,6 +63,21 @@ func SumRecent(s Sample) (total int32, average float32) {
 	return total, float32(total) / float32(Slots)
 }
 
+// Centre is the vector shape: SourcePawn returns a cell, so an array result
+// becomes the parameter the caller supplies and this fills.
+func Centre(s Sample) (centre [3]float32) {
+	centre[0] = s.Score
+	centre[1] = float32(s.Client)
+	centre[2] = 0.0
+	return centre
+}
+
+// Offset shows the call site: a declaration and a call, never an expression.
+func Offset(s Sample) float32 {
+	centre := Centre(s)
+	return centre[0] + centre[1]
+}
+
 // Clamp shows min and max, and the local declaration with no initialiser.
 func Clamp(v int32, low int32, high int32) int32 {
 	var out int32

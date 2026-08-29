@@ -1,6 +1,7 @@
 package spbody
 
 import (
+	"fmt"
 	"go/ast"
 	"strings"
 )
@@ -100,4 +101,19 @@ func (e *emitter) staticValues(value ast.Expr, isArray bool) []string {
 		out = append(out, e.expr(elt))
 	}
 	return out
+}
+
+// zeroOf is the value a declaration with no initialiser holds, which is what Go
+// gives a variable and what SourcePawn gives a global.
+func zeroOf(tag string) string {
+	switch tag {
+	case "bool":
+		return "false"
+	case "float":
+		return "0.0"
+	case "int":
+		return "0"
+	default:
+		return fmt.Sprintf("view_as<%s>(0)", tag)
+	}
 }

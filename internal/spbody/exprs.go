@@ -28,6 +28,12 @@ func (e *emitter) expr(x ast.Expr) string {
 	case *ast.SelectorExpr:
 		return e.selector(n)
 	case *ast.CallExpr:
+		if e.isArrayValue(n) {
+			if tv, isType := e.info.Types[n.Fun]; !isType || !tv.IsType() {
+				e.fail(n.Pos(), "a call returning an array used as a value; SourcePawn fills a parameter, so assign it to a name on a line of its own")
+				return ""
+			}
+		}
 		return e.callWith(n, nil)
 	case *ast.CompositeLit:
 		return e.compositeLit(n)

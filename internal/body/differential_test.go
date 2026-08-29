@@ -2,12 +2,14 @@ package body_test
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"testing"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/body"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/roster"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+	"github.com/m-this/tf2-mvm-bots-go/internal/sp"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spshell"
 )
 
@@ -25,6 +27,7 @@ const (
 	traceGetClientTeam
 	traceHasAmmo
 	traceClip1
+	traceOrigin
 )
 
 // world is what the stubs answer, indexed by slot. Slot 0 is never a client and
@@ -36,6 +39,7 @@ type world struct {
 	team     [worldSlots + 1]int32
 	hasAmmo  [worldSlots + 1]bool
 	clip     [worldSlots + 1]int32
+	origin   [worldSlots + 1][3]float32
 }
 
 // cannedWorld is one world with every case the bodies branch on in it: a slot
@@ -50,6 +54,7 @@ func cannedWorld() world {
 		w.team[i] = int32(i % 3)
 		w.hasAmmo[i] = i != 5
 		w.clip[i] = int32(i) - 2
+		w.origin[i] = [3]float32{float32(i) * 64.5, float32(i) * -3.25, float32(i)}
 	}
 	return w
 }
@@ -79,6 +84,7 @@ func (in *installed) calls() engine.Calls {
 		GetClientTeam:  func(c int32) int32 { in.record(traceGetClientTeam, c); return in.w.team[c] },
 		HasAmmo:        func(x int32) bool { in.record(traceHasAmmo, x); return in.w.hasAmmo[x] },
 		Clip1:          func(x int32) int32 { in.record(traceClip1, x); return in.w.clip[x] },
+		Origin:         func(c int32) [3]float32 { in.record(traceOrigin, c); return in.w.origin[c] },
 	}
 }
 
@@ -108,6 +114,16 @@ func goCells(w world) []int32 {
 	}
 	for team := int32(0); team < 4; team++ {
 		emit(roster.AliveOnTeam(worldSlots, team))
+	}
+	for team := int32(0); team < 4; team++ {
+		centre := roster.TeamCentre(worldSlots, team)
+		for _, axis := range centre {
+			// The bit pattern, not a rounded number: two floats that
+			// print the same and are not the same is the failure
+			// this comparison exists to catch.
+			out = append(out, int32(math.Float32bits(axis))) //nolint:gosec // G115: a cell is 32 bits either way
+		}
+		emit(0)
 	}
 	for weapon := int32(0); weapon <= worldSlots; weapon++ {
 		emit(roster.LoadedRounds(weapon))
@@ -186,6 +202,7 @@ func worldInclude(w world) string {
 	writeBools(&b, "gHasAmmo", w.hasAmmo[:])
 	writeInts(&b, "gTeam", w.team[:])
 	writeInts(&b, "gClip", w.clip[:])
+	writeVectors(&b, "gOrigin", w.origin[:])
 	b.WriteString(`
 int gTrace[512];
 int gTraceLen = 0;
@@ -214,7 +231,8 @@ stock any SDKCall(int handle, int weapon)
 `)
 	fmt.Fprintf(&b, "\t\tcase m_hHasAmmo: { Trace(%d, weapon); return gHasAmmo[weapon]; }\n", traceHasAmmo)
 	fmt.Fprintf(&b, "\t\tcase m_hClip1:   { Trace(%d, weapon); return gClip[weapon]; }\n", traceClip1)
-	b.WriteString("\t}\n\treturn 0;\n}\n")
+	b.WriteString("\t}\n\treturn 0;\n}\n\n")
+	fmt.Fprintf(&b, "stock void GetClientAbsOrigin(int client, float origin[3])\n{\n\tTrace(%d, client);\n\tfor (int axis = 0; axis < 3; axis++)\n\t\torigin[axis] = gOrigin[client][axis];\n}\n", traceOrigin)
 	return b.String()
 }
 
@@ -225,6 +243,14 @@ func writeBools(b *strings.Builder, name string, values []bool) {
 			b.WriteString(", ")
 		}
 		fmt.Fprintf(b, "%t", v)
+	}
+	b.WriteString("};\n")
+}
+
+func writeVectors(b *strings.Builder, name string, values [][3]float32) {
+	fmt.Fprintf(b, "float %s[%d][3] =\n{\n", name, len(values))
+	for _, v := range values {
+		fmt.Fprintf(b, "\t{%s, %s, %s},\n", sp.FloatLiteral(v[0]), sp.FloatLiteral(v[1]), sp.FloatLiteral(v[2]))
 	}
 	b.WriteString("};\n")
 }

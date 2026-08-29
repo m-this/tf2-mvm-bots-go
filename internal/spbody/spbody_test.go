@@ -64,7 +64,7 @@ func TestRefusals(t *testing.T) {
 		{"struct_literal", "SourcePawn has no struct literal"},
 		{"unknown_extern", "is not an extern this emission was given"},
 		{"enum_without_constants", "declares no constants"},
-		{"returns_array", "a function returning an array"},
+		{"array_call_as_value", "used as a value"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.dir, func(t *testing.T) {

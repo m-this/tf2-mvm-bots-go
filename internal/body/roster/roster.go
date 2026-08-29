@@ -100,3 +100,31 @@ func IsBotPre(client int32) (supercede bool, value bool) {
 	}
 	return false, false
 }
+
+// TeamCentre is where a team is on average, which the nest and the guard point
+// both want and which util.sp works out inline in three places. An empty team
+// has no centre, and the zero vector is what the shipped code leaves in the
+// caller's array.
+func TeamCentre(maxClients int32, team int32) (centre [3]float32) {
+	found := int32(0)
+	for i := int32(1); i <= maxClients; i++ {
+		if !engine.IsClientInGame(i) {
+			continue
+		}
+		if engine.GetClientTeam(i) != team {
+			continue
+		}
+		origin := engine.Origin(i)
+		for axis := range centre {
+			centre[axis] += origin[axis]
+		}
+		found++
+	}
+	if found == 0 {
+		return centre
+	}
+	for axis := range centre {
+		centre[axis] /= float32(found)
+	}
+	return centre
+}

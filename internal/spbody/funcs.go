@@ -41,6 +41,32 @@ func (e *emitter) ident(pos token.Pos, name string) string {
 	return name
 }
 
+// outParam is a Go result that SourcePawn takes as a parameter.
+type outParam struct {
+	name string
+	tag  string
+	dims []int64
+}
+
+// zero clears an out parameter, which is what Go does to a named result.
+func (e *emitter) zero(out outParam) {
+	if len(out.dims) == 0 {
+		e.line("%s = %s;", out.name, zeroOf(out.tag))
+		return
+	}
+	e.line("for (int i = 0; i < %d; i++)", out.dims[0])
+	e.line("{")
+	e.indent++
+	inner := out.name + "[i]"
+	if len(out.dims) > 1 {
+		e.fail(token.NoPos, "an out parameter of more than one dimension")
+		return
+	}
+	e.line("%s = %s;", inner, zeroOf(out.tag))
+	e.indent--
+	e.line("}")
+}
+
 func (e *emitter) funcDecl(d *ast.FuncDecl) {
 	obj, ok := e.info.Defs[d.Name].(*types.Func)
 	if !ok {
@@ -66,6 +92,13 @@ func (e *emitter) funcDecl(d *ast.FuncDecl) {
 	if e.resultName != "" {
 		e.line("%s;", e.resultDecl)
 	}
+	// Go zeroes a named result and SourcePawn hands the body whatever the
+	// caller's variable held, so the out parameters are cleared here. A
+	// body that reads one before writing it would otherwise see two
+	// different values in the two languages.
+	for _, out := range e.outParams {
+		e.zero(out)
+	}
 	for _, s := range d.Body.List {
 		e.stmt(s)
 	}
@@ -86,19 +119,26 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 	ret = "void"
 	results := sig.Results()
 	e.resultName, e.resultDecl = "", ""
+	e.returnsArray = false
+	first := 0
 	if results.Len() > 0 {
-		first := results.At(0)
-		tag, dims, terr := e.spType(first.Type())
+		r := results.At(0)
+		tag, dims, terr := e.spType(r.Type())
 		if terr != nil {
 			return "", nil, terr
 		}
 		if len(dims) > 0 {
-			return "", nil, errReturnsArray
-		}
-		ret = tag
-		if name := first.Name(); name != "" && name != "_" {
-			e.resultName = e.ident(d.Pos(), name)
-			e.resultDecl = declare(tag, e.resultName, nil)
+			// SourcePawn returns a cell, so an array result is a
+			// parameter the caller supplies and the body fills.
+			// That is the idiom the plugin already writes.
+			e.returnsArray = true
+		} else {
+			ret = tag
+			first = 1
+			if name := r.Name(); name != "" && name != "_" {
+				e.resultName = e.ident(d.Pos(), name)
+				e.resultDecl = declare(tag, e.resultName, nil)
+			}
 		}
 	}
 	for i := range sig.Params().Len() {
@@ -114,7 +154,7 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 		params = append(params, declare(tag, e.ident(d.Pos(), name), dims))
 	}
 	e.outParams = nil
-	for i := 1; i < results.Len(); i++ {
+	for i := first; i < results.Len(); i++ {
 		r := results.At(i)
 		if r.Name() == "" || r.Name() == "_" {
 			return "", nil, errUnnamedResult
@@ -123,8 +163,14 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 		if terr != nil {
 			return "", nil, terr
 		}
-		e.outParams = append(e.outParams, r.Name())
-		params = append(params, declare(tag, "&"+e.ident(d.Pos(), r.Name()), dims))
+		// An array is by reference in SourcePawn already, and & in
+		// front of one is not a declaration it takes.
+		name := e.ident(d.Pos(), r.Name())
+		e.outParams = append(e.outParams, outParam{name: name, tag: tag, dims: dims})
+		if len(dims) == 0 {
+			name = "&" + name
+		}
+		params = append(params, declare(tag, name, dims))
 	}
 	return ret, params, nil
 }

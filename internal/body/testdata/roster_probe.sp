@@ -37,6 +37,20 @@ public void main()
 	for (int team = 0; team < 4; team++)
 		Emit(Go_AliveOnTeam(WORLD_SLOTS, team));
 
+	/* One array, reused. SourcePawn hands the body the caller's variable, so
+	   a body that did not clear it would carry the previous team's centre
+	   into a team with nobody on it. Go clears a named result, so the two
+	   only agree if the generated body clears too. */
+	float centre[3];
+
+	for (int team = 0; team < 4; team++)
+	{
+		Go_TeamCentre(WORLD_SLOTS, team, centre);
+		for (int axis = 0; axis < 3; axis++)
+			printnum(view_as<int>(centre[axis]));
+		Emit(0);
+	}
+
 	for (int weapon = 0; weapon <= WORLD_SLOTS; weapon++)
 		Emit(Go_LoadedRounds(weapon));
 

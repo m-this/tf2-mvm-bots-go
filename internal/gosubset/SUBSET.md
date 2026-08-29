@@ -47,7 +47,12 @@ Refused, with the fix:
 
 - Functions, with parameters and results of accepted types. Several results are
   fine: the generator turns the ones after the first into by-reference
-  parameters.
+  parameters, and every result that becomes a parameter has to be named,
+  because the name is what the parameter is called.
+- A result that is an array, which SourcePawn cannot return: it becomes a
+  trailing parameter and the function returns nothing. `v := Centre(s)` is
+  therefore a declaration and a call, and a call returning an array used inside
+  a larger expression is refused.
 - `const`, including `iota` blocks.
 - `type`, at package level only.
 - Package-level `var`, whose initialiser is a constant or an array literal of

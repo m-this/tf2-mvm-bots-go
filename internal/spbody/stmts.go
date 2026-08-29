@@ -107,6 +107,9 @@ func (e *emitter) assignOne(n *ast.AssignStmt, lhs, rhs ast.Expr) {
 		e.line("%s;", e.expr(rhs))
 		return
 	}
+	if e.arrayCall(n.Tok == token.DEFINE, lhs, rhs) {
+		return
+	}
 	if n.Tok == token.DEFINE {
 		e.define(lhs, rhs)
 		return
@@ -136,6 +139,41 @@ func (e *emitter) define(lhs, rhs ast.Expr) {
 		return
 	}
 	e.line("%s = %s;", declare(tag, e.ident(id.Pos(), id.Name), dims), e.expr(rhs))
+}
+
+/*
+	arrayCall is the vector idiom
+
+A function whose first result is an array returns nothing in SourcePawn and
+fills a parameter instead, so `v := WorldSpaceCenter(e)` is a declaration and a
+call, not an assignment. Doing it here rather than in the expression emitter is
+deliberate: it only works as a whole statement, and a nested one is refused
+where it is written.
+*/
+func (e *emitter) arrayCall(define bool, lhs, rhs ast.Expr) bool {
+	call, ok := rhs.(*ast.CallExpr)
+	if !ok || !e.isArrayValue(rhs) {
+		return false
+	}
+	if tv, isType := e.info.Types[call.Fun]; isType && tv.IsType() {
+		return false // a conversion, which is not a call at all
+	}
+	if define {
+		e.declareTarget(lhs)
+	} else {
+		e.checkWritable(lhs)
+	}
+	e.line("%s;", e.callWith(call, []string{e.expr(lhs)}))
+	return true
+}
+
+func (e *emitter) isArrayValue(x ast.Expr) bool {
+	t := e.info.Types[x].Type
+	if t == nil {
+		return false
+	}
+	_, isArray := types.Unalias(t).Underlying().(*types.Array)
+	return isArray
 }
 
 // multiAssign is the call with several results. SourcePawn has one return and
@@ -234,12 +272,24 @@ func (e *emitter) returnStmt(n *ast.ReturnStmt) {
 		e.line("return %s;", e.resultName)
 		return
 	}
-	if len(n.Results) != len(e.outParams)+1 {
-		e.fail(n.Pos(), "a return of %d values from a function with %d results", len(n.Results), len(e.outParams)+1)
+	first := 1
+	if e.returnsArray {
+		first = 0
+	}
+	if len(n.Results) != len(e.outParams)+first {
+		e.fail(n.Pos(), "a return of %d values from a function with %d results", len(n.Results), len(e.outParams)+first)
 		return
 	}
-	for i, name := range e.outParams {
-		e.line("%s = %s;", name, e.expr(n.Results[i+1]))
+	for i, out := range e.outParams {
+		value := e.expr(n.Results[i+first])
+		if value == out.name {
+			continue // return centre, where centre is the parameter
+		}
+		e.line("%s = %s;", out.name, value)
+	}
+	if e.returnsArray {
+		e.line("return;")
+		return
 	}
 	e.line("return %s;", e.expr(n.Results[0]))
 }

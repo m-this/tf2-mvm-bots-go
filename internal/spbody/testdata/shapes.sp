@@ -70,6 +70,7 @@ stock Go_Priority Go_Rank(Go_Sample s, float threshold)
 stock int Go_SumRecent(Go_Sample s, float &average)
 {
 	int total;
+	average = 0.0;
 	total = 0;
 	for (int i = 0; i < 4; i++)
 	{
@@ -77,6 +78,25 @@ stock int Go_SumRecent(Go_Sample s, float &average)
 	}
 	average = float(total) / 4.0;
 	return total;
+}
+
+stock void Go_Centre(Go_Sample s, float centre[3])
+{
+	for (int i = 0; i < 3; i++)
+	{
+		centre[i] = 0.0;
+	}
+	centre[0] = s.Score;
+	centre[1] = float(s.Client);
+	centre[2] = 0.0;
+	return;
+}
+
+stock float Go_Offset(Go_Sample s)
+{
+	float centre[3];
+	Go_Centre(s, centre);
+	return centre[0] + centre[1];
 }
 
 stock int Go_Clamp(int v, int low, int high)

@@ -35,11 +35,15 @@ type emitter struct {
 
 	// outParams are the results after the first, which SourcePawn takes as
 	// by-reference parameters. Set for the function being emitted.
-	outParams []string
+	outParams []outParam
 	// resultName is the named first result, which SourcePawn has no name
 	// for: it becomes a local, so a naked return has a value.
 	resultName string
 	resultDecl string
+	// returnsArray says the first Go result is an array, which SourcePawn
+	// cannot return: it became a trailing parameter and there is no return
+	// value at all.
+	returnsArray bool
 	// state is every package-level var, in declaration order, so Reset puts
 	// them back in the order they were declared.
 	state []stateVar

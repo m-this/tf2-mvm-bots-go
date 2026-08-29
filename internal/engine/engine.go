@@ -30,6 +30,7 @@ type Calls struct {
 	GetClientTeam  func(client int32) int32
 	HasAmmo        func(weapon int32) bool
 	Clip1          func(weapon int32) int32
+	Origin         func(client int32) [3]float32
 }
 
 var installed Calls
@@ -95,4 +96,14 @@ func Clip1(weapon int32) int32 {
 		missing("Clip1")
 	}
 	return installed.Clip1(weapon)
+}
+
+// Origin is where the client is standing.
+//
+//sp:native GetClientAbsOrigin
+func Origin(client int32) (origin [3]float32) {
+	if installed.Origin == nil {
+		missing("GetClientAbsOrigin")
+	}
+	return installed.Origin(client)
 }
