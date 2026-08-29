@@ -54,6 +54,14 @@ func ExternsFromDir(dir string) (Declared, error) {
 					continue
 				}
 				key := local + "." + d.Name.Name
+				if recv, ok := receiverType(d); ok {
+					// A method is keyed by the type it hangs
+					// off, because that is what resolves a
+					// call site: the receiver's type, then
+					// the name.
+					extern.Method = true
+					key = local + "." + recv + "." + d.Name.Name
+				}
 				if _, dup := out.Funcs[key]; dup {
 					return Declared{}, fmt.Errorf("%s: %s is declared twice", fset.Position(d.Pos()), key)
 				}
@@ -89,8 +97,8 @@ func parseTag(doc *ast.CommentGroup) (string, bool) {
 	if doc == nil {
 		return "", false
 	}
-	for _, c := range doc.List {
-		fields := strings.Fields(c.Text)
+	for _, line := range docLines(doc) {
+		fields := strings.Fields(line)
 		if len(fields) == 2 && fields[0] == directive+"tag" {
 			return fields[1], true
 		}
@@ -98,14 +106,33 @@ func parseTag(doc *ast.CommentGroup) (string, bool) {
 	return "", false
 }
 
+// receiverType is the named type a method hangs off, without its pointer, and
+// false for a plain function.
+func receiverType(d *ast.FuncDecl) (string, bool) {
+	if d.Recv == nil || len(d.Recv.List) != 1 {
+		return "", false
+	}
+	switch t := d.Recv.List[0].Type.(type) {
+	case *ast.Ident:
+		return t.Name, true
+	case *ast.StarExpr:
+		if id, ok := t.X.(*ast.Ident); ok {
+			return id.Name, true
+		}
+	}
+	return "", false
+}
+
 func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
-	for _, c := range doc.List {
-		if !strings.HasPrefix(c.Text, directive) {
+	// Line by line inside each comment: a doc comment may be a /* */ block
+	// with the directive somewhere in the middle of it.
+	for _, line := range docLines(doc) {
+		if !strings.HasPrefix(line, directive) {
 			continue
 		}
-		fields := strings.Fields(strings.TrimPrefix(c.Text, directive))
+		fields := strings.Fields(strings.TrimPrefix(line, directive))
 		if len(fields) < 2 || len(fields) > 3 {
-			return Extern{}, false, fmt.Errorf("the directive %q needs a kind, one name and at most one flag", c.Text)
+			return Extern{}, false, fmt.Errorf("the directive %q needs a kind, one name and at most one flag", line)
 		}
 		kind, name := fields[0], fields[1]
 		returnsArray := false
@@ -118,8 +145,18 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 		switch kind {
 		case "native":
 			return Extern{Func: name, ReturnsArray: returnsArray}, true, nil
+		case "method":
+			// The receiver is what picks it; the name is what
+			// SourcePawn writes after the dot.
+			return Extern{Func: name, ReturnsArray: returnsArray}, true, nil
+		case "slot":
+			return Extern{Func: name, Slot: true}, true, nil
+		case "slotset":
+			return Extern{Func: name, Slot: true, Set: true}, true, nil
 		case "global":
 			return Extern{Func: name, Global: true}, true, nil
+		case "body":
+			return Extern{Func: name, Body: true, ReturnsArray: returnsArray}, true, nil
 		case "plugin":
 			return Extern{Func: name, Plugin: true, ReturnsArray: returnsArray}, true, nil
 		case "sdkcall":
@@ -127,8 +164,20 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 		case "address":
 			return Extern{Func: "LoadFromAddress", Lead: []string{name}, ReturnsArray: returnsArray}, true, nil
 		default:
-			return Extern{}, false, fmt.Errorf("the directive kind %q is not native, global, plugin, sdkcall or address", kind)
+			return Extern{}, false, fmt.Errorf("the directive kind %q is not native, method, global, slot, slotset, body, plugin, sdkcall or address", kind)
 		}
 	}
 	return Extern{}, false, nil
+}
+
+// docLines is every line of a doc comment, trimmed, whether it was written as
+// a run of // or as one /* */ block.
+func docLines(doc *ast.CommentGroup) []string {
+	var out []string
+	for _, c := range doc.List {
+		for line := range strings.Lines(c.Text) {
+			out = append(out, strings.TrimSpace(line))
+		}
+	}
+	return out
 }

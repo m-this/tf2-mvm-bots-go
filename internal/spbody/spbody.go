@@ -23,6 +23,11 @@ type Config struct {
 	// Tags are the types a body names and this package does not declare,
 	// by the qualified Go name: "engine.Class" is SourcePawn's TFClassType.
 	Tags map[string]string
+	// Declare overrides the emitted declaration line of a named function,
+	// which is how a callback the engine calls gets the signature the engine
+	// calls it with rather than the one derived from the Go. The body is
+	// translated the same way either way.
+	Declare map[string]string
 	// Import maps an import path to the identifier the body writes it as,
 	// so a selector can be resolved back to an extern without go/types
 	// having to name the package twice.
@@ -53,6 +58,21 @@ type Extern struct {
 	// variable, and the Go declaration is a function only because the
 	// subset has no other way to name something it does not own.
 	Global bool
+	// Method says the call is written on a receiver: SourceMod's API is
+	// methodmaps, and myBot.GetVisionInterface() has no plain function
+	// behind it to call instead.
+	Method bool
+	// Slot says the extern is a plugin array indexed by its first argument,
+	// not a call: m_flRepathTime[actor]. Set says the same array written to,
+	// which takes the value as its second argument.
+	Slot bool
+	Set  bool
+	// Body says the opposite of Plugin: this names SourcePawn the port
+	// already generates, in another package. The emitted SourcePawn is one
+	// flat namespace, so calling it is calling it by name; what this buys is
+	// the assertion, because internal/body requires a body of that name to
+	// exist and refuses the declaration when it does not.
+	Body bool
 }
 
 // Generated is one emission: the SourcePawn, and what was left out of it.

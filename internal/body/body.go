@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/gosubset"
+	"github.com/m-this/tf2-mvm-bots-go/internal/spaction"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spbody"
 )
 
@@ -33,6 +34,13 @@ type Body struct {
 	// Prefix goes in front of every emitted name. Go_ says at the call site
 	// that the function came from here and is not to be edited.
 	Prefix string
+}
+
+// Actions are the behaviours: a Go package each, emitted as the BehaviorAction
+// subclass the plugin includes. They are bodies with a shape around them, so
+// they go through the same extern declarations and the same ownership rule.
+var Actions = []Body{
+	{Dir: "internal/action/spysap", Out: "sourcepawn/spysap.sp", Prefix: "Go_"},
 }
 
 // All is every body. Adding one here is what makes it generated.
@@ -80,16 +88,35 @@ func GenerateWith(root string, alsoOwned string) (map[string][]byte, error) {
 		}
 		out[b.Hooks] = []byte(g.Hooks)
 	}
+	for _, a := range Actions {
+		source, err := spaction.Generate(filepath.Join(root, a.Dir), spbody.Config{
+			Prefix:  a.Prefix,
+			Externs: declared.Funcs,
+			Tags:    declared.Tags,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("generating %s: %w", a.Dir, err)
+		}
+		out[a.Out] = []byte(source)
+	}
+
 	// A plugin extern names SourcePawn this repository has not written yet.
 	// The day it does, the extern has to go: a function owned in both places
 	// is the duplication the epic exists to remove, and nothing else would
 	// notice, because both would compile.
 	for qualified, x := range declared.Funcs {
-		if !x.Plugin {
+		if x.Plugin {
+			if dir, ported := owned[x.Func]; ported {
+				return nil, fmt.Errorf("%s is declared as a plugin extern and %s generates %s; delete the extern and call it directly", qualified, dir, x.Func)
+			}
 			continue
 		}
-		if dir, ported := owned[x.Func]; ported {
-			return nil, fmt.Errorf("%s is declared as a plugin extern and %s generates %s; delete the extern and call it directly", qualified, dir, x.Func)
+		// The other direction: a body extern says the port owns it, and
+		// a name nothing generates is a claim that stopped being true.
+		if x.Body {
+			if _, ported := owned[x.Func]; !ported {
+				return nil, fmt.Errorf("%s is declared as a body extern and nothing generates %s; make it a plugin extern, or port it", qualified, x.Func)
+			}
 		}
 	}
 	return out, nil

@@ -41,6 +41,26 @@ func (e *emitter) ident(pos token.Pos, name string) string {
 	return name
 }
 
+// usesResult says whether the body needs the named result declared: it says the
+// name, or it returns without one and the name is what comes back.
+func usesResult(body *ast.BlockStmt, name string) bool {
+	found := false
+	ast.Inspect(body, func(n ast.Node) bool {
+		switch t := n.(type) {
+		case *ast.ReturnStmt:
+			if len(t.Results) == 0 {
+				found = true
+			}
+		case *ast.Ident:
+			if t.Name == name {
+				found = true
+			}
+		}
+		return !found
+	})
+	return found
+}
+
 // outParam is a Go result that SourcePawn takes as a parameter.
 type outParam struct {
 	name string
@@ -96,13 +116,21 @@ func (e *emitter) funcDecl(d *ast.FuncDecl) {
 	e.byRef = byRefParams(sig)
 	name := e.emittedName(d)
 	e.emitted = append(e.emitted, name)
-	e.line("stock %s %s(%s)", ret, name, strings.Join(params, ", "))
+	if decl, given := e.cfg.Declare[d.Name.Name]; given {
+		e.line("%s", decl)
+	} else {
+		e.line("stock %s %s(%s)", ret, name, strings.Join(params, ", "))
+	}
 	e.line("{")
 	e.indent++
-	// A named first result is a local in SourcePawn, declared before the
-	// body so a naked return has something to return.
-	if e.resultName != "" {
+	// A named first result is a local in SourcePawn, and it is only needed if
+	// the body says its name or returns without one. Declaring it regardless
+	// left an unused variable in every callback that names its result and
+	// always returns a value.
+	if e.resultName != "" && usesResult(d.Body, e.resultName) {
 		e.line("%s;", e.resultDecl)
+	} else if e.resultName != "" {
+		e.resultName = ""
 	}
 	// Go zeroes a named result and SourcePawn hands the body whatever the
 	// caller's variable held, so the out parameters are cleared here. A

@@ -80,6 +80,9 @@ func (e *emitter) identExpr(id *ast.Ident) string {
 		obj = e.info.Defs[id]
 	}
 	if obj != nil && obj.Parent() == e.pkg.Scope() {
+		if name, claimed := e.spNames[id.Name]; claimed {
+			return e.ident(id.Pos(), name)
+		}
 		return e.cfg.Prefix + e.ident(id.Pos(), id.Name)
 	}
 	return e.ident(id.Pos(), id.Name)
@@ -159,6 +162,10 @@ func (e *emitter) selector(n *ast.SelectorExpr) string {
 		e.fail(n.Pos(), "%s used as a value; an extern is called, not passed", e.qualified(n))
 		return ""
 	}
+	if _, _, isMethod := e.externMethod(n); isMethod {
+		e.fail(n.Pos(), "%s used as a value; an extern is called, not passed", e.qualified(n))
+		return ""
+	}
 	if e.info.Selections[n] == nil {
 		e.fail(n.Pos(), "%s is not a field of anything this package declares", e.qualified(n))
 		return ""
@@ -171,6 +178,43 @@ func (e *emitter) qualified(n *ast.SelectorExpr) string {
 		return id.Name + "." + n.Sel.Name
 	}
 	return n.Sel.Name
+}
+
+/*
+	slot is a plugin array indexed by the actor
+
+The bot state the behaviours share lives in nextbot_behavior.sp as arrays over
+client slots, and a behaviour both reads and writes it. Go has no way to say
+"assign to the result of a call", so the read and the write are two declarations
+and this emits the subscript for both.
+
+It is transitional by construction. When that state moves here it becomes
+ordinary package state, the two declarations go, and the subscript is the
+generator's own.
+*/
+func (e *emitter) slot(call *ast.CallExpr, x Extern) string {
+	want := 1
+	if x.Set {
+		want = 2
+	}
+	if len(call.Args) != want {
+		e.fail(call.Pos(), "%s takes %d argument(s), and was given %d", x.Func, want, len(call.Args))
+		return ""
+	}
+	read := fmt.Sprintf("%s[%s]", x.Func, e.expr(call.Args[0]))
+	if !x.Set {
+		return read
+	}
+	return fmt.Sprintf("%s = %s", read, e.expr(call.Args[1]))
+}
+
+func (e *emitter) slotExtern(call *ast.CallExpr) (Extern, bool) {
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return Extern{}, false
+	}
+	x, isExtern := e.externOf(sel)
+	return x, isExtern && x.Slot
 }
 
 func (e *emitter) globalExtern(call *ast.CallExpr) (Extern, bool) {
@@ -187,13 +231,42 @@ func (e *emitter) globalExtern(call *ast.CallExpr) (Extern, bool) {
 func (e *emitter) returnsArrayValue(call *ast.CallExpr) bool {
 	switch fun := call.Fun.(type) {
 	case *ast.SelectorExpr:
-		x, isExtern := e.externOf(fun)
-		return isExtern && x.ReturnsArray
+		if x, isExtern := e.externOf(fun); isExtern {
+			return x.ReturnsArray
+		}
+		x, _, isMethod := e.externMethod(fun)
+		return isMethod && x.ReturnsArray
 	case *ast.Ident:
 		return e.valueReturners[fun.Name]
 	default:
 		return false
 	}
+}
+
+/*
+	externMethod resolves a call written on a receiver
+
+The receiver's type is what picks the method, so this asks go/types what the
+expression on the left is rather than reading the name. A type from the extern
+package carries a //sp:tag saying what SourcePawn calls it, and the method
+carries its own directive; anything else is not an extern and is refused where
+it is written.
+*/
+func (e *emitter) externMethod(n *ast.SelectorExpr) (Extern, string, bool) {
+	tv, ok := e.info.Types[n.X]
+	if !ok || tv.Type == nil {
+		return Extern{}, "", false
+	}
+	named, ok := types.Unalias(tv.Type).(*types.Named)
+	if !ok || named.Obj().Pkg() == nil || named.Obj().Pkg() == e.pkg {
+		return Extern{}, "", false
+	}
+	key := named.Obj().Pkg().Name() + "." + named.Obj().Name() + "." + n.Sel.Name
+	x, declared := e.cfg.Externs[key]
+	if !declared || !x.Method {
+		return Extern{}, "", false
+	}
+	return x, e.expr(n.X), true
 }
 
 func (e *emitter) externOf(n *ast.SelectorExpr) (Extern, bool) {
@@ -216,6 +289,9 @@ func (e *emitter) callWith(call *ast.CallExpr, extra []string) string {
 	}
 	if name, ok := e.builtinHelper(call); ok {
 		return name
+	}
+	if x, ok := e.slotExtern(call); ok {
+		return e.slot(call, x)
 	}
 	if x, ok := e.globalExtern(call); ok {
 		if len(call.Args) != 0 || len(extra) != 0 {
@@ -280,11 +356,16 @@ func (e *emitter) callee(fun ast.Expr) (name string, lead []string, err error) {
 	case *ast.ParenExpr:
 		return e.callee(f.X)
 	case *ast.SelectorExpr:
-		x, ok := e.externOf(f)
-		if !ok {
-			return "", nil, fmt.Errorf("%s is not an extern this emission was given; add it to Config.Externs", e.qualified(f))
+		if x, ok := e.externOf(f); ok {
+			return x.Func, x.Lead, nil
 		}
-		return x.Func, x.Lead, nil
+		if x, recv, ok := e.externMethod(f); ok {
+			// SourceMod's API is methodmaps, so this one is written
+			// on its receiver and there is no plain function behind
+			// it to call instead.
+			return recv + "." + x.Func, x.Lead, nil
+		}
+		return "", nil, fmt.Errorf("%s is not an extern this emission was given; add it to internal/engine", e.qualified(f))
 	case *ast.Ident:
 		if builtin, ok := e.info.Uses[f].(*types.Builtin); ok {
 			return builtinCall(builtin.Name())

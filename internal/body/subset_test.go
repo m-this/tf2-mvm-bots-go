@@ -2,6 +2,7 @@ package body_test
 
 import (
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/body"
@@ -17,7 +18,7 @@ func TestEveryBodyIsInsideTheSubset(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reading the extern declarations: %v", err)
 	}
-	for _, b := range body.All {
+	for _, b := range slices.Concat(body.All, body.Actions) {
 		t.Run(b.Dir, func(t *testing.T) {
 			diags, err := gosubset.CheckDir(filepath.Join("../..", b.Dir), cfg)
 			if err != nil {

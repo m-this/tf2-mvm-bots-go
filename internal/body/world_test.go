@@ -2,6 +2,8 @@ package body_test
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -388,4 +390,14 @@ func logCases(t *testing.T, want, got []int32) {
 		j += 2 + int(gl)
 		n++
 	}
+}
+
+// readUpstreamFile reads a file out of the plugin repository's working tree.
+func readUpstreamFile(t *testing.T, root string, parts ...string) string {
+	t.Helper()
+	body, err := os.ReadFile(filepath.Join(append([]string{root}, parts...)...))
+	if err != nil {
+		t.Fatalf("reading the shipped file: %v", err)
+	}
+	return string(body)
 }

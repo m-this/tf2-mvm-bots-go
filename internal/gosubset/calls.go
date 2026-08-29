@@ -63,6 +63,24 @@ func (c *checker) checkCalleeSelector(sel *ast.SelectorExpr) {
 			return
 		}
 	}
-	c.refuse(sel.Pos(), "a method call",
-		"call a plain function with the value as its first parameter; the body generator emits no methodmaps")
+	/* A method call on something that is not an import.
+
+	Accepted here and judged by the emitter, which has the types. SourceMod's
+	API is methodmaps: myBot.GetVisionInterface() has no plain function
+	behind it, so refusing every method call refused the engine. What the
+	emitter accepts is a method the extern package declares on a type
+	carrying an //sp:tag, and it refuses the rest by name.
+
+	This is the one rule this checker cannot decide, because deciding it
+	needs to know what the receiver is. */
+	if id, ok := sel.X.(*ast.Ident); ok && c.packageNames[id.Name] {
+		// A package this configuration maps, used by a file that did not
+		// import it. An import is file scoped, and a selector that reads
+		// as a package in one file and a variable in the next is the
+		// kind of thing nobody notices until it compiles differently.
+		c.refuse(sel.Pos(), fmt.Sprintf("%s.%s, in a file that does not import %s", id.Name, sel.Sel.Name, id.Name),
+			"import it in this file, or call something this one can see")
+		return
+	}
+	c.checkExpr(sel.X)
 }

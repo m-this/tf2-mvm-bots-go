@@ -123,6 +123,23 @@ func (e *emitter) run(files []*ast.File) {
 				e.spNames[fn.Name.Name] = name
 			}
 		}
+		// Package level vars claim a name the same way, and by the same
+		// argument: the files that still read them have not moved.
+		for _, decl := range f.Decls {
+			g, ok := decl.(*ast.GenDecl)
+			if !ok || g.Tok != token.VAR {
+				continue
+			}
+			for _, spec := range g.Specs {
+				vs, ok := spec.(*ast.ValueSpec)
+				if !ok || len(vs.Names) != 1 {
+					continue
+				}
+				if name, claimed := varName(vs, g); claimed {
+					e.spNames[vs.Names[0].Name] = name
+				}
+			}
+		}
 	}
 	// SourcePawn reads top to bottom for everything but a function call, so
 	// the declarations come out in dependency order rather than source

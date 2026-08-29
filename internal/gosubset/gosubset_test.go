@@ -59,7 +59,7 @@ func TestRefused(t *testing.T) {
 		{"type assertion", "package decisions\n\nfunc f(x any) {\n\t_ = x.(int32)\n}\n", "type assertion"},
 		{"type switch", "package decisions\n\nfunc f(x any) {\n\tswitch x.(type) {\n\t}\n}\n", "type switch"},
 		{"method receiver", "package decisions\n\ntype T struct{ A int32 }\n\nfunc (t T) M() int32 { return t.A }\n", "method receiver"},
-		{"method call", "package decisions\n\ntype T struct{ A int32 }\n\nfunc f(t T) int32 { return t.M() }\n", "method call"},
+
 		{"generic function", "package decisions\n\nfunc f[T any](x T) T { return x }\n", "generic function"},
 		{"computed package variable", "package decisions\n\nfunc n() int32 { return 1 }\n\nvar counter = n()\n", "package-level initialiser"},
 		{"import", "package decisions\n\nimport \"os\"\n\nfunc f() { _ = os.Args }\n", "import of \"os\""},
@@ -109,6 +109,10 @@ func TestAccepted(t *testing.T) {
 		src  string
 	}{
 		{"sized arithmetic", wrap("\ta = a*2 + int32(b)")},
+		// A method call reaches the emitter, which has the types to say
+		// whether the receiver is an extern the engine declares. This
+		// checker cannot: it would have to know what t is.
+		{"method call", "package decisions\n\ntype T struct{ A int32 }\n\nfunc f(t T) int32 { return t.M() }\n"},
 		{"package state", "package decisions\n\nvar touching bool\n\nvar counts [4]int32 = [4]int32{1, 2, 3, 4}\n\nfunc f() int32 {\n\tif touching {\n\t\tcounts[0]++\n\t}\n\treturn counts[0]\n}\n"},
 		{"if else", wrap("\tif a > 1 {\n\t\ta = 1\n\t} else if a < 0 {\n\t\ta = 0\n\t} else {\n\t\ta = 2\n\t}")},
 		{"three clause for", wrap("\tfor i := int32(0); i < 8; i++ {\n\t\ta += i\n\t}")},

@@ -36,6 +36,9 @@ func (e *emitter) varDecl(d *ast.GenDecl) {
 			e.fail(d.Pos(), "an unrecognised package-level declaration")
 			continue
 		}
+		// A global keeps the plugin's name for the same reason a function
+		// does: the files that have not been ported still read it.
+		claimed, hasName := varName(vs, d)
 		for i, name := range vs.Names {
 			if name.Name == "_" {
 				continue
@@ -44,12 +47,33 @@ func (e *emitter) varDecl(d *ast.GenDecl) {
 			if i < len(vs.Values) {
 				value = vs.Values[i]
 			}
-			e.stateVar(name, value)
+			emitted := ""
+			if hasName && len(vs.Names) == 1 {
+				emitted = claimed
+			}
+			e.stateVar(name, value, emitted)
 		}
 	}
 }
 
-func (e *emitter) stateVar(name *ast.Ident, value ast.Expr) {
+// varName reads //sp:name off a var declaration, from the spec's own doc or
+// the group's when the group declares one variable.
+func varName(vs *ast.ValueSpec, d *ast.GenDecl) (string, bool) {
+	for _, doc := range []*ast.CommentGroup{vs.Doc, d.Doc} {
+		if doc == nil {
+			continue
+		}
+		for _, c := range doc.List {
+			fields := strings.Fields(c.Text)
+			if len(fields) == 2 && fields[0] == nameDirective {
+				return fields[1], true
+			}
+		}
+	}
+	return "", false
+}
+
+func (e *emitter) stateVar(name *ast.Ident, value ast.Expr, claimed string) {
 	obj := e.info.Defs[name]
 	if obj == nil {
 		e.fail(name.Pos(), "the variable %s has no type", name.Name)
@@ -64,7 +88,11 @@ func (e *emitter) stateVar(name *ast.Ident, value ast.Expr) {
 		e.fail(name.Pos(), "%s is a global of more than one dimension; Reset writes one loop, so declare it flat", name.Name)
 		return
 	}
-	v := stateVar{name: e.cfg.Prefix + e.ident(name.Pos(), name.Name), tag: tag, dims: dims}
+	emitted := e.cfg.Prefix + e.ident(name.Pos(), name.Name)
+	if claimed != "" {
+		emitted = e.ident(name.Pos(), claimed)
+	}
+	v := stateVar{name: emitted, tag: tag, dims: dims}
 	e.state = append(e.state, v)
 
 	decl := declare(v.tag, v.name, v.dims)

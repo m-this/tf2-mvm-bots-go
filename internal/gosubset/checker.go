@@ -10,20 +10,25 @@ type checker struct {
 	fset     *token.FileSet
 	natives  map[string]bool
 	packages map[string]map[string]bool
-	imports  map[string]string // local name -> import path
-	types    map[string]bool   // package-level type names
-	funcs    map[string]bool   // package-level function names
-	diags    []Diagnostic
+	// packageNames are the last path elements of the mapped packages, so a
+	// selector that reads as one of them in a file that did not import it
+	// can be refused as the leak it is rather than read as a method call.
+	packageNames map[string]bool
+	imports      map[string]string // local name -> import path
+	types        map[string]bool   // package-level type names
+	funcs        map[string]bool   // package-level function names
+	diags        []Diagnostic
 }
 
 func newChecker(fset *token.FileSet, cfg Config) *checker {
 	c := &checker{
-		fset:     fset,
-		natives:  make(map[string]bool, len(cfg.Natives)),
-		packages: make(map[string]map[string]bool, len(cfg.Packages)),
-		imports:  make(map[string]string),
-		types:    make(map[string]bool),
-		funcs:    make(map[string]bool),
+		fset:         fset,
+		natives:      make(map[string]bool, len(cfg.Natives)),
+		packages:     make(map[string]map[string]bool, len(cfg.Packages)),
+		packageNames: make(map[string]bool, len(cfg.Packages)),
+		imports:      make(map[string]string),
+		types:        make(map[string]bool),
+		funcs:        make(map[string]bool),
 	}
 	for _, n := range cfg.Natives {
 		c.natives[n] = true
@@ -34,6 +39,11 @@ func newChecker(fset *token.FileSet, cfg Config) *checker {
 			set[m] = true
 		}
 		c.packages[path] = set
+		name := path
+		if i := lastSlash(path); i >= 0 {
+			name = path[i+1:]
+		}
+		c.packageNames[name] = true
 	}
 	return c
 }
