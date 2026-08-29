@@ -75,7 +75,10 @@ Refused: `go`, `defer`, `select`, channel send and receive, labels, `goto`,
 `fallthrough` (write `case a, b:`), type switch, and a `switch` with no tag
 (SourcePawn's `switch` needs a value; write `if` / `else if`).
 
-Switch cases must be constants, which is what SourcePawn accepts.
+Switch cases must be constants, which is what SourcePawn accepts. A call is
+allowed through to the emitter, because a constant the extern package names,
+`TFClass_Soldier` and its like, is a call in Go and a constant in SourcePawn.
+The emitter accepts exactly those and refuses the rest.
 
 ## Expressions
 

@@ -457,6 +457,15 @@ func (e *emitter) caseClause(clause *ast.CaseClause) {
 	} else {
 		values := make([]string, 0, len(clause.List))
 		for _, v := range clause.List {
+			// SourcePawn switches on constants. A call is only one if
+			// it is a constant the extern package names, and anything
+			// else would emit a call where spcomp wants a value.
+			if call, isCall := v.(*ast.CallExpr); isCall {
+				if _, isGlobal := e.globalExtern(call); !isGlobal {
+					e.fail(v.Pos(), "a switch case that is not a constant; SourcePawn switches on values known at compile time")
+					continue
+				}
+			}
 			values = append(values, e.expr(v))
 		}
 		e.line("case %s:", strings.Join(values, ", "))

@@ -126,6 +126,15 @@ func (c *checker) checkSwitch(n *ast.SwitchStmt) {
 			continue
 		}
 		for _, e := range clause.List {
+			// A case may also be a constant the extern package names,
+			// TFClass_Soldier and its like, which is a call in Go and
+			// a constant in SourcePawn. The emitter has the types to
+			// tell that from a call that computes something; this
+			// checker does not.
+			if _, isCall := e.(*ast.CallExpr); isCall {
+				c.checkExpr(e)
+				continue
+			}
 			c.checkConstExpr(e, "a switch case")
 		}
 		for _, body := range clause.Body {

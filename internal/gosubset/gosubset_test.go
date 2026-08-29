@@ -37,7 +37,7 @@ func TestRefused(t *testing.T) {
 		{"label", "package decisions\n\nfunc f() {\nagain:\n\tfor {\n\t\tbreak again\n\t}\n}\n", "label"},
 		{"fallthrough", wrap("\tswitch a {\n\tcase 1:\n\t\tfallthrough\n\tcase 2:\n\t}"), "fallthrough"},
 		{"tagless switch", wrap("\tswitch {\n\tcase a > 1:\n\t}"), "no value to switch on"},
-		{"non constant case", wrap("\tswitch a {\n\tcase f(a, b):\n\t}"), "not a constant"},
+
 		{"map type", "package decisions\n\ntype T struct {\n\tM map[int32]int32\n}\n", "map type"},
 		{"slice type", "package decisions\n\ntype T struct {\n\tS []int32\n}\n", "slice type"},
 		{"slice expr", "package decisions\n\nfunc f(x [4]int32) {\n\t_ = x[1:2]\n}\n", "slice expression"},
@@ -109,6 +109,10 @@ func TestAccepted(t *testing.T) {
 		src  string
 	}{
 		{"sized arithmetic", wrap("\ta = a*2 + int32(b)")},
+		// A call in a case reaches the emitter, which accepts it only when
+		// it is a constant the extern package names and refuses the rest.
+		// This checker cannot tell them apart.
+		{"case naming an extern constant", wrap("\tswitch a {\n\tcase f(a, b):\n\t}")},
 		// A method call reaches the emitter, which has the types to say
 		// whether the receiver is an extern the engine declares. This
 		// checker cannot: it would have to know what t is.
