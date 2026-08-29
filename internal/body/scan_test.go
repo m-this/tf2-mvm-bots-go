@@ -73,6 +73,20 @@ func goScanCells(w world) []int32 {
 		emit(scan.NearestEnemyTeleporter(client, 999999.0))
 		emit(scan.NearestEnemyTeleporter(client, 1000.0))
 		emit(scan.BestTargetForSpy(client, 900000.0))
+
+		// The spy's four, over the two filters the callers vary and the
+		// speed check that is off unless a caller asks for it.
+		var here [3]float32
+		here[0] = 200.0
+		emit(scan.NearestSappablePlayer(client, 900000.0, false, engine.ClassUnknown(), 0.0))
+		emit(scan.NearestSappablePlayer(client, 900000.0, true, engine.ClassUnknown(), 0.0))
+		emit(scan.NearestSappablePlayer(client, 900000.0, false, engine.Class(2), 340.0))
+		emit(scan.FarthestSappablePlayer(client, 900000.0, false, engine.ClassUnknown(), 0.0))
+		emit(scan.FarthestSappablePlayer(client, 900000.0, false, engine.ClassUnknown(), 340.0))
+		emit(scan.NearestSappablePlayerHealingSomeone(client, 900000.0, false, engine.ClassUnknown(), 0.0))
+		emit(scan.NearestSappablePlayerHealingSomeone(client, 900000.0, true, engine.ClassUnknown(), 340.0))
+		emit(scan.EnemyPlayerNearestToPosition(client, here, 900000.0))
+		emit(scan.EnemyPlayerNearestToPosition(client, here, 100.0))
 	}
 	return out
 }
@@ -92,6 +106,12 @@ func scanStubs(w world) string {
 	writeBools(&b, "gDazed", w.dazed[:])
 	writeInts(&b, "gClass", classCells(w))
 	writeInts(&b, "gTfTeam", teamCells(w))
+	writeBools(&b, "gSapped", w.sapped[:])
+	writeBools(&b, "gBonked", w.bonked[:])
+	writeBools(&b, "gMedigun", w.medigun[:])
+	writeBools(&b, "gHealing", w.healing[:])
+	writeInts(&b, "gWeapon", w.weapon[:])
+	writeFloats(&b, "gMaxSpeed", w.maxSpeed[:])
 	b.WriteString(`
 /* The three SourceMod tags the ported signature keeps. Declared here because
    SourceMod's own includes are not in the standalone SourcePawn, with only the
@@ -109,7 +129,20 @@ enum TFTeam
 
 enum TFCond
 {
-	TFCond_Dazed = 17
+	TFCond_Dazed = 17,
+	TFCond_Sapped = 15,
+	TFCond_Bonked = 16
+};
+
+enum PropType
+{
+	Prop_Send = 1
+};
+
+enum TFWeaponType
+{
+	TF_WEAPON_NONE = 0,
+	TF_WEAPON_MEDIGUN = 29
 };
 
 `)
@@ -146,9 +179,26 @@ stock float GetVectorDistance(const float a[3], const float b[3])
 }
 `, traceWorldSpaceCenter, traceVectorDistance)
 	fmt.Fprintf(&b, "stock bool TF2_IsMiniBoss(int client) { Trace(%d, client); return gGiant[client]; }\n", traceIsMiniBoss)
-	fmt.Fprintf(&b, "stock bool TF2_IsPlayerInCondition(int client, TFCond condition) { Trace(%d, client); return condition == TFCond_Dazed && gDazed[client]; }\n", traceIsPlayerInCondition)
+	fmt.Fprintf(&b, `
+stock bool TF2_IsPlayerInCondition(int client, TFCond condition)
+{
+	Trace(%d, client);
+
+	switch (condition)
+	{
+		case TFCond_Dazed:  { return gDazed[client]; }
+		case TFCond_Sapped: { return gSapped[client]; }
+		case TFCond_Bonked: { return gBonked[client]; }
+	}
+	return false;
+}
+`, traceIsPlayerInCondition)
 	fmt.Fprintf(&b, "stock TFClassType TF2_GetPlayerClass(int client) { Trace(%d, client); return view_as<TFClassType>(gClass[client]); }\n", tracePlayerClass)
 	fmt.Fprintf(&b, "stock TFTeam TF2_GetClientTeam(int client) { Trace(%d, client); return view_as<TFTeam>(gTfTeam[client]); }\n", tracePlayerTeam)
+	fmt.Fprintf(&b, "stock float GetEntPropFloat(int entity, PropType propType, const char[] prop) { Trace(%d, entity); return gMaxSpeed[entity]; }\n", traceEntPropFloat)
+	fmt.Fprintf(&b, "stock int GetEntPropEnt(int weapon, PropType propType, const char[] prop) { Trace(%d, weapon); return gHealing[weapon - 200] ? 1 : -1; }\n", traceEntPropEnt)
+	fmt.Fprintf(&b, "stock int BaseCombatCharacter_GetActiveWeapon(int client) { Trace(%d, client); return gWeapon[client]; }\n", traceActiveWeapon)
+	fmt.Fprintf(&b, "stock TFWeaponType TF2Util_GetWeaponID(int weapon) { Trace(%d, weapon); return gMedigun[weapon - 200] ? TF_WEAPON_MEDIGUN : TF_WEAPON_NONE; }\n", traceWeaponID)
 	fmt.Fprintf(&b, "stock TFTeam GetPlayerEnemyTeam(int client) { Trace(%d, client); return gTfTeam[client] == 2 ? view_as<TFTeam>(3) : view_as<TFTeam>(2); }\n", tracePlayerEnemyTeam)
 	return b.String()
 }

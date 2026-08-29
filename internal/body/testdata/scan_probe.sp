@@ -52,5 +52,19 @@ public void main()
 		Emit(Go_NearestEnemyTeleporter(client));
 		Emit(Go_NearestEnemyTeleporter(client, 1000.0));
 		Emit(Go_BestTargetForSpy(client, 900000.0));
+
+		/* The spy's four, over the two filters the callers vary and the
+		   speed check that is off unless a caller asks for it. */
+		float here[3];
+		here[0] = 200.0;
+		Emit(Go_NearestSappablePlayer(client, 900000.0));
+		Emit(Go_NearestSappablePlayer(client, 900000.0, true));
+		Emit(Go_NearestSappablePlayer(client, 900000.0, false, view_as<TFClassType>(2), 340.0));
+		Emit(Go_FarthestSappablePlayer(client, 900000.0));
+		Emit(Go_FarthestSappablePlayer(client, 900000.0, false, TFClass_Unknown, 340.0));
+		Emit(Go_NearestSappablePlayerHealingSomeone(client, 900000.0));
+		Emit(Go_NearestSappablePlayerHealingSomeone(client, 900000.0, true, TFClass_Unknown, 340.0));
+		Emit(Go_EnemyPlayerNearestToPosition(client, here, 900000.0));
+		Emit(Go_EnemyPlayerNearestToPosition(client, here, 100.0));
 	}
 }

@@ -26,6 +26,15 @@ stock int BaseEntity_GetTeamNumber(int entity) { return GetEntProp(entity, Prop_
 stock bool BaseEntity_IsPlayer(int entity) { return entity > 0 && entity <= MaxClients; }
 stock int TF2_GetNumHealers(int client) { return 0; }
 stock int TF2Util_GetPlayerHealer(int client, int index) { return -1; }
+stock int BaseCombatCharacter_GetActiveWeapon(int client) { return GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon"); }
+/* tf2utils' own. The include is not on the path here; the constant it answers
+   with comes from tf2_stocks, which is. */
+enum TFWeaponType
+{
+	TFWeaponTypeUnused = -1
+};
+
+stock TFWeaponType TF2Util_GetWeaponID(int weapon) { return view_as<TFWeaponType>(TF_WEAPON_MEDIGUN); }
 
 stock float[] GetAbsOrigin(int entity)
 {
@@ -56,4 +65,11 @@ public void OnPluginStart()
 	PrintToServer("%d", Go_NearestSappableObject(1));
 	PrintToServer("%d", Go_NearestEnemyTeleporter(1));
 	PrintToServer("%d", Go_BestTargetForSpy(1, 400.0));
+	// The spy's four, with the defaults their callers omit.
+	PrintToServer("%d", Go_NearestSappablePlayer(1, 400.0));
+	PrintToServer("%d", Go_FarthestSappablePlayer(1, 400.0, true));
+	PrintToServer("%d", Go_NearestSappablePlayerHealingSomeone(1, 400.0, false, TFClass_Medic, 300.0));
+
+	float here[3];
+	PrintToServer("%d", Go_EnemyPlayerNearestToPosition(1, here, 400.0));
 }

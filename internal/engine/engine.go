@@ -54,6 +54,16 @@ type Condition int32
 //sp:tag TFObjectType
 type Object int32
 
+// PropType is SourceMod's PropType, the networked or the datamap table.
+//
+//sp:tag PropType
+type PropType int32
+
+// Weapon is SourceMod's TFWeaponType.
+//
+//sp:tag TFWeaponType
+type Weapon int32
+
 // Calls is the set of answers a body gets. A nil field is a call the caller did
 // not expect the body to make, and reaching it is a failed expectation rather
 // than a zero value quietly standing in for one.
@@ -91,6 +101,10 @@ type Calls struct {
 	IsPlayer               func(entity int32) bool
 	NumHealers             func(client int32) int32
 	PlayerHealer           func(client int32, index int32) int32
+	EntPropFloat           func(entity int32, propType PropType, prop string) float32
+	EntPropEnt             func(entity int32, propType PropType, prop string) int32
+	ActiveWeapon           func(client int32) int32
+	WeaponID               func(weapon int32) Weapon
 }
 
 var installed Calls
@@ -409,4 +423,65 @@ func PlayerHealer(client int32, index int32) int32 {
 		missing("TF2Util_GetPlayerHealer")
 	}
 	return installed.PlayerHealer(client, index)
+}
+
+// PropSend is Prop_Send, the networked table.
+//
+//sp:global Prop_Send
+func PropSend() PropType { return 1 }
+
+// ConditionSapped is TFCond_Sapped.
+//
+//sp:global TFCond_Sapped
+func ConditionSapped() Condition { return 15 }
+
+// ConditionBonked is TFCond_Bonked, the phase a Scout drinking Bonk is in.
+//
+//sp:global TFCond_Bonked
+func ConditionBonked() Condition { return 16 }
+
+// WeaponMedigun is TF_WEAPON_MEDIGUN.
+//
+//sp:global TF_WEAPON_MEDIGUN
+func WeaponMedigun() Weapon { return 29 }
+
+// EntPropFloat reads a float from one of the entity's property tables.
+//
+//sp:native GetEntPropFloat
+func EntPropFloat(entity int32, propType PropType, prop string) float32 {
+	if installed.EntPropFloat == nil {
+		missing("GetEntPropFloat")
+	}
+	return installed.EntPropFloat(entity, propType, prop)
+}
+
+// EntPropEnt reads an entity handle from one of the property tables, and
+// answers -1 when it holds none.
+//
+//sp:native GetEntPropEnt
+func EntPropEnt(entity int32, propType PropType, prop string) int32 {
+	if installed.EntPropEnt == nil {
+		missing("GetEntPropEnt")
+	}
+	return installed.EntPropEnt(entity, propType, prop)
+}
+
+// ActiveWeapon is what the player is holding.
+//
+//sp:native BaseCombatCharacter_GetActiveWeapon
+func ActiveWeapon(client int32) int32 {
+	if installed.ActiveWeapon == nil {
+		missing("BaseCombatCharacter_GetActiveWeapon")
+	}
+	return installed.ActiveWeapon(client)
+}
+
+// WeaponID is which weapon it is.
+//
+//sp:native TF2Util_GetWeaponID
+func WeaponID(weapon int32) Weapon {
+	if installed.WeaponID == nil {
+		missing("TF2Util_GetWeaponID")
+	}
+	return installed.WeaponID(weapon)
 }

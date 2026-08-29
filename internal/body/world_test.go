@@ -43,6 +43,10 @@ const (
 	traceNumHealers
 	tracePlayerHealer
 	traceIsPlayer
+	traceEntPropFloat
+	traceEntPropEnt
+	traceActiveWeapon
+	traceWeaponID
 )
 
 // world is what the stubs answer, indexed by slot. Slot 0 is never a client and
@@ -64,6 +68,12 @@ type world struct {
 	dazed    [worldSlots + 1]bool
 	class    [worldSlots + 1]engine.Class
 	tfTeam   [worldSlots + 1]engine.Team
+	sapped   [worldSlots + 1]bool
+	bonked   [worldSlots + 1]bool
+	maxSpeed [worldSlots + 1]float32
+	weapon   [worldSlots + 1]int32
+	medigun  [worldSlots + 1]bool
+	healing  [worldSlots + 1]bool
 }
 
 // cannedWorld is one world with every case the bodies branch on in it: a slot
@@ -93,6 +103,17 @@ func cannedWorld() world {
 		w.dazed[i] = i%5 == 0
 		w.class[i] = engine.Class(i % 4)
 		w.tfTeam[i] = engine.Team(2 + (i/2)%2)
+		w.sapped[i] = i == 8
+		w.bonked[i] = i == 9
+		w.maxSpeed[i] = 300.0 + float32(i)*8.0
+		// Slot 12 holds nothing, which is the -1 IsPlayerHealingSomething
+		// returns on before it asks anything else.
+		w.weapon[i] = int32(200 + i)
+		if i == worldSlots {
+			w.weapon[i] = -1
+		}
+		w.medigun[i] = i%2 == 0
+		w.healing[i] = i != 6
 	}
 	// Two enemies of slot 1 in the same place. FindEnemyNearestToMe compares
 	// with <=, so the later of two equally close ones is what it picks, and a
@@ -146,7 +167,34 @@ func (in *installed) calls() engine.Calls {
 		IsMiniBoss: func(c int32) bool { in.record(traceIsMiniBoss, c); return in.w.giant[c] },
 		IsPlayerInCondition: func(c int32, cond engine.Condition) bool {
 			in.record(traceIsPlayerInCondition, c)
-			return cond == engine.ConditionDazed() && in.w.dazed[c]
+			switch cond {
+			case engine.ConditionDazed():
+				return in.w.dazed[c]
+			case engine.ConditionSapped():
+				return in.w.sapped[c]
+			case engine.ConditionBonked():
+				return in.w.bonked[c]
+			}
+			return false
+		},
+		EntPropFloat: func(e int32, _ engine.PropType, _ string) float32 {
+			in.record(traceEntPropFloat, e)
+			return in.w.maxSpeed[e]
+		},
+		EntPropEnt: func(weapon int32, _ engine.PropType, _ string) int32 {
+			in.record(traceEntPropEnt, weapon)
+			if in.w.healing[weapon-200] {
+				return 1
+			}
+			return -1
+		},
+		ActiveWeapon: func(c int32) int32 { in.record(traceActiveWeapon, c); return in.w.weapon[c] },
+		WeaponID: func(weapon int32) engine.Weapon {
+			in.record(traceWeaponID, weapon)
+			if in.w.medigun[weapon-200] {
+				return engine.WeaponMedigun()
+			}
+			return 0
 		},
 		PlayerClass: func(c int32) engine.Class { in.record(tracePlayerClass, c); return in.w.class[c] },
 		PlayerTeam:  func(c int32) engine.Team { in.record(tracePlayerTeam, c); return in.w.tfTeam[c] },
@@ -292,6 +340,7 @@ func writeInts(b *strings.Builder, name string, values []int32) {
 func compareCells(t *testing.T, want, got []int32) {
 	t.Helper()
 	if len(got) != len(want) {
+		logCases(t, want, got)
 		t.Fatalf("the probe printed %d cells, the Go produced %d", len(got), len(want))
 	}
 	mismatches := 0
@@ -309,4 +358,34 @@ func compareCells(t *testing.T, want, got []int32) {
 		t.Errorf("%d further disagreements", mismatches-reportAtMost)
 	}
 	t.Logf("compared %d cells, answers and call traces both", len(want))
+}
+
+func writeFloats(b *strings.Builder, name string, values []float32) {
+	fmt.Fprintf(b, "float %s[%d] = {", name, len(values))
+	for i, v := range values {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(sp.FloatLiteral(v))
+	}
+	b.WriteString("};\n")
+}
+
+// logCases walks both streams as the probe emits them, result then trace
+// length then trace, and names the first case whose shape differs.
+func logCases(t *testing.T, want, got []int32) {
+	t.Helper()
+	i, j, n := 0, 0, 0
+	for i < len(want) && j < len(got) {
+		wl, gl := want[i+1], got[j+1]
+		if want[i] != got[j] || wl != gl {
+			t.Logf("case %d: go result %d over %d trace cells, sp result %d over %d", n, want[i], wl, got[j], gl)
+			t.Logf("  go trace %v", want[i+2:i+2+int(wl)])
+			t.Logf("  sp trace %v", got[j+2:j+2+int(gl)])
+			return
+		}
+		i += 2 + int(wl)
+		j += 2 + int(gl)
+		n++
+	}
 }
