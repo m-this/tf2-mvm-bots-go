@@ -26,10 +26,11 @@ linters:
       # a wrong generated constant.
       - linters: [gosec]
         text: "G(204|304|703):"
-      # Golden files are source. They are read by people and by git.
+      # Generated files and golden files are source: read by people, diffed by
+      # git, and compiled by spcomp. 0644 is what source is.
       - linters: [gosec]
-        text: "G306:"
-        path: _test\.go
+        text: "G(301|306):"
+        path: (_test\.go|cmd/gen/)
 
 formatters:
   enable:

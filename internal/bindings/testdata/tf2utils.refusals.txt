@@ -1,0 +1,8 @@
+# refused while parsing
+
+# refused while emitting
+tf2utils.inc:21: define: replacement text is not a constant expression (TAKEHEALTH_IGNORE_MAXHEALTH (DMG_BULLET))
+tf2utils.inc:22: define: replacement text is not a constant expression (TAKEHEALTH_IGNORE_DEBUFFS (DMG_SLASH))
+tf2utils.inc:497: define: replacement text is not a constant expression (TF2_GetPlayerLoadoutSlot TF2Util_GetPlayerLoadoutEntity)
+tf2utils.inc:498: define: replacement text is not a constant expression (TF2_EquipPlayerWearable TF2Util_EquipPlayerWearable)
+tf2utils.inc:499: define: replacement text is not a constant expression (TF2_IsWearable TF2Util_IsEntityWearable)

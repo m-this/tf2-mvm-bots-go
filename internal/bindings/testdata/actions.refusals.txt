@@ -1,0 +1,5 @@
+# refused while parsing
+actions.inc:149: typeset: typeset has several signatures under one name (ActionComponentFn)
+
+# refused while emitting
+actions.inc:900: declaration: name already used on BehaviorAction (BehaviorAction.Set)
