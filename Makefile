@@ -23,17 +23,17 @@ gen:
 # the whole point: the gate runs the same tests and refuses to skip the ones
 # that need spcomp.
 check: REQUIRE := MVMBOTS_REQUIRE_SPSHELL=1 MVMBOTS_REQUIRE_UPSTREAM=1
-check: toolchain vet lint test
+check: toolchain gen vet lint test
 	$(GO) run ./cmd/gen -upstream $(UPSTREAM) -out gen
 	@cp -r gen .gen.first && $(GO) run ./cmd/gen -upstream $(UPSTREAM) -out gen \
 		&& diff -r .gen.first gen >/dev/null \
 		|| { rm -rf .gen.first; echo "generated output is not reproducible"; exit 1; }
 	@rm -rf .gen.first
 
-# The toolchain is a soft dependency here on purpose: a clone with no clang and
-# no network still runs every test that does not need spcomp. make check is
-# where it is mandatory.
-test:
+# gen first, and not only in check: report imports the generated wave record, so
+# a clone that has never generated does not build at all. It is cheap and
+# reproducible, so there is no reason to make anybody remember it.
+test: gen
 	MVMBOTS_UPSTREAM=$(UPSTREAM) $(SPENV) $(REQUIRE) $(GO) test -race ./...
 
 # Builds SourcePawn's own compiler and VM at the pinned commit. Idempotent: a
@@ -45,12 +45,12 @@ toolchain:
 # SourcePawn's: bitbuffer.inc really does have ReadByte and WriteByte, and vet
 # reads those as broken io interfaces. Renaming them would make the binding
 # wrong to be tidy.
-vet:
-	$(GO) vet ./cmd/... ./internal/...
+vet: gen
+	$(GO) vet ./cmd/... ./internal/... ./report/... ./sweepreport/...
 	$(GO) build ./gen/...
 
-lint:
-	$(GO) run $(GOLANGCI) run ./cmd/... ./internal/...
+lint: gen
+	$(GO) run $(GOLANGCI) run ./cmd/... ./internal/... ./report/... ./sweepreport/...
 
 clean:
 	rm -rf gen bin toolchain

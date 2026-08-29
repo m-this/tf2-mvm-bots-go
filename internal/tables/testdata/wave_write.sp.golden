@@ -5,8 +5,11 @@ The table it comes from is the only place these names are written. */
 /* One line for the wave, with everything that was counted while it ran
  *
  * The duration is the honest number to compare runs on: a wave that is cleared slowly is a team
- * that nearly lost it, and a change that clears the same waves faster is a change that worked */
-static void WriteWaveResult(const char[] result)
+ * that nearly lost it, and a change that clears the same waves faster is a change that worked
+ *
+ * Not static, because spcomp scopes static to the file and this one is included: the helpers it
+ * calls live in the plugin and the callers of it do too. */
+void WriteWaveResult(const char[] result)
 {
 	/* A wave nobody played is not a result
 	 *
@@ -167,4 +170,23 @@ static void WriteWaveResult(const char[] result)
 		g_Wave.healingByClass[view_as<int>(TFClass_Engineer)]);
 
 	WriteLine(line);
+
+	/* What the server's frames cost while that was happening
+
+	Its own line, because it is about the machine rather than about the bots, and it should be
+	possible to read a run's frame times without parsing everything else. */
+	char perf[ENGINEER_LINE_LENGTH];
+	FormatEx(perf, sizeof(perf),
+		"{\"event\":\"perf\",\"map\":\"%s\",\"wave\":%d,\"frames\":%d,"
+		... "\"frames_slow\":%d,\"frames_stalled\":%d,\"frame_mean_ms\":%.2f,\"frame_worst_ms\":%.1f,"
+		... "\"red\":%d}",
+		g_sMap, g_iWave, g_Wave.frames, g_Wave.framesSlow, g_Wave.framesStalled,
+		g_Wave.frames > 0 ? g_Wave.frameTotalMs / float(g_Wave.frames) : 0.0,
+		g_Wave.frameWorstMs, CountTeam(TFTeam_Red, false));
+
+	WriteLine(perf);
+
+	WriteEngineers("end");
+
+	g_flWaveStart = 0.0;
 }

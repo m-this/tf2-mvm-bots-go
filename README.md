@@ -51,6 +51,11 @@ down twice, and of the interesting code being unreachable from a test.
   was shipping.
 - `internal/spshell` — golden inputs through `spcomp` and SourcePawn's
   standalone VM, compared with the Go on `float32` bits, with no game server.
+- `cmd/testbed`, `cmd/rc`, `internal/lab`, `internal/rcon`, `internal/wave`,
+  `report`, `sweepreport` — the test-bed. It runs the mission, watches the waves
+  and reports what happened. It drives the plugin repository through
+  `internal/upstream`: build.sh, the compose file, the popfiles and the map
+  configs live there, and none of them are code.
 
 `gen/` is the output. It is gitignored and never edited by hand.
 

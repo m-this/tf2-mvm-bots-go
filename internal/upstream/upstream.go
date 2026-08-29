@@ -9,6 +9,8 @@ two answered different questions about the same file.
 package upstream
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -37,21 +39,48 @@ package under test. Resolving it here rather than in the Makefile is what stops
 a wrong path turning the proofs into silent skips, which it already did.
 */
 func Dir() (string, error) {
-	dir := os.Getenv("MVMBOTS_UPSTREAM")
-	if dir == "" {
-		dir = filepath.Join("..", "..", "..", "tf2-mvm-bots")
-	}
-	if !filepath.IsAbs(dir) {
-		if abs, err := filepath.Abs(dir); err == nil {
-			if _, err := os.Stat(filepath.Join(abs, ".git")); err != nil {
-				dir = filepath.Join("..", "..", dir)
-			}
-		}
-	}
-	if _, err := os.Stat(filepath.Join(dir, ".git")); err != nil {
+	root, err := repoRoot()
+	if err != nil {
 		return "", err
 	}
+	dir := os.Getenv(DirEnv)
+	if dir == "" {
+		dir = filepath.Join(root, "..", "tf2-mvm-bots")
+	} else if !filepath.IsAbs(dir) {
+		dir = filepath.Join(root, dir)
+	}
+	if _, err := os.Stat(filepath.Join(dir, ".git")); err != nil {
+		return "", fmt.Errorf("no plugin repository at %s: %w", dir, err)
+	}
 	return dir, nil
+}
+
+// DirEnv names the variable that points at the plugin repository.
+const DirEnv = "MVMBOTS_UPSTREAM"
+
+/*
+	repoRoot is this repository, found by its go.mod
+
+It used to be counted in directories, "..", "..", "..", which is right for a
+test running in internal/something and wrong for a command running at the root.
+cmd/testbed is that command, and after mvm-x2c it is the biggest reader of the
+plugin tree, so the depth is worked out rather than assumed.
+*/
+func repoRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir, nil
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", errors.New("not inside the repository: no go.mod above the working directory")
+		}
+		dir = parent
+	}
 }
 
 // Read returns one file at Rev, with the path parts joined the way git wants

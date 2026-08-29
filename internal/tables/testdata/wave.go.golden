@@ -7,8 +7,8 @@ package waveline
 // and engineer rows as waves.
 const Event = "wave_end"
 
-// Wave is one wave, as the statistics plugin wrote it.
-type Wave struct {
+// Record is one wave, as the statistics plugin wrote it.
+type Record struct {
 	Event               string  `json:"event"`
 	Map                 string  `json:"map"`
 	Wave                int     `json:"wave"`

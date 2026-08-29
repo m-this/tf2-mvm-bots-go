@@ -16,7 +16,10 @@ func GoWaveParser(pkg string) []byte {
 		"// events too, so a reader that does not filter on this is reading setup rows\n"+
 		"// and engineer rows as waves.\nconst Event = %q\n\n", WaveEvent)
 
-	b.WriteString("// Wave is one wave, as the statistics plugin wrote it.\ntype Wave struct {\n")
+	// Record, not Wave: the package is already called wave, and one of the
+	// fields is the wave number, so wave.Wave would both stutter and shadow
+	// its own field for anybody embedding it.
+	b.WriteString("// Record is one wave, as the statistics plugin wrote it.\ntype Record struct {\n")
 
 	width := 0
 	for _, f := range WaveRecord {

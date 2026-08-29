@@ -155,7 +155,7 @@ func TestGeneratedWaveWriterRoundTrips(t *testing.T) {
 func TestGeneratedParserReadsEveryWrittenField(t *testing.T) {
 	t.Parallel()
 
-	tags := parseGoTags(t, tables.GoWaveParser("waveline"), "Wave")
+	tags := parseGoTags(t, tables.GoWaveParser("waveline"), "Record")
 
 	if len(tags) != len(tables.WaveRecord) {
 		t.Fatalf("generated parser has %d fields, the table has %d", len(tags), len(tables.WaveRecord))
@@ -285,10 +285,16 @@ func TestGeneratedWaveWriterIsTheWholeShippedFunction(t *testing.T) {
 // adjacent string literals FormatEx sees as one are joined, comments go, and
 // runs of whitespace become one space.
 func waveResultFunc(src string) (string, bool) {
-	i := strings.Index(src, "static void WriteWaveResult")
+	i := strings.Index(src, "void WriteWaveResult")
 	if i < 0 {
 		return "", false
 	}
+	// The shipped one is static and the generated one is not: spcomp scopes
+	// static to the file, and the generated one is included. That is the one
+	// difference between them this comparison is allowed to ignore.
+	src = strings.TrimPrefix(src[i:], "void WriteWaveResult")
+	i = 0
+	src = "void WriteWaveResult" + src
 	j := strings.Index(src[i:], "\n}\n")
 	if j < 0 {
 		return "", false
