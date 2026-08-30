@@ -11,6 +11,7 @@ delete at every way out and refuses one that nothing closes.
 // ListCalls are the answers.
 type ListCalls struct {
 	SortCustom func(l List, cmp Compare)
+	Clear      func(l List)
 	PushFloat  func(l List, value float32) int32
 	PushAt     func(l List, value int32) int32
 	SetFloatAt func(l List, index int32, value float32, block int32)
@@ -148,6 +149,16 @@ func (l List) SetFloatAt(index int32, value float32, block int32) {
 //sp:cast ArrayList
 func ListOf(h Handle) List {
 	return List(h)
+}
+
+// Clear empties the list without releasing it.
+//
+//sp:method Clear
+func (l List) Clear() {
+	if lists.Clear == nil {
+		missing("ArrayList.Clear")
+	}
+	lists.Clear(l)
 }
 
 // NoList is null, which is what a caller passes when it has no list to give.

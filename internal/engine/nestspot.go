@@ -8,6 +8,8 @@ type NestSpotCalls struct {
 	Sine               func(radians float32) float32
 	FloatAbs           func(value float32) float32
 	ClosestPointOnArea func(a Area, from [3]float32) [3]float32
+	MaxFloat           func(a float32, b float32) float32
+	NavAreaAt          func(l NavAreaList, index int32) NavArea
 	BestNestArea       func(client int32, areas List, target [3]float32, sentryRange float32) Area
 	Extent             func(a Area) ([3]float32, [3]float32)
 	Z                  func(a Area, x float32, y float32) float32
@@ -146,3 +148,40 @@ func BestNestArea(client int32, areas List, target [3]float32, sentryRange float
 	}
 	return nestSpots.BestNestArea(client, areas, target, sentryRange)
 }
+
+// NestDepth is redbots_manager_engineer_nest_depth, the share of the bomb's route
+// an engineer may hold ground along.
+//
+//sp:global redbots_manager_engineer_nest_depth
+func NestDepth() ConVar { return 0 }
+
+// MaxFloat is the larger of two. The plugin has its own, and the generator's own
+// max would emit a second one beside it.
+//
+//sp:plugin MaxFloat
+func MaxFloat(a float32, b float32) float32 {
+	if nestSpots.MaxFloat == nil {
+		missing("MaxFloat")
+	}
+	return nestSpots.MaxFloat(a, b)
+}
+
+// NavAreaAt is one area of the whole mesh, by index.
+//
+//sp:method Get
+func (l NavAreaList) NavAreaAt(index int32) NavArea {
+	if nestSpots.NavAreaAt == nil {
+		missing("TheNavAreas.Get")
+	}
+	return nestSpots.NavAreaAt(l, index)
+}
+
+// NavAreaList is TheNavAreas, the mesh as a list.
+//
+//sp:tag ArrayList
+type NavAreaList int32
+
+// AllNavAreas is TheNavAreas itself.
+//
+//sp:global TheNavAreas
+func AllNavAreas() NavAreaList { return 0 }

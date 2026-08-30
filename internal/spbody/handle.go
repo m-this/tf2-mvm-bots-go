@@ -104,6 +104,11 @@ func (e *emitter) opens(d *ast.FuncDecl) map[string]bool {
 		if x, isExtern := e.externOfCall(call); isExtern && (x.Global || x.Cast) {
 			return
 		}
+		// A function that hands back a handle it keeps, which is not one
+		// this caller opened: //sp:borrowed is where it says so.
+		if id, plain := call.Fun.(*ast.Ident); plain && e.borrowed[id.Name] {
+			return
+		}
 		if id, ok := lhs[0].(*ast.Ident); ok {
 			out[id.Name] = true
 		}

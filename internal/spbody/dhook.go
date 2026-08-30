@@ -76,6 +76,30 @@ func isPublic(d *ast.FuncDecl) bool {
 	return false
 }
 
+/*
+	borrowedDirective says a handle result belongs to somebody else
+
+A function that hands back a handle it keeps is not opening one for the caller:
+MapHintNests collects the map's nest entities once and answers with the same list
+for the rest of the map, and a caller that closed it would take the list away from
+everybody. The handle rule cannot see that, so the function says it.
+*/
+const borrowedDirective = "//sp:borrowed"
+
+func isBorrowed(d *ast.FuncDecl) bool {
+	if d.Doc == nil {
+		return false
+	}
+	for _, c := range d.Doc.List {
+		for line := range strings.Lines(c.Text) {
+			if strings.TrimSpace(line) == borrowedDirective {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // spName is the name the emitted function carries, and whether the body asked
 // for one. A body that does not is prefixed like everything else.
 func spName(d *ast.FuncDecl) (string, bool) {

@@ -59,6 +59,9 @@ type emitter struct {
 	// lengths maps a buffer parameter of the function being emitted onto
 	// the parameter that carries its length, from //sp:length.
 	lengths map[string]string
+	// borrowed are the functions whose handle result the caller does not
+	// own, from //sp:borrowed.
+	borrowed map[string]bool
 	// consts are the parameters of the function being emitted that carry
 	// //sp:const, which SourcePawn writes in front of the type.
 	consts map[string]bool
@@ -122,6 +125,7 @@ func (e *emitter) run(files []*ast.File) {
 	e.helpers = make(map[string]helper)
 	e.valueReturners = make(map[string]bool)
 	e.spNames = make(map[string]string)
+	e.borrowed = make(map[string]bool)
 	for _, f := range files {
 		if isGenerated(f) {
 			continue
@@ -136,6 +140,9 @@ func (e *emitter) run(files []*ast.File) {
 			}
 			if name, claimed := spName(fn); claimed {
 				e.spNames[fn.Name.Name] = name
+			}
+			if isBorrowed(fn) {
+				e.borrowed[fn.Name.Name] = true
 			}
 		}
 		// Package level vars and constants claim a name the same way, and
