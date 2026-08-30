@@ -11,6 +11,8 @@ delete at every way out and refuses one that nothing closes.
 // ListCalls are the answers.
 type ListCalls struct {
 	NewList    func() List
+	NewBlocks  func(blockSize int32) List
+	ListGetAt  func(l List, index int32, block int32) int32
 	ListPush   func(l List, value int32)
 	ListGet    func(l List, index int32) int32
 	ListLength func(l List) int32
@@ -79,4 +81,25 @@ func (l List) Close() {
 		missing("delete ArrayList")
 	}
 	lists.ListClose(l)
+}
+
+// NewBlocks makes one whose entries are several cells wide, which is how the
+// plugin keeps an entity and a distance side by side.
+//
+//sp:new ArrayList
+func NewBlocks(blockSize int32) List {
+	if lists.NewBlocks == nil {
+		missing("new ArrayList")
+	}
+	return lists.NewBlocks(blockSize)
+}
+
+// GetAt is one cell of a wide entry.
+//
+//sp:method Get
+func (l List) GetAt(index int32, block int32) int32 {
+	if lists.ListGetAt == nil {
+		missing("ArrayList.Get")
+	}
+	return lists.ListGetAt(l, index, block)
 }

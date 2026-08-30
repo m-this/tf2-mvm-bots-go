@@ -103,6 +103,11 @@ var callbacks = map[string]callback{
 		Params: "INextBot nextbot, int entity, CKnownEntity threat1, CKnownEntity threat2, CKnownEntity& knownEntity",
 		Names:  []string{"nextbot", "entity", "threat1", "threat2", "knownEntity"},
 	},
+	"ShouldHurry": {
+		Wire: "ShouldHurry", Returns: "Action",
+		Params: "INextBot nextbot, QueryResultType& result",
+		Names:  []string{"nextbot", "result"},
+	},
 	"IsHindrance": {
 		Wire: "IsHindrance", Returns: "Action",
 		Params: "INextBot nextbot, int entity, QueryResultType& result",
@@ -143,7 +148,7 @@ var callbacks = map[string]callback{
 var order = []string{
 	"OnStart", "Update", "OnEnd", "OnSuspend", "OnResume",
 	"OnInjured", "OnNavAreaChanged", "OnTerritoryContested", "OnTerritoryLost",
-	"SelectMoreDangerousThreat", "ShouldAttack", "IsHindrance",
+	"SelectMoreDangerousThreat", "ShouldHurry", "ShouldAttack", "IsHindrance",
 }
 
 // Action is one behaviour: what it is registered as, what its functions are
