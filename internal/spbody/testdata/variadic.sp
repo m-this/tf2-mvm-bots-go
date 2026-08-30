@@ -21,3 +21,10 @@ stock void Go_Stack(int client)
 	PrintToServer("[defenderbots] %N is running %s", client, stack);
 }
 
+stock bool Go_Currency(int entity)
+{
+	char class[256];
+	GetEntityClassname(entity, class, 256);
+	return StrContains(class, "item_currency", false) != -1;
+}
+

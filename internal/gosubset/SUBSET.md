@@ -116,10 +116,16 @@ An extern that fills a buffer carries the `sized` flag, and the emitted call
 passes the buffer's length after it, which is how every SourceMod call that
 writes text is declared.
 
-Comparing text is still refused, and almost always the wrong question: 95 of the
-97 string comparisons in the plugin's behaviour files compare an attribute name
-against a literal, and `internal/tables` generates the name to id table that
-turns those into an integer switch.
+Text has one size, `engine.Text`, and it is the largest the plugin uses. A Go
+function cannot be generic over an array length, so one type per size would mean
+one copy of every text extern per size. A generated buffer where the plugin
+declared 64 is 256 bytes of stack instead of 64; that is a size and not a
+behaviour, and it is the known normalisation here.
+
+Comparing an attribute name is still the wrong question, whatever the subset
+allows: 95 of the 97 string comparisons in the plugin's behaviour files compare
+an attribute name against a literal, and `internal/tables` generates the name to
+id table that turns those into an integer switch.
 
 ## Expressions
 

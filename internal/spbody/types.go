@@ -60,6 +60,11 @@ func (e *emitter) namedTag(t *types.Named) (string, []int64, error) {
 		if !declared {
 			return "", nil, fmt.Errorf("the type %s.%s has no //sp:tag saying what it is called in SourcePawn", pkg.Name(), name)
 		}
+		// A named array carries its length with it, which is how a text
+		// buffer is one type rather than one per size.
+		if arr, isArray := t.Underlying().(*types.Array); isArray {
+			return tag, []int64{arr.Len()}, nil
+		}
 		return tag, nil, nil
 	}
 	switch u := t.Underlying().(type) {

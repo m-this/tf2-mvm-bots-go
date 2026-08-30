@@ -101,3 +101,68 @@ func ActionStackOf(client int32) (stack [512]byte) {
 	}
 	return texts.ActionStackOf(client)
 }
+
+/*
+Text is a string buffer, and there is one size of it.
+
+SourcePawn buffers are declared with a length and the plugin uses several: 64
+for a classname, PLATFORM_MAX_PATH for a map or a model, 512 for a behaviour
+stack. Go needs a type per size, because an array length is not something a
+function can be generic over, and one extern per size would be a set of
+near-identical declarations nobody would keep in step.
+
+So the port has one text size, and it is the largest the plugin uses. A
+generated buffer where the plugin declared 64 is 256 bytes of stack instead of
+64, on a frame that already has a nav mesh search in it. That is the known
+normalisation, and it is a size rather than a behaviour: what is written into it
+and compared out of it is the same either way.
+*/
+//
+//sp:tag char
+type Text [256]byte
+
+// TextOps are the answers for the operations on it.
+type TextOps struct {
+	StrEqual        func(a Text, b string) bool
+	StrContains     func(haystack Text, needle string, caseSensitive bool) int32
+	EntityClassname func(entity int32) Text
+}
+
+var textOps TextOps
+
+// InstallTextOps puts a set of answers behind them.
+func InstallTextOps(c TextOps) func() {
+	previous := textOps
+	textOps = c
+	return func() { textOps = previous }
+}
+
+// StrEqual says whether the buffer holds exactly that.
+//
+//sp:native StrEqual
+func StrEqual(a Text, b string) bool {
+	if textOps.StrEqual == nil {
+		missing("StrEqual")
+	}
+	return textOps.StrEqual(a, b)
+}
+
+// StrContains is where the needle starts, and -1 when it is not there.
+//
+//sp:native StrContains
+func StrContains(haystack Text, needle string, caseSensitive bool) int32 {
+	if textOps.StrContains == nil {
+		missing("StrContains")
+	}
+	return textOps.StrContains(haystack, needle, caseSensitive)
+}
+
+// EntityClassname is what the entity is, filled into the buffer it is given.
+//
+//sp:native GetEntityClassname sized
+func EntityClassname(entity int32) (class Text) {
+	if textOps.EntityClassname == nil {
+		missing("GetEntityClassname")
+	}
+	return textOps.EntityClassname(entity)
+}

@@ -31,3 +31,11 @@ func Stack(client int32) {
 
 	engine.PrintToServer("[defenderbots] %N is running %s", client, stack)
 }
+
+// Currency is the classname test the money and health and ammo searches all
+// make: fill a buffer, then ask what it starts with.
+func Currency(entity int32) bool {
+	class := engine.EntityClassname(entity)
+
+	return engine.StrContains(class, "item_currency", false) != -1
+}
