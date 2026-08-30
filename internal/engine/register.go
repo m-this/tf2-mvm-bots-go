@@ -12,28 +12,33 @@ signature the registration expects.
 
 // RegisterCalls are the answers.
 type RegisterCalls struct {
-	RegConsoleCmd                func(name string)
-	HookEvent                    func(name string)
-	CreateTimerWith              func(interval float32, data int32, flags int32) Timer
-	ResetIntentionInterface      func(client int32)
-	SetShoppedThisBreak          func(client int32, shopped bool)
-	SetBeingRevived              func(client int32, reviving bool)
-	EventInt                     func(e Event, key string) int32
-	EventBool                    func(e Event, key string) bool
-	ResetSpyIntel                func()
-	SetupSniperSpotHints         func()
-	NestRelocationResetAll       func()
-	DebugFaultsOnWaveStart       func()
-	DebugFaultsOnWaveStartEmpty  func()
-	PublishActiveFeatures        func()
-	ThreatPortAuditReport        func()
-	NestRelocationStopEvaluating func()
-	TeleporterForgetGivingUp     func()
-	DisposableForgetGivingUp     func()
-	QueueBehaviourReset          func()
-	RemoveOrphanedWearables      func()
-	ManageDefenderBots           func(force bool)
-	FreeChosenBotTeam            func()
+	RegConsoleCmd                  func(name string)
+	HookEvent                      func(name string)
+	CreateTimerWith                func(interval float32, data int32, flags int32) Timer
+	ResetIntentionInterface        func(client int32)
+	SetShoppedThisBreak            func(client int32, shopped bool)
+	SetBeingRevived                func(client int32, reviving bool)
+	EventInt                       func(e Event, key string) int32
+	EventBool                      func(e Event, key string) bool
+	ResetSpyIntel                  func()
+	SetupSniperSpotHints           func()
+	NestRelocationResetAll         func()
+	DebugFaultsOnWaveStart         func()
+	DebugFaultsOnWaveStartEmpty    func()
+	PublishActiveFeatures          func()
+	ThreatPortAuditReport          func()
+	NestRelocationStopEvaluating   func()
+	TeleporterForgetGivingUp       func()
+	DisposableForgetGivingUp       func()
+	QueueBehaviourReset            func()
+	RemoveOrphanedWearables        func()
+	ManageDefenderBots             func(force bool)
+	FreeChosenBotTeam              func()
+	HasUpgraded                    func(client int32) bool
+	SetHasUpgraded                 func(client int32, upgraded bool)
+	SetHasBoughtUpgrades           func(client int32, bought bool)
+	GrantOrRemoveAllUpgrades       func(client int32, remove bool, refund bool)
+	UpdateChosenBotTeamComposition func()
 }
 
 var registrations RegisterCalls
@@ -303,3 +308,71 @@ func ManagerMode() ConVar { return 0 }
 //
 //sp:global MANAGER_MODE_AUTO_BOTS
 func ManagerModeAutoBots() int32 { return 0 }
+
+// KeepBotUpgrades is redbots_manager_keep_bot_upgrades, whether a failed wave
+// leaves the bots what they bought.
+//
+//sp:global redbots_manager_keep_bot_upgrades
+func KeepBotUpgrades() ConVar { return 0 }
+
+// BotLineupMode is redbots_manager_bot_lineup_mode, how the team is composed.
+//
+//sp:global redbots_manager_bot_lineup_mode
+func BotLineupMode() ConVar { return 0 }
+
+// LineupModeChoose is BOT_LINEUP_MODE_CHOOSE, the mode where the players pick.
+//
+//sp:global BOT_LINEUP_MODE_CHOOSE
+func LineupModeChoose() int32 { return 0 }
+
+// HasUpgraded says this bot has been through the upgrade station.
+//
+//sp:slot g_bHasUpgraded
+func HasUpgraded(client int32) bool {
+	if registrations.HasUpgraded == nil {
+		missing("g_bHasUpgraded")
+	}
+	return registrations.HasUpgraded(client)
+}
+
+// SetHasUpgraded writes it.
+//
+//sp:slotset g_bHasUpgraded
+func SetHasUpgraded(client int32, upgraded bool) {
+	if registrations.SetHasUpgraded == nil {
+		missing("g_bHasUpgraded")
+	}
+	registrations.SetHasUpgraded(client, upgraded)
+}
+
+// SetHasBoughtUpgrades writes the loadout side of the same fact. Ported,
+// loadouts.
+//
+//sp:slotset g_bHasBoughtUpgrades
+func SetHasBoughtUpgrades(client int32, bought bool) {
+	if registrations.SetHasBoughtUpgrades == nil {
+		missing("g_bHasBoughtUpgrades")
+	}
+	registrations.SetHasBoughtUpgrades(client, bought)
+}
+
+// GrantOrRemoveAllUpgrades makes the population manager forget what this bot
+// bought, so it can go and buy again.
+//
+//sp:native VS_GrantOrRemoveAllUpgrades
+func GrantOrRemoveAllUpgrades(client int32, remove bool, refund bool) {
+	if registrations.GrantOrRemoveAllUpgrades == nil {
+		missing("VS_GrantOrRemoveAllUpgrades")
+	}
+	registrations.GrantOrRemoveAllUpgrades(client, remove, refund)
+}
+
+// UpdateChosenBotTeamComposition works out the lineup the next wave gets.
+//
+//sp:plugin UpdateChosenBotTeamComposition
+func UpdateChosenBotTeamComposition() {
+	if registrations.UpdateChosenBotTeamComposition == nil {
+		missing("UpdateChosenBotTeamComposition")
+	}
+	registrations.UpdateChosenBotTeamComposition()
+}

@@ -122,3 +122,64 @@ func EventMvmWaveBegin(event engine.Event, name string, dontBroadcast bool) {
 	// that was used.
 	engine.FreeChosenBotTeam()
 }
+
+// The wave failures since the counter was last cleared, which tells a mission
+// restart apart from a wave the players simply lost.
+//
+//sp:name m_iWaveFailCounterTick
+//nolint:unused // Event_MvmWaveFailed counts it up, and that one is still in the plugin
+var waveFailCounterTick int32
+
+/*
+TimerWaveFailure hands the bots' upgrades back after a wave they lost.
+
+Not necessary in itself: the point is that the population manager forgets what
+they bought, so they go and buy again in their upgrade behaviour. It is really
+for the bots that failed a wave and were not kicked.
+*/
+//
+//sp:name Timer_WaveFailure
+//sp:public
+//
+//nolint:revive // unused-parameter: the handle is the timer's own, and nothing here needs it
+func TimerWaveFailure(timer engine.Timer) engine.Outcome {
+	waveFailCounterTick = 0
+
+	if engine.RoundState() != engine.RoundStateBetweenRounds() {
+		return engine.PluginStop()
+	}
+
+	// Don't refund if we wanna keep them.
+	if engine.KeepBotUpgrades().Bool() {
+		return engine.PluginStop()
+	}
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if engine.IsClientInGame(i) && engine.DefenderBotFlag(i) {
+			if engine.HasUpgraded(i) {
+				engine.SetHasBoughtUpgrades(i, false)
+				engine.GrantOrRemoveAllUpgrades(i, true, true)
+				engine.SetHasUpgraded(i, false)
+			}
+		}
+	}
+
+	return engine.PluginStop()
+}
+
+// TimerUpdateChosenBotTeamComposition works out the next lineup, unless the
+// players are picking it themselves.
+//
+//sp:name Timer_UpdateChosenBotTeamComposition
+//sp:public
+//nolint:revive // unused-parameter: the handle is the timer's own, and nothing here needs it
+func TimerUpdateChosenBotTeamComposition(timer engine.Timer) engine.Outcome {
+	// These modes use their own way of composing a bot team.
+	if engine.BotLineupMode().Int() == engine.LineupModeChoose() {
+		return engine.PluginStop()
+	}
+
+	engine.UpdateChosenBotTeamComposition()
+
+	return engine.PluginStop()
+}
