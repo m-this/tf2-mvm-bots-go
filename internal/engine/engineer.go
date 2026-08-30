@@ -205,7 +205,7 @@ func PickBusterRetreatArea(sentry int32, buster int32) Area {
 
 // DetonateObjectOfType takes one of the engineer's buildings down.
 //
-//sp:plugin DetonateObjectOfType
+//sp:body DetonateObjectOfType
 func DetonateObjectOfType(client int32, objectType Object) {
 	if engineers.DetonateObjectOfType == nil {
 		missing("DetonateObjectOfType")

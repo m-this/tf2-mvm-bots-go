@@ -103,7 +103,7 @@ func NearestSpawnPoint(actor int32) (ok bool, spawn [3]float32) {
 // HasObjectOfType counts what is in the engineer's hands as well as what is
 // standing.
 //
-//sp:plugin HasObjectOfType
+//sp:body HasObjectOfType
 func HasObjectOfType(client int32, objectType Object, mode ObjectMode) int32 {
 	if teleporters.HasObjectOfType == nil {
 		missing("HasObjectOfType")
@@ -113,7 +113,7 @@ func HasObjectOfType(client int32, objectType Object, mode ObjectMode) int32 {
 
 // ObjectOfTypeMode is GetObjectOfType for a building that has halves.
 //
-//sp:plugin GetObjectOfType
+//sp:body GetObjectOfType
 func ObjectOfTypeMode(client int32, objectType Object, mode ObjectMode) int32 {
 	if teleporters.ObjectOfTypeMode == nil {
 		missing("GetObjectOfType")
@@ -123,7 +123,7 @@ func ObjectOfTypeMode(client int32, objectType Object, mode ObjectMode) int32 {
 
 // IsBuilderSetToMode is IsBuilderSetTo for one half of a teleporter.
 //
-//sp:plugin IsBuilderSetTo
+//sp:body IsBuilderSetTo
 func IsBuilderSetToMode(client int32, objectType Object, mode ObjectMode) bool {
 	if teleporters.IsBuilderSetToMode == nil {
 		missing("IsBuilderSetTo")

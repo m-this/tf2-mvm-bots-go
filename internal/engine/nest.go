@@ -84,7 +84,7 @@ func BuildReachTime(from [3]float32, to [3]float32) float32 {
 // LogBuildFailure says out loud why a build ended without a building, which was
 // invisible until it did.
 //
-//sp:plugin LogBuildFailure
+//sp:body LogBuildFailure
 func LogBuildFailure(actor int32, what string, why string) {
 	if nests.LogBuildFailure == nil {
 		missing("LogBuildFailure")
