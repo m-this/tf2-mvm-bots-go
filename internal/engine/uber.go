@@ -41,7 +41,7 @@ func FeatureMedicShield() int32 { return 14 }
 
 // MedigunType is which of the four this medigun is.
 //
-//sp:plugin GetMedigunType
+//sp:body GetMedigunType
 func MedigunType(weapon int32) int32 {
 	if ubers.MedigunType == nil {
 		missing("GetMedigunType")

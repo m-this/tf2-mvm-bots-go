@@ -86,7 +86,7 @@ func TeleportEntity(entity int32, origin [3]float32, angles [3]float32, velocity
 
 // HasSniperRifle says the bot is carrying one.
 //
-//sp:plugin HasSniperRifle
+//sp:body HasSniperRifle
 func HasSniperRifle(client int32) bool {
 	if faults.HasSniperRifle == nil {
 		missing("HasSniperRifle")

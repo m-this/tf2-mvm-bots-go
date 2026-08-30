@@ -97,7 +97,7 @@ func RandomInt(low int32, high int32) int32 {
 
 // EquipWeaponSlot puts whatever is in that slot in the bot's hands.
 //
-//sp:plugin EquipWeaponSlot
+//sp:body EquipWeaponSlot
 func EquipWeaponSlot(client int32, slot int32) bool {
 	if marks.EquipWeaponSlot == nil {
 		missing("EquipWeaponSlot")

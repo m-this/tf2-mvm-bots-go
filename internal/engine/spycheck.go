@@ -102,7 +102,7 @@ func HasTheFlag(client int32) bool {
 
 // TimeSinceWeaponFired is the alibi a disguised spy cannot produce.
 //
-//sp:plugin GetTimeSinceWeaponFired
+//sp:body GetTimeSinceWeaponFired
 func TimeSinceWeaponFired(client int32) float32 {
 	if spyChecks.TimeSinceWeaponFired == nil {
 		missing("GetTimeSinceWeaponFired")

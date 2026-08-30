@@ -17,6 +17,7 @@ type SpyCalls struct {
 	IsFeignDeathReady          func(client int32) bool
 	PlayerWeaponSlot           func(client int32, slot int32) int32
 	SetPlayerActiveWeapon      func(client int32, weapon int32)
+	SetActiveWeapon            func(client int32, weapon int32) bool
 	PressAltFireButton         func(client int32)
 	PressFireButton            func(client int32)
 	SnapViewToPosition         func(client int32, position [3]float32)
@@ -84,7 +85,18 @@ func PlayerWeaponSlot(client int32, slot int32) int32 {
 	return spy.PlayerWeaponSlot(client, slot)
 }
 
-// SetPlayerActiveWeapon puts the weapon in the player's hands.
+// SetActiveWeapon puts a weapon in the player's hands and says whether the game
+// allowed it, which is what EquipWeaponSlot passes on to its caller.
+//
+//sp:native TF2Util_SetPlayerActiveWeapon
+func SetActiveWeapon(client int32, weapon int32) bool {
+	if spy.SetActiveWeapon == nil {
+		missing("TF2Util_SetPlayerActiveWeapon")
+	}
+	return spy.SetActiveWeapon(client, weapon)
+}
+
+// SetPlayerActiveWeapon is the same native where the answer is not read.
 //
 //sp:native TF2Util_SetPlayerActiveWeapon
 func SetPlayerActiveWeapon(client int32, weapon int32) {
