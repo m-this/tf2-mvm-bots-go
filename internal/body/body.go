@@ -84,6 +84,10 @@ var Actions = []Body{
 		Dir: "internal/action/spylurk", Out: "sourcepawn/spylurk.sp", Prefix: "Go_",
 		Shipped: "source/redbots3/behavior/spylurk.sp",
 	},
+	{
+		Dir: "internal/action/markgiant", Out: "sourcepawn/markgiant.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/behavior/markgiant.sp",
+	},
 }
 
 // All is every body. Adding one here is what makes it generated.

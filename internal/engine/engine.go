@@ -10,6 +10,12 @@ Three kinds of call, and the directive names which:
 
 	//sp:native NAME     a SourceMod native, called by name
 	//sp:method NAME     a methodmap method, written on its receiver
+	//sp:new NAME        a constructor, new NAME()
+	//sp:property NAME   a methodmap property, written without parentheses
+	//sp:delete NAME     the delete of a handle, which makes its type a lifetime
+	//sp:slot NAME       a plugin array indexed by its first argument
+	//sp:slotset NAME    the same array, written to
+	//sp:body NAME       SourcePawn this port already generates
 	//sp:global NAME     a SourcePawn variable, not a call at all
 	//sp:plugin NAME     a plugin function the port has not reached yet
 	//sp:sdkcall HANDLE  SDKCall through a handle prepared at load

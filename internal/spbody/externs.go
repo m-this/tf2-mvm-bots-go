@@ -155,6 +155,10 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 			return Extern{Func: name, Method: true, Property: true}, true, nil
 		case "delete":
 			return Extern{Func: name, Delete: true}, true, nil
+		case "new":
+			// SourcePawn spells a constructor new Thing(), which is
+			// the only call whose name has a space in it.
+			return Extern{Func: "new " + name}, true, nil
 		case "method":
 			// The receiver is what picks it; the name is what
 			// SourcePawn writes after the dot.
@@ -174,7 +178,7 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 		case "address":
 			return Extern{Func: "LoadFromAddress", Lead: []string{name}, ReturnsArray: returnsArray}, true, nil
 		default:
-			return Extern{}, false, fmt.Errorf("the directive kind %q is not native, method, property, delete, global, slot, slotset, body, plugin, sdkcall or address", kind)
+			return Extern{}, false, fmt.Errorf("the directive kind %q is not native, new, method, property, delete, global, slot, slotset, body, plugin, sdkcall or address", kind)
 		}
 	}
 	return Extern{}, false, nil

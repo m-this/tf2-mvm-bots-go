@@ -25,9 +25,11 @@ So what is compared is two things, and it is worth being precise about which:
   - the declaration line, byte for byte. That is the engine's, not ours: a
     callback declared with the wrong parameters is entered with the arguments in
     the wrong places and compiles perfectly.
-  - the sequence of functions the body calls, in order. That catches a dropped
-    call, an extra one and a reordering, which is what a bad translation looks
-    like.
+  - the sequence of functions the body calls, in order, by name and not by
+    receiver. That catches a dropped call, an extra one and a reordering, which
+    is what a bad translation looks like. The receiver is left out because a
+    local's name is the port's to choose, and calling a method on the wrong
+    methodmap does not compile.
 
 It does not compare the body text. The generator writes braces around a single
 statement where the plugin does not, and folds 2.0 * sapRange to 80.0, and
@@ -138,7 +140,15 @@ func callsIn(fn string) []string {
 		if keywords[m[1]] {
 			continue
 		}
-		out = append(out, m[1])
+		// The name, not the receiver. A local's name is the port's to
+		// choose and Go renames potential_victims to potentialVictims;
+		// the receiver is checked by spcomp anyway, since calling a
+		// method on the wrong methodmap does not compile.
+		name := m[1]
+		if i := strings.LastIndexByte(name, '.'); i >= 0 {
+			name = name[i+1:]
+		}
+		out = append(out, name)
 	}
 	return out
 }
