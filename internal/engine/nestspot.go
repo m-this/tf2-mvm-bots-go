@@ -8,6 +8,7 @@ type NestSpotCalls struct {
 	Sine               func(radians float32) float32
 	FloatAbs           func(value float32) float32
 	ClosestPointOnArea func(a Area, from [3]float32) [3]float32
+	BestNestArea       func(client int32, areas List, target [3]float32, sentryRange float32) Area
 	Extent             func(a Area) ([3]float32, [3]float32)
 	Z                  func(a Area, x float32, y float32) float32
 }
@@ -123,4 +124,25 @@ func (a Area) Z(x float32, y float32) float32 {
 		missing("CNavArea.GetZ")
 	}
 	return nestSpots.Z(a, x, y)
+}
+
+// NestSpotMatchRange is how near an authored spot has to be to a nest area
+// before it is that nest. internal/body/nestspot declares it.
+//
+//sp:global NEST_SPOT_MATCH_RANGE
+func NestSpotMatchRange() float32 { return 400.0 }
+
+// FeatureNestZones is the switch on one engineer per named zone.
+//
+//sp:global FEATURE_NEST_ZONES
+func FeatureNestZones() int32 { return 4 }
+
+// BestNestArea is the highest scoring of the areas offered.
+//
+//sp:body BestNestArea
+func BestNestArea(client int32, areas List, target [3]float32, sentryRange float32) Area {
+	if nestSpots.BestNestArea == nil {
+		missing("BestNestArea")
+	}
+	return nestSpots.BestNestArea(client, areas, target, sentryRange)
 }

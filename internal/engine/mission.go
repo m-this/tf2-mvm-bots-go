@@ -5,6 +5,7 @@ type MissionCalls struct {
 	ClientModel   func(client int32) Text
 	WaveCount     func(resource int32) int32
 	MaxWaveCount  func(resource int32) int32
+	IsTankWave    func() bool
 	WaveClassName func(resource int32, index int32) Text
 	StrContainsIn func(haystack Text, needle Text, caseSensitive bool) int32
 }
@@ -64,4 +65,15 @@ func WaveClassName(resource int32, index int32) (icon Text) {
 		missing("TF2_GetMannVsMachineWaveClassName")
 	}
 	return missions.WaveClassName(resource, index)
+}
+
+// IsTankWave says a tank is coming, which decides which of the map's two nest
+// lists applies.
+//
+//sp:body IsTankWave
+func IsTankWave() bool {
+	if missions.IsTankWave == nil {
+		missing("IsTankWave")
+	}
+	return missions.IsTankWave()
 }
