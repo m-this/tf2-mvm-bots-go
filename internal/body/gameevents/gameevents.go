@@ -183,3 +183,49 @@ func TimerUpdateChosenBotTeamComposition(timer engine.Timer) engine.Outcome {
 
 	return engine.PluginStop()
 }
+
+/*
+EventMvmWaveFailed is the break that opens when the players lose a wave.
+
+The same wave comes back down the same route, so there is nothing new to say
+about the nests.
+*/
+//
+//sp:name Event_MvmWaveFailed
+//sp:public
+//
+//nolint:revive // unused-parameter: the event and its name are SourceMod's, and this reads neither
+func EventMvmWaveFailed(event engine.Event, name string, dontBroadcast bool) {
+	OpenTheBreak()
+
+	// A lineup retyped mid-wave was held until now.
+	engine.ReseatOnBreak()
+
+	waveFailCounterTick++
+
+	engine.NestRelocationResetAll()
+
+	if engine.KickBots().Bool() {
+		engine.RemoveAllDefenderBots("BotManager3: Wave failed!")
+		engine.ManageDefenderBots(false)
+		engine.CreateTimer(0.1, TimerUpdateChosenBotTeamComposition, engine.Default(), engine.TimerNoMapChange())
+		engine.PrintToChatAll("%s Use command !viewbotlineup to view the next bot team composition", engine.PluginPrefix())
+	}
+
+	if engine.ManagerMode().Int() == engine.ManagerModeReadyBots() {
+		// Global cooldown before players can ready up again.
+		engine.SetNextReadyTime(engine.GameTime() + engine.ReadyCooldown().Float())
+
+		if waveFailCounterTick > 3 {
+			// Mission restarted or changed, don't have a cooldown here.
+			engine.SetNextReadyTime(0.0)
+		}
+	}
+
+	if engine.BotLineupMode().Int() == engine.LineupModeChoose() {
+		// In case the mission changed, let players pick the bot team.
+		engine.FreeChosenBotTeam()
+	}
+
+	engine.CreateTimer(0.1, TimerWaveFailure, engine.Default(), engine.TimerNoMapChange())
+}

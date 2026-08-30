@@ -39,6 +39,9 @@ type RegisterCalls struct {
 	SetHasBoughtUpgrades           func(client int32, bought bool)
 	GrantOrRemoveAllUpgrades       func(client int32, remove bool, refund bool)
 	UpdateChosenBotTeamComposition func()
+	ReseatOnBreak                  func()
+	SetNextReadyTime               func(when float32)
+	RemoveAllDefenderBots          func(reason string)
 }
 
 var registrations RegisterCalls
@@ -375,4 +378,58 @@ func UpdateChosenBotTeamComposition() {
 		missing("UpdateChosenBotTeamComposition")
 	}
 	registrations.UpdateChosenBotTeamComposition()
+}
+
+// ReseatOnBreak applies a lineup that was retyped mid-wave, which is held until
+// the break.
+//
+//sp:plugin Reseat_OnBreak
+func ReseatOnBreak() {
+	if registrations.ReseatOnBreak == nil {
+		missing("Reseat_OnBreak")
+	}
+	registrations.ReseatOnBreak()
+}
+
+// KickBots is redbots_manager_kick_bots, whether a break clears the team out.
+//
+//sp:global redbots_manager_kick_bots
+func KickBots() ConVar { return 0 }
+
+// ReadyCooldown is redbots_manager_ready_cooldown, how long before the players
+// may ready up again.
+//
+//sp:global redbots_manager_ready_cooldown
+func ReadyCooldown() ConVar { return 0 }
+
+// ManagerModeReadyBots is MANAGER_MODE_READY_BOTS, the mode where the players
+// ready up.
+//
+//sp:global MANAGER_MODE_READY_BOTS
+func ManagerModeReadyBots() int32 { return 0 }
+
+// NextReadyTime is g_flNextReadyTime, the clock the global ready cooldown ends
+// on.
+//
+//sp:global g_flNextReadyTime
+func NextReadyTime() float32 { return 0 }
+
+// SetNextReadyTime writes it.
+//
+//sp:globalset g_flNextReadyTime
+func SetNextReadyTime(when float32) {
+	if registrations.SetNextReadyTime == nil {
+		missing("g_flNextReadyTime")
+	}
+	registrations.SetNextReadyTime(when)
+}
+
+// RemoveAllDefenderBots clears the team out, saying why.
+//
+//sp:plugin RemoveAllDefenderBots
+func RemoveAllDefenderBots(reason string) {
+	if registrations.RemoveAllDefenderBots == nil {
+		missing("RemoveAllDefenderBots")
+	}
+	registrations.RemoveAllDefenderBots(reason)
 }

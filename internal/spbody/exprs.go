@@ -414,6 +414,13 @@ func (e *emitter) callWith(call *ast.CallExpr, extra []string, front ...string) 
 	if x, ok := e.slotExtern(call); ok {
 		return e.slot(call, x)
 	}
+	if x, ok := e.globalExtern(call); ok && x.Set {
+		if len(call.Args) != 1 || len(extra) != 0 {
+			e.fail(call.Pos(), "%s is a SourcePawn variable being written and takes one value", x.Func)
+			return ""
+		}
+		return fmt.Sprintf("%s = %s", x.Func, e.expr(call.Args[0]))
+	}
 	if x, ok := e.globalExtern(call); ok {
 		if len(call.Args) != 0 || len(extra) != 0 {
 			e.fail(call.Pos(), "%s is a SourcePawn variable and takes no arguments", x.Func)

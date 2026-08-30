@@ -210,6 +210,10 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 			return Extern{Func: name, Slot: true, Set: true}, true, nil
 		case "global":
 			return Extern{Func: name, Global: true}, true, nil
+		case "globalset":
+			// The write half of a global the plugin declares, which
+			// Go has no form for but a call taking the new value.
+			return Extern{Func: name, Global: true, Set: true}, true, nil
 		case "body":
 			// A ported function fills a buffer the same way an
 			// unported one does, so it takes the same flags.
@@ -221,7 +225,7 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 		case "address":
 			return Extern{Func: "LoadFromAddress", Lead: []string{name}, ReturnsArray: returnsArray}, true, nil
 		default:
-			return Extern{}, false, fmt.Errorf("the directive kind %q is not native, cast, choice, new, method, property, propertyset, delete, global, slot, slotset, body, plugin, sdkcall or address", kind)
+			return Extern{}, false, fmt.Errorf("the directive kind %q is not native, cast, choice, new, method, property, propertyset, delete, global, globalset, slot, slotset, body, plugin, sdkcall or address", kind)
 		}
 	}
 	return Extern{}, false, nil
