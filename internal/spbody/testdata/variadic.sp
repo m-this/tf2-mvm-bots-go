@@ -23,8 +23,8 @@ stock void Go_Stack(int client)
 
 stock bool Go_Currency(int entity)
 {
-	char class[256];
-	GetEntityClassname(entity, class, 256);
+	char class[512];
+	GetEntityClassname(entity, class, 512);
 	return StrContains(class, "item_currency", false) != -1;
 }
 
