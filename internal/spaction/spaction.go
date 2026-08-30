@@ -70,6 +70,17 @@ var callbacks = map[string]callback{
 		Params: "INextBot nextbot, CKnownEntity knownEntity, QueryResultType& result",
 		Names:  []string{"nextbot", "knownEntity", "result"},
 	},
+	// The engine telling a behaviour about ground it was holding.
+	"OnTerritoryContested": {
+		Wire: "OnTerritoryContested", Returns: "Action",
+		Params: "int actor, int territory",
+		Names:  []string{"actor", "territory"},
+	},
+	"OnTerritoryLost": {
+		Wire: "OnTerritoryLost", Returns: "Action",
+		Params: "int actor, int territory",
+		Names:  []string{"actor", "territory"},
+	},
 	// The engine telling the behaviour something happened. The result is a
 	// desired one rather than an outcome, and the behaviour usually just
 	// carries on.
@@ -124,7 +135,8 @@ var callbacks = map[string]callback{
 // plugin writes and so the order a reviewer expects.
 var order = []string{
 	"OnStart", "Update", "OnEnd", "OnSuspend", "OnResume",
-	"OnInjured", "SelectMoreDangerousThreat", "ShouldAttack", "IsHindrance",
+	"OnInjured", "OnTerritoryContested", "OnTerritoryLost",
+	"SelectMoreDangerousThreat", "ShouldAttack", "IsHindrance",
 }
 
 // Action is one behaviour: what it is registered as, what its functions are

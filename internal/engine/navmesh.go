@@ -17,13 +17,17 @@ return inside the loop.
 
 // NavCalls are the answers.
 type NavCalls struct {
-	CollectAreasInRadius func(origin [3]float32, radius float32) Areas
-	AreasCount           func(a Areas) int32
-	AreasGet             func(a Areas, index int32) NavArea
-	AreasClose           func(a Areas)
-	AreaCenter           func(area NavArea) [3]float32
-	HasAttributeTF       func(area NavArea, attribute int32) bool
-	IsZeroVector         func(v [3]float32) bool
+	CollectAreasInRadius       func(origin [3]float32, radius float32) Areas
+	AreasCount                 func(a Areas) int32
+	AreasGet                   func(a Areas, index int32) NavArea
+	AreasClose                 func(a Areas)
+	AreaCenter                 func(area NavArea) [3]float32
+	HasAttributeTF             func(area NavArea, attribute int32) bool
+	IsZeroVector               func(v [3]float32) bool
+	CapturableAreaTrigger      func(team Team) int32
+	ControlPointByID           func(pointID int32) int32
+	IsFailureImminent          func(client int32) bool
+	DefenderAttackSelectTarget func(client int32) bool
 }
 
 var nav NavCalls
@@ -125,4 +129,50 @@ func IsZeroVector(v [3]float32) bool {
 		missing("IsZeroVector")
 	}
 	return nav.IsZeroVector(v)
+}
+
+// CapturableAreaTrigger is the point that team can take, and -1 for none.
+//
+//sp:plugin GetCapturableAreaTrigger
+func CapturableAreaTrigger(team Team) int32 {
+	if nav.CapturableAreaTrigger == nil {
+		missing("GetCapturableAreaTrigger")
+	}
+	return nav.CapturableAreaTrigger(team)
+}
+
+// ControlPointByID is the entity for that point, which the debug output names.
+//
+//sp:plugin GetControlPointByID
+func ControlPointByID(pointID int32) int32 {
+	if nav.ControlPointByID == nil {
+		missing("GetControlPointByID")
+	}
+	return nav.ControlPointByID(pointID)
+}
+
+// IsFailureImminent says the wave is about to be lost, which outranks holding
+// any point.
+//
+//sp:plugin IsFailureImminent
+func IsFailureImminent(client int32) bool {
+	if nav.IsFailureImminent == nil {
+		missing("IsFailureImminent")
+	}
+	return nav.IsFailureImminent(client)
+}
+
+// ConceptHelp is MP_CONCEPT_PLAYER_HELP.
+//
+//sp:global MP_CONCEPT_PLAYER_HELP
+func ConceptHelp() int32 { return 2 }
+
+// DefenderAttackSelectTarget is the attack behaviour's own precondition.
+//
+//sp:plugin CTFBotDefenderAttack_SelectTarget
+func DefenderAttackSelectTarget(client int32) bool {
+	if nav.DefenderAttackSelectTarget == nil {
+		missing("CTFBotDefenderAttack_SelectTarget")
+	}
+	return nav.DefenderAttackSelectTarget(client)
 }

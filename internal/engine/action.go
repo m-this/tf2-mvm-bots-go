@@ -26,11 +26,13 @@ type Behaviour int32
 
 // ActionCalls are the four answers, kept apart for the same reason BotCalls is.
 type ActionCalls struct {
-	Continue   func() Outcome
-	Done       func(reason string) Outcome
-	ChangeTo   func(next Behaviour, reason string) Outcome
-	SuspendFor func(next Behaviour, reason string) Outcome
-	Actor      func() int32
+	Continue     func() Outcome
+	Done         func(reason string) Outcome
+	ChangeTo     func(next Behaviour, reason string) Outcome
+	SuspendFor   func(next Behaviour, reason string) Outcome
+	Actor        func() int32
+	TryToSustain func() Outcome
+	TryChangeTo  func(next Behaviour, priority int32, reason string) Outcome
 }
 
 var actions ActionCalls
@@ -81,3 +83,30 @@ func SuspendFor(next Behaviour, reason string) Outcome {
 	}
 	return actions.SuspendFor(next, reason)
 }
+
+// TryToSustain asks to keep going, which the engine may refuse.
+//
+//sp:native action.TryToSustain
+func TryToSustain() Outcome {
+	if actions.TryToSustain == nil {
+		missing("action.TryToSustain")
+	}
+	return actions.TryToSustain()
+}
+
+// TryChangeTo asks to become another behaviour, at a priority the engine
+// weighs against whatever else wants to run.
+//
+//sp:native action.TryChangeTo
+func TryChangeTo(next Behaviour, priority int32, reason string) Outcome {
+	if actions.TryChangeTo == nil {
+		missing("action.TryChangeTo")
+	}
+	return actions.TryChangeTo(next, priority, reason)
+}
+
+// ResultCritical is RESULT_CRITICAL, which is a change the engine should not
+// weigh against anything.
+//
+//sp:global RESULT_CRITICAL
+func ResultCritical() int32 { return 3 }
