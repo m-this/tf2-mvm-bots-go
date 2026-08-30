@@ -120,7 +120,7 @@ func SetPlayerReady(client int32, ready bool) {
 
 // IsPlayerReady says whether the ready registered.
 //
-//sp:plugin IsPlayerReady
+//sp:body IsPlayerReady
 func IsPlayerReady(client int32) bool {
 	if fronts.IsPlayerReady == nil {
 		missing("IsPlayerReady")

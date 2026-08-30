@@ -127,7 +127,7 @@ func (n NavArea) HasAttributeTF(attribute int32) bool {
 
 // IsZeroVector says whether the position was never filled in.
 //
-//sp:plugin IsZeroVector
+//sp:body IsZeroVector
 func IsZeroVector(v [3]float32) bool {
 	if nav.IsZeroVector == nil {
 		missing("IsZeroVector")

@@ -154,9 +154,17 @@ func callsIn(fn string) []string {
 }
 
 // keywords read as calls to the pattern above and are not.
+/*
+	keywords are the things that read as a call and are not one
+
+Control flow, and the three conversions. float() and view_as() change how a value
+is read and nothing else: the port writes them where Go needs a conversion and
+the plugin leaves the coercion implicit, which is a difference in spelling rather
+than in what runs.
+*/
 var keywords = map[string]bool{
 	"if": true, "for": true, "switch": true, "while": true, "return": true,
-	"sizeof": true, "view_as": true,
+	"sizeof": true, "view_as": true, "float": true,
 }
 
 var (

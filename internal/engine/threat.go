@@ -80,7 +80,7 @@ func SelectCloserThreat(bot Bot, threat1 Known, threat2 Known) Known {
 // IsMeleeWeapon says whether the weapon only reaches what it is standing next
 // to.
 //
-//sp:plugin IsMeleeWeapon
+//sp:body IsMeleeWeapon
 func IsMeleeWeapon(entity int32) bool {
 	if threats.IsMeleeWeapon == nil {
 		missing("IsMeleeWeapon")

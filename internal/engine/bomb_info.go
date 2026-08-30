@@ -113,7 +113,7 @@ func FeatureDemoStickySelfVeto() int32 { return 12 }
 // IsBaseBoss says the entity really is a tank rather than something else the
 // map called tank_boss.
 //
-//sp:plugin IsBaseBoss
+//sp:body IsBaseBoss
 func IsBaseBoss(entity int32) bool {
 	if bombInfos.IsBaseBoss == nil {
 		missing("IsBaseBoss")

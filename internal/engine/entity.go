@@ -4,6 +4,11 @@ package engine
 type EntityCalls struct {
 	DispatchUpdateTransmitState func(e Entity)
 	AbsAngles                   func(e Entity) [3]float32
+	ClientName                  func(client int32) (bool, Text)
+	MakeVectorFromPoints        func(from [3]float32, to [3]float32) [3]float32
+	VectorAngles                func(direction [3]float32) [3]float32
+	RoundToFloor                func(value float32) int32
+	GameRulesPropAt             func(prop string, size int32, element int32) int32
 	FindDataMapInfo             func(entity int32, prop string) int32
 	EntData                     func(entity int32, offset int32, size int32) int32
 	EntPropAt                   func(entity int32, propType PropType, prop string, element int32) int32
@@ -89,4 +94,56 @@ func SetEntPropSend(entity int32, propType PropType, prop string, value int32) {
 		missing("SetEntProp")
 	}
 	entities.SetEntPropSend(entity, propType, prop, value)
+}
+
+// ClientName is what the player calls themselves, and whether the game answered
+// at all: the native fills the buffer and returns a bool, and the plugin reads
+// both.
+//
+//sp:native GetClientName sized
+func ClientName(client int32) (ok bool, name Text) {
+	if entities.ClientName == nil {
+		missing("GetClientName")
+	}
+	return entities.ClientName(client)
+}
+
+// MakeVectorFromPoints is the vector from one point to another.
+//
+//sp:native MakeVectorFromPoints
+func MakeVectorFromPoints(from [3]float32, to [3]float32) (direction [3]float32) {
+	if entities.MakeVectorFromPoints == nil {
+		missing("MakeVectorFromPoints")
+	}
+	return entities.MakeVectorFromPoints(from, to)
+}
+
+// VectorAngles is the angles a direction points at.
+//
+//sp:native GetVectorAngles
+func VectorAngles(direction [3]float32) (angles [3]float32) {
+	if entities.VectorAngles == nil {
+		missing("GetVectorAngles")
+	}
+	return entities.VectorAngles(direction)
+}
+
+// RoundToFloor rounds down.
+//
+//sp:native RoundToFloor
+func RoundToFloor(value float32) int32 {
+	if entities.RoundToFloor == nil {
+		missing("RoundToFloor")
+	}
+	return entities.RoundToFloor(value)
+}
+
+// GameRulesPropAt is one element of a game rules array property.
+//
+//sp:native GameRules_GetProp
+func GameRulesPropAt(prop string, size int32, element int32) int32 {
+	if entities.GameRulesPropAt == nil {
+		missing("GameRules_GetProp")
+	}
+	return entities.GameRulesPropAt(prop, size, element)
 }

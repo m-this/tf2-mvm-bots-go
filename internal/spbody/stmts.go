@@ -359,6 +359,20 @@ func (e *emitter) multiAssign(n *ast.AssignStmt) {
 			e.checkWritable(lhs)
 		}
 		extra = append(extra, e.expr(lhs))
+
+		/* A buffer is followed by its length here too
+
+		SourceMod writes (buffer, maxlen) together, and a native that
+		fills one while returning something else lands on this path
+		rather than on the single-result one: GetClientName answers a
+		bool and fills a name. */
+		if x, ok := e.externOfCall(call); ok && x.Sized {
+			if size, sized := e.arrayLen(lhs); sized {
+				extra = append(extra, fmt.Sprintf("%d", size))
+			} else {
+				e.fail(lhs.Pos(), "%s fills a buffer and the destination has no length the generator can see", x.Func)
+			}
+		}
 	}
 	first := n.Lhs[0]
 	/* An array first result fills a parameter like every other one

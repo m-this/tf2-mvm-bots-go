@@ -128,7 +128,7 @@ func PressFireButton(client int32) {
 
 // SnapViewToPosition turns the bot to look at a point.
 //
-//sp:plugin SnapViewToPosition
+//sp:body SnapViewToPosition
 func SnapViewToPosition(client int32, position [3]float32) {
 	if spy.SnapViewToPosition == nil {
 		missing("SnapViewToPosition")

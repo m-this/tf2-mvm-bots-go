@@ -131,6 +131,7 @@ type TextOps struct {
 	EntityClassname func(entity int32) Text
 	CopyText        func(from string) Text
 	CopyTextInto    func(from Text) Text
+	StrEqualFolded  func(a Text, b string, caseSensitive bool) bool
 }
 
 var textOps TextOps
@@ -200,6 +201,16 @@ func CopyTextInto(from Text) (into Text) {
 		missing("strcopy")
 	}
 	return textOps.CopyTextInto(from)
+}
+
+// StrEqualFolded compares a buffer against a literal, case sensitively or not.
+//
+//sp:native StrEqual
+func StrEqualFolded(a Text, b string, caseSensitive bool) bool {
+	if textOps.StrEqualFolded == nil {
+		missing("StrEqual")
+	}
+	return textOps.StrEqualFolded(a, b, caseSensitive)
 }
 
 // StrEqual says whether the buffer holds exactly that.

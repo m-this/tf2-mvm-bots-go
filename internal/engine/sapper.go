@@ -69,7 +69,7 @@ func ClassMedic() Class { return 5 }
 
 // IsValidClientIndex says whether the number could be a client at all.
 //
-//sp:plugin IsValidClientIndex
+//sp:body IsValidClientIndex
 func IsValidClientIndex(client int32) bool {
 	if sappers.IsValidClientIndex == nil {
 		missing("IsValidClientIndex")
