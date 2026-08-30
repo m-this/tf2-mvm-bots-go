@@ -631,6 +631,13 @@ func (e *emitter) forStmt(n *ast.ForStmt) {
 		e.block(n.Body)
 		return
 	}
+	// A for with only a condition is a while, which is what the plugin writes
+	// and the only spelling SourcePawn reads as one.
+	if init == "" && post == "" {
+		e.line("while (%s)", cond)
+		e.block(n.Body)
+		return
+	}
 	e.line("for (%s; %s; %s)", init, cond, post)
 	e.block(n.Body)
 }
