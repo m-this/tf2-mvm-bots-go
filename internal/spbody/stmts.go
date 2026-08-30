@@ -183,6 +183,9 @@ func (e *emitter) arrayCall(define bool, lhs, rhs ast.Expr) bool {
 		// assignment is an ordinary one however the Go spells it.
 		return false
 	}
+	if _, isSlot := e.slotExtern(call); isSlot {
+		return false // a subscript is a value too
+	}
 	if e.returnsArrayValue(call) {
 		// spcomp takes the float[] form as the right hand side of an
 		// assignment and not as an initialiser, so the declaration and
@@ -204,7 +207,17 @@ func (e *emitter) arrayCall(define bool, lhs, rhs ast.Expr) bool {
 		e.checkWritable(lhs)
 	}
 	extra := []string{e.expr(lhs)}
-	if x, _, ok := e.externOfCall(call); ok && x.Sized {
+	if x, ok := e.externOfCall(call); ok && x.Fills {
+		// The buffer and its length come first: Format(buffer, maxlen, ...).
+		n, sized := e.arrayLen(lhs)
+		if !sized {
+			e.fail(lhs.Pos(), "%s writes into a buffer and the destination has no length the generator can see", x.Func)
+			return true
+		}
+		e.line("%s;", e.callWith(call, nil, e.expr(lhs), fmt.Sprintf("%d", n)))
+		return true
+	}
+	if x, ok := e.externOfCall(call); ok && x.Sized {
 		// A buffer is followed by its length, which is what SourceMod
 		// declares and what stops the callee writing past the end.
 		if n, ok := e.arrayLen(lhs); ok {
@@ -219,15 +232,16 @@ func (e *emitter) arrayCall(define bool, lhs, rhs ast.Expr) bool {
 
 // externOfCall is the extern a call names, whether it is a plain one or a
 // method.
-func (e *emitter) externOfCall(call *ast.CallExpr) (Extern, string, bool) {
+func (e *emitter) externOfCall(call *ast.CallExpr) (Extern, bool) {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok {
-		return Extern{}, "", false
+		return Extern{}, false
 	}
 	if x, ok := e.externOf(sel); ok {
-		return x, "", true
+		return x, true
 	}
-	return e.externMethod(sel)
+	x, _, isMethod := e.externMethod(sel)
+	return x, isMethod
 }
 
 // arrayLen is how long the destination is, which a sized call has to be told.

@@ -33,6 +33,11 @@ func (e *emitter) expr(x ast.Expr) string {
 		if _, isGlobal := e.globalExtern(n); isGlobal {
 			return e.callWith(n, nil)
 		}
+		if _, isSlot := e.slotExtern(n); isSlot {
+			// A slot is a subscript, so an array one is an array
+			// expression and not a call that fills a parameter.
+			return e.callWith(n, nil)
+		}
 		if e.isArrayValue(n) && !e.returnsArrayValue(n) {
 			if tv, isType := e.info.Types[n.Fun]; !isType || !tv.IsType() {
 				e.fail(n.Pos(), "a call returning an array used as a value; SourcePawn fills a parameter, so assign it to a name on a line of its own")
@@ -346,7 +351,9 @@ func (e *emitter) externOf(n *ast.SelectorExpr) (Extern, bool) {
 
 // callWith emits a call, appending extra arguments for the results after the
 // first when the caller wanted them.
-func (e *emitter) callWith(call *ast.CallExpr, extra []string) string {
+// callWith emits a call, appending extra arguments for the results after the
+// first when the caller wanted them, and putting lead ones in front.
+func (e *emitter) callWith(call *ast.CallExpr, extra []string, front ...string) string {
 	if tv, ok := e.info.Types[call.Fun]; ok && tv.IsType() {
 		return e.conversion(call, tv.Type)
 	}
@@ -389,7 +396,7 @@ func (e *emitter) callWith(call *ast.CallExpr, extra []string) string {
 	if name == "" {
 		return lead[0] // a builtin that folded into an expression
 	}
-	args = append(append(append([]string{}, lead...), args...), extra...)
+	args = append(append(append(append([]string{}, lead...), front...), args...), extra...)
 	return fmt.Sprintf("%s(%s)", name, strings.Join(args, ", "))
 }
 

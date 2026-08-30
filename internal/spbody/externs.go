@@ -135,20 +135,22 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 			return Extern{}, false, fmt.Errorf("the directive %q needs a kind, one name and at most one flag", line)
 		}
 		kind, name := fields[0], fields[1]
-		returnsArray, sized := false, false
+		returnsArray, sized, fills := false, false, false
 		if len(fields) == 3 {
 			switch fields[2] {
 			case "returns":
 				returnsArray = true
 			case "sized":
 				sized = true
+			case "fills":
+				fills = true
 			default:
-				return Extern{}, false, fmt.Errorf("the directive flag %q is not returns or sized", fields[2])
+				return Extern{}, false, fmt.Errorf("the directive flag %q is not returns, sized or fills", fields[2])
 			}
 		}
 		switch kind {
 		case "native":
-			return Extern{Func: name, ReturnsArray: returnsArray, Sized: sized}, true, nil
+			return Extern{Func: name, ReturnsArray: returnsArray, Sized: sized, Fills: fills}, true, nil
 		case "propertyset":
 			// The same read, written to: recv.Name = value, from a call
 			// taking the value.
@@ -176,7 +178,7 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 		case "body":
 			return Extern{Func: name, Body: true, ReturnsArray: returnsArray}, true, nil
 		case "plugin":
-			return Extern{Func: name, Plugin: true, ReturnsArray: returnsArray, Sized: sized}, true, nil
+			return Extern{Func: name, Plugin: true, ReturnsArray: returnsArray, Sized: sized, Fills: fills}, true, nil
 		case "sdkcall":
 			return Extern{Func: "SDKCall", Lead: []string{name}, ReturnsArray: returnsArray}, true, nil
 		case "address":
