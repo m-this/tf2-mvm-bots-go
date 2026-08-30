@@ -1,0 +1,456 @@
+/*
+Package playerpref is source/redbots3/player_pref.sp: what the players asked the
+bots to be, and the loadout a server can set over the top of it.
+
+The file loading, the save timer and the menus stay in the plugin. What is here
+is the reading and the writing: which class a player wants a bot to play, which
+weapon it carries, and which seat of the composition it fills.
+*/
+package playerpref
+
+import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+
+// Slots is the client array size, MAXPLAYERS + 1.
+const Slots = 65
+
+// MaxPlayers is MAXPLAYERS, the highest seat a loadout may name.
+//
+//sp:name MAXPLAYERS
+const MaxPlayers = 64
+
+// ClassMaxNameLength is how long the longest class name is, heavyweapons plus a
+// terminator.
+//
+//sp:name TF2_CLASS_MAX_NAME_LENGTH
+const ClassMaxNameLength = 14
+
+// The class a player will take a bot as, one bit each.
+const (
+	//sp:name PREF_FL_NONE
+	PrefNone = 0
+	//sp:name PREF_FL_SCOUT
+	PrefScout = 1 << 0
+	//sp:name PREF_FL_SOLDIER
+	PrefSoldier = 1 << 1
+	//sp:name PREF_FL_PYRO
+	PrefPyro = 1 << 2
+	//sp:name PREF_FL_DEMO
+	PrefDemo = 1 << 3
+	//sp:name PREF_FL_HEAVY
+	PrefHeavy = 1 << 4
+	//sp:name PREF_FL_ENGINEER
+	PrefEngineer = 1 << 5
+	//sp:name PREF_FL_MEDIC
+	PrefMedic = 1 << 6
+	//sp:name PREF_FL_SNIPER
+	PrefSniper = 1 << 7
+	//sp:name PREF_FL_SPY
+	PrefSpy = 1 << 8
+)
+
+// ItemDefDefault is the stock item, which has no definition index of its own.
+const ItemDefDefault = -1
+
+/*
+The seat of the composition a bot fills, counted from 1, and 0 for a bot that
+fills none.
+
+The composition is an ordered list, so the third name in it is a seat somebody
+sits in and not just another engineer. Looking a loadout up by class alone hands
+every engineer on the team the same two weapons.
+*/
+//
+//sp:name m_iBotSeat
+var botSeat [Slots]int32
+
+// The seats asked for, waiting for bots the server has not created yet.
+//
+//sp:name m_adtPendingBotSeats
+var pendingBotSeats engine.List
+
+// IsValidLoadoutSeat says the file named a seat a bot can actually fill.
+//
+//sp:name IsValidLoadoutSeat
+func IsValidLoadoutSeat(seat int32) bool {
+	return seat >= 1 && seat <= MaxPlayers
+}
+
+/*
+WarnAboutInvalidLoadoutSeats complains about the seats the file names that no bot
+can ever fill.
+
+A seat out of range is a typo, and nothing else says so: the bot wears the
+loadout of its class instead, which reads as the mod ignoring the file rather
+than the file asking for seat 0.
+*/
+//
+//sp:name WarnAboutInvalidLoadoutSeats
+func WarnAboutInvalidLoadoutSeats() {
+	engine.ServerLoadout().Rewind()
+
+	if !engine.ServerLoadout().JumpToKey("seats", false) || !engine.ServerLoadout().GotoFirstSubKey() {
+		engine.ServerLoadout().Rewind()
+		return
+	}
+
+	for {
+		section := engine.ServerLoadout().SectionName()
+
+		if !IsValidLoadoutSeat(engine.StringToInt(section)) {
+			engine.LogError("Config_LoadServerLoadout: seat \"%s\" is not between 1 and %d, ignoring it", section, MaxPlayers)
+		}
+
+		if !engine.ServerLoadout().GotoNextKey() {
+			break
+		}
+	}
+
+	engine.ServerLoadout().Rewind()
+}
+
+/*
+JumpToServerLoadoutSeat stands on the block the file writes for one seat, when it
+writes one this bot may wear.
+
+A seat answers only for the class it names. The composition gets retyped between
+waves, so the seat that was an engineer's is now a medic's, and that medic is
+better off with the medic block than with an engineer's wrangler.
+*/
+//
+//sp:name JumpToServerLoadoutSeat
+func JumpToServerLoadoutSeat(seat int32, class string) bool {
+	if !IsValidLoadoutSeat(seat) {
+		return false
+	}
+
+	section := engine.IntToString(seat)
+
+	if !engine.ServerLoadout().JumpToKey("seats", false) || !engine.ServerLoadout().JumpToKeyText(section, false) {
+		engine.ServerLoadout().Rewind()
+		return false
+	}
+
+	seatClass := engine.ServerLoadout().String("class")
+
+	if engine.StrEqualFolded(seatClass, class, false) {
+		return true
+	}
+
+	engine.ServerLoadout().Rewind()
+
+	return false
+}
+
+/*
+GetServerLoadoutWeapon is what the file says this bot carries in that slot.
+
+The seat decides the whole loadout when it names this bot, and the class decides
+it otherwise. The seat is the more specific of the two, so it answers for every
+slot the way the file itself does: a slot it leaves out is the stock weapon, not
+the class block's answer.
+*/
+//
+//sp:name GetServerLoadoutWeapon
+func GetServerLoadoutWeapon(seat int32, class string, slot string) int32 {
+	engine.ServerLoadout().Rewind()
+
+	if !JumpToServerLoadoutSeat(seat, class) && !engine.ServerLoadout().JumpToKey(class, false) {
+		return ItemDefDefault
+	}
+
+	weaponIndex := engine.ServerLoadout().Num(slot, ItemDefDefault)
+	engine.ServerLoadout().Rewind()
+
+	return weaponIndex
+}
+
+/*
+NoteBotSeatPending remembers a seat asked for, waiting for the bot the server has
+not created yet.
+
+tf_bot_add is a console command, so the bot does not exist when its seat is
+decided. Nobody came for the oldest one when the list is full, which means that
+tf_bot_add was refused: one wrong loadout beats a list that only grows.
+*/
+//
+//sp:name NoteBotSeatPending
+func NoteBotSeatPending(seat int32) {
+	if pendingBotSeats == engine.NoList() {
+		pendingBotSeats = engine.NewList()
+	}
+
+	if pendingBotSeats.Length() >= MaxPlayers {
+		pendingBotSeats.Erase(0)
+	}
+
+	pendingBotSeats.Push(seat)
+}
+
+// TakeBotSeat gives the bot that just entered the seat at the front.
+//
+//sp:name TakeBotSeat
+func TakeBotSeat(client int32) {
+	botSeat[client] = 0
+
+	if pendingBotSeats == engine.NoList() || pendingBotSeats.Length() < 1 {
+		return
+	}
+
+	botSeat[client] = pendingBotSeats.Get(0)
+	pendingBotSeats.Erase(0)
+}
+
+// ForgetBotSeat drops it: whoever holds this client index next is another bot.
+//
+//sp:name ForgetBotSeat
+func ForgetBotSeat(client int32) {
+	botSeat[client] = 0
+}
+
+// GetClassPreferencesFlags is every class this player will take a bot as.
+//
+//sp:name GetClassPreferencesFlags
+func GetClassPreferencesFlags(client int32) int32 {
+	found, steamID := engine.ClientAuthID(client)
+
+	if !found {
+		engine.LogError("GetClassPreferencesFlags: failed to get Steam ID for %L", client)
+		return PrefNone
+	}
+
+	flags := int32(PrefNone)
+
+	engine.PlayerPrefData().JumpToKeyText(steamID, true)
+	engine.PlayerPrefData().JumpToKey("class", true)
+
+	if engine.PlayerPrefData().Num("scout", 0) == 1 {
+		flags |= PrefScout
+	}
+
+	if engine.PlayerPrefData().Num("soldier", 0) == 1 {
+		flags |= PrefSoldier
+	}
+
+	if engine.PlayerPrefData().Num("pyro", 0) == 1 {
+		flags |= PrefPyro
+	}
+
+	if engine.PlayerPrefData().Num("demoman", 0) == 1 {
+		flags |= PrefDemo
+	}
+
+	if engine.PlayerPrefData().Num("heavyweapons", 0) == 1 {
+		flags |= PrefHeavy
+	}
+
+	if engine.PlayerPrefData().Num("engineer", 0) == 1 {
+		flags |= PrefEngineer
+	}
+
+	if engine.PlayerPrefData().Num("medic", 0) == 1 {
+		flags |= PrefMedic
+	}
+
+	if engine.PlayerPrefData().Num("sniper", 0) == 1 {
+		flags |= PrefSniper
+	}
+
+	if engine.PlayerPrefData().Num("spy", 0) == 1 {
+		flags |= PrefSpy
+	}
+
+	engine.PlayerPrefData().Rewind()
+
+	return flags
+}
+
+// SetClassPreferences writes one class answer down.
+//
+//sp:name SetClassPreferences
+func SetClassPreferences(client int32, class string, value int32) {
+	found, steamID := engine.ClientAuthID(client)
+
+	if !found {
+		engine.LogError("SetClassPreferences: failed to get Steam ID for %L", client)
+		return
+	}
+
+	engine.PlayerPrefData().JumpToKeyText(steamID, true)
+	engine.PlayerPrefData().JumpToKey("class", true)
+	engine.PlayerPrefData().SetNum(class, value)
+	engine.PlayerPrefData().Rewind()
+}
+
+// GetWeaponPreference is the item definition index this player wants in that
+// slot.
+//
+//sp:name GetWeaponPreference
+func GetWeaponPreference(client int32, class string, slot string) int32 {
+	found, steamID := engine.ClientAuthID(client)
+
+	if !found {
+		engine.LogError("GetWeaponPreference: failed to get Steam ID for %L", client)
+		return ItemDefDefault
+	}
+
+	var weaponIndex int32
+
+	engine.PlayerPrefData().JumpToKeyText(steamID, true)
+	engine.PlayerPrefData().JumpToKey("loadout", true)
+	engine.PlayerPrefData().JumpToKey(class, true)
+	weaponIndex = engine.PlayerPrefData().Num(slot, ItemDefDefault)
+	engine.PlayerPrefData().Rewind()
+
+	return weaponIndex
+}
+
+/*
+GetPreferredWeaponForClass is the weapon a bot of that class carries in that slot.
+
+The server's own loadout answers first when there is one. Otherwise the players
+who are in and on red have a say each, and one of their answers is drawn: drawing
+rather than counting makes the choice proportional instead of majority.
+*/
+//
+//sp:name GetPreferredWeaponForClass
+func GetPreferredWeaponForClass(class string, slot string, client int32) int32 {
+	if engine.ServerLoadout() != engine.NoKeyValues() {
+		return GetServerLoadoutWeapon(botSeat[client], class, slot)
+	}
+
+	if engine.PlayerForcedPref() != -1 {
+		// Preference forced by admin, probably wants to use his or
+		// someone else's.
+		return GetWeaponPreference(engine.PlayerForcedPref(), class, slot)
+	}
+
+	weaponPref := engine.NewList()
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if engine.IsClientInGame(i) && IsValidForBotPreferences(i) {
+			prefWeapon := GetWeaponPreference(i, class, slot)
+
+			if prefWeapon != ItemDefDefault {
+				weaponPref.Push(prefWeapon)
+			}
+		}
+	}
+
+	// No preferences found, probably no human red players.
+	if weaponPref.Length() < 1 {
+		weaponPref.Close()
+		return engine.RandomWeaponForClass(class, slot)
+	}
+
+	itemDefIndex := weaponPref.Get(engine.RandomInt(0, weaponPref.Length()-1))
+
+	weaponPref.Close()
+
+	return itemDefIndex
+}
+
+// SetWeaponPreference writes one weapon answer down.
+//
+//sp:name SetWeaponPreference
+func SetWeaponPreference(client int32, class string, slot string, value int32) {
+	_, steamID := engine.ClientAuthID(client)
+
+	engine.PlayerPrefData().JumpToKeyText(steamID, true)
+	engine.PlayerPrefData().JumpToKey("loadout", true)
+	engine.PlayerPrefData().JumpToKey(class, true)
+	engine.PlayerPrefData().SetNum(slot, value)
+	engine.PlayerPrefData().Rewind()
+}
+
+// IsValidForBotPreferences says this player has an influence on what the bots
+// are.
+//
+//sp:name IsValidForBotPreferences
+func IsValidForBotPreferences(client int32) bool {
+	return !engine.IsFakeClient(client) && engine.ClientTeam(client) == engine.TeamRed()
+}
+
+// CollectPlayerBotClassPreferences is every class every player asked for, one
+// entry per player per class, which is what makes the draw proportional.
+//
+//sp:name CollectPlayerBotClassPreferences
+func CollectPlayerBotClassPreferences(stringList engine.List) {
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if engine.IsClientInGame(i) && IsValidForBotPreferences(i) {
+			classFlags := GetClassPreferencesFlags(i)
+
+			if classFlags&PrefScout != 0 {
+				stringList.PushString("scout")
+			}
+
+			if classFlags&PrefSoldier != 0 {
+				stringList.PushString("soldier")
+			}
+
+			if classFlags&PrefPyro != 0 {
+				stringList.PushString("pyro")
+			}
+
+			if classFlags&PrefDemo != 0 {
+				stringList.PushString("demoman")
+			}
+
+			if classFlags&PrefHeavy != 0 {
+				stringList.PushString("heavyweapons")
+			}
+
+			if classFlags&PrefEngineer != 0 {
+				stringList.PushString("engineer")
+			}
+
+			if classFlags&PrefMedic != 0 {
+				stringList.PushString("medic")
+			}
+
+			if classFlags&PrefSniper != 0 {
+				stringList.PushString("sniper")
+			}
+
+			if classFlags&PrefSpy != 0 {
+				stringList.PushString("spy")
+			}
+		}
+	}
+}
+
+// AddBotsBasedOnPreferences adds that many bots, drawing each one's class from
+// what the players asked for.
+//
+//sp:name AddBotsBasedOnPreferences
+func AddBotsBasedOnPreferences(amount int32) {
+	// Can't add any more if the server is full.
+	if engine.IsServerFull() {
+		return
+	}
+
+	engine.PrintToChatAll("%s Adding %d bot(s)...", engine.PluginPrefix(), amount)
+
+	if amount <= 0 {
+		return
+	}
+
+	classPref := engine.NewStringList(ClassMaxNameLength)
+
+	// Get the players' class preferences.
+	CollectPlayerBotClassPreferences(classPref)
+
+	if classPref.Length() > 0 {
+		for i := int32(1); i <= amount; i++ {
+			// Now pick a random class from preferences. This makes
+			// class choice proportional, rather than majority.
+			class := classPref.GetString(engine.RandomInt(0, classPref.Length()-1))
+
+			engine.AddDefenderTFBotOf(1, class, "red", "expert")
+		}
+	} else {
+		// Nobody had preferences, just add random bots.
+		engine.AddRandomDefenderBots(amount)
+	}
+
+	classPref.Close()
+}

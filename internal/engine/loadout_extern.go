@@ -22,10 +22,10 @@ func InstallLoadouts(c LoadoutCalls) func() {
 	return func() { loadouts = previous }
 }
 
-// PreferredWeaponForClass is what this player asked for in that slot, or a draw
-// from the pool when they asked for nothing.
+// PreferredWeaponForClass is what the players asked for in that slot, or a draw
+// from the pool when they asked for nothing. Ported, player_pref.sp.
 //
-//sp:plugin GetPreferredWeaponForClass
+//sp:body GetPreferredWeaponForClass
 func PreferredWeaponForClass(class string, slot string, client int32) int32 {
 	if loadouts.PreferredWeaponForClass == nil {
 		missing("GetPreferredWeaponForClass")
