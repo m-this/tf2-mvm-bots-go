@@ -181,6 +181,7 @@ func ShouldDetonateStickies(client int32) bool {
 // to hurt one.
 //
 //sp:name IsStickyOnTank
+//sp:const stickyOrigin
 func IsStickyOnTank(stickyOrigin [3]float32) bool {
 	tank := int32(-1)
 

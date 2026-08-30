@@ -55,6 +55,7 @@ func CanWeaponAirblast(weapon int32) bool {
 // CountEnemiesNearPosition is how many robots are standing within the radius.
 //
 //sp:name CountEnemiesNearPosition
+//sp:const origin
 func CountEnemiesNearPosition(client int32, origin [3]float32, radius float32) int32 {
 	count := int32(0)
 	enemyTeam := engine.PlayerEnemyTeam(client)

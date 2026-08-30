@@ -27,6 +27,7 @@ type EngineerCalls struct {
 	AbsAnglesOf            func(entity int32) [3]float32
 	NestRelocateOf         func(client int32) Area
 	EngineerGunSpendsMetal func(client int32) bool
+	GunslingerEquipped     func(client int32) bool
 	NavAreaCount           func() int32
 	BuilderOf              func(building int32, propType PropType, prop string) int32
 	SetNestRelocate        func(client int32, area Area)
@@ -159,6 +160,16 @@ func ShouldBuildTeleporter(actor int32) bool {
 		missing("ShouldBuildTeleporter")
 	}
 	return engineers.ShouldBuildTeleporter(actor)
+}
+
+// GunslingerEquipped says this engineer builds minis rather than level threes.
+//
+//sp:body TF2_IsGunslingerEquipped
+func GunslingerEquipped(client int32) bool {
+	if engineers.GunslingerEquipped == nil {
+		missing("TF2_IsGunslingerEquipped")
+	}
+	return engineers.GunslingerEquipped(client)
 }
 
 // EngineerGunSpendsMetal is an engineer carrying a gun that costs metal to

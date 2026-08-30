@@ -107,14 +107,14 @@ func shape(fn string) string {
 			p, value = strings.TrimSpace(name), " = "+strings.TrimSpace(def)
 		}
 
-		/* const is dropped from both sides
+		/* const is compared, because it is part of the contract
 
-		It restricts the callee at compile time and changes nothing at
-		run time, and the port cannot always reproduce it: a const array
-		cannot be handed to a native that declares its parameter
-		writable, which several of them do. What stops a generated body
-		writing a parameter is the emitter's refusal, not a keyword. */
-		p = strings.TrimPrefix(p, "const ")
+		A const array cannot be handed to a native that declares its
+		parameter writable, and a caller holding one cannot pass it to a
+		function that does not promise. So neither always-const nor
+		never-const compiles across the plugin: the port says which with
+		//sp:const and this is what checks it against the shipped
+		declaration. */
 
 		// The type is everything up to the last word, which is the name,
 		// plus any [3] the name carries.

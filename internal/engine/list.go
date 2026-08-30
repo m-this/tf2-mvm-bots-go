@@ -150,6 +150,11 @@ func ListOf(h Handle) List {
 	return List(h)
 }
 
+// NoList is null, which is what a caller passes when it has no list to give.
+//
+//sp:global null
+func NoList() List { return 0 }
+
 // NewBlocks makes one whose entries are several cells wide, which is how the
 // plugin keeps an entity and a distance side by side.
 //

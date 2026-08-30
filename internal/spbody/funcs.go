@@ -109,6 +109,35 @@ func (e *emitter) emittedName(d *ast.FuncDecl) string {
 // lengthDirective names the parameter carrying a buffer parameter's length.
 const lengthDirective = "//sp:length"
 
+/*
+	constDirective marks a parameter the callee may not write
+
+SourcePawn's const is a promise to the caller, and it has to be exact in both
+directions: a const array cannot be handed to a native that declares its
+parameter writable, and a caller holding a const array cannot pass it to a
+function that does not promise. Neither always-const nor never-const compiles
+across the plugin, so the port says which, and the comparison against the shipped
+declaration is what checks it.
+*/
+const constDirective = "//sp:const"
+
+// constsOf reads //sp:const <parameter> off a declaration.
+func constsOf(d *ast.FuncDecl) map[string]bool {
+	out := map[string]bool{}
+	if d.Doc == nil {
+		return out
+	}
+	for _, c := range d.Doc.List {
+		for line := range strings.Lines(c.Text) {
+			fields := strings.Fields(line)
+			if len(fields) == 2 && fields[0] == constDirective {
+				out[fields[1]] = true
+			}
+		}
+	}
+	return out
+}
+
 // lengthsOf reads //sp:length <buffer> <parameter> off a declaration.
 func lengthsOf(d *ast.FuncDecl) map[string]string {
 	out := map[string]string{}
@@ -133,6 +162,7 @@ func (e *emitter) funcDecl(d *ast.FuncDecl) {
 		return
 	}
 	e.lengths = lengthsOf(d)
+	e.consts = constsOf(d)
 	sig := obj.Type().(*types.Signature)
 	if sig.Recv() != nil {
 		e.fail(d.Pos(), "a method; write a plain function taking the receiver first")
@@ -282,6 +312,10 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 		half a dozen others do. So the restriction stays where it is
 		enforced, in the emitter's refusal to write an array parameter,
 		and the declaration says nothing about it. */
+		if e.consts[name] {
+			params = append(params, "const "+declare(tag, e.ident(d.Pos(), name), dims))
+			continue
+		}
 		params = append(params, declare(tag, e.ident(d.Pos(), name), dims))
 	}
 	params = e.applyDefaults(d, names, params, e.defaultsOf(d))

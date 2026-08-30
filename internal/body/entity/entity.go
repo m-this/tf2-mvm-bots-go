@@ -99,6 +99,7 @@ func GetControlPointByID(pointID int32) int32 {
 // the distance, and -1 for none.
 //
 //sp:name GetNearestReviveMarker
+//sp:const maxDistance
 func GetNearestReviveMarker(client int32, maxDistance float32) int32 {
 	origin := engine.Origin(client)
 

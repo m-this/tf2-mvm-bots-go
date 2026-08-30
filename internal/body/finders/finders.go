@@ -59,6 +59,7 @@ func MedicHasPatient(client int32, medigun int32) bool {
 // team, and -1 for none in range.
 //
 //sp:name FindFriendlyDispenserNear
+//sp:const origin
 //sp:default maxRange DISPENSER_GUARD_RANGE
 func FindFriendlyDispenserNear(client int32, origin [3]float32, maxRange float32) int32 {
 	bestDistance := maxRange
@@ -108,6 +109,7 @@ func WantsDispenser(client int32) bool {
 // spawn, and -1 for none in range.
 //
 //sp:name FindSentryBusterNear
+//sp:const origin
 func FindSentryBusterNear(origin [3]float32, enemyTeam engine.Team, maxRange float32) int32 {
 	bestDistance := maxRange
 	best := int32(-1)
@@ -248,6 +250,7 @@ func FindBotNearestToBombNearestToHatch(client int32) int32 {
 // distance, and -1 for nobody. The name is the shipped one, typo included.
 //
 //sp:name GerNearestTeammate
+//sp:const maxDistance
 func GerNearestTeammate(client int32, maxDistance float32) int32 {
 	origin := engine.WorldSpaceCenter(client)
 

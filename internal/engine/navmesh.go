@@ -17,6 +17,9 @@ return inside the loop.
 
 // NavCalls are the answers.
 type NavCalls struct {
+	IsCompletelyVisible        func(n NavArea, other Area) bool
+	SizeX                      func(n NavArea) float32
+	SizeY                      func(n NavArea) float32
 	CollectAreasInRadius       func(origin [3]float32, radius float32) Areas
 	AreasCount                 func(a Areas) int32
 	AreasGet                   func(a Areas, index int32) NavArea
@@ -201,4 +204,40 @@ func (a Area) Center() (centre [3]float32) {
 		missing("CNavArea.GetCenter")
 	}
 	return nav.AreaCenter(NavArea(a))
+}
+
+// AttributeBombDrop is BOMB_DROP, the ground the bomb is carried across.
+//
+//sp:global BOMB_DROP
+func AttributeBombDrop() int32 { return 8 }
+
+// IsCompletelyVisible says every corner of the other area can be seen from this
+// one, which is what a sentry needs of the ground it covers.
+//
+//sp:method IsCompletelyVisible
+func (n NavArea) IsCompletelyVisible(other Area) bool {
+	if nav.IsCompletelyVisible == nil {
+		missing("CTFNavArea.IsCompletelyVisible")
+	}
+	return nav.IsCompletelyVisible(n, other)
+}
+
+// SizeX is how wide the area is, which is how much room a building has.
+//
+//sp:method GetSizeX
+func (n NavArea) SizeX() float32 {
+	if nav.SizeX == nil {
+		missing("CNavArea.GetSizeX")
+	}
+	return nav.SizeX(n)
+}
+
+// SizeY is the other side of it.
+//
+//sp:method GetSizeY
+func (n NavArea) SizeY() float32 {
+	if nav.SizeY == nil {
+		missing("CNavArea.GetSizeY")
+	}
+	return nav.SizeY(n)
 }

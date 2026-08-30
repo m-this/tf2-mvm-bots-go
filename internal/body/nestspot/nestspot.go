@@ -144,6 +144,8 @@ the next side rather than to walk at thin air.
 */
 //
 //sp:name BuildStandPoint
+//sp:const spot
+//sp:const from
 func BuildStandPoint(spot [3]float32, from [3]float32, attempt int32, attempts int32, reach float32) (ok bool, stand [3]float32) {
 	away := engine.SubtractVectors(from, spot)
 

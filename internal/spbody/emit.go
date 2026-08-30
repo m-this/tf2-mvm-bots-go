@@ -59,6 +59,9 @@ type emitter struct {
 	// lengths maps a buffer parameter of the function being emitted onto
 	// the parameter that carries its length, from //sp:length.
 	lengths map[string]string
+	// consts are the parameters of the function being emitted that carry
+	// //sp:const, which SourcePawn writes in front of the type.
+	consts map[string]bool
 	// handles are the extern types that have to be deleted, by qualified Go
 	// name. A local of one is a lifetime this package will not leave open.
 	handles map[string]bool
