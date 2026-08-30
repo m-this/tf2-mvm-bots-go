@@ -67,6 +67,16 @@ type Extern struct {
 	// which takes the value as its second argument.
 	Slot bool
 	Set  bool
+	// Delete says the method is SourcePawn's delete on its receiver, which
+	// makes the receiver's type a handle: a lifetime the emitter tracks and
+	// refuses to leave open.
+	Delete bool
+	// Property says the method is written without parentheses, which is what
+	// SourcePawn calls a property: convar.BoolValue.
+	Property bool
+	// Sized says the buffer this fills is followed by its length, which is
+	// how every SourceMod call that writes text is declared.
+	Sized bool
 	// Body says the opposite of Plugin: this names SourcePawn the port
 	// already generates, in another package. The emitted SourcePawn is one
 	// flat namespace, so calling it is calling it by name; what this buys is

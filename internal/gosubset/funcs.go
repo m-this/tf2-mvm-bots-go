@@ -23,7 +23,49 @@ func (c *checker) checkFuncDecl(d *ast.FuncDecl) {
 		return
 	}
 	c.checkParams(d.Type)
-	c.checkBlock(d.Body)
+	c.checkFuncBody(d.Body)
+}
+
+/*
+	checkFuncBody is checkBlock with defer allowed
+
+A handle is a lifetime, and the Go way to say so is defer. It is accepted at the
+top level of a function and nowhere else: there it has always run by the time
+any later return is reached, so the emitter can put the delete at every way out
+and know it is right. Nested, it would have to know whether the branch was
+taken.
+*/
+func (c *checker) checkFuncBody(b *ast.BlockStmt) {
+	if b == nil {
+		return
+	}
+	for _, s := range b.List {
+		if d, isDefer := s.(*ast.DeferStmt); isDefer {
+			c.checkDefer(d)
+			continue
+		}
+		c.checkStmt(s)
+	}
+}
+
+// checkDefer accepts the one shape the emitter can discharge: a method call on
+// a name, with no arguments.
+func (c *checker) checkDefer(d *ast.DeferStmt) {
+	sel, ok := d.Call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		c.refuse(d.Pos(), "a defer of something that is not a method call",
+			"defer the close of the handle, x.Close(), which is the only cleanup the generator emits")
+		return
+	}
+	if _, ok := sel.X.(*ast.Ident); !ok {
+		c.refuse(d.Pos(), "a defer on something that is not a name",
+			"assign the handle to a name first, then defer its close")
+		return
+	}
+	if len(d.Call.Args) != 0 {
+		c.refuse(d.Pos(), "a defer of a call with arguments",
+			"the generator emits a delete, which takes none")
+	}
 }
 
 func (c *checker) checkParams(t *ast.FuncType) {

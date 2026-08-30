@@ -238,6 +238,17 @@ func (e *emitter) slot(call *ast.CallExpr, x Extern) string {
 	return fmt.Sprintf("%s = %s", read, e.expr(call.Args[1]))
 }
 
+// propertyExtern is a read written without parentheses, which is what
+// SourcePawn calls a property and Go has no form for but a method.
+func (e *emitter) propertyExtern(call *ast.CallExpr) (Extern, string, bool) {
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return Extern{}, "", false
+	}
+	x, recv, isMethod := e.externMethod(sel)
+	return x, recv, isMethod && x.Property
+}
+
 func (e *emitter) slotExtern(call *ast.CallExpr) (Extern, bool) {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok {
@@ -319,6 +330,13 @@ func (e *emitter) callWith(call *ast.CallExpr, extra []string) string {
 	}
 	if name, ok := e.builtinHelper(call); ok {
 		return name
+	}
+	if x, recv, ok := e.propertyExtern(call); ok {
+		if len(call.Args) != 0 {
+			e.fail(call.Pos(), "%s is a property and takes no arguments", x.Func)
+			return ""
+		}
+		return recv + "." + x.Func
 	}
 	if x, ok := e.slotExtern(call); ok {
 		return e.slot(call, x)

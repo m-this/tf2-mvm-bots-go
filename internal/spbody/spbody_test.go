@@ -13,15 +13,35 @@ import (
 
 var update = flag.Bool("update", false, "rewrite the golden files")
 
-// TestShapesGolden emits one of everything the subset has and compares it with
-// the file a reviewer reads. The golden file is the review: a change to the
-// emitter that nobody meant shows up here as a diff and nowhere else.
+// goldens are the fixtures whose emitted SourcePawn is pinned. shapes is one of
+// everything the subset has; the other two are the shapes that took a design
+// decision and are worth reading on their own.
+var goldens = []string{"shapes", "handle", "variadic"}
+
+// TestShapesGolden emits each and compares it with the file a reviewer reads.
+// The golden file is the review: a change to the emitter that nobody meant
+// shows up here as a diff and nowhere else.
 func TestShapesGolden(t *testing.T) {
-	g, err := spbody.GenerateDir("testdata/shapes", spbody.Config{Prefix: "Go_"})
+	declared, err := spbody.ExternsFromDir("../engine")
 	if err != nil {
-		t.Fatalf("generating the shapes body: %v", err)
+		t.Fatalf("reading the extern declarations: %v", err)
 	}
-	const golden = "testdata/shapes.sp"
+	for _, name := range goldens {
+		t.Run(name, func(t *testing.T) {
+			goldenOf(t, name, spbody.Config{
+				Prefix: "Go_", Externs: declared.Funcs, Tags: declared.Tags,
+			})
+		})
+	}
+}
+
+func goldenOf(t *testing.T, name string, cfg spbody.Config) {
+	t.Helper()
+	g, err := spbody.GenerateDir("testdata/"+name, cfg)
+	if err != nil {
+		t.Fatalf("generating %s: %v", name, err)
+	}
+	golden := "testdata/" + name + ".sp"
 	if *update {
 		if err := os.WriteFile(golden, []byte(g.Source), 0o600); err != nil {
 			t.Fatal(err)
@@ -66,10 +86,18 @@ func TestRefusals(t *testing.T) {
 		{"enum_without_constants", "declares no constants"},
 		{"array_call_as_value", "used as a value"},
 		{"default_before_plain", "has no default and follows one that does"},
+		{"unclosed_handle", "is a handle and nothing closes it"},
+		{"handle_in_return", "is returned or read by the return that closes it"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.dir, func(t *testing.T) {
-			_, err := spbody.GenerateDir(filepath.Join("testdata", tc.dir), spbody.Config{Prefix: "Go_"})
+			declared, err := spbody.ExternsFromDir("../engine")
+			if err != nil {
+				t.Fatalf("reading the extern declarations: %v", err)
+			}
+			_, err = spbody.GenerateDir(filepath.Join("testdata", tc.dir), spbody.Config{
+				Prefix: "Go_", Externs: declared.Funcs, Tags: declared.Tags,
+			})
 			if err == nil {
 				t.Fatal("the construct was translated; it has no faithful SourcePawn")
 			}

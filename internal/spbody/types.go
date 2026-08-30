@@ -20,6 +20,12 @@ func (e *emitter) spType(t types.Type) (tag string, dims []int64, err error) {
 	case *types.Named:
 		return e.namedTag(t)
 	case *types.Array:
+		// A byte array is a string buffer. SourcePawn spells that char,
+		// and nothing else in the subset uses uint8, so the mapping is
+		// unambiguous: byte means text.
+		if b, ok := types.Unalias(t.Elem()).(*types.Basic); ok && b.Kind() == types.Byte {
+			return "char", []int64{t.Len()}, nil
+		}
 		tag, inner, err := e.spType(t.Elem())
 		if err != nil {
 			return "", nil, err

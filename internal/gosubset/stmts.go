@@ -57,8 +57,11 @@ func (c *checker) refuseStmt(s ast.Stmt) {
 		c.refuse(n.Pos(), "a goroutine",
 			"a generated body is one call on the server thread; do the work inline")
 	case *ast.DeferStmt:
-		c.refuse(n.Pos(), "a defer statement",
-			"write the cleanup at each return, or restructure so there is one return")
+		// Handled in checkBlock at function level, where it is accepted.
+		// Reaching it here means it was nested, which the emitter cannot
+		// discharge without knowing whether it ran.
+		c.refuse(n.Pos(), "a defer inside a block",
+			"put it at the top level of the function, straight after the thing it closes, so it has always run by the time a return is reached")
 	case *ast.SelectStmt:
 		c.refuse(n.Pos(), "a select statement",
 			"the subset has no channels; remove it")

@@ -61,6 +61,16 @@ func usesResult(body *ast.BlockStmt, name string) bool {
 	return found
 }
 
+// endsInReturn says whether control can fall off the end of the body, which is
+// the one way out a return statement does not cover.
+func endsInReturn(body *ast.BlockStmt) bool {
+	if len(body.List) == 0 {
+		return false
+	}
+	_, ok := body.List[len(body.List)-1].(*ast.ReturnStmt)
+	return ok
+}
+
 // outParam is a Go result that SourcePawn takes as a parameter.
 type outParam struct {
 	name string
@@ -139,9 +149,16 @@ func (e *emitter) funcDecl(d *ast.FuncDecl) {
 	for _, out := range e.outParams {
 		e.zero(out)
 	}
+	e.pending = nil
+	e.checkClosed(d)
 	for _, s := range d.Body.List {
 		e.stmt(s)
 	}
+	// Falling off the end is a way out too.
+	if !endsInReturn(d.Body) {
+		e.discharge(d.Body.End(), nil)
+	}
+	e.pending = nil
 	e.indent--
 	e.line("}")
 	e.blank()

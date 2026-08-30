@@ -71,7 +71,7 @@ Accepted: `if` / `else`, three-clause `for`, condition-only `for`, `for {}`,
 assignment including the compound operators, `++`/`--`, `break`, `continue`,
 local `var` and `const`, and a call statement whose result is discarded.
 
-Refused: `go`, `defer`, `select`, channel send and receive, labels, `goto`,
+Refused: `go`, `select`, channel send and receive, labels, `goto`,
 `fallthrough` (write `case a, b:`), type switch, and a `switch` with no tag
 (SourcePawn's `switch` needs a value; write `if` / `else if`).
 
@@ -79,6 +79,47 @@ Switch cases must be constants, which is what SourcePawn accepts. A call is
 allowed through to the emitter, because a constant the extern package names,
 `TFClass_Soldier` and its like, is a call in Go and a constant in SourcePawn.
 The emitter accepts exactly those and refuses the rest.
+
+## Handles, which are lifetimes
+
+`TheNavMesh.CollectAreasInRadius` hands back a collector and it has to be
+deleted. That is a lifetime, and the Go way to say so is `defer`:
+
+```go
+areas := engine.CollectAreasInRadius(origin, 300.0)
+defer areas.Close()
+```
+
+The generator puts `delete areas;` at every way out of the function, including
+each early return and falling off the end. That is stronger than what it
+replaces: the plugin deletes once, after the loop, which is right until somebody
+adds a return inside the loop.
+
+Two rules make it a guarantee rather than a habit:
+
+- The `defer` is at the top level of a function and nowhere else, so it has
+  always run by the time a later return is reached. Nested, the generator would
+  have to know whether the branch was taken.
+- A local of a handle type that nothing closes is refused. So is a return whose
+  expression reads the handle, because Go computes the result before the defer
+  runs and SourcePawn has no way to say that.
+
+A handle type is any type the extern package declares with an `//sp:delete`
+method on it.
+
+## Text
+
+`[N]byte` is a `char[N]`. Nothing else in the subset uses `uint8`, so the
+mapping is unambiguous: byte means text.
+
+An extern that fills a buffer carries the `sized` flag, and the emitted call
+passes the buffer's length after it, which is how every SourceMod call that
+writes text is declared.
+
+Comparing text is still refused, and almost always the wrong question: 95 of the
+97 string comparisons in the plugin's behaviour files compare an attribute name
+against a literal, and `internal/tables` generates the name to id table that
+turns those into an integer switch.
 
 ## Expressions
 

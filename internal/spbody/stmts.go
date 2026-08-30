@@ -42,6 +42,8 @@ func (e *emitter) stmt(s ast.Stmt) {
 		e.rangeStmt(n)
 	case *ast.SwitchStmt:
 		e.switchStmt(n)
+	case *ast.DeferStmt:
+		e.deferStmt(n)
 	case *ast.BranchStmt:
 		e.line("%s;", n.Tok)
 	default:
@@ -180,8 +182,53 @@ func (e *emitter) arrayCall(define bool, lhs, rhs ast.Expr) bool {
 	} else {
 		e.checkWritable(lhs)
 	}
-	e.line("%s;", e.callWith(call, []string{e.expr(lhs)}))
+	extra := []string{e.expr(lhs)}
+	if x, _, ok := e.externOfCall(call); ok && x.Sized {
+		// A buffer is followed by its length, which is what SourceMod
+		// declares and what stops the callee writing past the end.
+		if n, ok := e.arrayLen(lhs); ok {
+			extra = append(extra, fmt.Sprintf("%d", n))
+		} else {
+			e.fail(lhs.Pos(), "%s fills a buffer and the destination has no length the generator can see", x.Func)
+		}
+	}
+	e.line("%s;", e.callWith(call, extra))
 	return true
+}
+
+// externOfCall is the extern a call names, whether it is a plain one or a
+// method.
+func (e *emitter) externOfCall(call *ast.CallExpr) (Extern, string, bool) {
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return Extern{}, "", false
+	}
+	if x, ok := e.externOf(sel); ok {
+		return x, "", true
+	}
+	return e.externMethod(sel)
+}
+
+// arrayLen is how long the destination is, which a sized call has to be told.
+func (e *emitter) arrayLen(x ast.Expr) (int64, bool) {
+	t := e.info.Types[x].Type
+	if t == nil {
+		// A short declaration introduces the name here, so its type is a
+		// definition rather than the type of an expression.
+		if id, ok := x.(*ast.Ident); ok {
+			if obj := e.info.Defs[id]; obj != nil {
+				t = obj.Type()
+			}
+		}
+	}
+	if t == nil {
+		return 0, false
+	}
+	arr, ok := types.Unalias(t).Underlying().(*types.Array)
+	if !ok {
+		return 0, false
+	}
+	return arr.Len(), true
 }
 
 func (e *emitter) isArrayValue(x ast.Expr) bool {
@@ -280,8 +327,59 @@ func (e *emitter) checkWritable(lhs ast.Expr) {
 	}
 }
 
+/*
+	deferStmt records a close rather than emitting one
+
+The delete goes at every way out below this point, which is what makes the
+lifetime a guarantee instead of a habit. Nothing is written here.
+*/
+func (e *emitter) deferStmt(n *ast.DeferStmt) {
+	sel, ok := n.Call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		e.fail(n.Pos(), "a defer of something that is not a method call")
+		return
+	}
+	x, _, isMethod := e.externMethod(sel)
+	if !isMethod || !x.Delete {
+		e.fail(n.Pos(), "a defer of something the extern package does not declare as a delete")
+		return
+	}
+	id, ok := sel.X.(*ast.Ident)
+	if !ok {
+		e.fail(n.Pos(), "a defer on something that is not a name")
+		return
+	}
+	e.pending = append(e.pending, deferred{name: e.ident(id.Pos(), id.Name), after: n.Pos()})
+}
+
+// discharge writes the deletes owed at this point, latest first, which is the
+// order Go runs them in.
+func (e *emitter) discharge(at token.Pos, uses func(string) bool) {
+	for i := len(e.pending) - 1; i >= 0; i-- {
+		p := e.pending[i]
+		if at < p.after {
+			continue
+		}
+		if uses != nil && uses(p.name) {
+			e.fail(at, "%s is returned or read by the return that closes it; Go computes the result before the defer runs and SourcePawn has no way to say that", p.name)
+			continue
+		}
+		e.line("delete %s;", p.name)
+	}
+}
+
 func (e *emitter) returnStmt(n *ast.ReturnStmt) {
+	mentions := func(name string) bool {
+		for _, r := range n.Results {
+			if mentionsIdent(r, name) {
+				return true
+			}
+		}
+		return false
+	}
+
 	if len(n.Results) == 0 {
+		e.discharge(n.Pos(), nil)
 		if e.resultName == "" {
 			e.line("return;")
 			return
@@ -289,6 +387,7 @@ func (e *emitter) returnStmt(n *ast.ReturnStmt) {
 		e.line("return %s;", e.resultName)
 		return
 	}
+	e.discharge(n.Pos(), mentions)
 	first := 1
 	if e.returnsArray {
 		first = 0
@@ -309,6 +408,18 @@ func (e *emitter) returnStmt(n *ast.ReturnStmt) {
 		return
 	}
 	e.line("return %s;", e.expr(n.Results[0]))
+}
+
+// mentionsIdent says whether the expression reads that name anywhere.
+func mentionsIdent(x ast.Expr, name string) bool {
+	found := false
+	ast.Inspect(x, func(n ast.Node) bool {
+		if id, ok := n.(*ast.Ident); ok && id.Name == name {
+			found = true
+		}
+		return !found
+	})
+	return found
 }
 
 func (e *emitter) ifStmt(n *ast.IfStmt) {

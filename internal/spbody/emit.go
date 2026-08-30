@@ -54,6 +54,12 @@ type emitter struct {
 	// emitted under, so a call to a body that claimed the plugin's name
 	// with //sp:name is emitted under that name too.
 	spNames map[string]string
+	// handles are the extern types that have to be deleted, by qualified Go
+	// name. A local of one is a lifetime this package will not leave open.
+	handles map[string]bool
+	// pending are the defers seen so far in the function being emitted, in
+	// the order they were written; they discharge in reverse.
+	pending []deferred
 	// emitted are the SourcePawn function names this emission declares.
 	emitted []string
 	// state is every package-level var, in declaration order, so Reset puts
@@ -104,6 +110,7 @@ func (e *emitter) line(format string, args ...any) {
 }
 
 func (e *emitter) run(files []*ast.File) {
+	e.collectHandles()
 	e.helpers = make(map[string]helper)
 	e.valueReturners = make(map[string]bool)
 	e.spNames = make(map[string]string)

@@ -135,16 +135,26 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 			return Extern{}, false, fmt.Errorf("the directive %q needs a kind, one name and at most one flag", line)
 		}
 		kind, name := fields[0], fields[1]
-		returnsArray := false
+		returnsArray, sized := false, false
 		if len(fields) == 3 {
-			if fields[2] != "returns" {
-				return Extern{}, false, fmt.Errorf("the directive flag %q is not returns", fields[2])
+			switch fields[2] {
+			case "returns":
+				returnsArray = true
+			case "sized":
+				sized = true
+			default:
+				return Extern{}, false, fmt.Errorf("the directive flag %q is not returns or sized", fields[2])
 			}
-			returnsArray = true
 		}
 		switch kind {
 		case "native":
-			return Extern{Func: name, ReturnsArray: returnsArray}, true, nil
+			return Extern{Func: name, ReturnsArray: returnsArray, Sized: sized}, true, nil
+		case "property":
+			// Written on the receiver like a method, and without the
+			// parentheses: convar.BoolValue, not convar.BoolValue().
+			return Extern{Func: name, Method: true, Property: true}, true, nil
+		case "delete":
+			return Extern{Func: name, Delete: true}, true, nil
 		case "method":
 			// The receiver is what picks it; the name is what
 			// SourcePawn writes after the dot.
@@ -158,13 +168,13 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 		case "body":
 			return Extern{Func: name, Body: true, ReturnsArray: returnsArray}, true, nil
 		case "plugin":
-			return Extern{Func: name, Plugin: true, ReturnsArray: returnsArray}, true, nil
+			return Extern{Func: name, Plugin: true, ReturnsArray: returnsArray, Sized: sized}, true, nil
 		case "sdkcall":
 			return Extern{Func: "SDKCall", Lead: []string{name}, ReturnsArray: returnsArray}, true, nil
 		case "address":
 			return Extern{Func: "LoadFromAddress", Lead: []string{name}, ReturnsArray: returnsArray}, true, nil
 		default:
-			return Extern{}, false, fmt.Errorf("the directive kind %q is not native, method, global, slot, slotset, body, plugin, sdkcall or address", kind)
+			return Extern{}, false, fmt.Errorf("the directive kind %q is not native, method, property, delete, global, slot, slotset, body, plugin, sdkcall or address", kind)
 		}
 	}
 	return Extern{}, false, nil
