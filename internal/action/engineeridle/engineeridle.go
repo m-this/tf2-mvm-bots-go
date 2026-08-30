@@ -1190,7 +1190,7 @@ func EvaluateNestRelocation(timer engine.Timer) engine.Outcome {
 //
 //sp:name ShouldEvaluateNestRelocation
 func ShouldEvaluateNestRelocation(client int32) bool {
-	if !engine.IsClientInGame(client) || !engine.IsDefenderBot(client) || !engine.IsPlayerAlive(client) {
+	if !engine.IsClientInGame(client) || !engine.DefenderBotFlag(client) || !engine.IsPlayerAlive(client) {
 		return false
 	}
 

@@ -23,6 +23,7 @@ type FrontCalls struct {
 	RecoverDefenderFromDisconnectedSpawn func(actor int32)
 	LookupEntityActionByName             func(client int32, name string) int32
 	IsDefenderBot                        func(client int32) bool
+	DefenderBotFlag                      func(client int32) bool
 	ShoppedThisBreak                     func(client int32) bool
 }
 
@@ -169,12 +170,30 @@ func LookupEntityActionByName(client int32, name string) int32 {
 	return fronts.LookupEntityActionByName(client, name)
 }
 
-// IsDefenderBot says the client is one of ours.
+// DefenderBotFlag is the flag itself, which is what a caller reading
+// g_bIsDefenderBot[client] asks.
 //
 //sp:slot g_bIsDefenderBot
+func DefenderBotFlag(client int32) bool {
+	if fronts.DefenderBotFlag == nil {
+		missing("g_bIsDefenderBot")
+	}
+	return fronts.DefenderBotFlag(client)
+}
+
+/*
+IsDefenderBot is the function, which is not the same question as the flag.
+
+It answers yes for a fake client whose name carries the mod's identity even
+though nothing has flagged him yet, which is how a bot the manager has not
+adopted is still recognised. A port that reads the flag where the plugin called
+the function quietly narrows it.
+
+//sp:plugin IsDefenderBot
+*/
 func IsDefenderBot(client int32) bool {
 	if fronts.IsDefenderBot == nil {
-		missing("g_bIsDefenderBot")
+		missing("IsDefenderBot")
 	}
 	return fronts.IsDefenderBot(client)
 }

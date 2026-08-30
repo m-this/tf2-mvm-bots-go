@@ -273,6 +273,15 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 			params = append(params, "const char[] "+e.ident(d.Pos(), name))
 			continue
 		}
+		/* An array parameter is not marked const, though a generated body
+		can never write one
+
+		Saying const would match the shipped declarations, and it breaks
+		the calls: SourcePawn refuses a const array handed to a native
+		that declares its parameter writable, which AimHeadTowards and
+		half a dozen others do. So the restriction stays where it is
+		enforced, in the emitter's refusal to write an array parameter,
+		and the declaration says nothing about it. */
 		params = append(params, declare(tag, e.ident(d.Pos(), name), dims))
 	}
 	params = e.applyDefaults(d, names, params, e.defaultsOf(d))

@@ -116,7 +116,7 @@ func TraceSnipers(timer engine.Timer) engine.Outcome {
 			continue
 		}
 
-		if !engine.IsDefenderBot(client) || engine.PlayerClass(client) != engine.ClassSniper() {
+		if !engine.DefenderBotFlag(client) || engine.PlayerClass(client) != engine.ClassSniper() {
 			continue
 		}
 
@@ -384,7 +384,7 @@ func ReportSniperSpots() {
 			continue
 		}
 
-		if !engine.IsDefenderBot(client) || engine.PlayerClass(client) != engine.ClassSniper() {
+		if !engine.DefenderBotFlag(client) || engine.PlayerClass(client) != engine.ClassSniper() {
 			continue
 		}
 
