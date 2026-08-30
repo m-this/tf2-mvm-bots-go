@@ -117,6 +117,10 @@ var Actions = []Body{
 		Shipped: "source/redbots3/behavior/movetofront.sp",
 	},
 	{
+		Dir: "internal/action/spycheck", Out: "sourcepawn/spycheck.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/behavior/spycheck.sp",
+	},
+	{
 		Dir: "internal/action/getammo", Out: "sourcepawn/getammo.sp", Prefix: "Go_",
 		Shipped: "source/redbots3/behavior/getammo.sp",
 	},

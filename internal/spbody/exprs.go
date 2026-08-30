@@ -406,6 +406,10 @@ func (e *emitter) callWith(call *ast.CallExpr, extra []string, front ...string) 
 		args = append(args, e.expr(a))
 	}
 	name, lead, err := e.callee(call.Fun)
+	var trail []string
+	if x, ok := e.externOfCall(call); ok {
+		trail = x.Trail
+	}
 	if err != nil {
 		e.fail(call.Pos(), "%v", err)
 		return ""
@@ -413,7 +417,7 @@ func (e *emitter) callWith(call *ast.CallExpr, extra []string, front ...string) 
 	if name == "" {
 		return lead[0] // a builtin that folded into an expression
 	}
-	args = append(append(append(append([]string{}, lead...), front...), args...), extra...)
+	args = append(append(append(append(append([]string{}, lead...), front...), args...), extra...), trail...)
 	return fmt.Sprintf("%s(%s)", name, strings.Join(args, ", "))
 }
 

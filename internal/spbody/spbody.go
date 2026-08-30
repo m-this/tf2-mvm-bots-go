@@ -67,6 +67,10 @@ type Extern struct {
 	// which takes the value as its second argument.
 	Slot bool
 	Set  bool
+	// Trail are arguments written after the Go ones and after the result
+	// buffer, which is the only place GetAngleVectors will take the two
+	// vectors a caller does not want.
+	Trail []string
 	// Choice says the extern is SourcePawn's ?: and not a call at all. Go
 	// has no conditional expression, and a two-branch if writing a string
 	// is not a thing the emitter can spell: SourcePawn holds text in a
