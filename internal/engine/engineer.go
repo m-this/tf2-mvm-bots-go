@@ -164,7 +164,7 @@ func ShouldBuildTeleporter(actor int32) bool {
 // EngineerGunSpendsMetal is an engineer carrying a gun that costs metal to
 // fire: the Widowmaker, the Short Circuit and the Rescue Ranger.
 //
-//sp:plugin EngineerGunSpendsMetal
+//sp:body EngineerGunSpendsMetal
 func EngineerGunSpendsMetal(client int32) bool {
 	if engineers.EngineerGunSpendsMetal == nil {
 		missing("EngineerGunSpendsMetal")
@@ -276,7 +276,7 @@ func EntityMaxHealth(entity int32) int32 {
 
 // IsRescueRangerEquipped says he can repair from behind cover.
 //
-//sp:plugin TF2_IsRescueRangerEquipped
+//sp:body TF2_IsRescueRangerEquipped
 func IsRescueRangerEquipped(client int32) bool {
 	if engineers.IsRescueRangerEquipped == nil {
 		missing("TF2_IsRescueRangerEquipped")

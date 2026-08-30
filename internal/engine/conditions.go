@@ -74,3 +74,8 @@ func (e Entity) AbsVelocity() (velocity [3]float32) {
 	}
 	return conditions.AbsVelocity(e)
 }
+
+// ConditionMeleeOnly is TFCond_MeleeOnly, which a mission can put a wave in.
+//
+//sp:global TFCond_MeleeOnly
+func ConditionMeleeOnly() Condition { return 27 }

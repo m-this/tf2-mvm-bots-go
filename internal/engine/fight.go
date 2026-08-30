@@ -81,7 +81,7 @@ func TFBotMission(client int32) int32 {
 
 // CanUsePrimaryWeapon says the sniper has his rifle back.
 //
-//sp:plugin CanUsePrimayWeapon
+//sp:body CanUsePrimayWeapon
 func CanUsePrimaryWeapon(client int32) bool {
 	if fights.CanUsePrimaryWeapon == nil {
 		missing("CanUsePrimayWeapon")
