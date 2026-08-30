@@ -18,12 +18,12 @@ var (
 	offsetEntityLevel int32 = -1
 )
 
-// EconItemCreateNoSpawn makes the item without bringing it into the world, so the
+// CreateNoSpawn makes the item without bringing it into the world, so the
 // caller can finish it first.
 //
 //sp:name EconItemCreateNoSpawn
 //sp:writable classname
-func EconItemCreateNoSpawn(classname string, itemDefIndex int32, level int32, quality int32) int32 {
+func CreateNoSpawn(classname string, itemDefIndex int32, level int32, quality int32) int32 {
 	item := engine.CreateEntityByName(classname)
 
 	if item != -1 {
@@ -73,11 +73,11 @@ func EconItemCreateNoSpawn(classname string, itemDefIndex int32, level int32, qu
 	return item
 }
 
-// EconItemSpawnGiveTo brings it into the world and equips it. Call this when you
+// SpawnGiveTo brings it into the world and equips it. Call this when you
 // are ready to spawn it.
 //
 //sp:name EconItemSpawnGiveTo
-func EconItemSpawnGiveTo(item int32, client int32) {
+func SpawnGiveTo(item int32, client int32) {
 	engine.DispatchSpawn(item)
 
 	if engine.IsEntityWearable(item) {
@@ -94,11 +94,11 @@ func EconItemSpawnGiveTo(item int32, client int32) {
 //sp:name GiveItemToPlayer
 //sp:writable classname
 func GiveItemToPlayer(client int32, classname string, itemDefIndex int32, level int32, quality int32) int32 {
-	item := EconItemCreateNoSpawn(classname, itemDefIndex, level, quality)
+	item := CreateNoSpawn(classname, itemDefIndex, level, quality)
 
 	if item != -1 {
 		engine.SetItemID(item, engine.RandomInt(1, 2048))
-		EconItemSpawnGiveTo(item, client)
+		SpawnGiveTo(item, client)
 	}
 
 	return item
