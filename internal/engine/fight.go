@@ -132,7 +132,7 @@ func SelectRandomReachableEnemy(actor int32) int32 {
 
 // HealerOfPlayer is whoever is keeping him alive, which is worth shooting first.
 //
-//sp:plugin GetHealerOfPlayer
+//sp:body GetHealerOfPlayer
 func HealerOfPlayer(client int32, playerOnly bool) int32 {
 	if fights.HealerOfPlayer == nil {
 		missing("GetHealerOfPlayer")

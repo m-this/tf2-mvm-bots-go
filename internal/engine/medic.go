@@ -91,7 +91,7 @@ func IsTaunting(client int32) bool {
 
 // IsPlayerMoving says whether the player is going anywhere.
 //
-//sp:plugin IsPlayerMoving
+//sp:body IsPlayerMoving
 func IsPlayerMoving(client int32) bool {
 	if medics.IsPlayerMoving == nil {
 		missing("IsPlayerMoving")
@@ -101,7 +101,7 @@ func IsPlayerMoving(client int32) bool {
 
 // CanWeaponAddUberOnHit says whether hitting somebody with it fills the charge.
 //
-//sp:plugin CanWeaponAddUberOnHit
+//sp:body CanWeaponAddUberOnHit
 func CanWeaponAddUberOnHit(weapon int32) bool {
 	if medics.CanWeaponAddUberOnHit == nil {
 		missing("CanWeaponAddUberOnHit")

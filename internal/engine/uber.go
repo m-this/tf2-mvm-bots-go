@@ -51,7 +51,7 @@ func MedigunType(weapon int32) int32 {
 
 // CountEnemiesNearPosition is how many robots are in the fight at that spot.
 //
-//sp:plugin CountEnemiesNearPosition
+//sp:body CountEnemiesNearPosition
 func CountEnemiesNearPosition(client int32, origin [3]float32, radius float32) int32 {
 	if ubers.CountEnemiesNearPosition == nil {
 		missing("CountEnemiesNearPosition")

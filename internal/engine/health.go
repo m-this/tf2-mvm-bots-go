@@ -113,7 +113,7 @@ func IsCarryingObject(client int32) bool {
 
 // IsHealedByObject says a dispenser is doing it.
 //
-//sp:plugin IsHealedByObject
+//sp:body IsHealedByObject
 func IsHealedByObject(client int32) bool {
 	if healths.IsHealedByObject == nil {
 		missing("IsHealedByObject")

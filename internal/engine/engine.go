@@ -245,7 +245,7 @@ func IsStealthed(client int32) bool {
 
 // IsCloakedPlayerExposed says whether a cloaked player can be seen anyway.
 //
-//sp:plugin IsCloakedPlayerExposed
+//sp:body IsCloakedPlayerExposed
 func IsCloakedPlayerExposed(client int32) bool {
 	if installed.IsCloakedPlayerExposed == nil {
 		missing("IsCloakedPlayerExposed")
