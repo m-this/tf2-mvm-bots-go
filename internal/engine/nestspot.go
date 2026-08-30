@@ -2,22 +2,25 @@ package engine
 
 // NestSpotCalls are the answers for the nest geometry.
 type NestSpotCalls struct {
-	ArcTangent2            func(y float32, x float32) float32
-	DegToRad               func(degrees float32) float32
-	Cosine                 func(radians float32) float32
-	Sine                   func(radians float32) float32
-	FloatAbs               func(value float32) float32
-	ClosestPointOnArea     func(a Area, from [3]float32) [3]float32
-	MaxFloat               func(a float32, b float32) float32
-	PickConfiguredNestArea func(client int32, target [3]float32, sentryRange float32) Area
-	PickMapHintNestArea    func(client int32, target [3]float32, sentryRange float32) Area
-	PickBuildAreaPreRound  func(client int32, sentryRange float32) Area
-	IsNestRangeSane        func(rangeToBomb float32, sentryRange float32) bool
-	NestDistanceLimit      func() float32
-	NavAreaAt              func(l NavAreaList, index int32) NavArea
-	BestNestArea           func(client int32, areas List, target [3]float32, sentryRange float32) Area
-	Extent                 func(a Area) ([3]float32, [3]float32)
-	Z                      func(a Area, x float32, y float32) float32
+	ArcTangent2              func(y float32, x float32) float32
+	DegToRad                 func(degrees float32) float32
+	Cosine                   func(radians float32) float32
+	Sine                     func(radians float32) float32
+	FloatAbs                 func(value float32) float32
+	ClosestPointOnArea       func(a Area, from [3]float32) [3]float32
+	MaxFloat                 func(a float32, b float32) float32
+	PickConfiguredNestArea   func(client int32, target [3]float32, sentryRange float32) Area
+	PickMapHintNestArea      func(client int32, target [3]float32, sentryRange float32) Area
+	PickBuildAreaPreRound    func(client int32, sentryRange float32) Area
+	IsNestRangeSane          func(rangeToBomb float32, sentryRange float32) bool
+	NestDistanceLimit        func() float32
+	PickBuildAreaRanged      func(client int32, sentryRange float32) Area
+	ScoreNestArea            func(client int32, area NavArea, target [3]float32, sentryRange float32, approach List) float32
+	CollectBombApproachAreas func(target [3]float32, sentryRange float32, out List)
+	NavAreaAt                func(l NavAreaList, index int32) NavArea
+	BestNestArea             func(client int32, areas List, target [3]float32, sentryRange float32) Area
+	Extent                   func(a Area) ([3]float32, [3]float32)
+	Z                        func(a Area, x float32, y float32) float32
 }
 
 var nestSpots NestSpotCalls
@@ -242,4 +245,41 @@ func NestDistanceLimit() float32 {
 		missing("NestDistanceLimit")
 	}
 	return nestSpots.NestDistanceLimit()
+}
+
+// NestRelocateScoreGainMin is how much better a spot has to score than the one an
+// engineer holds before he moves to it between waves.
+//
+//sp:global redbots_manager_engineer_nest_relocate_score_gain_min
+func NestRelocateScoreGainMin() ConVar { return 0 }
+
+// ScoreNestArea is what one piece of ground is worth to this engineer.
+//
+//sp:body ScoreNestArea
+func ScoreNestArea(client int32, area NavArea, target [3]float32, sentryRange float32, approach List) float32 {
+	if nestSpots.ScoreNestArea == nil {
+		missing("ScoreNestArea")
+	}
+	return nestSpots.ScoreNestArea(client, area, target, sentryRange, approach)
+}
+
+// CollectBombApproachAreas samples the ground the robots cross.
+//
+//sp:body CollectBombApproachAreas
+func CollectBombApproachAreas(target [3]float32, sentryRange float32, out List) {
+	if nestSpots.CollectBombApproachAreas == nil {
+		missing("CollectBombApproachAreas")
+	}
+	nestSpots.CollectBombApproachAreas(target, sentryRange, out)
+}
+
+// PickBuildAreaRanged is PickBuildArea with the sentry range given rather than
+// defaulted, which is what the relocation asks.
+//
+//sp:body PickBuildArea
+func PickBuildAreaRanged(client int32, sentryRange float32) Area {
+	if nestSpots.PickBuildAreaRanged == nil {
+		missing("PickBuildArea")
+	}
+	return nestSpots.PickBuildAreaRanged(client, sentryRange)
 }

@@ -149,14 +149,29 @@ var reshaped = map[string]string{
 /*
 	frees is how many handles a body releases
 
-Both spellings, on both sides. SourceMod frees a handle with delete or with
-Close and the shipped files use each in different functions; the generator writes
-delete because a defer puts the free at every way out rather than at the one the
-author remembered. What has to match is how many.
+Distinct handles rather than statements, and both spellings. SourceMod frees one
+with delete or with Close and the shipped files use each in different functions.
+The generator writes delete from a defer, which puts the free at every way out
+rather than at the one the author remembered, so one handle can be freed in two
+places and is still freed once per path. What has to match is how many handles
+are released, not how many times the text says so.
 */
 func frees(fn string) int {
-	return strings.Count(fn, ".Close()") + strings.Count(fn, "delete ")
+	names := map[string]bool{}
+
+	for _, m := range freeDelete.FindAllStringSubmatch(fn, -1) {
+		names[m[1]] = true
+	}
+	for _, m := range freeClose.FindAllStringSubmatch(fn, -1) {
+		names[m[1]] = true
+	}
+	return len(names)
 }
+
+var (
+	freeDelete = regexp.MustCompile(`delete (\w+)`)
+	freeClose  = regexp.MustCompile(`(\w+)\.Close\(\)`)
+)
 
 // withoutCloses drops the Close calls, which are counted rather than sequenced.
 func withoutCloses(calls []string) []string {

@@ -318,7 +318,25 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 		}
 		params = append(params, declare(tag, e.ident(d.Pos(), name), dims))
 	}
-	params = e.applyDefaults(d, names, params, e.defaultsOf(d))
+	defaults := e.defaultsOf(d)
+	params = e.applyDefaults(d, names, params, defaults)
+
+	/* A defaulted parameter has to be last, so the results go before it
+
+	SourcePawn defaults every parameter after the first defaulted one, which
+	means an out-parameter appended after one would not compile. The shipped
+	files put the out-parameter in the middle for exactly this reason:
+	ShouldRelocateNest takes the destination before its defaulted range. */
+	var plain, defaulted []string
+	for i, name := range names {
+		if _, has := defaults[name]; has {
+			defaulted = append(defaulted, params[i])
+			continue
+		}
+		plain = append(plain, params[i])
+	}
+	params = plain
+
 	e.outParams = nil
 	for i := first; i < results.Len(); i++ {
 		r := results.At(i)
@@ -338,6 +356,9 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 		}
 		params = append(params, declare(tag, name, dims))
 	}
+
+	params = append(params, defaulted...)
+
 	return ret, params, nil
 }
 

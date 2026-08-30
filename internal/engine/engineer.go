@@ -206,7 +206,7 @@ func SetNestRelocate(client int32, area Area) {
 
 // PickBusterRetreatArea is ground out of the blast to carry the sentry to.
 //
-//sp:plugin PickBusterRetreatArea
+//sp:body PickBusterRetreatArea
 func PickBusterRetreatArea(sentry int32, buster int32) Area {
 	if engineers.PickBusterRetreatArea == nil {
 		missing("PickBusterRetreatArea")
@@ -309,7 +309,7 @@ func TurretAngles(sentry int32) (angles [3]float32) {
 // ShouldRelocateNest is the between-waves question, and the ground it answers
 // with.
 //
-//sp:plugin ShouldRelocateNest
+//sp:body ShouldRelocateNest
 func ShouldRelocateNest(client int32) (yes bool, destination Area) {
 	if engineers.ShouldRelocateNest == nil {
 		missing("ShouldRelocateNest")
