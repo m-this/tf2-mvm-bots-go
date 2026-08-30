@@ -12,9 +12,10 @@ signature the registration expects.
 
 // RegisterCalls are the answers.
 type RegisterCalls struct {
-	RegConsoleCmd   func(name string)
-	HookEvent       func(name string)
-	CreateTimerWith func(interval float32, data int32, flags int32) Timer
+	RegConsoleCmd           func(name string)
+	HookEvent               func(name string)
+	CreateTimerWith         func(interval float32, data int32, flags int32) Timer
+	ResetIntentionInterface func(client int32)
 }
 
 var registrations RegisterCalls
@@ -64,4 +65,15 @@ func CreateTimerWith(interval float32, callback func(timer Timer, data int32) Ou
 		missing("CreateTimer")
 	}
 	return registrations.CreateTimerWith(interval, data, flags)
+}
+
+// ResetIntentionInterface makes the bot throw away what it was doing and decide
+// again from the top.
+//
+//sp:plugin ResetIntentionInterface
+func ResetIntentionInterface(client int32) {
+	if registrations.ResetIntentionInterface == nil {
+		missing("ResetIntentionInterface")
+	}
+	registrations.ResetIntentionInterface(client)
 }
