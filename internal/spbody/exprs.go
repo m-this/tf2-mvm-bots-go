@@ -354,6 +354,13 @@ func (e *emitter) callWith(call *ast.CallExpr, extra []string) string {
 		return name
 	}
 	if x, recv, ok := e.propertyExtern(call); ok {
+		if x.Set {
+			if len(call.Args) != 1 {
+				e.fail(call.Pos(), "%s is a property being written and takes one value", x.Func)
+				return ""
+			}
+			return fmt.Sprintf("%s.%s = %s", recv, x.Func, e.expr(call.Args[0]))
+		}
 		if len(call.Args) != 0 {
 			e.fail(call.Pos(), "%s is a property and takes no arguments", x.Func)
 			return ""

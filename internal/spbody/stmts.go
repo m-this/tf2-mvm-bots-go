@@ -86,6 +86,11 @@ func (e *emitter) valueSpec(vs *ast.ValueSpec) {
 			e.line("%s;", decl)
 			continue
 		}
+		if len(dims) > 0 && !isArrayLiteral(vs.Values[i]) {
+			e.line("%s;", decl)
+			e.line("%s = %s;", e.ident(name.Pos(), name.Name), e.expr(vs.Values[i]))
+			continue
+		}
 		e.line("%s = %s;", decl, e.expr(vs.Values[i]))
 	}
 }
@@ -140,7 +145,23 @@ func (e *emitter) define(lhs, rhs ast.Expr) {
 		e.fail(id.Pos(), "%s: %v", id.Name, err)
 		return
 	}
-	e.line("%s = %s;", declare(tag, e.ident(id.Pos(), id.Name), dims), e.expr(rhs))
+	decl := declare(tag, e.ident(id.Pos(), id.Name), dims)
+	if len(dims) > 0 && !isArrayLiteral(rhs) {
+		// spcomp takes an array literal as an initialiser and another
+		// array only as the right hand side of an assignment, which is
+		// what the plugin writes: float spot[3]; spot = other;
+		e.line("%s;", decl)
+		e.line("%s = %s;", e.ident(id.Pos(), id.Name), e.expr(rhs))
+		return
+	}
+	e.line("%s = %s;", decl, e.expr(rhs))
+}
+
+// isArrayLiteral says the value is written out in braces, which spcomp does
+// accept where it is declared.
+func isArrayLiteral(x ast.Expr) bool {
+	_, ok := x.(*ast.CompositeLit)
+	return ok
 }
 
 /*

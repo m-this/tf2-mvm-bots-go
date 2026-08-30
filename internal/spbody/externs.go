@@ -149,6 +149,10 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 		switch kind {
 		case "native":
 			return Extern{Func: name, ReturnsArray: returnsArray, Sized: sized}, true, nil
+		case "propertyset":
+			// The same read, written to: recv.Name = value, from a call
+			// taking the value.
+			return Extern{Func: name, Method: true, Property: true, Set: true}, true, nil
 		case "property":
 			// Written on the receiver like a method, and without the
 			// parentheses: convar.BoolValue, not convar.BoolValue().
@@ -178,7 +182,7 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 		case "address":
 			return Extern{Func: "LoadFromAddress", Lead: []string{name}, ReturnsArray: returnsArray}, true, nil
 		default:
-			return Extern{}, false, fmt.Errorf("the directive kind %q is not native, new, method, property, delete, global, slot, slotset, body, plugin, sdkcall or address", kind)
+			return Extern{}, false, fmt.Errorf("the directive kind %q is not native, new, method, property, propertyset, delete, global, slot, slotset, body, plugin, sdkcall or address", kind)
 		}
 	}
 	return Extern{}, false, nil
