@@ -23,6 +23,7 @@ type StateCalls struct {
 	RepathToPos         func(actor int32, bot Bot, goal [3]float32)
 	IsValidCurrencyPack func(pack int32) bool
 	NearestCurrencyPack func(client int32, maxDistance float32) int32
+	NextThink           func(e Entity, context string) float32
 }
 
 var state StateCalls
@@ -132,8 +133,9 @@ func RepathToPos(actor int32, bot Bot, goal [3]float32) {
 }
 
 // IsValidCurrencyPack says whether the pack is still there to be picked up.
+// Ported, collectmoney.sp.
 //
-//sp:plugin IsValidCurrencyPack
+//sp:body IsValidCurrencyPack
 func IsValidCurrencyPack(pack int32) bool {
 	if state.IsValidCurrencyPack == nil {
 		missing("IsValidCurrencyPack")
@@ -150,3 +152,29 @@ func NearestCurrencyPack(client int32, maxDistance float32) int32 {
 	}
 	return state.NearestCurrencyPack(client, maxDistance)
 }
+
+// NextThink is when the entity's named think runs next, which is how long a
+// money pack has before it vanishes.
+//
+//sp:method GetNextThink
+func (e Entity) NextThink(context string) float32 {
+	if state.NextThink == nil {
+		missing("CBaseEntity.GetNextThink")
+	}
+	return state.NextThink(e, context)
+}
+
+// Entity is CBaseEntity, anything in the world.
+//
+//sp:tag CBaseEntity
+type Entity int32
+
+// EntityOf is the base entity side of an index.
+//
+//sp:native CBaseEntity
+func EntityOf(index int32) Entity { return Entity(index) }
+
+// RoundStateBetweenRounds is RoundState_BetweenRounds, the break.
+//
+//sp:global RoundState_BetweenRounds
+func RoundStateBetweenRounds() int32 { return 10 }

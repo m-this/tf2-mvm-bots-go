@@ -7,6 +7,7 @@ import (
 	"go/constant"
 	"go/token"
 	"go/types"
+	"math"
 	"sort"
 	"strings"
 )
@@ -355,9 +356,14 @@ func literalOf(v constant.Value, tag string) (string, error) {
 		}
 		return "false", nil
 	case "float":
-		f, ok := constant.Float32Val(v)
-		if !ok {
-			return "", fmt.Errorf("%s does not fit a 32 bit SourcePawn float", v)
+		// Float32Val says whether the value survived exactly, and almost
+		// none do: 0.3 is not representable in 32 bits and neither is the
+		// 0.3 the plugin writes. What matters is that it is a number and
+		// not an overflow, and that the literal reads back as the same
+		// float, which internal/sp is what guarantees.
+		f, _ := constant.Float32Val(v)
+		if math.IsInf(float64(f), 0) {
+			return "", fmt.Errorf("%s is outside the range of a 32 bit SourcePawn float", v)
 		}
 		return floatLiteral(f), nil
 	default:
