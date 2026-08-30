@@ -12,17 +12,28 @@ signature the registration expects.
 
 // RegisterCalls are the answers.
 type RegisterCalls struct {
-	RegConsoleCmd           func(name string)
-	HookEvent               func(name string)
-	CreateTimerWith         func(interval float32, data int32, flags int32) Timer
-	ResetIntentionInterface func(client int32)
-	SetShoppedThisBreak     func(client int32, shopped bool)
-	SetBeingRevived         func(client int32, reviving bool)
-	EventInt                func(e Event, key string) int32
-	EventBool               func(e Event, key string) bool
-	ResetSpyIntel           func()
-	SetupSniperSpotHints    func()
-	NestRelocationResetAll  func()
+	RegConsoleCmd                func(name string)
+	HookEvent                    func(name string)
+	CreateTimerWith              func(interval float32, data int32, flags int32) Timer
+	ResetIntentionInterface      func(client int32)
+	SetShoppedThisBreak          func(client int32, shopped bool)
+	SetBeingRevived              func(client int32, reviving bool)
+	EventInt                     func(e Event, key string) int32
+	EventBool                    func(e Event, key string) bool
+	ResetSpyIntel                func()
+	SetupSniperSpotHints         func()
+	NestRelocationResetAll       func()
+	DebugFaultsOnWaveStart       func()
+	DebugFaultsOnWaveStartEmpty  func()
+	PublishActiveFeatures        func()
+	ThreatPortAuditReport        func()
+	NestRelocationStopEvaluating func()
+	TeleporterForgetGivingUp     func()
+	DisposableForgetGivingUp     func()
+	QueueBehaviourReset          func()
+	RemoveOrphanedWearables      func()
+	ManageDefenderBots           func(force bool)
+	FreeChosenBotTeam            func()
 }
 
 var registrations RegisterCalls
@@ -162,3 +173,133 @@ func NestRelocationResetAll() {
 	}
 	registrations.NestRelocationResetAll()
 }
+
+// DebugFaultsOnWaveStart starts the fault trace, which does nothing unless a
+// debug convar is set. Ported, faults.
+//
+//sp:body DebugFaults_OnWaveStart
+func DebugFaultsOnWaveStart() {
+	if registrations.DebugFaultsOnWaveStart == nil {
+		missing("DebugFaults_OnWaveStart")
+	}
+	registrations.DebugFaultsOnWaveStart()
+}
+
+// DebugFaultsOnWaveStartEmpty is the same for a wave that begins with no bots.
+// Ported, faults.
+//
+//sp:body DebugFaults_OnWaveStartEmpty
+func DebugFaultsOnWaveStartEmpty() {
+	if registrations.DebugFaultsOnWaveStartEmpty == nil {
+		missing("DebugFaults_OnWaveStartEmpty")
+	}
+	registrations.DebugFaultsOnWaveStartEmpty()
+}
+
+// PublishActiveFeatures says which feature switches are on, late enough that
+// server.cfg has certainly run.
+//
+//sp:plugin PublishActiveFeatures
+func PublishActiveFeatures() {
+	if registrations.PublishActiveFeatures == nil {
+		missing("PublishActiveFeatures")
+	}
+	registrations.PublishActiveFeatures()
+}
+
+// ThreatPortAuditReport says what the threat port disagreed about.
+//
+//sp:plugin ThreatPortAudit_Report
+func ThreatPortAuditReport() {
+	if registrations.ThreatPortAuditReport == nil {
+		missing("ThreatPortAudit_Report")
+	}
+	registrations.ThreatPortAuditReport()
+}
+
+// NestRelocationStopEvaluating drops whatever the relocation queue has left,
+// because it is about a bomb that is about to move. Ported, engineeridle.
+//
+//sp:body EngineerNestRelocation_StopEvaluating
+func NestRelocationStopEvaluating() {
+	if registrations.NestRelocationStopEvaluating == nil {
+		missing("EngineerNestRelocation_StopEvaluating")
+	}
+	registrations.NestRelocationStopEvaluating()
+}
+
+// TeleporterForgetGivingUp gives the exit spot another chance. Ported,
+// engineerbuildteleporter.
+//
+//sp:body EngineerTeleporter_ForgetGivingUp
+func TeleporterForgetGivingUp() {
+	if registrations.TeleporterForgetGivingUp == nil {
+		missing("EngineerTeleporter_ForgetGivingUp")
+	}
+	registrations.TeleporterForgetGivingUp()
+}
+
+// DisposableForgetGivingUp is the same for the disposable sentry. Ported,
+// engineerbuilddisposable.
+//
+//sp:body EngineerDisposable_ForgetGivingUp
+func DisposableForgetGivingUp() {
+	if registrations.DisposableForgetGivingUp == nil {
+		missing("EngineerDisposable_ForgetGivingUp")
+	}
+	registrations.DisposableForgetGivingUp()
+}
+
+// QueueBehaviourReset drains a rethink across the clients. Ported,
+// behaviourreset.
+//
+//sp:body QueueBehaviourReset
+func QueueBehaviourReset() {
+	if registrations.QueueBehaviourReset == nil {
+		missing("QueueBehaviourReset")
+	}
+	registrations.QueueBehaviourReset()
+}
+
+// RemoveOrphanedWearables sweeps up the hats the game refused. Ported,
+// cosmetics.
+//
+//sp:body RemoveOrphanedWearables
+func RemoveOrphanedWearables() {
+	if registrations.RemoveOrphanedWearables == nil {
+		missing("RemoveOrphanedWearables")
+	}
+	registrations.RemoveOrphanedWearables()
+}
+
+// ManageDefenderBots adds or removes bots to match what the server asked for.
+//
+//sp:plugin ManageDefenderBots
+func ManageDefenderBots(force bool) {
+	if registrations.ManageDefenderBots == nil {
+		missing("ManageDefenderBots")
+	}
+	registrations.ManageDefenderBots(force)
+}
+
+// FreeChosenBotTeam drops the lineup the players picked, which the bots on the
+// field have already been built from.
+//
+//sp:plugin FreeChosenBotTeam
+func FreeChosenBotTeam() {
+	if registrations.FreeChosenBotTeam == nil {
+		missing("FreeChosenBotTeam")
+	}
+	registrations.FreeChosenBotTeam()
+}
+
+// ManagerMode is redbots_manager_mode, which says who starts the bots.
+//
+//sp:global redbots_manager_mode
+func ManagerMode() ConVar { return 0 }
+
+// ManagerModeAutoBots is MANAGER_MODE_AUTO_BOTS, the mode where the mod starts
+// them itself.
+//
+//sp:global MANAGER_MODE_AUTO_BOTS
+func ManagerModeAutoBots() int32 { return 0 }

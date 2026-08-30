@@ -69,3 +69,56 @@ func EventTeamplayRoundStart(event engine.Event, name string, dontBroadcast bool
 		engine.NestRelocationResetAll()
 	}
 }
+
+/*
+EventMvmWaveBegin is everything that has to happen on the frame a wave starts,
+and one thing that deliberately does not.
+
+Resetting an intention throws away a bot's behaviour and has it rebuilt on its
+next update, and rebuilding runs the OnStart of whatever it picks. Several of
+those are not cheap. Doing it for six bots inside the wave_begin frame puts all
+of it on the one frame of a mission that is already the most expensive: every
+robot spawns there and starts pathing at the same moment. Three runs of an A/B
+died on exactly that frame, so the resets are a queue drained a bot a tick.
+*/
+//
+//sp:name Event_MvmWaveBegin
+//sp:public
+//
+//nolint:revive // unused-parameter: the event and its name are SourceMod's, and this reads neither
+func EventMvmWaveBegin(event engine.Event, name string, dontBroadcast bool) {
+	// Nothing unless a debug convar is set, which is never on a real server.
+	engine.DebugFaultsOnWaveStart()
+	engine.DebugFaultsOnWaveStartEmpty()
+
+	/* Published here rather than only on a timer after the map loads
+
+	server.cfg runs at its own pace and a late-loaded plugin misses it
+	entirely, so a list published once on map start can be the defaults rather
+	than what the server was asked for. A wave beginning is after everything,
+	every time. */
+	engine.PublishActiveFeatures()
+	engine.ThreatPortAuditReport()
+
+	// Whatever the queue has left is about a bomb that is about to move.
+	engine.NestRelocationStopEvaluating()
+
+	// A new wave is a new chance at a spot that refused him last time.
+	engine.TeleporterForgetGivingUp()
+	engine.DisposableForgetGivingUp()
+
+	// One a tick, because the frame this runs on is the one the server dies on.
+	engine.QueueBehaviourReset()
+
+	// A hat the game refused is an edict nobody will ever free, and there is
+	// one per refusal.
+	engine.RemoveOrphanedWearables()
+
+	if engine.ManagerMode().Int() == engine.ManagerModeAutoBots() {
+		engine.ManageDefenderBots(true)
+	}
+
+	// At this point the bots should already be here, so clear up the lineup
+	// that was used.
+	engine.FreeChosenBotTeam()
+}
