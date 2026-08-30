@@ -87,7 +87,7 @@ func IsPlacementOK(object int32) bool {
 // BuildStandPoint walks a ring round a spot and answers where to stand for this
 // attempt.
 //
-//sp:plugin BuildStandPoint
+//sp:body BuildStandPoint
 func BuildStandPoint(spot [3]float32, from [3]float32, attempt int32, attempts int32, reach float32) (ok bool, stand [3]float32) {
 	if builds.BuildStandPoint == nil {
 		missing("BuildStandPoint")

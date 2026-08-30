@@ -200,7 +200,9 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 		case "global":
 			return Extern{Func: name, Global: true}, true, nil
 		case "body":
-			return Extern{Func: name, Body: true, ReturnsArray: returnsArray}, true, nil
+			// A ported function fills a buffer the same way an
+			// unported one does, so it takes the same flags.
+			return Extern{Func: name, Body: true, ReturnsArray: returnsArray, Sized: sized, Fills: fills, Trail: trail}, true, nil
 		case "plugin":
 			return Extern{Func: name, Plugin: true, ReturnsArray: returnsArray, Sized: sized, Fills: fills, Trail: trail}, true, nil
 		case "sdkcall":

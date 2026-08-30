@@ -311,6 +311,24 @@ func (e *emitter) arrayLen(x ast.Expr) (int64, bool) {
 	return arr.Len(), true
 }
 
+// firstResultIsArray says the call's first result fills a parameter, whether the
+// call has one result or several: a tuple's first element is the one that would
+// have been returned.
+func (e *emitter) firstResultIsArray(call *ast.CallExpr) bool {
+	t := e.info.Types[call].Type
+	if t == nil {
+		return false
+	}
+	if tuple, several := t.(*types.Tuple); several {
+		if tuple.Len() == 0 {
+			return false
+		}
+		t = tuple.At(0).Type()
+	}
+	_, isArray := types.Unalias(t).Underlying().(*types.Array)
+	return isArray
+}
+
 func (e *emitter) isArrayValue(x ast.Expr) bool {
 	t := e.info.Types[x].Type
 	if t == nil {
@@ -342,8 +360,27 @@ func (e *emitter) multiAssign(n *ast.AssignStmt) {
 		}
 		extra = append(extra, e.expr(lhs))
 	}
-	text := e.callWith(call, extra)
 	first := n.Lhs[0]
+	/* An array first result fills a parameter like every other one
+
+	SourcePawn returns a cell, so a function whose first result is an array
+	takes the destination as a parameter and returns nothing. The rest of the
+	results are already parameters, so all this does is put the first
+	destination in front of them and write a call rather than an assignment. */
+	if e.firstResultIsArray(call) && !e.returnsArrayValue(call) {
+		if id, ok := first.(*ast.Ident); ok && id.Name == "_" {
+			e.fail(first.Pos(), "a discarded array result; SourcePawn writes through the parameter, so name it")
+			return
+		}
+		if n.Tok == token.DEFINE {
+			e.declareTarget(first)
+		} else {
+			e.checkWritable(first)
+		}
+		e.line("%s;", e.callWith(call, append([]string{e.expr(first)}, extra...)))
+		return
+	}
+	text := e.callWith(call, extra)
 	if id, ok := first.(*ast.Ident); ok && id.Name == "_" {
 		e.line("%s;", text)
 		return
@@ -400,6 +437,12 @@ func (e *emitter) checkWritable(lhs ast.Expr) {
 			root = x.X
 		default:
 			if id, ok := root.(*ast.Ident); ok && e.byRef[id.Name] {
+				// A buffer the function was handed to fill is the
+				// exception, and //sp:length is where it says so:
+				// writing the caller's buffer is the whole job.
+				if _, fills := e.lengths[id.Name]; fills {
+					return
+				}
 				e.fail(lhs.Pos(), "a write to the parameter %s, which SourcePawn passes by reference and Go copies; copy it into a local first", id.Name)
 			}
 			return

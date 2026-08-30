@@ -38,7 +38,7 @@ func NoZone() Text { return Text{} }
 
 // NestZoneOf is the zone a nest area belongs to, empty when the map names none.
 //
-//sp:plugin NestZoneOf sized
+//sp:body NestZoneOf sized
 func NestZoneOf(area Area) (zone Text) {
 	if dispensers.NestZoneOf == nil {
 		missing("NestZoneOf")

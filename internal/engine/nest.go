@@ -62,7 +62,7 @@ func SetNestArea(actor int32, area Area) {
 
 // NestBuildPosition is where in that area the building goes.
 //
-//sp:plugin NestBuildPosition
+//sp:body NestBuildPosition
 func NestBuildPosition(area Area) (position [3]float32) {
 	if nests.NestBuildPosition == nil {
 		missing("NestBuildPosition")
