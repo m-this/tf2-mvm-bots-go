@@ -13,6 +13,7 @@ a struct tag, which is what struct tags are for.
 type BombInfoCalls struct {
 	GetBombInfo                func() (bool, BombInfo)
 	TravelDistanceToBombTarget func(area Area) float32
+	IsBaseBoss                 func(entity int32) bool
 	BombHatchPosition          func() [3]float32
 	IsHeadAimingOnTarget       func(b Body) bool
 }
@@ -97,4 +98,21 @@ func (b Body) IsHeadAimingOnTarget() bool {
 		missing("IBody.IsHeadAimingOnTarget")
 	}
 	return bombInfos.IsHeadAimingOnTarget(b)
+}
+
+// FeatureDemoStickySelfVeto is the switch on a demoman refusing the button when
+// one of his own bombs is on top of him.
+//
+//sp:global FEATURE_DEMO_STICKY_SELF_VETO
+func FeatureDemoStickySelfVeto() int32 { return 12 }
+
+// IsBaseBoss says the entity really is a tank rather than something else the
+// map called tank_boss.
+//
+//sp:plugin IsBaseBoss
+func IsBaseBoss(entity int32) bool {
+	if bombInfos.IsBaseBoss == nil {
+		missing("IsBaseBoss")
+	}
+	return bombInfos.IsBaseBoss(entity)
 }
