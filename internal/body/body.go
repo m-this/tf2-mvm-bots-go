@@ -114,6 +114,7 @@ var Actions = []Body{
 var All = []Body{
 	{Dir: "internal/body/roster", Out: "sourcepawn/roster.sp", Hooks: "sourcepawn/roster_dhooks.sp", Prefix: "Go_"},
 	{Dir: "internal/body/scan", Out: "sourcepawn/scan.sp", Prefix: "Go_"},
+	{Dir: "internal/body/medic", Out: "sourcepawn/medic.sp", Prefix: "Go_"},
 }
 
 // Generate emits every body, keyed by its output path.

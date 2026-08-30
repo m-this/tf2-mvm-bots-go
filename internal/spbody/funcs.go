@@ -126,9 +126,12 @@ func (e *emitter) funcDecl(d *ast.FuncDecl) {
 	e.byRef = byRefParams(sig)
 	name := e.emittedName(d)
 	e.emitted = append(e.emitted, name)
-	if decl, given := e.cfg.Declare[d.Name.Name]; given {
+	switch decl, given := e.cfg.Declare[d.Name.Name]; {
+	case given:
 		e.line("%s", decl)
-	} else {
+	case isPublic(d):
+		e.line("public %s %s(%s)", ret, name, strings.Join(params, ", "))
+	default:
 		e.line("stock %s %s(%s)", ret, name, strings.Join(params, ", "))
 	}
 	e.line("{")

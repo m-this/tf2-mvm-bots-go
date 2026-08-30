@@ -53,6 +53,27 @@ says so loudly if the original is still there.
 */
 const nameDirective = "//sp:name"
 
+/*
+	publicDirective emits a body as public rather than stock
+
+SourceMod takes the address of a console command callback and of an event
+handler, and it will only take a public one. Nothing else in a generated file
+needs to be public, so this is a modifier rather than the default.
+*/
+const publicDirective = "//sp:public"
+
+func isPublic(d *ast.FuncDecl) bool {
+	if d.Doc == nil {
+		return false
+	}
+	for _, c := range d.Doc.List {
+		if strings.TrimSpace(c.Text) == publicDirective {
+			return true
+		}
+	}
+	return false
+}
+
 // spName is the name the emitted function carries, and whether the body asked
 // for one. A body that does not is prefixed like everything else.
 func spName(d *ast.FuncDecl) (string, bool) {

@@ -20,6 +20,8 @@ type LogCalls struct {
 	PrintToServer  func(format string, args ...any)
 	PrintToChatAll func(format string, args ...any)
 	LogAction      func(client int32, target int32, format string, args ...any)
+	ReplyToCommand func(client int32, format string, args ...any)
+	HasEntProp     func(entity int32, propType PropType, prop string) bool
 }
 
 var logs LogCalls
@@ -167,3 +169,31 @@ func EntityClassname(entity int32) (class Text) {
 	}
 	return textOps.EntityClassname(entity)
 }
+
+// ReplyToCommand answers whoever typed the command, in the console or the chat
+// depending on where they typed it.
+//
+//sp:native ReplyToCommand
+func ReplyToCommand(client int32, format string, args ...any) {
+	if logs.ReplyToCommand == nil {
+		missing("ReplyToCommand")
+	}
+	logs.ReplyToCommand(client, format, args...)
+}
+
+// HasEntProp says the entity has that property at all, which a medigun with no
+// healing target still does and a weapon that is not a medigun does not.
+//
+//sp:native HasEntProp
+func HasEntProp(entity int32, propType PropType, prop string) bool {
+	if logs.HasEntProp == nil {
+		missing("HasEntProp")
+	}
+	return logs.HasEntProp(entity, propType, prop)
+}
+
+// PluginHandled is Plugin_Handled, which a command callback returns to say it
+// dealt with the command.
+//
+//sp:global Plugin_Handled
+func PluginHandled() Outcome { return 3 }

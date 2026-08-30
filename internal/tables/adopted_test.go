@@ -3,6 +3,8 @@ package tables_test
 import (
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/body"
@@ -45,10 +47,16 @@ func TestAdoptedFilesMatchTheGenerator(t *testing.T) {
 		filepath.Join("testbed", "stats", "generated", "wave_write.sp"):         tables.SourcePawnWaveWriter(),
 	}
 
-	// The behaviours come from the list rather than being named here, so a
-	// port that adds one cannot forget to guard it.
-	for _, action := range body.Actions {
-		adopted[filepath.Join("source", "redbots3", "generated", filepath.Base(action.Out))] = bodies[action.Out]
+	// The behaviours and the bodies come from the lists rather than being
+	// named here, so a port that adds one cannot forget to guard it. scan.sp
+	// is already named above; roster is the generator's proof and ships
+	// nowhere, so it is skipped.
+	for _, b := range slices.Concat(body.Actions, body.All) {
+		name := filepath.Base(b.Out)
+		if strings.HasPrefix(name, "roster") {
+			continue
+		}
+		adopted[filepath.Join("source", "redbots3", "generated", name)] = bodies[b.Out]
 	}
 
 	for name, want := range adopted {
