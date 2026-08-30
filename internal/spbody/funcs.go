@@ -76,10 +76,18 @@ type outParam struct {
 	name string
 	tag  string
 	dims []int64
+	// record says the result is an enum struct, which is array-like: it
+	// takes no & and there is nothing sensible to zero it with.
+	record bool
 }
 
 // zero clears an out parameter, which is what Go does to a named result.
 func (e *emitter) zero(out outParam) {
+	if out.record {
+		// The shipped GetBombInfo writes every field before it returns
+		// true and leaves the record alone when it returns false.
+		return
+	}
 	if len(out.dims) == 0 {
 		e.line("%s = %s;", out.name, zeroOf(out.tag))
 		return
@@ -104,6 +112,17 @@ func (e *emitter) emittedName(d *ast.FuncDecl) string {
 		return e.ident(d.Name.Pos(), name)
 	}
 	return e.cfg.Prefix + e.ident(d.Name.Pos(), d.Name.Name)
+}
+
+// isEnumStruct says the type is a named struct, which SourcePawn spells as an
+// enum struct and passes the way it passes an array.
+func isEnumStruct(t types.Type) bool {
+	named, ok := types.Unalias(t).(*types.Named)
+	if !ok {
+		return false
+	}
+	_, isStruct := named.Underlying().(*types.Struct)
+	return isStruct
 }
 
 // lengthDirective names the parameter carrying a buffer parameter's length.
@@ -347,11 +366,17 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 		if terr != nil {
 			return "", nil, terr
 		}
-		// An array is by reference in SourcePawn already, and & in
-		// front of one is not a declaration it takes.
+		/* An array is by reference in SourcePawn already, and & in front
+		of one is not a declaration it takes
+
+		An enum struct is array-like for the same reason and refuses the
+		& as well, and there is nothing sensible to zero it with: the
+		shipped GetBombInfo writes every field before it returns true and
+		leaves the record alone when it returns false. */
 		name := e.ident(d.Pos(), r.Name())
-		e.outParams = append(e.outParams, outParam{name: name, tag: tag, dims: dims})
-		if len(dims) == 0 {
+		record := isEnumStruct(r.Type())
+		e.outParams = append(e.outParams, outParam{name: name, tag: tag, dims: dims, record: record})
+		if len(dims) == 0 && !record {
 			name = "&" + name
 		}
 		params = append(params, declare(tag, name, dims))

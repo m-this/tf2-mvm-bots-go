@@ -14,6 +14,7 @@ type BombInfoCalls struct {
 	GetBombInfo                func() (bool, BombInfo)
 	TravelDistanceToBombTarget func(area Area) float32
 	IsBaseBoss                 func(entity int32) bool
+	NearestNavAreaAt           func(position [3]float32) Area
 	BombHatchPosition          func() [3]float32
 	IsHeadAimingOnTarget       func(b Body) bool
 }
@@ -34,6 +35,9 @@ type BombInfo struct {
 	Position [3]float32 `sp:"vPosition"`
 	// MaxBattleFront is how far along the route the fighting has reached,
 	// which is what a nest is compared against before it moves forward.
+	// MinBattleFront is the other end of the same window: how far forward of
+	// the bomb the fighting reaches.
+	MinBattleFront float32 `sp:"flMinBattleFront"`
 	MaxBattleFront float32 `sp:"flMaxBattleFront"`
 }
 
@@ -71,7 +75,7 @@ func TravelDistanceToBombTarget(area Area) float32 {
 // GetBombInfo fills the record, and says whether there was a bomb to fill it
 // from.
 //
-//sp:plugin GetBombInfo
+//sp:body GetBombInfo
 func GetBombInfo() (found bool, info BombInfo) {
 	if bombInfos.GetBombInfo == nil {
 		missing("GetBombInfo")
@@ -115,4 +119,20 @@ func IsBaseBoss(entity int32) bool {
 		missing("IsBaseBoss")
 	}
 	return bombInfos.IsBaseBoss(entity)
+}
+
+// FlagInfoHome is TF_FLAGINFO_HOME, a bomb still on its stand.
+//
+//sp:global TF_FLAGINFO_HOME
+func FlagInfoHome() int32 { return 0 }
+
+// NearestNavAreaAt is the area under a position, with the search bounded by the
+// mesh's own default rather than by an argument.
+//
+//sp:native TheNavMesh.GetNearestNavArea
+func NearestNavAreaAt(position [3]float32) Area {
+	if bombInfos.NearestNavAreaAt == nil {
+		missing("TheNavMesh.GetNearestNavArea")
+	}
+	return bombInfos.NearestNavAreaAt(position)
 }
