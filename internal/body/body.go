@@ -80,6 +80,10 @@ var Actions = []Body{
 		Dir: "internal/action/evadebuster", Out: "sourcepawn/evadebuster.sp", Prefix: "Go_",
 		Shipped: "source/redbots3/behavior/evadebuster.sp",
 	},
+	{
+		Dir: "internal/action/spylurk", Out: "sourcepawn/spylurk.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/behavior/spylurk.sp",
+	},
 }
 
 // All is every body. Adding one here is what makes it generated.
@@ -128,13 +132,16 @@ func GenerateWith(root string, alsoOwned string) (map[string][]byte, error) {
 		out[b.Hooks] = []byte(g.Hooks)
 	}
 	for _, a := range Actions {
-		source, err := spaction.Generate(filepath.Join(root, a.Dir), spbody.Config{
+		source, emitted, err := spaction.Generate(filepath.Join(root, a.Dir), spbody.Config{
 			Prefix:  a.Prefix,
 			Externs: declared.Funcs,
 			Tags:    declared.Tags,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("generating %s: %w", a.Dir, err)
+		}
+		for _, name := range emitted {
+			owned[name] = a.Dir
 		}
 		out[a.Out] = []byte(source)
 	}

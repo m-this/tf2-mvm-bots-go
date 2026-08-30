@@ -17,7 +17,8 @@ A behaviour is a package carrying
 	//sp:action DefenderCollectNearMoney CTFBotCollectNearMoney
 
 on its package clause: the name ActionsManager registers it under, then the
-prefix every emitted function carries. It declares whichever of OnStart, Update,
+prefix every emitted function carries, and optionally the word static, which
+some of the shipped files declare their callbacks as. It declares whichever of OnStart, Update,
 OnEnd, OnSuspend and OnResume it needs, and each of those may take any of the
 parameters the engine passes that callback, by the engine's own name for it.
 */
@@ -150,31 +151,49 @@ type Action struct {
 	Prefix string
 	// Has are the callbacks the package declares, in wiring order.
 	Has []string
+	// Static says the callbacks are declared static rather than public,
+	// which some of the shipped files do. Both work: the constructor that
+	// takes their address is in the same file. It is carried so the port
+	// reads as what it replaces.
+	Static bool
 }
 
-// Generate emits the constructor and the callbacks of the action package in dir.
-func Generate(dir string, cfg spbody.Config) (string, error) {
+// Generate emits the constructor and the callbacks of the action package in dir,
+// and the SourcePawn names it declares, so a caller can hold them against what
+// is still an extern.
+func Generate(dir string, cfg spbody.Config) (source string, emitted []string, err error) {
 	action, err := Read(dir)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	cfg.Declare = make(map[string]string, len(action.Has))
 	for _, name := range action.Has {
 		c := callbacks[name]
-		cfg.Declare[name] = fmt.Sprintf("public %s %s_%s(BehaviorAction action, %s)",
-			c.Returns, action.Prefix, name, c.Params)
+		visibility := "public"
+		if action.Static {
+			visibility = "static"
+		}
+		cfg.Declare[name] = fmt.Sprintf("%s %s %s_%s(BehaviorAction action, %s)",
+			visibility, c.Returns, action.Prefix, name, c.Params)
 	}
 
-	body, err := spbody.GenerateDir(dir, cfg)
+	generated, err := spbody.GenerateDir(dir, cfg)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	var b strings.Builder
 	b.WriteString(constructor(action))
-	b.WriteString(afterBanner(body.Source))
-	return b.String(), nil
+	b.WriteString(afterBanner(generated.Source))
+
+	// The constructor is a name this file owns too, and the one another
+	// behaviour reaches for when it hands the engine this one.
+	emitted = append(append([]string{}, generated.Emitted...), action.Prefix)
+	for _, name := range action.Has {
+		emitted = append(emitted, action.Prefix+"_"+name)
+	}
+	return b.String(), emitted, nil
 }
 
 // constructor is the function the plugin calls to get one of these.
@@ -264,6 +283,9 @@ func parseDirective(doc *ast.CommentGroup) (Action, bool) {
 			fields := strings.Fields(line)
 			if len(fields) == 3 && fields[0] == directive {
 				return Action{Registered: fields[1], Prefix: fields[2]}, true
+			}
+			if len(fields) == 4 && fields[0] == directive && fields[3] == "static" {
+				return Action{Registered: fields[1], Prefix: fields[2], Static: true}, true
 			}
 		}
 	}
