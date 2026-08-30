@@ -457,6 +457,11 @@ func (e *emitter) checkWritable(lhs ast.Expr) {
 				if _, fills := e.lengths[id.Name]; fills {
 					return
 				}
+				// A parameter the body works through in place,
+				// which //sp:mutates names and explains.
+				if e.mutates[id.Name] {
+					return
+				}
 				e.fail(lhs.Pos(), "a write to the parameter %s, which SourcePawn passes by reference and Go copies; copy it into a local first", id.Name)
 			}
 			return

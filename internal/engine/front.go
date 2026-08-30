@@ -110,7 +110,7 @@ func (l Locomotion) ClearStuckStatus(reason string) {
 
 // SetPlayerReady presses the ready button for the bot.
 //
-//sp:plugin SetPlayerReady
+//sp:body SetPlayerReady
 func SetPlayerReady(client int32, ready bool) {
 	if fronts.SetPlayerReady == nil {
 		missing("SetPlayerReady")

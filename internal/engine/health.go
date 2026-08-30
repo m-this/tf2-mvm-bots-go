@@ -72,7 +72,7 @@ func HealthSearchNearRange() ConVar { return 0 }
 
 // PlayerMaxHealth is what the bot would have at full.
 //
-//sp:plugin TEMP_GetPlayerMaxHealth
+//sp:body TEMP_GetPlayerMaxHealth
 func PlayerMaxHealth(client int32) int32 {
 	if healths.PlayerMaxHealth == nil {
 		missing("TEMP_GetPlayerMaxHealth")

@@ -102,3 +102,79 @@ func IsMeleeWeapon(entity int32) bool {
 func IsZeroVector(origin [3]float32) bool {
 	return origin[0] == engine.NullVector()[0] && origin[1] == engine.NullVector()[1] && origin[2] == engine.NullVector()[2]
 }
+
+// SetPlayerReady presses ready for the bot, when it is not already pressed.
+//
+//sp:name SetPlayerReady
+func SetPlayerReady(client int32, state bool) {
+	if IsPlayerReady(client) == state {
+		return
+	}
+
+	engine.FakeClientCommand(client, "tournament_player_readystate %d", state)
+}
+
+// IsPluginMvMCreditsLoaded says the credits plugin is on this server.
+//
+//sp:name IsPluginMvMCreditsLoaded
+func IsPluginMvMCreditsLoaded() bool {
+	// tf_mvm_credits
+	return engine.FindConVar("sm_mvmcredits_version") != engine.NoConVar()
+}
+
+// IsPluginRTDLoaded says the roll-the-dice plugin is on this server.
+//
+//sp:name IsPluginRTDLoaded
+func IsPluginRTDLoaded() bool {
+	// rtd
+	return engine.FindConVar("sm_rtd2_version") != engine.NoConVar()
+}
+
+// UseActionSlotItem uses the canteen, which the game takes as key values rather
+// than as a command.
+//
+//sp:name UseActionSlotItem
+func UseActionSlotItem(client int32) {
+	kv := engine.NewKeyValues("use_action_slot_item_server")
+	defer kv.Close()
+
+	engine.FakeCommandKV(client, kv)
+}
+
+// PlayerBuyback spends the credits that put a dead bot back in the wave.
+//
+//sp:name PlayerBuyback
+func PlayerBuyback(client int32) {
+	engine.FakeClientCommand(client, "td_buyback")
+}
+
+// IsServerFull says there is no seat left.
+//
+//sp:name IsServerFull
+func IsServerFull() bool {
+	return engine.ClientCount(false) >= engine.MaxClients()
+}
+
+// GetTeamHumanClientCount is how many people, rather than bots, are on that team.
+//
+//sp:name GetTeamHumanClientCount
+func GetTeamHumanClientCount(team int32) int32 {
+	count := int32(0)
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if engine.IsClientInGame(i) && !engine.IsFakeClient(i) && engine.GetClientTeam(i) == team {
+			count++
+		}
+	}
+
+	return count
+}
+
+// TEMPGetPlayerMaxHealth is the player's maximum, read off the resource entity
+// because the player's own property lags a class change. The shipped name says
+// TEMP_ and has for years.
+//
+//sp:name TEMP_GetPlayerMaxHealth
+func TEMPGetPlayerMaxHealth(client int32) int32 {
+	return engine.EntPropAt(engine.ResourceEntity(), engine.PropSend(), "m_iMaxHealth", client)
+}

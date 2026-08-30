@@ -125,6 +125,38 @@ func isEnumStruct(t types.Type) bool {
 	return isStruct
 }
 
+/*
+	mutatesDirective marks a parameter the body writes through
+
+SourcePawn passes an array by reference and Go copies one, so a body that writes a
+parameter means different things in the two languages: the emitted SourcePawn
+changes the caller's array and the Go changes its own copy. Every such write is
+refused for that reason.
+
+The exception is a native that works in place. VMX_VectorNormalize hands its
+vector to ScaleVector, which scales the caller's array, and the shipped file
+depends on that. The directive says so at the one function that needs it, and the
+Go there is not a description of what the SourcePawn does to its caller.
+*/
+const mutatesDirective = "//sp:mutates"
+
+// mutatesOf reads //sp:mutates <parameter> off a declaration.
+func mutatesOf(d *ast.FuncDecl) map[string]bool {
+	out := map[string]bool{}
+	if d.Doc == nil {
+		return out
+	}
+	for _, c := range d.Doc.List {
+		for line := range strings.Lines(c.Text) {
+			fields := strings.Fields(line)
+			if len(fields) == 2 && fields[0] == mutatesDirective {
+				out[fields[1]] = true
+			}
+		}
+	}
+	return out
+}
+
 // lengthDirective names the parameter carrying a buffer parameter's length.
 const lengthDirective = "//sp:length"
 
@@ -182,6 +214,7 @@ func (e *emitter) funcDecl(d *ast.FuncDecl) {
 	}
 	e.lengths = lengthsOf(d)
 	e.consts = constsOf(d)
+	e.mutates = mutatesOf(d)
 	sig := obj.Type().(*types.Signature)
 	if sig.Recv() != nil {
 		e.fail(d.Pos(), "a method; write a plain function taking the receiver first")

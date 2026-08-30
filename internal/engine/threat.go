@@ -91,7 +91,7 @@ func IsMeleeWeapon(entity int32) bool {
 // EyePosition is where the client is looking from. Its SourcePawn returns the
 // array.
 //
-//sp:plugin GetEyePosition returns
+//sp:body GetEyePosition returns
 func EyePosition(client int32) [3]float32 {
 	if threats.EyePosition == nil {
 		missing("GetEyePosition")

@@ -62,6 +62,9 @@ type emitter struct {
 	// borrowed are the functions whose handle result the caller does not
 	// own, from //sp:borrowed.
 	borrowed map[string]bool
+	// mutates are the parameters the function being emitted writes through,
+	// from //sp:mutates.
+	mutates map[string]bool
 	// consts are the parameters of the function being emitted that carry
 	// //sp:const, which SourcePawn writes in front of the type.
 	consts map[string]bool
