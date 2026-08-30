@@ -169,6 +169,17 @@ func ChooseText(cond bool, yes string, no Text) Text {
 	return no
 }
 
+// ChooseFloat is SourcePawn's ?: over two numbers, which the charge test writes
+// inline rather than as a branch.
+//
+//sp:choice ?:
+func ChooseFloat(cond bool, yes float32, no float32) float32 {
+	if cond {
+		return yes
+	}
+	return no
+}
+
 // StrEqual says whether the buffer holds exactly that.
 //
 //sp:native StrEqual

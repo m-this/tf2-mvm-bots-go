@@ -389,7 +389,10 @@ func (e *emitter) callWith(call *ast.CallExpr, extra []string, front ...string) 
 			e.fail(call.Pos(), "%s is SourcePawn's ?: and takes a condition and two values", x.Func)
 			return ""
 		}
-		return fmt.Sprintf("%s ? %s : %s", e.expr(call.Args[0]), e.expr(call.Args[1]), e.expr(call.Args[2]))
+		// Always parenthesised: ?: binds looser than everything around it,
+		// so "charge < cond ? a : b" is (charge < cond) ? a : b, which is
+		// not what the Go says and not what the plugin wrote.
+		return fmt.Sprintf("(%s ? %s : %s)", e.expr(call.Args[0]), e.expr(call.Args[1]), e.expr(call.Args[2]))
 	}
 	if x, ok := e.slotExtern(call); ok {
 		return e.slot(call, x)
