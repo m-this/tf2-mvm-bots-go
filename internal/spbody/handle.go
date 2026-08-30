@@ -29,6 +29,10 @@ Two rules make it provable rather than hopeful:
     time a later return is reached. gosubset refuses it anywhere else.
   - a local of a handle type that is never closed is refused. A leak the author
     did not write is a leak nobody will find.
+
+Only the ones this function opens. A handle it was handed, or one it reads off
+the map configuration, belongs to whoever made it, and closing that is worse
+than leaking it.
 */
 
 // deferred is one pending close: the name, and where in the body it was
@@ -79,7 +83,45 @@ Every local whose type is a handle has to be the receiver of a close somewhere
 in the function, deferred or not. Whether it is on every path is what the defer
 rule above settles; whether it happens at all is this.
 */
+// opens is the locals this function created, which are the only ones it owes a
+// close. A handle read off a SourcePawn variable is not created: the map
+// configuration's lists outlive every function that looks at one, and deleting
+// one is worse than leaking it.
+func (e *emitter) opens(d *ast.FuncDecl) map[string]bool {
+	out := map[string]bool{}
+	record := func(lhs []ast.Expr, rhs []ast.Expr) {
+		if len(lhs) != 1 || len(rhs) != 1 {
+			return
+		}
+		call, ok := rhs[0].(*ast.CallExpr)
+		if !ok {
+			return
+		}
+		if x, isExtern := e.externOfCall(call); isExtern && x.Global {
+			return
+		}
+		if id, ok := lhs[0].(*ast.Ident); ok {
+			out[id.Name] = true
+		}
+	}
+	ast.Inspect(d.Body, func(n ast.Node) bool {
+		switch s := n.(type) {
+		case *ast.AssignStmt:
+			record(s.Lhs, s.Rhs)
+		case *ast.ValueSpec:
+			for i, name := range s.Names {
+				if i < len(s.Values) {
+					record([]ast.Expr{name}, []ast.Expr{s.Values[i]})
+				}
+			}
+		}
+		return true
+	})
+	return out
+}
+
 func (e *emitter) checkClosed(d *ast.FuncDecl) {
+	opened := e.opens(d)
 	closed := map[string]bool{}
 	ast.Inspect(d.Body, func(n ast.Node) bool {
 		call, ok := n.(*ast.CallExpr)
@@ -103,7 +145,7 @@ func (e *emitter) checkClosed(d *ast.FuncDecl) {
 		if !ok || v.Parent() == nil || v.Parent() == e.pkg.Scope() {
 			continue
 		}
-		if !e.handleType(v.Type()) || closed[id.Name] {
+		if !e.handleType(v.Type()) || !opened[id.Name] || closed[id.Name] {
 			continue
 		}
 		if !within(d.Body, id.Pos()) {

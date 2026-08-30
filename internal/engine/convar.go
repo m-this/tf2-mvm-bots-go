@@ -34,6 +34,12 @@ func InstallConVars(c ConVarCalls) func() {
 //sp:tag ConVar
 type ConVar int32
 
+// ManagerDebug is redbots_manager_debug, the older and wider of the two debug
+// switches.
+//
+//sp:global redbots_manager_debug
+func ManagerDebug() ConVar { return 0 }
+
 // DebugActions is redbots_manager_debug_actions, which turns on the running
 // commentary about which behaviour a bot picked.
 //

@@ -182,8 +182,10 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 			return Extern{Func: "new " + name}, true, nil
 		case "method":
 			// The receiver is what picks it; the name is what
-			// SourcePawn writes after the dot.
-			return Extern{Func: name, ReturnsArray: returnsArray}, true, nil
+			// SourcePawn writes after the dot. A method fills a
+			// buffer the same way a native does, so it takes the
+			// same flags.
+			return Extern{Func: name, ReturnsArray: returnsArray, Sized: sized, Fills: fills}, true, nil
 		case "slot":
 			return Extern{Func: name, Slot: true}, true, nil
 		case "slotset":
