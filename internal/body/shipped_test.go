@@ -146,6 +146,30 @@ var reshaped = map[string]string{
 	"NestSpotFromList": "the candidate and the answer cannot be the same variable; see the aliasing refusal in internal/spbody",
 }
 
+/*
+	frees is how many handles a body releases
+
+Both spellings, on both sides. SourceMod frees a handle with delete or with
+Close and the shipped files use each in different functions; the generator writes
+delete because a defer puts the free at every way out rather than at the one the
+author remembered. What has to match is how many.
+*/
+func frees(fn string) int {
+	return strings.Count(fn, ".Close()") + strings.Count(fn, "delete ")
+}
+
+// withoutCloses drops the Close calls, which are counted rather than sequenced.
+func withoutCloses(calls []string) []string {
+	out := calls[:0:0]
+	for _, c := range calls {
+		if c == "Close" {
+			continue
+		}
+		out = append(out, c)
+	}
+	return out
+}
+
 func compareBody(t *testing.T, got, shipped string) {
 	t.Helper()
 
@@ -179,7 +203,20 @@ func compareBody(t *testing.T, got, shipped string) {
 				t.Errorf("the declaration differs:\nshipped:   %s\ngenerated: %s", wantDecl, haveDecl)
 			}
 
-			if wantCalls, haveCalls := callsIn(want), callsIn(have); !slices.Equal(wantCalls, haveCalls) {
+			/* delete and Close are the same operation on a handle
+
+			The shipped files write handle.Close() and the generator
+			writes delete handle, because a defer puts the free at
+			every way out rather than at the one the author
+			remembered. Both are compared: the frees have to match in
+			number, and the rest of the sequence has to match in
+			order. */
+			wantFrees, haveFrees := frees(want), frees(have)
+			if wantFrees != haveFrees {
+				t.Errorf("the body frees %d handles and the shipped one frees %d", haveFrees, wantFrees)
+			}
+
+			if wantCalls, haveCalls := withoutCloses(callsIn(want)), withoutCloses(callsIn(have)); !slices.Equal(wantCalls, haveCalls) {
 				t.Errorf("the body calls a different sequence:\nshipped:   %v\ngenerated: %v", wantCalls, haveCalls)
 			}
 		})

@@ -95,7 +95,7 @@ func LogBuildFailure(actor int32, what string, why string) {
 // PickBuildArea scores the nav mesh and picks somewhere to build, which is the
 // expensive answer and is given only when the spot itself is the suspect.
 //
-//sp:plugin PickBuildArea
+//sp:body PickBuildArea
 func PickBuildArea(actor int32) Area {
 	if nests.PickBuildArea == nil {
 		missing("PickBuildArea")

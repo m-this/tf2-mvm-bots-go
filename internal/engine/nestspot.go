@@ -2,17 +2,22 @@ package engine
 
 // NestSpotCalls are the answers for the nest geometry.
 type NestSpotCalls struct {
-	ArcTangent2        func(y float32, x float32) float32
-	DegToRad           func(degrees float32) float32
-	Cosine             func(radians float32) float32
-	Sine               func(radians float32) float32
-	FloatAbs           func(value float32) float32
-	ClosestPointOnArea func(a Area, from [3]float32) [3]float32
-	MaxFloat           func(a float32, b float32) float32
-	NavAreaAt          func(l NavAreaList, index int32) NavArea
-	BestNestArea       func(client int32, areas List, target [3]float32, sentryRange float32) Area
-	Extent             func(a Area) ([3]float32, [3]float32)
-	Z                  func(a Area, x float32, y float32) float32
+	ArcTangent2            func(y float32, x float32) float32
+	DegToRad               func(degrees float32) float32
+	Cosine                 func(radians float32) float32
+	Sine                   func(radians float32) float32
+	FloatAbs               func(value float32) float32
+	ClosestPointOnArea     func(a Area, from [3]float32) [3]float32
+	MaxFloat               func(a float32, b float32) float32
+	PickConfiguredNestArea func(client int32, target [3]float32, sentryRange float32) Area
+	PickMapHintNestArea    func(client int32, target [3]float32, sentryRange float32) Area
+	PickBuildAreaPreRound  func(client int32, sentryRange float32) Area
+	IsNestRangeSane        func(rangeToBomb float32, sentryRange float32) bool
+	NestDistanceLimit      func() float32
+	NavAreaAt              func(l NavAreaList, index int32) NavArea
+	BestNestArea           func(client int32, areas List, target [3]float32, sentryRange float32) Area
+	Extent                 func(a Area) ([3]float32, [3]float32)
+	Z                      func(a Area, x float32, y float32) float32
 }
 
 var nestSpots NestSpotCalls
@@ -185,3 +190,56 @@ type NavAreaList int32
 //
 //sp:global TheNavAreas
 func AllNavAreas() NavAreaList { return 0 }
+
+// PickConfiguredNestArea is the best of the ground the map configuration names.
+//
+//sp:body PickConfiguredNestArea
+func PickConfiguredNestArea(client int32, target [3]float32, sentryRange float32) Area {
+	if nestSpots.PickConfiguredNestArea == nil {
+		missing("PickConfiguredNestArea")
+	}
+	return nestSpots.PickConfiguredNestArea(client, target, sentryRange)
+}
+
+// PickMapHintNestArea is the best of the ground the map's own entities name.
+//
+//sp:body PickMapHintNestArea
+func PickMapHintNestArea(client int32, target [3]float32, sentryRange float32) Area {
+	if nestSpots.PickMapHintNestArea == nil {
+		missing("PickMapHintNestArea")
+	}
+	return nestSpots.PickMapHintNestArea(client, target, sentryRange)
+}
+
+// PickBuildAreaPreRound is the between-rounds answer, which walks the mesh from
+// the hatch rather than from the bomb.
+//
+//sp:body PickBuildAreaPreRound
+func PickBuildAreaPreRound(client int32, sentryRange float32) Area {
+	if nestSpots.PickBuildAreaPreRound == nil {
+		missing("PickBuildAreaPreRound")
+	}
+	return nestSpots.PickBuildAreaPreRound(client, sentryRange)
+}
+
+// IsNestRangeSane says the ground is far enough from the bomb to shoot at it and
+// near enough to reach it.
+//
+//sp:body IsNestRangeSane
+func IsNestRangeSane(rangeToBomb float32, sentryRange float32) bool {
+	if nestSpots.IsNestRangeSane == nil {
+		missing("IsNestRangeSane")
+	}
+	return nestSpots.IsNestRangeSane(rangeToBomb, sentryRange)
+}
+
+// NestDistanceLimit is how far along the bomb's route an engineer may hold
+// ground.
+//
+//sp:body NestDistanceLimit
+func NestDistanceLimit() float32 {
+	if nestSpots.NestDistanceLimit == nil {
+		missing("NestDistanceLimit")
+	}
+	return nestSpots.NestDistanceLimit()
+}

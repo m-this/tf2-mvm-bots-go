@@ -18,6 +18,7 @@ return inside the loop.
 // NavCalls are the answers.
 type NavCalls struct {
 	IsCompletelyVisible        func(n NavArea, other Area) bool
+	IsEntirelyVisible          func(n NavArea, position [3]float32) bool
 	SizeX                      func(n NavArea) float32
 	SizeY                      func(n NavArea) float32
 	CollectAreasInRadius       func(origin [3]float32, radius float32) Areas
@@ -240,4 +241,20 @@ func (n NavArea) SizeY() float32 {
 		missing("CNavArea.GetSizeY")
 	}
 	return nav.SizeY(n)
+}
+
+// AttributeBlocked is BLOCKED, the one nav attribute that changes during a
+// mission: gates and func_nav_blocker set it.
+//
+//sp:global BLOCKED
+func AttributeBlocked() int32 { return 1 }
+
+// IsEntirelyVisible says every corner of this area can see the position.
+//
+//sp:method IsEntirelyVisible
+func (n NavArea) IsEntirelyVisible(position [3]float32) bool {
+	if nav.IsEntirelyVisible == nil {
+		missing("CTFNavArea.IsEntirelyVisible")
+	}
+	return nav.IsEntirelyVisible(n, position)
 }
