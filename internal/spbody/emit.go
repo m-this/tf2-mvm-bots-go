@@ -46,6 +46,8 @@ type emitter struct {
 	// cannot return: it became a trailing parameter and there is no return
 	// value at all.
 	returnsArray bool
+	// variadic says the function takes the caller's own any ... tail.
+	variadic bool
 	// returnsValue says the body carries //sp:returns, so an array result is
 	// returned rather than filled.
 	returnsValue bool

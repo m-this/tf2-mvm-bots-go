@@ -52,8 +52,17 @@ func (c *checker) checkType(expr ast.Expr) {
 		c.refuse(t.Pos(), "a function type",
 			"call the function by name; the generator has no function values")
 	case *ast.Ellipsis:
+		/* ...any is the caller's own tail, which SourcePawn spells any ...
+
+		A body cannot read it: there is no indexing and no length. All
+		it can do is hand it to VFormat, which is what the plugin's
+		printers do, so the tail is allowed and anything else variadic
+		is not. */
+		if id, isIdent := t.Elt.(*ast.Ident); isIdent && id.Name == "any" {
+			return
+		}
 		c.refuse(t.Pos(), "a variadic parameter",
-			"take a fixed-length array and a count")
+			"take a fixed-length array and a count, or write ...any and hand it to VFormat")
 	case *ast.SelectorExpr:
 		// A type from the extern package is a SourcePawn tag that
 		// already exists, named there so a ported signature keeps it.

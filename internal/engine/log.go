@@ -124,15 +124,28 @@ same either way.
 //sp:tag char
 type Text [512]byte
 
+/*
+Line is one chat line.
+
+The plugin cuts it at 254 and the normalisation above does not apply: where the
+cut falls is what the player reads, so the size is kept as it is written.
+*/
+//
+//sp:tag char
+type Line [254]byte
+
 // TextOps are the answers for the operations on it.
 type TextOps struct {
-	StrEqual        func(a Text, b string) bool
-	StrContains     func(haystack Text, needle string, caseSensitive bool) int32
-	EntityClassname func(entity int32) Text
-	CopyText        func(from string) Text
-	CopyTextInto    func(from Text) Text
-	StrEqualFolded  func(a Text, b string, caseSensitive bool) bool
-	StrEqualLiteral func(a string, b string, caseSensitive bool) bool
+	StrEqual             func(a Text, b string) bool
+	StrContains          func(haystack Text, needle string, caseSensitive bool) int32
+	EntityClassname      func(entity int32) Text
+	CopyText             func(from string) Text
+	CopyTextInto         func(from Text) Text
+	StrEqualFolded       func(a Text, b string, caseSensitive bool) bool
+	StrEqualLiteral      func(a string, b string, caseSensitive bool) bool
+	SetGlobalTransTarget func(client int32)
+	VFormat              func(format string, argIndex int32) Line
+	PrintToChatText      func(client int32, format string, text Line)
 }
 
 var textOps TextOps
@@ -282,3 +295,35 @@ func HasEntProp(entity int32, propType PropType, prop string) bool {
 //
 //sp:global Plugin_Handled
 func PluginHandled() Outcome { return 3 }
+
+// PrintToChatText writes a line to one player's chat.
+//
+//sp:native PrintToChat
+func PrintToChatText(client int32, format string, text Line) {
+	if textOps.PrintToChatText == nil {
+		missing("PrintToChat")
+	}
+	textOps.PrintToChatText(client, format, text)
+}
+
+// SetGlobalTransTarget says who the next formatted line is for, which decides
+// the language it comes out in.
+//
+//sp:native SetGlobalTransTarget
+func SetGlobalTransTarget(client int32) {
+	if textOps.SetGlobalTransTarget == nil {
+		missing("SetGlobalTransTarget")
+	}
+	textOps.SetGlobalTransTarget(client)
+}
+
+// VFormat writes a format and the caller's own variadic arguments into a buffer,
+// taking the index the arguments start at.
+//
+//sp:native VFormat fills
+func VFormat(format string, argIndex int32) (out Line) {
+	if textOps.VFormat == nil {
+		missing("VFormat")
+	}
+	return textOps.VFormat(format, argIndex)
+}

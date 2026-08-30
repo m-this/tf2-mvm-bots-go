@@ -306,6 +306,7 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 	results := sig.Results()
 	e.resultName, e.resultDecl = "", ""
 	e.returnsArray = false
+	e.variadic = false
 	first := 0
 	if results.Len() > 0 {
 		r := results.At(0)
@@ -344,6 +345,18 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 	for i := range sig.Params().Len() {
 		p := sig.Params().At(i)
 		name := p.Name()
+
+		/* The variadic tail, which SourcePawn spells any ...
+
+		Only the plugin's own printers take one, and they hand it
+		straight to VFormat with the index it starts at. Nothing in a
+		generated body reads the arguments: there is no way to, and no
+		caller wants one. */
+		if sig.Variadic() && i == sig.Params().Len()-1 {
+			e.variadic = true
+			continue
+		}
+
 		if name == "" || name == "_" {
 			return "", nil, errUnnamedParam
 		}
@@ -463,6 +476,11 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 	}
 
 	params = append(params, defaulted...)
+
+	// The tail goes last, which is the only place SourcePawn takes it.
+	if e.variadic {
+		params = append(params, "any ...")
+	}
 
 	return ret, params, nil
 }
