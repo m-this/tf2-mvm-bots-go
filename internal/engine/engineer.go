@@ -143,7 +143,7 @@ func KillTimer(timer Timer) {
 
 // AbsAnglesOf is which way the entity is facing.
 //
-//sp:plugin GetAbsAngles returns
+//sp:body GetAbsAngles returns
 func AbsAnglesOf(entity int32) (angles [3]float32) {
 	if engineers.AbsAnglesOf == nil {
 		missing("GetAbsAngles")

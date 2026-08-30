@@ -82,7 +82,7 @@ func GetBombInfo() (found bool, info BombInfo) {
 // BombHatchPosition is where the hatch is, which is the trap spot when no bomb
 // is in play. Its SourcePawn returns the array.
 //
-//sp:plugin GetBombHatchPosition returns
+//sp:body GetBombHatchPosition returns
 func BombHatchPosition() [3]float32 {
 	if bombInfos.BombHatchPosition == nil {
 		missing("GetBombHatchPosition")

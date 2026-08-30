@@ -193,7 +193,7 @@ func ModelScale(entity int32) float32 {
 // HasBackstabPotential says the spy is behind him enough for the game to give
 // it.
 //
-//sp:plugin HasBackstabPotential
+//sp:body HasBackstabPotential
 func HasBackstabPotential(client int32) bool {
 	if lurks.HasBackstabPotential == nil {
 		missing("HasBackstabPotential")

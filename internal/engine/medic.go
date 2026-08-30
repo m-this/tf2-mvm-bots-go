@@ -180,7 +180,7 @@ func IsPathToVectorPossibleLength(client int32, position [3]float32) (ok bool, l
 
 // NearestReviveMarker is the closest reanimator a medic could pick up.
 //
-//sp:plugin GetNearestReviveMarker
+//sp:body GetNearestReviveMarker
 func NearestReviveMarker(client int32, maxDistance float32) int32 {
 	if medics.NearestReviveMarker == nil {
 		missing("GetNearestReviveMarker")

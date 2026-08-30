@@ -143,7 +143,7 @@ func CapturableAreaTrigger(team Team) int32 {
 
 // ControlPointByID is the entity for that point, which the debug output names.
 //
-//sp:plugin GetControlPointByID
+//sp:body GetControlPointByID
 func ControlPointByID(pointID int32) int32 {
 	if nav.ControlPointByID == nil {
 		missing("GetControlPointByID")
