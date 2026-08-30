@@ -207,6 +207,16 @@ func (e *emitter) arrayCall(define bool, lhs, rhs ast.Expr) bool {
 		e.checkWritable(lhs)
 	}
 	extra := []string{e.expr(lhs)}
+	if x, ok := e.externOfCall(call); ok && x.InPlace {
+		// The answer goes back into the first argument, so the
+		// assignment has to be to that same thing.
+		if len(call.Args) == 0 || e.expr(call.Args[0]) != e.expr(lhs) {
+			e.fail(lhs.Pos(), "%s writes its answer into its first argument, so assign it back to that argument", x.Func)
+			return true
+		}
+		e.line("%s;", e.callWith(call, nil))
+		return true
+	}
 	if x, ok := e.externOfCall(call); ok && x.Fills {
 		// The buffer and its length come first: Format(buffer, maxlen, ...).
 		n, sized := e.arrayLen(lhs)

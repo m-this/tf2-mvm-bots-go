@@ -118,7 +118,7 @@ func FindFriendlyDispenserNear(client int32, origin [3]float32) int32 {
 
 // AttackTank is CTFBotAttackTank.
 //
-//sp:plugin CTFBotAttackTank
+//sp:body CTFBotAttackTank
 func AttackTank() Behaviour {
 	if bombs.AttackTank == nil {
 		missing("CTFBotAttackTank")
@@ -138,7 +138,7 @@ func DefenderAttack() Behaviour {
 
 // AttackTankSelectTarget is the tank behaviour's own precondition.
 //
-//sp:plugin CTFBotAttackTank_SelectTarget
+//sp:body CTFBotAttackTank_SelectTarget
 func AttackTankSelectTarget(client int32) bool {
 	if bombs.AttackTankSelectTarget == nil {
 		missing("CTFBotAttackTank_SelectTarget")

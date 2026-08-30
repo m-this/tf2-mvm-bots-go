@@ -67,6 +67,10 @@ type Extern struct {
 	// which takes the value as its second argument.
 	Slot bool
 	Set  bool
+	// InPlace says the call writes its answer back into its first argument,
+	// which is how SourcePawn spells ScaleVector. Nothing is appended, and
+	// the assignment has to name that same argument.
+	InPlace bool
 	// Trail are arguments written after the Go ones and after the result
 	// buffer, which is the only place GetAngleVectors will take the two
 	// vectors a caller does not want.
