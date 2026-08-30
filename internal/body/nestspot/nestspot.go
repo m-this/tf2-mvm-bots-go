@@ -44,10 +44,31 @@ func NestBuildPosition(area engine.Area) (out [3]float32) {
 
 	best := float32(spotMatchRange)
 
-	out, best = FromList(engine.EngineerNestSpots(), out, best)
-	out, best = FromList(engine.NestTankOnlySpots(), out, best)
-	//nolint:wastedassign,ineffassign,staticcheck // the last best is written and not read: the shipped code threads the same variable through all three lists
-	out, best = FromList(engine.NestNoTankSpots(), out, best)
+	/* A fresh destination each time, because the same array cannot be both
+
+	SourcePawn passes an array by reference and a generated function zeroes its
+	out-parameters at entry, so passing one variable as both the candidate and
+	the answer zeroes the candidate before it is read. The emitter refuses that
+	shape now; this is what it looks like written safely. */
+	nearest, closest := FromList(engine.EngineerNestSpots(), out, best)
+
+	out = nearest
+	best = closest
+
+	nearest, closest = FromList(engine.NestTankOnlySpots(), out, best)
+
+	out = nearest
+	best = closest
+
+	/* The third distance is written and never read again
+
+	The shipped code threads one best through all three lists and the last one
+	goes out of scope with the function. SourcePawn writes it through a
+	parameter, so it needs a name here whether or not anything reads it. */
+	//nolint:staticcheck,ineffassign,wastedassign // the name exists because SourcePawn writes the distance through it
+	nearest, closest = FromList(engine.NestNoTankSpots(), out, best)
+
+	out = nearest
 
 	return out
 }

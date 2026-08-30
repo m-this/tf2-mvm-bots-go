@@ -437,6 +437,28 @@ func (e *emitter) callWith(call *ast.CallExpr, extra []string, front ...string) 
 	if name == "" {
 		return lead[0] // a builtin that folded into an expression
 	}
+	/* The same name cannot be both an argument and a destination, for a
+	function this port generates
+
+	SourcePawn passes an array by reference, and a generated function zeroes
+	its out-parameters before it reads anything. So a call that hands one
+	variable in and takes the answer back out through it reads zeros: the
+	nest position was computed from the map origin for one release because of
+	exactly this, and it compiled and ran and lost a wave.
+
+	A native is a different matter and is left alone. NormalizeVector(away,
+	away) is what SourceMod documents and what the plugin writes, because the
+	native reads its input before it writes its output. This port cannot make
+	that promise about its own functions, so it refuses to rely on it. */
+	if e.generates(call) {
+		for _, out := range extra {
+			for _, in := range args {
+				if out == in {
+					e.fail(call.Pos(), "%s is passed to %s as an argument and taken back as a result, and a generated function zeroes its results before reading its arguments; give the result its own name", out, name)
+				}
+			}
+		}
+	}
 	args = append(append(append(append(append([]string{}, lead...), front...), args...), extra...), trail...)
 	return fmt.Sprintf("%s(%s)", name, strings.Join(args, ", "))
 }
@@ -474,6 +496,20 @@ func (e *emitter) builtinHelper(call *ast.CallExpr) (string, bool) {
 	name := fmt.Sprintf("%s%s_%s", e.cfg.Prefix, builtin.Name(), tag)
 	e.helpers[name] = helper{tag: tag, op: op}
 	return fmt.Sprintf("%s(%s, %s)", name, e.expr(call.Args[0]), e.expr(call.Args[1])), true
+}
+
+// generates says the call goes to a function this port emits: one of this
+// package's own, or an extern marked //sp:body because another package emits it.
+func (e *emitter) generates(call *ast.CallExpr) bool {
+	if x, isExtern := e.externOfCall(call); isExtern {
+		return x.Body
+	}
+	id, plain := call.Fun.(*ast.Ident)
+	if !plain {
+		return false
+	}
+	obj := e.info.Uses[id]
+	return obj != nil && obj.Parent() == e.pkg.Scope()
 }
 
 func (e *emitter) callee(fun ast.Expr) (name string, lead []string, err error) {
