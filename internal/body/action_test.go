@@ -131,9 +131,22 @@ func callsIn(fn string) []string {
 	found := reCall.FindAllStringSubmatch(body, -1)
 	out := make([]string, 0, len(found))
 	for _, m := range found {
+		// if and switch are not calls. Counting them made the comparison
+		// sensitive to whether a result was tested inline or assigned
+		// first, which Go often cannot choose: a function with two
+		// results has to be assigned before it can be tested.
+		if keywords[m[1]] {
+			continue
+		}
 		out = append(out, m[1])
 	}
 	return out
+}
+
+// keywords read as calls to the pattern above and are not.
+var keywords = map[string]bool{
+	"if": true, "for": true, "switch": true, "while": true, "return": true,
+	"sizeof": true, "view_as": true,
 }
 
 var (

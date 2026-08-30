@@ -176,3 +176,29 @@ func DefenderAttackSelectTarget(client int32) bool {
 	}
 	return nav.DefenderAttackSelectTarget(client)
 }
+
+// Area is a CNavArea, the untagged form the collector hands back where the
+// caller does not need the TF-specific attributes.
+//
+//sp:tag CNavArea
+type Area int32
+
+// Area is Get read back as the plain nav area rather than the TF one.
+//
+//sp:method Get
+func (a Areas) Area(index int32) Area {
+	if nav.AreasGet == nil {
+		missing("AreasCollector.Get")
+	}
+	return Area(nav.AreasGet(a, index))
+}
+
+// Center is the middle of the area.
+//
+//sp:method GetCenter
+func (a Area) Center() (centre [3]float32) {
+	if nav.AreaCenter == nil {
+		missing("CNavArea.GetCenter")
+	}
+	return nav.AreaCenter(NavArea(a))
+}
