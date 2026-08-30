@@ -54,7 +54,7 @@ func DetonatingPlayer() int32 {
 
 // FindSentryBusterNear is a live buster within range, or -1.
 //
-//sp:plugin FindSentryBusterNear
+//sp:body FindSentryBusterNear
 func FindSentryBusterNear(origin [3]float32, enemyTeam Team, maxRange float32) int32 {
 	if busters.FindSentryBusterNear == nil {
 		missing("FindSentryBusterNear")

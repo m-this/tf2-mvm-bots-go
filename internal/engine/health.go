@@ -13,6 +13,8 @@ one on half.
 type HealthCalls struct {
 	PlayerMaxHealth             func(client int32) int32
 	ClampFloat                  func(value float32, low float32, high float32) float32
+	IsPointInRespawnRoom        func(position [3]float32) bool
+	IsAmmoLow                   func(client int32) bool
 	ComputeHealthAndAmmoVectors func(actor int32, into List, maxRange float32)
 	IsCarryingObject            func(client int32) bool
 	IsHealedByObject            func(client int32) bool
@@ -121,7 +123,7 @@ func IsHealedByObject(client int32) bool {
 
 // IsHealedByMedic says a medic is doing it.
 //
-//sp:plugin IsHealedByMedic
+//sp:body IsHealedByMedic
 func IsHealedByMedic(client int32) bool {
 	if healths.IsHealedByMedic == nil {
 		missing("IsHealedByMedic")
@@ -159,4 +161,26 @@ func AsFloat(cell int32) float32 {
 		missing("view_as<float>")
 	}
 	return healths.AsFloat(cell)
+}
+
+// IsPointInRespawnRoom says the position is inside a spawn, where a robot
+// cannot be reached and a buster cannot be walked away from.
+//
+//sp:native TF2Util_IsPointInRespawnRoom
+func IsPointInRespawnRoom(position [3]float32) bool {
+	if healths.IsPointInRespawnRoom == nil {
+		missing("TF2Util_IsPointInRespawnRoom")
+	}
+	return healths.IsPointInRespawnRoom(position)
+}
+
+// IsAmmoLow says the bot is running out, which is one of the two reasons to
+// stand at a dispenser.
+//
+//sp:plugin IsAmmoLow
+func IsAmmoLow(client int32) bool {
+	if healths.IsAmmoLow == nil {
+		missing("IsAmmoLow")
+	}
+	return healths.IsAmmoLow(client)
 }

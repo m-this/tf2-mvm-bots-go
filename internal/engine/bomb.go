@@ -95,7 +95,7 @@ func IsLineOfFireClearPosition(client int32, from [3]float32, to [3]float32) boo
 
 // WantsDispenser says whether the bot would use one if it were there.
 //
-//sp:plugin WantsDispenser
+//sp:body WantsDispenser
 func WantsDispenser(client int32) bool {
 	if bombs.WantsDispenser == nil {
 		missing("WantsDispenser")
@@ -105,7 +105,7 @@ func WantsDispenser(client int32) bool {
 
 // FindFriendlyDispenserNear is one on this ground, and -1 for none.
 //
-//sp:plugin FindFriendlyDispenserNear
+//sp:body FindFriendlyDispenserNear
 func FindFriendlyDispenserNear(client int32, origin [3]float32) int32 {
 	if bombs.FindFriendlyDispenserNear == nil {
 		missing("FindFriendlyDispenserNear")
