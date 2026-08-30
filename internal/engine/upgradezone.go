@@ -118,7 +118,7 @@ func NearestNavArea(origin [3]float32, anyZ bool, maxDistance float32, checkLOS 
 
 // RandomPointIn is somewhere inside the area.
 //
-//sp:plugin CNavArea_GetRandomPoint
+//sp:body CNavArea_GetRandomPoint
 func RandomPointIn(area Area) (point [3]float32) {
 	if stations.RandomPointIn == nil {
 		missing("CNavArea_GetRandomPoint")

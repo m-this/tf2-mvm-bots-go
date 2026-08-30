@@ -8,6 +8,8 @@ type NestSpotCalls struct {
 	Sine               func(radians float32) float32
 	FloatAbs           func(value float32) float32
 	ClosestPointOnArea func(a Area, from [3]float32) [3]float32
+	Extent             func(a Area) ([3]float32, [3]float32)
+	Z                  func(a Area, x float32, y float32) float32
 }
 
 var nestSpots NestSpotCalls
@@ -100,4 +102,25 @@ func (a Area) ClosestPointOnArea(from [3]float32) (ground [3]float32) {
 		missing("CNavArea.GetClosestPointOnArea")
 	}
 	return nestSpots.ClosestPointOnArea(a, from)
+}
+
+// Extent is the box an area covers, low corner and high.
+//
+//sp:method GetExtent
+func (a Area) Extent() (low [3]float32, high [3]float32) {
+	if nestSpots.Extent == nil {
+		missing("CNavArea.GetExtent")
+	}
+	return nestSpots.Extent(a)
+}
+
+// Z is the height of the area's own surface under a point, which is what stops a
+// random point inside the box floating above or below the floor.
+//
+//sp:method GetZ
+func (a Area) Z(x float32, y float32) float32 {
+	if nestSpots.Z == nil {
+		missing("CNavArea.GetZ")
+	}
+	return nestSpots.Z(a, x, y)
 }

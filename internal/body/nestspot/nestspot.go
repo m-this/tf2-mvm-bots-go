@@ -179,3 +179,21 @@ func BuildStandPoint(spot [3]float32, from [3]float32, attempt int32, attempts i
 
 	return true, stand
 }
+
+// RandomPointIn is somewhere inside the area, on its own surface rather than
+// inside the box that bounds it.
+//
+//sp:name CNavArea_GetRandomPoint
+func RandomPointIn(area engine.Area) (buffer [3]float32) {
+	eLo, eHi := area.Extent()
+
+	var spot [3]float32
+
+	spot[0] = engine.RandomFloat(eLo[0], eHi[0])
+	spot[1] = engine.RandomFloat(eLo[1], eHi[1])
+	spot[2] = area.Z(spot[0], spot[1])
+
+	buffer = spot
+
+	return buffer
+}

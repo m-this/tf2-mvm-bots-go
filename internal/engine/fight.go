@@ -122,7 +122,7 @@ func BotNearestToBombNearestToHatch(client int32) int32 {
 
 // SelectRandomReachableEnemy is anybody the bot could actually get to.
 //
-//sp:plugin SelectRandomReachableEnemy
+//sp:body SelectRandomReachableEnemy
 func SelectRandomReachableEnemy(actor int32) int32 {
 	if fights.SelectRandomReachableEnemy == nil {
 		missing("SelectRandomReachableEnemy")

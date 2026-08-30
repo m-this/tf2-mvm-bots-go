@@ -215,7 +215,7 @@ func VectorDistance(a [3]float32, b [3]float32) float32 {
 // IsSentryBusterRobot says whether the robot is a sentry buster, which is
 // usually not a threat worth counting.
 //
-//sp:plugin IsSentryBusterRobot
+//sp:body IsSentryBusterRobot
 func IsSentryBusterRobot(client int32) bool {
 	if installed.IsSentryBusterRobot == nil {
 		missing("IsSentryBusterRobot")
