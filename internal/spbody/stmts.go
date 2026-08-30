@@ -491,11 +491,32 @@ func (e *emitter) deferStmt(n *ast.DeferStmt) {
 		e.fail(n.Pos(), "a defer on something that is not a name")
 		return
 	}
-	e.pending = append(e.pending, deferred{name: e.ident(id.Pos(), id.Name), after: n.Pos()})
+	e.pending = append(e.pending, deferred{
+		name:   e.ident(id.Pos(), id.Name),
+		after:  n.Pos(),
+		closer: e.closerFor(id),
+	})
 }
 
 // discharge writes the deletes owed at this point, latest first, which is the
 // order Go runs them in.
+// closerFor is the method that releases this variable's handle type, empty for
+// the delete every other one takes.
+func (e *emitter) closerFor(id *ast.Ident) string {
+	obj := e.info.Uses[id]
+	if obj == nil {
+		obj = e.info.Defs[id]
+	}
+	if obj == nil {
+		return ""
+	}
+	named, ok := types.Unalias(obj.Type()).(*types.Named)
+	if !ok || named.Obj().Pkg() == nil {
+		return ""
+	}
+	return e.closers[named.Obj().Pkg().Name()+"."+named.Obj().Name()]
+}
+
 func (e *emitter) discharge(at token.Pos, uses func(string) bool) {
 	for i := len(e.pending) - 1; i >= 0; i-- {
 		p := e.pending[i]
@@ -504,6 +525,10 @@ func (e *emitter) discharge(at token.Pos, uses func(string) bool) {
 		}
 		if uses != nil && uses(p.name) {
 			e.fail(at, "%s is returned or read by the return that closes it; Go computes the result before the defer runs and SourcePawn has no way to say that", p.name)
+			continue
+		}
+		if p.closer != "" {
+			e.line("%s.%s();", p.name, p.closer)
 			continue
 		}
 		e.line("delete %s;", p.name)

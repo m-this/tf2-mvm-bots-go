@@ -133,6 +133,17 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 		fields := strings.Fields(strings.TrimPrefix(line, directive))
 		// after NAME... are constant arguments written last, so they are
 		// taken off before the one optional flag is read.
+		var lead []string
+		for i, f := range fields {
+			if f == "before" {
+				if i+1 == len(fields) {
+					return Extern{}, false, fmt.Errorf("the directive %q says before and names no argument", line)
+				}
+				lead = fields[i+1:]
+				fields = fields[:i]
+				break
+			}
+		}
 		var trail []string
 		for i, f := range fields {
 			if f == "after" {
@@ -165,7 +176,7 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 		}
 		switch kind {
 		case "native":
-			return Extern{Func: name, ReturnsArray: returnsArray, Sized: sized, Fills: fills, InPlace: inPlace, Trail: trail}, true, nil
+			return Extern{Func: name, Lead: lead, ReturnsArray: returnsArray, Sized: sized, Fills: fills, InPlace: inPlace, Trail: trail}, true, nil
 		case "propertyset":
 			// The same read, written to: recv.Name = value, from a call
 			// taking the value.

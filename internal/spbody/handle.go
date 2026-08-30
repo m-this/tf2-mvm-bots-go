@@ -40,6 +40,9 @@ than leaking it.
 type deferred struct {
 	name  string
 	after token.Pos
+	// closer is the method that releases it, empty for the delete every
+	// other handle takes.
+	closer string
 }
 
 // handleType says whether the type is one this package tracks, which is any
@@ -56,6 +59,7 @@ func (e *emitter) handleType(t types.Type) bool {
 // can be held to being closed.
 func (e *emitter) collectHandles() {
 	e.handles = make(map[string]bool)
+	e.closers = make(map[string]string)
 	for qualified, x := range e.cfg.Externs {
 		if !x.Delete {
 			continue
@@ -63,6 +67,16 @@ func (e *emitter) collectHandles() {
 		// engine.Areas.Close -> engine.Areas
 		if i := lastDot(qualified); i >= 0 {
 			e.handles[qualified[:i]] = true
+			/* How this one is released, which is not always delete
+
+			SourceMod frees most handles with delete, and a
+			PathFollower this port made is destroyed instead: it is
+			the game's object with its own teardown, and the shipped
+			file calls route.Destroy(). The directive names the
+			method, so the emitter writes what the extern says. */
+			if x.Func != "Close" {
+				e.closers[qualified[:i]] = x.Func
+			}
 		}
 	}
 }

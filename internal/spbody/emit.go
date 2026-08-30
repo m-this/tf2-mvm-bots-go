@@ -59,6 +59,9 @@ type emitter struct {
 	// lengths maps a buffer parameter of the function being emitted onto
 	// the parameter that carries its length, from //sp:length.
 	lengths map[string]string
+	// closers name the method that releases a handle type, for the ones
+	// that are not released with delete.
+	closers map[string]string
 	// borrowed are the functions whose handle result the caller does not
 	// own, from //sp:borrowed.
 	borrowed map[string]bool

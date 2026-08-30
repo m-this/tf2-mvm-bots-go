@@ -364,6 +364,19 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 		half a dozen others do. So the restriction stays where it is
 		enforced, in the emitter's refusal to write an array parameter,
 		and the declaration says nothing about it. */
+		/* The outer dimension of an array parameter belongs to the caller
+
+		SourcePawn writes float spots[][3] for a list of vectors: how many
+		is the caller's business and only the inner shape is fixed. The Go
+		has to name a length to have a type at all, and the emitted
+		declaration drops it, which is what the shipped SpawnRoutePoints
+		takes. */
+		if len(dims) > 1 {
+			inner := declare(tag, e.ident(d.Pos(), name), dims[1:])
+			at := strings.Index(inner, "[")
+			params = append(params, inner[:at]+"[]"+inner[at:])
+			continue
+		}
 		if e.consts[name] {
 			params = append(params, "const "+declare(tag, e.ident(d.Pos(), name), dims))
 			continue

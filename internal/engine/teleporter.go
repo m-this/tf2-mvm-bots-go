@@ -80,7 +80,7 @@ where the man stands to put it there, one pair per step along the route.
 The count of points comes last in the plugin's own declaration, after the two
 arrays it fills, so it is written as a trailing argument rather than a Go one.
 
-//sp:plugin SpawnRoutePoints after TELEPORTER_TRY_POINTS
+//sp:body SpawnRoutePoints after TELEPORTER_TRY_POINTS
 */
 func SpawnRoutePoints(actor int32, spawn [3]float32, first float32, step float32, reach float32) (found int32, spots [8][3]float32, stands [8][3]float32) {
 	if teleporters.SpawnRoutePoints == nil {
@@ -92,7 +92,7 @@ func SpawnRoutePoints(actor int32, spawn [3]float32, first float32, step float32
 // NearestSpawnPoint is where this bot's team respawns, and false when there is
 // no such thing on this map.
 //
-//sp:plugin NearestSpawnPoint
+//sp:body NearestSpawnPoint
 func NearestSpawnPoint(actor int32) (ok bool, spawn [3]float32) {
 	if teleporters.NearestSpawnPoint == nil {
 		missing("NearestSpawnPoint")
