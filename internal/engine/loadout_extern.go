@@ -11,6 +11,7 @@ type LoadoutCalls struct {
 	SetMission              func(client int32, mission int32)
 	AttribByDefIndex        func(entity int32, defIndex int32) Address
 	AttribValueAt           func(attrib Address) float32
+	ListDefIndices          func(entity int32, out [20]int32) int32
 }
 
 var loadouts LoadoutCalls
@@ -64,3 +65,19 @@ func AttribValueAt(attrib Address) float32 {
 	}
 	return loadouts.AttribValueAt(attrib)
 }
+
+// ListDefIndices writes every attribute index on the entity into the caller's
+// array and says how many it wrote.
+//
+//sp:native TF2Attrib_ListDefIndices
+func ListDefIndices(entity int32, out [20]int32) int32 {
+	if loadouts.ListDefIndices == nil {
+		missing("TF2Attrib_ListDefIndices")
+	}
+	return loadouts.ListDefIndices(entity, out)
+}
+
+// UseCustomLoadouts is redbots_manager_use_custom_loadouts.
+//
+//sp:global redbots_manager_use_custom_loadouts
+func UseCustomLoadouts() ConVar { return 0 }

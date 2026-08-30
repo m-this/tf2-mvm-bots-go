@@ -492,3 +492,79 @@ func BuildHatPool(playerClass engine.Class) (pool engine.List) {
 
 	return pool
 }
+
+// HatDrawTries is how many times a bot may draw again when what it drew has no
+// model to wear.
+//
+//sp:name HAT_DRAW_TRIES
+const HatDrawTries = 4
+
+/*
+GiveBotCosmeticsSoon dresses the bot half a second after it spawns, not the
+moment it does.
+
+The game gives its own items on spawn and the custom loadout replaces them a
+tenth of a second later, and a hat handed to a bot in the middle of that is a hat
+the game throws away. Once per spawn, however many times it is asked: a bot's
+first spawn asks twice.
+
+Spread across a second rather than all landing on the same frame. A team spawns
+together, and dressing a bot creates an entity and precaches a model, which is
+not a thing to do six times inside one tick of a server that is also starting a
+wave.
+*/
+//
+//sp:name GiveBotCosmeticsSoon
+func GiveBotCosmeticsSoon(client int32) {
+	if !engine.BotHats().Bool() {
+		return
+	}
+
+	if cosmeticsPending[client] {
+		return
+	}
+
+	cosmeticsPending[client] = true
+
+	when := 0.5 + 0.15*float32(client%8)
+
+	engine.CreateTimerWith(when, TimerGiveBotCosmetics, engine.ClientUserID(client), engine.TimerNoMapChange())
+}
+
+/*
+TimerGiveBotCosmetics is the dressing itself, once the spawn has settled.
+
+Draw again when what the bot drew turns out not to be wearable, up to a few
+times. A hat the schema has no model for is dropped from the pool and the bot was
+left bare until its next respawn, which for a defender that does not die is the
+rest of the mission. Every failure takes that item out of the pool, so the tries
+cannot chase the same bad one twice.
+*/
+//
+//sp:name Timer_GiveBotCosmetics
+//sp:public
+//
+//nolint:revive // unused-parameter: the handle is the timer's own, and nothing here needs it
+func TimerGiveBotCosmetics(timer engine.Timer, userid int32) engine.Outcome {
+	client := engine.ClientOfUserID(userid)
+
+	if client < 1 {
+		return engine.PluginStop()
+	}
+
+	cosmeticsPending[client] = false
+
+	if !engine.IsClientInGame(client) || !engine.IsPlayerAlive(client) || !engine.DefenderBotFlag(client) {
+		return engine.PluginStop()
+	}
+
+	for attempt := int32(0); attempt < HatDrawTries; attempt++ {
+		DrawWardrobe(client)
+
+		if !engine.BotHats().Bool() || WearHat(client) {
+			break
+		}
+	}
+
+	return engine.PluginStop()
+}

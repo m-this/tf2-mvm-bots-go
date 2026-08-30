@@ -333,3 +333,86 @@ func GetRandomWeaponForClass(class string, slot string) int32 {
 
 	return -1
 }
+
+// LoadLoadoutFunctions puts the command the bots use on the console.
+//
+//sp:name LoadLoadoutFunctions
+func LoadLoadoutFunctions() {
+	engine.RegConsoleCmd("sm_redbot_upgraded", CommandBoughtUpgrades)
+}
+
+/*
+CommandBoughtUpgrades remembers what the upgrade station wrote on this bot's
+weapons.
+
+The bot says so itself: the station is a menu the bot walks through, and this is
+the line it types when it comes out. Only worth remembering with custom loadouts
+on, because that is the only case where the weapons are handed back rather than
+kept.
+*/
+//
+//sp:name Command_BoughtUpgrades
+//sp:public
+//
+//nolint:revive // unused-parameter: the argument count is the console's, and this command takes none
+func CommandBoughtUpgrades(client int32, args int32) engine.Outcome {
+	// Only need to remember upgrades if using custom loadouts.
+	if !engine.UseCustomLoadouts().Bool() {
+		return engine.PluginHandled()
+	}
+
+	// Only our bots should execute this command.
+	if !engine.IsFakeClient(client) {
+		return engine.PluginHandled()
+	}
+
+	primaryWep := engine.PlayerWeaponSlot(client, engine.WeaponSlotPrimary())
+	secondaryWep := engine.PlayerWeaponSlot(client, engine.WeaponSlotSecondary())
+	meleeWep := engine.PlayerWeaponSlot(client, engine.WeaponSlotMelee())
+
+	ClearSavedAttributes(client)
+
+	var count int32
+	var attr engine.Address
+
+	if engine.IsValidEntity(primaryWep) {
+		count = engine.ListDefIndices(primaryWep, attribPrimary[client])
+
+		if count > 0 {
+			for i := int32(0); i < count; i++ {
+				attr = engine.AttribByDefIndex(primaryWep, attribPrimary[client][i])
+				attrValPrimary[client][i] = engine.AttribValueAt(attr)
+			}
+		}
+	}
+
+	if engine.IsValidEntity(secondaryWep) {
+		count = engine.ListDefIndices(secondaryWep, attribSecondary[client])
+
+		if count > 0 {
+			for i := int32(0); i < count; i++ {
+				attr = engine.AttribByDefIndex(secondaryWep, attribSecondary[client][i])
+				attrValSecondary[client][i] = engine.AttribValueAt(attr)
+			}
+		}
+	}
+
+	if engine.IsValidEntity(meleeWep) {
+		count = engine.ListDefIndices(meleeWep, attribMelee[client])
+
+		if count > 0 {
+			for i := int32(0); i < count; i++ {
+				attr = engine.AttribByDefIndex(meleeWep, attribMelee[client][i])
+				attrValMelee[client][i] = engine.AttribValueAt(attr)
+			}
+		}
+	}
+
+	if engine.ManagerDebug().Bool() {
+		engine.PrintToChatAll("[Command_BoughtUpgrades] SAVED WEAPON STATS FOR %N", client)
+	}
+
+	hasBoughtUpgrades[client] = true
+
+	return engine.PluginHandled()
+}
