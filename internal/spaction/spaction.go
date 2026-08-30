@@ -90,6 +90,12 @@ var callbacks = map[string]callback{
 		Params: "int actor, Address takedamageinfo, ActionDesiredResult result",
 		Names:  []string{"actor", "takedamageinfo", "result"},
 	},
+	// The engine telling a behaviour the bot walked onto different ground.
+	"OnNavAreaChanged": {
+		Wire: "OnNavAreaChanged", Returns: "Action",
+		Params: "int actor, CTFNavArea newArea, CTFNavArea oldArea, ActionDesiredResult result",
+		Names:  []string{"actor", "newArea", "oldArea", "result"},
+	},
 	// The engine asking which of two threats matters more. The answer is the
 	// by-reference one; the return only says the behaviour had an opinion.
 	"SelectMoreDangerousThreat": {
@@ -136,7 +142,7 @@ var callbacks = map[string]callback{
 // plugin writes and so the order a reviewer expects.
 var order = []string{
 	"OnStart", "Update", "OnEnd", "OnSuspend", "OnResume",
-	"OnInjured", "OnTerritoryContested", "OnTerritoryLost",
+	"OnInjured", "OnNavAreaChanged", "OnTerritoryContested", "OnTerritoryLost",
 	"SelectMoreDangerousThreat", "ShouldAttack", "IsHindrance",
 }
 

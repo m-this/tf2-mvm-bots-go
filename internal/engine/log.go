@@ -68,8 +68,8 @@ func LogAction(client int32, target int32, format string, args ...any) {
 // name to id table that turns those into an integer switch. That is the rule
 // SUBSET.md states and it is the right answer for almost all of them.
 type TextCalls struct {
-	CurrentMap    func() [64]byte
-	ActionStackOf func(client int32) [512]byte
+	CurrentMap    func() Text
+	ActionStackOf func(client int32) Text
 }
 
 var texts TextCalls
@@ -84,7 +84,7 @@ func InstallTexts(c TextCalls) func() {
 // CurrentMap is the map being played, filled into the buffer it is given.
 //
 //sp:native GetCurrentMap sized
-func CurrentMap() (name [64]byte) {
+func CurrentMap() (name Text) {
 	if texts.CurrentMap == nil {
 		missing("GetCurrentMap")
 	}
@@ -95,7 +95,7 @@ func CurrentMap() (name [64]byte) {
 // the debug output prints.
 //
 //sp:plugin ActionStackOf sized
-func ActionStackOf(client int32) (stack [512]byte) {
+func ActionStackOf(client int32) (stack Text) {
 	if texts.ActionStackOf == nil {
 		missing("ActionStackOf")
 	}
@@ -111,15 +111,16 @@ stack. Go needs a type per size, because an array length is not something a
 function can be generic over, and one extern per size would be a set of
 near-identical declarations nobody would keep in step.
 
-So the port has one text size, and it is the largest the plugin uses. A
-generated buffer where the plugin declared 64 is 256 bytes of stack instead of
-64, on a frame that already has a nav mesh search in it. That is the known
-normalisation, and it is a size rather than a behaviour: what is written into it
-and compared out of it is the same either way.
+So the port has one text size, and it is the largest the plugin uses: 512, which
+is the behaviour stack the debug output prints. A generated buffer where the
+plugin declared 64 is 512 bytes of stack instead of 64, on a frame that already
+has a nav mesh search in it. That is the known normalisation, and it is a size
+rather than a behaviour: what is written into it and compared out of it is the
+same either way.
 */
 //
 //sp:tag char
-type Text [256]byte
+type Text [512]byte
 
 // TextOps are the answers for the operations on it.
 type TextOps struct {

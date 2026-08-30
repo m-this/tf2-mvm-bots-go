@@ -33,6 +33,8 @@ type ActionCalls struct {
 	Actor        func() int32
 	TryToSustain func() Outcome
 	TryChangeTo  func(next Behaviour, priority int32, reason string) Outcome
+	TryContinue  func() Outcome
+	TryDone      func(priority int32, reason string) Outcome
 }
 
 var actions ActionCalls
@@ -110,3 +112,28 @@ func TryChangeTo(next Behaviour, priority int32, reason string) Outcome {
 //
 //sp:global RESULT_CRITICAL
 func ResultCritical() int32 { return 3 }
+
+// TryContinue asks to keep going, at the engine's discretion.
+//
+//sp:native action.TryContinue
+func TryContinue() Outcome {
+	if actions.TryContinue == nil {
+		missing("action.TryContinue")
+	}
+	return actions.TryContinue()
+}
+
+// TryDone asks to stop, at a priority the engine weighs.
+//
+//sp:native action.TryDone
+func TryDone(priority int32, reason string) Outcome {
+	if actions.TryDone == nil {
+		missing("action.TryDone")
+	}
+	return actions.TryDone(priority, reason)
+}
+
+// ResultImportant is RESULT_IMPORTANT.
+//
+//sp:global RESULT_IMPORTANT
+func ResultImportant() int32 { return 2 }
