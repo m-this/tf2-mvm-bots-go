@@ -102,7 +102,7 @@ func EyePosition(client int32) [3]float32 {
 // IsLineOfFireClearEntity says whether the bot could actually hit it from
 // there.
 //
-//sp:plugin IsLineOfFireClearEntity
+//sp:body IsLineOfFireClearEntity
 func IsLineOfFireClearEntity(client int32, from [3]float32, who int32) bool {
 	if threats.IsLineOfFireClearEntity == nil {
 		missing("IsLineOfFireClearEntity")

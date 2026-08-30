@@ -86,7 +86,7 @@ func EquipBestWeaponForThreat(client int32, threat Known) {
 
 // IsLineOfFireClearPosition says whether the bot could shoot at that spot.
 //
-//sp:plugin IsLineOfFireClearPosition
+//sp:body IsLineOfFireClearPosition
 func IsLineOfFireClearPosition(client int32, from [3]float32, to [3]float32) bool {
 	if bombs.IsLineOfFireClearPosition == nil {
 		missing("IsLineOfFireClearPosition")
