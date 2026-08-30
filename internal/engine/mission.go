@@ -2,9 +2,11 @@ package engine
 
 // MissionCalls are the answers about the mission and who is in it.
 type MissionCalls struct {
-	ClientModel  func(client int32) Text
-	WaveCount    func(resource int32) int32
-	MaxWaveCount func(resource int32) int32
+	ClientModel   func(client int32) Text
+	WaveCount     func(resource int32) int32
+	MaxWaveCount  func(resource int32) int32
+	WaveClassName func(resource int32, index int32) Text
+	StrContainsIn func(haystack Text, needle Text, caseSensitive bool) int32
 }
 
 var missions MissionCalls
@@ -51,4 +53,15 @@ func MaxWaveCount(resource int32) int32 {
 		missing("TF2_GetMannVsMachineMaxWaveCount")
 	}
 	return missions.MaxWaveCount(resource)
+}
+
+// WaveClassName is one of the icons on the wave bar, which is how the mod knows
+// what is coming before it arrives.
+//
+//sp:plugin TF2_GetMannVsMachineWaveClassName sized
+func WaveClassName(resource int32, index int32) (icon Text) {
+	if missions.WaveClassName == nil {
+		missing("TF2_GetMannVsMachineWaveClassName")
+	}
+	return missions.WaveClassName(resource, index)
 }

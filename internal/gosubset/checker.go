@@ -162,6 +162,22 @@ func (c *checker) checkValueSpec(spec *ast.ValueSpec, tok token.Token, atPackage
 	lists of entity classnames walked by index, and FindEntityByClassname
 	wants a real string: there is no id that would do instead. Read only,
 	which is enforced by there being no way to emit a write into one. */
+	/* A constant naming a piece of text, which SourcePawn writes as a define
+
+	The plugin has a handful, MVM_TANK_CLASS_ICON among them, and the wave bar
+	is read by comparing against it. There is no id that would do instead. */
+	if tok == token.CONST && atPackageLevel {
+		named := true
+		for _, v := range spec.Values {
+			lit, ok := v.(*ast.BasicLit)
+			if !ok || lit.Kind != token.STRING {
+				named = false
+			}
+		}
+		if named && len(spec.Values) > 0 {
+			return
+		}
+	}
 	if tok == token.VAR && atPackageLevel && specIsNameTable(spec) {
 		for _, v := range spec.Values {
 			c.checkNameTable(v)

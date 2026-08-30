@@ -9,6 +9,7 @@ import (
 	"go/types"
 	"math"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -344,6 +345,20 @@ func (e *emitter) constDecl(d *ast.GenDecl) {
 }
 
 func (e *emitter) constLiteral(c *types.Const) (string, error) {
+	/* A constant naming a piece of text, which SourcePawn writes as a define
+
+	The plugin has a handful: MVM_TANK_CLASS_ICON is "tank", and the wave bar
+	is read by comparing against it. There is no id that would do instead,
+	and a define is what the shipped file writes. */
+	if c.Val().Kind() == constant.String {
+		text := constant.StringVal(c.Val())
+		for _, r := range text {
+			if r < ' ' || r > '~' {
+				return "", fmt.Errorf("the text %q holds a character this package will not escape for SourcePawn", text)
+			}
+		}
+		return strconv.Quote(text), nil
+	}
 	tag, _, err := e.spType(c.Type())
 	if err != nil {
 		return "", err
