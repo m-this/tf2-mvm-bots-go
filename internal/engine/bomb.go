@@ -10,6 +10,7 @@ one, and the ones it hands over have not been ported yet.
 
 // BombCalls are the answers.
 type BombCalls struct {
+	CaptureFlagIsHome            func(flag int32) bool
 	BombNearestToHatch           func() int32
 	OwnerEntity                  func(entity int32) int32
 	EquipBestWeaponForThreat     func(client int32, threat Known)
@@ -55,7 +56,7 @@ func Feature(id int32) bool {
 
 // BombNearestToHatch is the bomb worth holding, and -1 when there is none.
 //
-//sp:plugin FindBombNearestToHatch
+//sp:body FindBombNearestToHatch
 func BombNearestToHatch() int32 {
 	if bombs.BombNearestToHatch == nil {
 		missing("FindBombNearestToHatch")
@@ -175,3 +176,14 @@ func ClassPyro() Class { return 7 }
 //
 //sp:global TFClass_DemoMan
 func ClassDemoMan() Class { return 4 }
+
+// CaptureFlagIsHome says the bomb is still on its stand, which is a bomb nobody
+// is carrying anywhere.
+//
+//sp:plugin CaptureFlag_IsHome
+func CaptureFlagIsHome(flag int32) bool {
+	if bombs.CaptureFlagIsHome == nil {
+		missing("CaptureFlag_IsHome")
+	}
+	return bombs.CaptureFlagIsHome(flag)
+}

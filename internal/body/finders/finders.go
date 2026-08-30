@@ -157,3 +157,127 @@ func IsHealedByMedic(client int32) bool {
 
 	return false
 }
+
+// FindBombNearestToHatch is the bomb closest to where the robots are taking it,
+// and -1 when every bomb is still on its stand.
+//
+//sp:name FindBombNearestToHatch
+func FindBombNearestToHatch() int32 {
+	origin := engine.BombHatchPosition()
+
+	bestDistance := float32(999999.0)
+	bestEntity := int32(-1)
+
+	ent := int32(-1)
+
+	for {
+		ent = engine.FindEntityByClassname(ent, "item_teamflag")
+
+		if ent == -1 {
+			break
+		}
+
+		if engine.CaptureFlagIsHome(ent) {
+			continue
+		}
+
+		distance := engine.VectorDistance(origin, engine.WorldSpaceCenter(ent))
+
+		if distance <= bestDistance {
+			bestDistance = distance
+			bestEntity = ent
+		}
+	}
+
+	return bestEntity
+}
+
+// FindBotNearestToBombNearestToHatch is the robot standing closest to the bomb
+// that is furthest along, which is the one worth shooting.
+//
+//sp:name FindBotNearestToBombNearestToHatch
+func FindBotNearestToBombNearestToHatch(client int32) int32 {
+	bomb := FindBombNearestToHatch()
+
+	if bomb <= 0 {
+		return -1
+	}
+
+	origin := engine.WorldSpaceCenter(bomb)
+
+	bestDistance := float32(999999.0)
+	bestEntity := int32(-1)
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if i == client {
+			continue
+		}
+
+		if !engine.IsClientInGame(i) {
+			continue
+		}
+
+		if !engine.IsPlayerAlive(i) {
+			continue
+		}
+
+		if engine.PlayerTeam(i) != engine.PlayerEnemyTeam(client) {
+			continue
+		}
+
+		if engine.IsPointInRespawnRoom(engine.WorldSpaceCenter(i)) {
+			continue
+		}
+
+		if engine.IsSentryBusterRobot(i) {
+			continue
+		}
+
+		distance := engine.VectorDistance(engine.WorldSpaceCenter(i), origin)
+
+		if distance <= bestDistance {
+			bestDistance = distance
+			bestEntity = i
+		}
+	}
+
+	return bestEntity
+}
+
+// GerNearestTeammate is the closest player on the bot's own team within the
+// distance, and -1 for nobody. The name is the shipped one, typo included.
+//
+//sp:name GerNearestTeammate
+func GerNearestTeammate(client int32, maxDistance float32) int32 {
+	origin := engine.WorldSpaceCenter(client)
+
+	bestDistance := float32(999999.0)
+	bestEntity := int32(-1)
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if i == client {
+			continue
+		}
+
+		if !engine.IsClientInGame(i) {
+			continue
+		}
+
+		if !engine.IsPlayerAlive(i) {
+			continue
+		}
+
+		if engine.GetClientTeam(i) != engine.GetClientTeam(client) {
+			continue
+		}
+
+		distance := engine.VectorDistance(engine.WorldSpaceCenter(i), origin)
+
+		if distance <= bestDistance && distance <= maxDistance {
+			bestDistance = distance
+			bestEntity = i
+		}
+	}
+
+	return bestEntity
+}

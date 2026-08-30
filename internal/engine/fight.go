@@ -112,7 +112,7 @@ func DesiredAttackRange(client int32) float32 {
 // BotNearestToBombNearestToHatch is the robot worth shooting: the one carrying
 // the bomb, or nearest to whoever is.
 //
-//sp:plugin FindBotNearestToBombNearestToHatch
+//sp:body FindBotNearestToBombNearestToHatch
 func BotNearestToBombNearestToHatch(client int32) int32 {
 	if fights.BotNearestToBombNearestToHatch == nil {
 		missing("FindBotNearestToBombNearestToHatch")
