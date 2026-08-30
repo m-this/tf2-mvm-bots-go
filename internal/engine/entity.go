@@ -9,6 +9,14 @@ type EntityCalls struct {
 	VectorAngles                func(direction [3]float32) [3]float32
 	RoundToFloor                func(value float32) int32
 	GameRulesPropAt             func(prop string, size int32, element int32) int32
+	CreateEntityByName          func(classname string) int32
+	RemoveEffectsFrom           func(entity int32, effects int32)
+	DispatchSpawn               func(entity int32) bool
+	SetEntPropEnt               func(entity int32, propType PropType, prop string, other int32)
+	SetObjectMode               func(building int32, mode int32)
+	TeamMayCapturePoint         func(team Team, pointIndex int32) bool
+	CompareText                 func(a Text, b Text, caseSensitive bool) int32
+	LoadFromAddress             func(address Address) int32
 	FindDataMapInfo             func(entity int32, prop string) int32
 	EntData                     func(entity int32, offset int32, size int32) int32
 	EntPropAt                   func(entity int32, propType PropType, prop string, element int32) int32
@@ -146,4 +154,92 @@ func GameRulesPropAt(prop string, size int32, element int32) int32 {
 		missing("GameRules_GetProp")
 	}
 	return entities.GameRulesPropAt(prop, size, element)
+}
+
+// Address is a raw memory address, which the gamedata hands out and two reads
+// follow.
+//
+//sp:tag Address
+type Address int32
+
+// RemoveEffectsFrom clears effect bits, which internal/body/entity generates.
+//
+//sp:body RemoveEffects
+func RemoveEffectsFrom(entity int32, effects int32) {
+	if entities.RemoveEffectsFrom == nil {
+		missing("RemoveEffects")
+	}
+	entities.RemoveEffectsFrom(entity, effects)
+}
+
+// CreateEntityByName makes one, unspawned.
+//
+//sp:native CreateEntityByName
+func CreateEntityByName(classname string) int32 {
+	if entities.CreateEntityByName == nil {
+		missing("CreateEntityByName")
+	}
+	return entities.CreateEntityByName(classname)
+}
+
+// DispatchSpawn brings it into the world.
+//
+//sp:native DispatchSpawn
+func DispatchSpawn(entity int32) bool {
+	if entities.DispatchSpawn == nil {
+		missing("DispatchSpawn")
+	}
+	return entities.DispatchSpawn(entity)
+}
+
+// SetEntPropEnt points one entity property at another.
+//
+//sp:native SetEntPropEnt
+func SetEntPropEnt(entity int32, propType PropType, prop string, other int32) {
+	if entities.SetEntPropEnt == nil {
+		missing("SetEntPropEnt")
+	}
+	entities.SetEntPropEnt(entity, propType, prop, other)
+}
+
+// SetObjectMode says which half of a teleporter a building is, which a sapper
+// copies from what it is sapping.
+//
+//sp:plugin TF2_SetObjectMode
+func SetObjectMode(building int32, mode int32) {
+	if entities.SetObjectMode == nil {
+		missing("TF2_SetObjectMode")
+	}
+	entities.SetObjectMode(building, mode)
+}
+
+// TeamMayCapturePoint says the point is one this team is allowed to take.
+//
+//sp:plugin TFGameRules_TeamMayCapturePoint
+func TeamMayCapturePoint(team Team, pointIndex int32) bool {
+	if entities.TeamMayCapturePoint == nil {
+		missing("TFGameRules_TeamMayCapturePoint")
+	}
+	return entities.TeamMayCapturePoint(team, pointIndex)
+}
+
+// CompareText is strcmp, which answers zero when two buffers hold the same text.
+//
+//sp:native strcmp
+func CompareText(a Text, b Text, caseSensitive bool) int32 {
+	if entities.CompareText == nil {
+		missing("strcmp")
+	}
+	return entities.CompareText(a, b, caseSensitive)
+}
+
+// LoadFromAddress reads memory, which is how an offset the gamedata names is
+// followed.
+//
+//sp:native LoadFromAddress after NumberType_Int32
+func LoadFromAddress(address Address) int32 {
+	if entities.LoadFromAddress == nil {
+		missing("LoadFromAddress")
+	}
+	return entities.LoadFromAddress(address)
 }

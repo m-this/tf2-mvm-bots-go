@@ -137,7 +137,7 @@ func IsZeroVector(v [3]float32) bool {
 
 // CapturableAreaTrigger is the point that team can take, and -1 for none.
 //
-//sp:plugin GetCapturableAreaTrigger
+//sp:body GetCapturableAreaTrigger
 func CapturableAreaTrigger(team Team) int32 {
 	if nav.CapturableAreaTrigger == nil {
 		missing("GetCapturableAreaTrigger")

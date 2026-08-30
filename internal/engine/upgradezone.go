@@ -179,7 +179,7 @@ func NudgeTowardsGoal(actor int32, bot Bot, goal [3]float32) {
 
 // IsUpgradeStationEnabled says the station is open.
 //
-//sp:plugin IsUpgradeStationEnabled
+//sp:body IsUpgradeStationEnabled
 func IsUpgradeStationEnabled(station int32) bool {
 	if stations.IsUpgradeStationEnabled == nil {
 		missing("IsUpgradeStationEnabled")

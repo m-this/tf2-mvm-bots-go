@@ -150,7 +150,7 @@ func SetEntPropFloat(entity int32, propType PropType, prop string, value float32
 // SpawnSapper puts one on the entity, which takes five steps the plugin knows
 // about and this port has not reached.
 //
-//sp:plugin SpawnSapper
+//sp:body SpawnSapper
 func SpawnSapper(owner int32, entity int32, weapon int32) int32 {
 	if sappers.SpawnSapper == nil {
 		missing("SpawnSapper")

@@ -15,6 +15,7 @@ type PlayerCalls struct {
 	SetVariantString    func(value string)
 	AcceptEntityInput   func(entity int32, input string, activator int32, caller int32, outputID int32) bool
 	TextLength          func(text Text) int32
+	TextLengthOf        func(text string) int32
 }
 
 var players PlayerCalls
@@ -157,6 +158,17 @@ func AcceptEntityInput(entity int32, input string, activator int32, caller int32
 		missing("AcceptEntityInput")
 	}
 	return players.AcceptEntityInput(entity, input, activator, caller, outputID)
+}
+
+// TextLengthOf is how long a literal is, which is how an empty default is told
+// from a real attachment point.
+//
+//sp:native strlen
+func TextLengthOf(text string) int32 {
+	if players.TextLengthOf == nil {
+		missing("strlen")
+	}
+	return players.TextLengthOf(text)
 }
 
 // TextLength is how long a buffer's text is.
