@@ -17,6 +17,14 @@ type EntityCalls struct {
 	TeamMayCapturePoint         func(team Team, pointIndex int32) bool
 	CompareText                 func(a Text, b Text, caseSensitive bool) int32
 	LoadFromAddress             func(address Address) int32
+	FindSendPropInfo            func(class string, prop string) int32
+	SetEntData                  func(entity int32, offset int32, value int32)
+	SetEntPropAt                func(entity int32, propType PropType, prop string, value int32, element int32)
+	IsEntityWearable            func(entity int32) bool
+	EquipPlayerWearable         func(client int32, item int32)
+	EquipPlayerWeapon           func(client int32, item int32)
+	SetItemID                   func(item int32, id int32)
+	IsItemDefIndexSapper        func(itemDefIndex int32) bool
 	FindDataMapInfo             func(entity int32, prop string) int32
 	EntData                     func(entity int32, offset int32, size int32) int32
 	EntPropAt                   func(entity int32, propType PropType, prop string, element int32) int32
@@ -242,4 +250,87 @@ func LoadFromAddress(address Address) int32 {
 		missing("LoadFromAddress")
 	}
 	return entities.LoadFromAddress(address)
+}
+
+// FindSendPropInfo is the offset of a networked property, which is how one
+// SetEntProp refuses to write is reached.
+//
+//sp:native FindSendPropInfo
+func FindSendPropInfo(class string, prop string) int32 {
+	if entities.FindSendPropInfo == nil {
+		missing("FindSendPropInfo")
+	}
+	return entities.FindSendPropInfo(class, prop)
+}
+
+// SetEntData writes at an offset.
+//
+//sp:native SetEntData
+func SetEntData(entity int32, offset int32, value int32) {
+	if entities.SetEntData == nil {
+		missing("SetEntData")
+	}
+	entities.SetEntData(entity, offset, value)
+}
+
+// SetEntPropAt writes one element of an array property.
+//
+//sp:native SetEntProp after _
+func SetEntPropAt(entity int32, propType PropType, prop string, value int32, element int32) {
+	if entities.SetEntPropAt == nil {
+		missing("SetEntProp")
+	}
+	entities.SetEntPropAt(entity, propType, prop, value, element)
+}
+
+// IsEntityWearable says the item is worn rather than held.
+//
+//sp:native TF2Util_IsEntityWearable
+func IsEntityWearable(entity int32) bool {
+	if entities.IsEntityWearable == nil {
+		missing("TF2Util_IsEntityWearable")
+	}
+	return entities.IsEntityWearable(entity)
+}
+
+// EquipPlayerWearable puts a worn item on.
+//
+//sp:native TF2Util_EquipPlayerWearable
+func EquipPlayerWearable(client int32, item int32) {
+	if entities.EquipPlayerWearable == nil {
+		missing("TF2Util_EquipPlayerWearable")
+	}
+	entities.EquipPlayerWearable(client, item)
+}
+
+// EquipPlayerWeapon puts a held item in the hands.
+//
+//sp:native EquipPlayerWeapon
+func EquipPlayerWeapon(client int32, item int32) {
+	if entities.EquipPlayerWeapon == nil {
+		missing("EquipPlayerWeapon")
+	}
+	entities.EquipPlayerWeapon(client, item)
+}
+
+// SetItemID stamps an item with an id, which the game wants unique enough not to
+// collide with a real one.
+//
+//sp:plugin EconItemView_SetItemID
+func SetItemID(item int32, id int32) {
+	if entities.SetItemID == nil {
+		missing("EconItemView_SetItemID")
+	}
+	entities.SetItemID(item, id)
+}
+
+// IsItemDefIndexSapper says the item is a sapper, which internal/body/reflect
+// generates.
+//
+//sp:body IsItemDefIndexSapper
+func IsItemDefIndexSapper(itemDefIndex int32) bool {
+	if entities.IsItemDefIndexSapper == nil {
+		missing("IsItemDefIndexSapper")
+	}
+	return entities.IsItemDefIndexSapper(itemDefIndex)
 }

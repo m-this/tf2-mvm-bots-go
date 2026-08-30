@@ -157,6 +157,27 @@ func mutatesOf(d *ast.FuncDecl) map[string]bool {
 	return out
 }
 
+// writableDirective marks a text parameter the shipped declaration leaves
+// writable, which a caller passing its own writable buffer depends on.
+const writableDirective = "//sp:writable"
+
+// writablesOf reads //sp:writable <parameter> off a declaration.
+func writablesOf(d *ast.FuncDecl) map[string]bool {
+	out := map[string]bool{}
+	if d.Doc == nil {
+		return out
+	}
+	for _, c := range d.Doc.List {
+		for line := range strings.Lines(c.Text) {
+			fields := strings.Fields(line)
+			if len(fields) == 2 && fields[0] == writableDirective {
+				out[fields[1]] = true
+			}
+		}
+	}
+	return out
+}
+
 // lengthDirective names the parameter carrying a buffer parameter's length.
 const lengthDirective = "//sp:length"
 
@@ -215,6 +236,7 @@ func (e *emitter) funcDecl(d *ast.FuncDecl) {
 	e.lengths = lengthsOf(d)
 	e.consts = constsOf(d)
 	e.mutates = mutatesOf(d)
+	e.writable = writablesOf(d)
 	sig := obj.Type().(*types.Signature)
 	if sig.Recv() != nil {
 		e.fail(d.Pos(), "a method; write a plain function taking the receiver first")
@@ -331,6 +353,18 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 		// and its size, which is a different parameter.
 		if b, ok := types.Unalias(p.Type()).(*types.Basic); ok && b.Kind() == types.String {
 			names = append(names, name)
+			/* Text is const unless the shipped declaration is not
+
+			A const buffer cannot be handed to something that
+			declares it writable, and the plugin leaves a few
+			writable that it never writes: GiveItemToPlayer takes a
+			char[] classname and passes it straight on. The port says
+			which with //sp:writable, and the comparison against the
+			shipped declaration checks it. */
+			if e.writable[name] {
+				params = append(params, "char[] "+e.ident(d.Pos(), name))
+				continue
+			}
 			params = append(params, "const char[] "+e.ident(d.Pos(), name))
 			continue
 		}

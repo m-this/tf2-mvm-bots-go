@@ -68,6 +68,9 @@ type emitter struct {
 	// mutates are the parameters the function being emitted writes through,
 	// from //sp:mutates.
 	mutates map[string]bool
+	// writable are the text parameters the shipped declaration leaves
+	// writable, from //sp:writable.
+	writable map[string]bool
 	// consts are the parameters of the function being emitted that carry
 	// //sp:const, which SourcePawn writes in front of the type.
 	consts map[string]bool

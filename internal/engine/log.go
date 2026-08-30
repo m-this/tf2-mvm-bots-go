@@ -132,6 +132,7 @@ type TextOps struct {
 	CopyText        func(from string) Text
 	CopyTextInto    func(from Text) Text
 	StrEqualFolded  func(a Text, b string, caseSensitive bool) bool
+	StrEqualLiteral func(a string, b string, caseSensitive bool) bool
 }
 
 var textOps TextOps
@@ -211,6 +212,17 @@ func StrEqualFolded(a Text, b string, caseSensitive bool) bool {
 		missing("StrEqual")
 	}
 	return textOps.StrEqualFolded(a, b, caseSensitive)
+}
+
+// StrEqualLiteral compares two literals, case sensitively or not, which is what
+// a classname check against a constant is.
+//
+//sp:native StrEqual
+func StrEqualLiteral(a string, b string, caseSensitive bool) bool {
+	if textOps.StrEqualLiteral == nil {
+		missing("StrEqual")
+	}
+	return textOps.StrEqualLiteral(a, b, caseSensitive)
 }
 
 // StrEqual says whether the buffer holds exactly that.

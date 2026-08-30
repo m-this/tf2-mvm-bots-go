@@ -116,10 +116,15 @@ func shape(fn string) string {
 		//sp:const and this is what checks it against the shipped
 		declaration. */
 
-		// The type is everything up to the last word, which is the name,
-		// plus any [3] the name carries.
+		/* The type is everything but the name
+
+		Two shapes: char[] name, where the dimensions belong to the type
+		and come before the name, and float name[3], where they come
+		after it. Taking the last word as the name and keeping whatever
+		brackets were attached to it handles both.
+		*/
 		dims := ""
-		if at := strings.Index(p, "["); at >= 0 {
+		if at := strings.Index(p, "["); at >= 0 && at > strings.LastIndexByte(p, ' ') {
 			dims, p = p[at:], strings.TrimSpace(p[:at])
 		}
 		if space := strings.LastIndexByte(p, ' '); space >= 0 {
