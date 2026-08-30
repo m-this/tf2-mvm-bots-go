@@ -116,6 +116,10 @@ var Actions = []Body{
 		Dir: "internal/action/movetofront", Out: "sourcepawn/movetofront.sp", Prefix: "Go_",
 		Shipped: "source/redbots3/behavior/movetofront.sp",
 	},
+	{
+		Dir: "internal/action/engineerbuildsentrygun", Out: "sourcepawn/engineerbuildsentrygun.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/behavior/engineerbuildsentrygun.sp",
+	},
 }
 
 // All is every body. Adding one here is what makes it generated.

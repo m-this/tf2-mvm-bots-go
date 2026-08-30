@@ -67,6 +67,12 @@ type Extern struct {
 	// which takes the value as its second argument.
 	Slot bool
 	Set  bool
+	// Choice says the extern is SourcePawn's ?: and not a call at all. Go
+	// has no conditional expression, and a two-branch if writing a string
+	// is not a thing the emitter can spell: SourcePawn holds text in a
+	// sized buffer, so that shape becomes two copies where the plugin
+	// wrote one argument.
+	Choice bool
 	// Delete says the method is SourcePawn's delete on its receiver, which
 	// makes the receiver's type a handle: a lifetime the emitter tracks and
 	// refuses to leave open.

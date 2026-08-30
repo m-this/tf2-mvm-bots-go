@@ -531,3 +531,21 @@ func HasAmmo(weapon int32) bool {
 	}
 	return installed.HasAmmo(weapon)
 }
+
+/*
+Choose is SourcePawn's a ? b : c, which Go does not have.
+
+Only where the plugin wrote one, and only for text. Everything else takes an if,
+because a Go if is clearer than a nested conditional and emits the same thing.
+The plugin's own arguments are the reason it exists: a message picked between two
+literals is one argument in SourcePawn and, written as an if, becomes two calls
+that a reader has to check are otherwise identical.
+
+//sp:choice ?:
+*/
+func Choose(cond bool, yes string, no string) string {
+	if cond {
+		return yes
+	}
+	return no
+}

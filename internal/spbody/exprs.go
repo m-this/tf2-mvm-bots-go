@@ -337,6 +337,16 @@ func (e *emitter) externMethod(n *ast.SelectorExpr) (Extern, string, bool) {
 	return x, e.expr(n.X), true
 }
 
+// externOf2 is externOf for a call site, which is where the package-level
+// externs that are not plain calls have to be recognised.
+func (e *emitter) externOf2(call *ast.CallExpr) (Extern, bool) {
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return Extern{}, false
+	}
+	return e.externOf(sel)
+}
+
 func (e *emitter) externOf(n *ast.SelectorExpr) (Extern, bool) {
 	id, ok := n.X.(*ast.Ident)
 	if !ok {
@@ -373,6 +383,13 @@ func (e *emitter) callWith(call *ast.CallExpr, extra []string, front ...string) 
 			return ""
 		}
 		return recv + "." + x.Func
+	}
+	if x, ok := e.externOf2(call); ok && x.Choice {
+		if len(call.Args) != 3 {
+			e.fail(call.Pos(), "%s is SourcePawn's ?: and takes a condition and two values", x.Func)
+			return ""
+		}
+		return fmt.Sprintf("%s ? %s : %s", e.expr(call.Args[0]), e.expr(call.Args[1]), e.expr(call.Args[2]))
 	}
 	if x, ok := e.slotExtern(call); ok {
 		return e.slot(call, x)
