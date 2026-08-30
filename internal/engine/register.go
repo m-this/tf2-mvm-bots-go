@@ -16,6 +16,13 @@ type RegisterCalls struct {
 	HookEvent               func(name string)
 	CreateTimerWith         func(interval float32, data int32, flags int32) Timer
 	ResetIntentionInterface func(client int32)
+	SetShoppedThisBreak     func(client int32, shopped bool)
+	SetBeingRevived         func(client int32, reviving bool)
+	EventInt                func(e Event, key string) int32
+	EventBool               func(e Event, key string) bool
+	ResetSpyIntel           func()
+	SetupSniperSpotHints    func()
+	NestRelocationResetAll  func()
 }
 
 var registrations RegisterCalls
@@ -76,4 +83,82 @@ func ResetIntentionInterface(client int32) {
 		missing("ResetIntentionInterface")
 	}
 	registrations.ResetIntentionInterface(client)
+}
+
+// SetShoppedThisBreak writes the shopping flag, which a break clears for
+// everybody.
+//
+//sp:slotset g_bShoppedThisBreak
+func SetShoppedThisBreak(client int32, shopped bool) {
+	if registrations.SetShoppedThisBreak == nil {
+		missing("g_bShoppedThisBreak")
+	}
+	registrations.SetShoppedThisBreak(client, shopped)
+}
+
+// SetBeingRevived says somebody has a revive marker up over this player.
+//
+//sp:slotset g_bIsBeingRevived
+func SetBeingRevived(client int32, reviving bool) {
+	if registrations.SetBeingRevived == nil {
+		missing("g_bIsBeingRevived")
+	}
+	registrations.SetBeingRevived(client, reviving)
+}
+
+// SpyKilled is g_bSpyKilled, set while a defender spy's death is being handled.
+//
+//sp:global g_bSpyKilled
+func SpyKilled() bool { return false }
+
+// EventInt reads a number off a game event.
+//
+//sp:method GetInt
+func (e Event) EventInt(key string) int32 {
+	if registrations.EventInt == nil {
+		missing("Event.GetInt")
+	}
+	return registrations.EventInt(e, key)
+}
+
+// EventBool reads a flag off one.
+//
+//sp:method GetBool
+func (e Event) EventBool(key string) bool {
+	if registrations.EventBool == nil {
+		missing("Event.GetBool")
+	}
+	return registrations.EventBool(e, key)
+}
+
+// ResetSpyIntel forgets what the bots think they know about spies. Ported,
+// spycheck.
+//
+//sp:body ResetSpyIntel
+func ResetSpyIntel() {
+	if registrations.ResetSpyIntel == nil {
+		missing("ResetSpyIntel")
+	}
+	registrations.ResetSpyIntel()
+}
+
+// SetupSniperSpotHints reads the map's sniping spots again.
+//
+//sp:plugin SetupSniperSpotHints
+func SetupSniperSpotHints() {
+	if registrations.SetupSniperSpotHints == nil {
+		missing("SetupSniperSpotHints")
+	}
+	registrations.SetupSniperSpotHints()
+}
+
+// NestRelocationResetAll forgets every engineer's relocation state. Ported,
+// engineeridle.
+//
+//sp:body EngineerNestRelocation_ResetAll
+func NestRelocationResetAll() {
+	if registrations.NestRelocationResetAll == nil {
+		missing("EngineerNestRelocation_ResetAll")
+	}
+	registrations.NestRelocationResetAll()
 }
