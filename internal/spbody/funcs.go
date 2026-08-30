@@ -218,13 +218,22 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 	var names []string
 	for i := range sig.Params().Len() {
 		p := sig.Params().At(i)
-		tag, dims, terr := e.spType(p.Type())
-		if terr != nil {
-			return "", nil, terr
-		}
 		name := p.Name()
 		if name == "" || name == "_" {
 			return "", nil, errUnnamedParam
+		}
+		// Text a function is given rather than one it owns: SourcePawn
+		// takes it as const char[], with no length, because the body may
+		// only read it. Anything that writes into a buffer takes a Text
+		// and its size, which is a different parameter.
+		if b, ok := types.Unalias(p.Type()).(*types.Basic); ok && b.Kind() == types.String {
+			names = append(names, name)
+			params = append(params, "const char[] "+e.ident(d.Pos(), name))
+			continue
+		}
+		tag, dims, terr := e.spType(p.Type())
+		if terr != nil {
+			return "", nil, terr
 		}
 		names = append(names, name)
 		params = append(params, declare(tag, e.ident(d.Pos(), name), dims))

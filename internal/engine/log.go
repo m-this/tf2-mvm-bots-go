@@ -129,6 +129,7 @@ type TextOps struct {
 	StrEqual        func(a Text, b string) bool
 	StrContains     func(haystack Text, needle string, caseSensitive bool) int32
 	EntityClassname func(entity int32) Text
+	CopyText        func(from string) Text
 }
 
 var textOps TextOps
@@ -138,6 +139,34 @@ func InstallTextOps(c TextOps) func() {
 	previous := textOps
 	textOps = c
 	return func() { textOps = previous }
+}
+
+/*
+CopyText is strcopy into a buffer this port owns.
+
+The destination is the assignment's left side and its length comes from the
+declaration, which is what "fills" means: strcopy(buffer, sizeof buffer, from).
+A buffer somebody else declared cannot be written this way, because the length
+the caller passed is not something the generated code can see.
+
+//sp:native strcopy fills
+*/
+func CopyText(from string) (into Text) {
+	if textOps.CopyText == nil {
+		missing("strcopy")
+	}
+	return textOps.CopyText(from)
+}
+
+// ChooseText is SourcePawn's ?: where one side is a buffer and the other a
+// literal, which is the shape [[Choose]] cannot take.
+//
+//sp:choice ?:
+func ChooseText(cond bool, yes string, no Text) Text {
+	if cond {
+		return CopyText(yes)
+	}
+	return no
 }
 
 // StrEqual says whether the buffer holds exactly that.

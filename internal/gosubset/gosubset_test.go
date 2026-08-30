@@ -47,7 +47,8 @@ func TestRefused(t *testing.T) {
 		{"pointer result", "package decisions\n\nfunc f() *int32 { return nil }\n", "pointer type"},
 		{"address of", wrap("\tp := &a\n\t_ = p"), "taking an address"},
 		{"unsized int", "package decisions\n\nfunc f(x int) {}\n", "32 bits"},
-		{"string type", "package decisions\n\nfunc f(s string) {}\n", "no strings"},
+		{"string result", "package decisions\n\nfunc f() string { return \"\" }\n", "no strings"},
+		{"string field", "package decisions\n\ntype T struct {\n\tS string\n}\n", "no strings"},
 		{"string literal", wrap("\t_ = \"medic\""), "string literal"},
 		{"error type", "package decisions\n\nfunc f() error { return nil }\n", "no error interface"},
 		{"any type", "package decisions\n\nfunc f(x any) {}\n", "concrete type"},
@@ -109,6 +110,11 @@ func TestAccepted(t *testing.T) {
 		src  string
 	}{
 		{"sized arithmetic", wrap("\ta = a*2 + int32(b)")},
+		// Text a function is given is const char[] in SourcePawn, which
+		// the plugin's own helpers take: a reason to log, a name to
+		// compare. Only as a parameter, and the emitter is the second
+		// gate on what the body does with one.
+		{"string parameter", "package decisions\n\nfunc f(reason string) {}\n"},
 		// A call in a case reaches the emitter, which accepts it only when
 		// it is a constant the extern package names and refuses the rest.
 		// This checker cannot tell them apart.

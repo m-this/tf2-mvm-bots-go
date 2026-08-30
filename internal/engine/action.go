@@ -56,6 +56,23 @@ func Continue() Outcome {
 	return actions.Continue()
 }
 
+// ThisAction is the action the engine handed the callback, for a helper that
+// takes it rather than being one.
+//
+//sp:global action
+func ThisAction() Behaviour { return 0 }
+
+// EndWith is Done written on an action a helper was given, which is the same
+// call with the receiver spelled out.
+//
+//sp:method Done
+func (a Behaviour) EndWith(reason string) Outcome {
+	if actions.Done == nil {
+		missing("action.Done")
+	}
+	return actions.Done(reason)
+}
+
 // Done ends the behaviour and says why.
 //
 //sp:native action.Done

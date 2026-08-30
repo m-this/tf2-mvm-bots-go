@@ -117,6 +117,10 @@ var Actions = []Body{
 		Shipped: "source/redbots3/behavior/movetofront.sp",
 	},
 	{
+		Dir: "internal/action/engineerbuildteleporter", Out: "sourcepawn/engineerbuildteleporter.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/behavior/engineerbuildteleporter.sp",
+	},
+	{
 		Dir: "internal/action/attacktank", Out: "sourcepawn/attacktank.sp", Prefix: "Go_",
 		Shipped: "source/redbots3/behavior/attacktank.sp",
 	},

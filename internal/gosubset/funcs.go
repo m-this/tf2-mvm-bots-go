@@ -71,6 +71,14 @@ func (c *checker) checkDefer(d *ast.DeferStmt) {
 func (c *checker) checkParams(t *ast.FuncType) {
 	if t.Params != nil {
 		for _, f := range t.Params.List {
+			// Text a function is given is const char[] in
+			// SourcePawn, which the plugin's own helpers take: a
+			// reason to log, a name to compare. It is a parameter
+			// and nothing else, and the emitter is the second gate
+			// on what a body does with one.
+			if id, ok := f.Type.(*ast.Ident); ok && id.Name == "string" {
+				continue
+			}
 			c.checkType(f.Type)
 		}
 	}

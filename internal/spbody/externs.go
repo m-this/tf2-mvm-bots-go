@@ -197,7 +197,7 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 		case "body":
 			return Extern{Func: name, Body: true, ReturnsArray: returnsArray}, true, nil
 		case "plugin":
-			return Extern{Func: name, Plugin: true, ReturnsArray: returnsArray, Sized: sized, Fills: fills}, true, nil
+			return Extern{Func: name, Plugin: true, ReturnsArray: returnsArray, Sized: sized, Fills: fills, Trail: trail}, true, nil
 		case "sdkcall":
 			return Extern{Func: "SDKCall", Lead: []string{name}, ReturnsArray: returnsArray}, true, nil
 		case "address":

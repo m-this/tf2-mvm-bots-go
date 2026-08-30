@@ -48,7 +48,7 @@ func NestZoneOf(area Area) (zone Text) {
 
 // NearestConfiguredSpot is the one of them closest to a position.
 //
-//sp:plugin NearestConfiguredSpot
+//sp:body NearestConfiguredSpot
 func NearestConfiguredSpot(spots List, from [3]float32) (ok bool, spot [3]float32) {
 	if dispensers.NearestConfiguredSpot == nil {
 		missing("NearestConfiguredSpot")

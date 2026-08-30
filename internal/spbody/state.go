@@ -84,8 +84,12 @@ func (e *emitter) stateVar(name *ast.Ident, value ast.Expr, claimed string) {
 		e.fail(name.Pos(), "%s: %v", name.Name, err)
 		return
 	}
-	if len(dims) > 2 {
-		e.fail(name.Pos(), "%s is a global of more than two dimensions; the plugin has none, so this is almost certainly a mistake", name.Name)
+	if len(dims) > 3 {
+		// Three is the plugin's deepest: a vector, per attempt, per
+		// client, which is the teleporter's route out of spawn. Deeper
+		// than that is a shape nobody has written and almost certainly
+		// a mistake.
+		e.fail(name.Pos(), "%s is a global of more than three dimensions; the plugin has none, so this is almost certainly a mistake", name.Name)
 		return
 	}
 	if len(dims) == 2 && value != nil {
