@@ -96,7 +96,7 @@ func CurrentMap() (name Text) {
 // ActionStackOf is the behaviour stack a bot is running, as text, which is what
 // the debug output prints.
 //
-//sp:plugin ActionStackOf sized
+//sp:body ActionStackOf sized
 func ActionStackOf(client int32) (stack Text) {
 	if texts.ActionStackOf == nil {
 		missing("ActionStackOf")

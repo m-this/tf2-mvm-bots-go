@@ -32,6 +32,7 @@ type EngineerCalls struct {
 	BuilderOf              func(building int32, propType PropType, prop string) int32
 	SetNestRelocate        func(client int32, area Area)
 	RunScriptCode          func(client int32, code string)
+	RunScriptCodeAt        func(client int32, code string, args ...any)
 	HeadSteadyDuration     func(b Body) float32
 	SetPathGoalEntity      func(bot PluginBot, entity int32)
 	EntIndexToEntRef       func(entity int32) int32
@@ -325,6 +326,18 @@ func ShouldBuildDisposable(actor int32) bool {
 		missing("ShouldBuildDisposable")
 	}
 	return engineers.ShouldBuildDisposable(actor)
+}
+
+// RunScriptCodeAt is RunScriptCode with arguments folded into the line, which is
+// how a threat index reaches the script.
+//
+//sp:plugin OSLib_RunScriptCode
+//nolint:revive // unused-parameter: the two are SourcePawn's own defaults, written through
+func RunScriptCodeAt(client int32, first int32, second int32, code string, args ...any) {
+	if engineers.RunScriptCodeAt == nil {
+		missing("OSLib_RunScriptCode")
+	}
+	engineers.RunScriptCodeAt(client, code, args...)
 }
 
 // RunScriptCode hands a line of VScript to the bot, which is the only way to

@@ -12,6 +12,9 @@ type PlayerCalls struct {
 	CloseKeyValues      func(kv KeyValues)
 	ClientCount         func(inGameOnly bool) int32
 	ResourceEntity      func() int32
+	SetVariantString    func(value string)
+	AcceptEntityInput   func(entity int32, input string, activator int32, caller int32, outputID int32) bool
+	TextLength          func(text Text) int32
 }
 
 var players PlayerCalls
@@ -129,4 +132,39 @@ func ResourceEntity() int32 {
 		missing("GetPlayerResourceEntity")
 	}
 	return players.ResourceEntity()
+}
+
+// PlayerSideSpeed is PLAYER_SIDESPEED, the strafe speed a bot is pushed at.
+//
+//sp:global PLAYER_SIDESPEED
+func PlayerSideSpeed() float32 { return 450.0 }
+
+// SetVariantString sets the value the next entity input carries.
+//
+//sp:native SetVariantString
+func SetVariantString(value string) {
+	if players.SetVariantString == nil {
+		missing("SetVariantString")
+	}
+	players.SetVariantString(value)
+}
+
+// AcceptEntityInput fires an input on an entity.
+//
+//sp:native AcceptEntityInput
+func AcceptEntityInput(entity int32, input string, activator int32, caller int32, outputID int32) bool {
+	if players.AcceptEntityInput == nil {
+		missing("AcceptEntityInput")
+	}
+	return players.AcceptEntityInput(entity, input, activator, caller, outputID)
+}
+
+// TextLength is how long a buffer's text is.
+//
+//sp:native strlen
+func TextLength(text Text) int32 {
+	if players.TextLength == nil {
+		missing("strlen")
+	}
+	return players.TextLength(text)
 }

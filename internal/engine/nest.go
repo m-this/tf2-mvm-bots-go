@@ -73,7 +73,7 @@ func NestBuildPosition(area Area) (position [3]float32) {
 // BuildReachTime prices the walk by its length, because the walk stopped being
 // inside the nest the moment he started every one of them at the station.
 //
-//sp:plugin BuildReachTime
+//sp:body BuildReachTime
 func BuildReachTime(from [3]float32, to [3]float32) float32 {
 	if nests.BuildReachTime == nil {
 		missing("BuildReachTime")

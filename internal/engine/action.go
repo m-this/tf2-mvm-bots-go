@@ -26,15 +26,19 @@ type Behaviour int32
 
 // ActionCalls are the four answers, kept apart for the same reason BotCalls is.
 type ActionCalls struct {
-	Continue     func() Outcome
-	Done         func(reason string) Outcome
-	ChangeTo     func(next Behaviour, reason string) Outcome
-	SuspendFor   func(next Behaviour, reason string) Outcome
-	Actor        func() int32
-	TryToSustain func() Outcome
-	TryChangeTo  func(next Behaviour, priority int32, reason string) Outcome
-	TryContinue  func() Outcome
-	TryDone      func(priority int32, reason string) Outcome
+	Continue       func() Outcome
+	Done           func(reason string) Outcome
+	ChangeTo       func(next Behaviour, reason string) Outcome
+	ActionName     func(a Behaviour) Text
+	IterateActions func(client int32, visit func(action Behaviour))
+	AppendText     func(from string) Text
+	AppendTextFrom func(from Text) Text
+	SuspendFor     func(next Behaviour, reason string) Outcome
+	Actor          func() int32
+	TryToSustain   func() Outcome
+	TryChangeTo    func(next Behaviour, priority int32, reason string) Outcome
+	TryContinue    func() Outcome
+	TryDone        func(priority int32, reason string) Outcome
 }
 
 var actions ActionCalls
@@ -154,3 +158,45 @@ func TryDone(priority int32, reason string) Outcome {
 //
 //sp:global RESULT_IMPORTANT
 func ResultImportant() int32 { return 2 }
+
+// ActionName is what the behaviour calls itself, filled into a buffer.
+//
+//sp:method GetName sized
+func (a Behaviour) ActionName() (name Text) {
+	if actions.ActionName == nil {
+		missing("BehaviorAction.GetName")
+	}
+	return actions.ActionName(a)
+}
+
+// IterateActions walks a bot's action stack, calling the visitor for each,
+// taking it by name.
+//
+//sp:native ActionsManager.Iterator
+//nolint:revive // unused-parameter: the visitor is a name the emitter writes, not something the Go calls
+func IterateActions(client int32, visit func(action Behaviour)) {
+	if actions.IterateActions == nil {
+		missing("ActionsManager.Iterator")
+	}
+	actions.IterateActions(client, visit)
+}
+
+// AppendText adds to the end of a buffer, which is how the stack is built up.
+//
+//sp:native StrCat fills
+func AppendText(from string) (into Text) {
+	if actions.AppendText == nil {
+		missing("StrCat")
+	}
+	return actions.AppendText(from)
+}
+
+// AppendTextFrom is StrCat where what is added is another buffer.
+//
+//sp:native StrCat fills
+func AppendTextFrom(from Text) (into Text) {
+	if actions.AppendTextFrom == nil {
+		missing("StrCat")
+	}
+	return actions.AppendTextFrom(from)
+}
