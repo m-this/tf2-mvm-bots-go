@@ -12,8 +12,9 @@ temporary directory when the real one is not there, and the generator reads that
 instead. Nothing chooses between them by configuration: the directory is either
 under the working directory or it is not.
 
-Only what the body generator reads is embedded. The tables and the decisions are
-compiled in already, being ordinary Go.
+Only what the body and action generators read is embedded: internal/action,
+internal/body and internal/engine. The tables and the decisions are compiled in
+already, being ordinary Go.
 */
 package mvmbots
 
@@ -24,7 +25,7 @@ import (
 	"path/filepath"
 )
 
-//go:embed internal/body internal/engine go.mod
+//go:embed internal/action internal/body internal/engine go.mod
 var sources embed.FS
 
 // SourceRoot is a directory holding internal/body and internal/engine, and the
