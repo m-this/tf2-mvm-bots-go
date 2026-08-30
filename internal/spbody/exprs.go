@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -196,11 +197,32 @@ func (e *emitter) selector(n *ast.SelectorExpr) string {
 		e.fail(n.Pos(), "%s used as a value; an extern is called, not passed", e.qualified(n))
 		return ""
 	}
-	if e.info.Selections[n] == nil {
+	sel := e.info.Selections[n]
+	if sel == nil {
 		e.fail(n.Pos(), "%s is not a field of anything this package declares", e.qualified(n))
 		return ""
 	}
-	return fmt.Sprintf("%s.%s", e.expr(n.X), e.ident(n.Sel.Pos(), n.Sel.Name))
+	return fmt.Sprintf("%s.%s", e.expr(n.X), e.fieldName(n, sel))
+}
+
+/*
+	fieldName is what SourcePawn calls the field
+
+A struct the extern package declares stands for one the plugin already has, and
+the plugin's field names are not Go's: BombInfo_t has vPosition, which Go cannot
+export. The Go field carries the SourcePawn name in a struct tag, which is what
+struct tags are for.
+*/
+func (e *emitter) fieldName(n *ast.SelectorExpr, sel *types.Selection) string {
+	if len(sel.Index()) == 1 {
+		if st, ok := sel.Recv().Underlying().(*types.Struct); ok {
+			i := sel.Index()[0]
+			if name, ok := reflect.StructTag(st.Tag(i)).Lookup("sp"); ok {
+				return name
+			}
+		}
+	}
+	return e.ident(n.Sel.Pos(), n.Sel.Name)
 }
 
 func (e *emitter) qualified(n *ast.SelectorExpr) string {

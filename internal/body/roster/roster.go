@@ -59,10 +59,10 @@ func AliveOnTeam(maxClients int32, team int32) int32 {
 // LoadedRounds is what the weapon has to fire with. A weapon with no ammo at
 // all reads as empty rather than as whatever the clip last held.
 func LoadedRounds(weapon int32) int32 {
-	if !engine.HasAmmo(weapon) {
+	if !engine.SDKHasAmmo(weapon) {
 		return 0
 	}
-	clip := engine.Clip1(weapon)
+	clip := engine.SDKClip1(weapon)
 	if clip < 0 {
 		return 0
 	}

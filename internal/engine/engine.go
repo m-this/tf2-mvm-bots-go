@@ -161,20 +161,21 @@ func GetClientTeam(client int32) int32 {
 	return installed.GetClientTeam(client)
 }
 
-// HasAmmo says whether the weapon has anything left to fire.
+// SDKHasAmmo is the raw SDKCall form, which internal/body/roster uses to prove
+// the generator can emit one. A port calls the plugin's wrapper below.
 //
 //sp:sdkcall m_hHasAmmo
-func HasAmmo(weapon int32) bool {
+func SDKHasAmmo(weapon int32) bool {
 	if installed.HasAmmo == nil {
 		missing("HasAmmo")
 	}
 	return installed.HasAmmo(weapon)
 }
 
-// Clip1 is what the weapon holds in its first clip.
+// SDKClip1 is the raw SDKCall form, for the same reason.
 //
 //sp:sdkcall m_hClip1
-func Clip1(weapon int32) int32 {
+func SDKClip1(weapon int32) int32 {
 	if installed.Clip1 == nil {
 		missing("Clip1")
 	}
@@ -519,3 +520,14 @@ func EntityFlags(entity int32) int32 {
 //
 //sp:global FL_ONGROUND
 func FlagOnGround() int32 { return 1 }
+
+// HasAmmo is sdkcalls.sp's wrapper round m_hHasAmmo, which is what the plugin
+// actually calls.
+//
+//sp:plugin HasAmmo
+func HasAmmo(weapon int32) bool {
+	if installed.HasAmmo == nil {
+		missing("HasAmmo")
+	}
+	return installed.HasAmmo(weapon)
+}
