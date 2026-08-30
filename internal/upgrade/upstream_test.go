@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/m-this/tf2-mvm-bots-go/gen/go/attr"
 	"github.com/m-this/tf2-mvm-bots-go/internal/tables"
 	"github.com/m-this/tf2-mvm-bots-go/internal/upgrade"
 	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
@@ -59,16 +58,16 @@ func shippedFunc(t *testing.T, src, name string) string {
 }
 
 // attrOf is the id the tables package gives a schema name.
-func attrOf(t *testing.T, name string) attr.Attribute {
+func attrOf(t *testing.T, name string) tables.Attribute {
 	t.Helper()
 
 	for _, a := range tables.Attributes {
 		if a.Name == name {
-			return attr.Attribute(a.ID)
+			return a
 		}
 	}
 	t.Fatalf("the ranking names %q and internal/tables does not", name)
-	return attr.AttributeNone
+	return tables.Attribute{}
 }
 
 // rulesOf is every (attribute, score) the text holds, in order.
@@ -204,7 +203,7 @@ func klassOf(t *testing.T, name string) upgrade.Klass {
 func compare(t *testing.T, what string, shipped, table []upgrade.Rule) {
 	t.Helper()
 
-	got := map[attr.Attribute]upgrade.Score{}
+	got := map[tables.Attribute]upgrade.Score{}
 	for _, r := range table {
 		got[r.Attr] = r.Score
 	}
@@ -212,17 +211,17 @@ func compare(t *testing.T, what string, shipped, table []upgrade.Rule) {
 	for _, r := range shipped {
 		score, ranked := got[r.Attr]
 		if !ranked {
-			t.Errorf("%s: the shipped file ranks %v at %d and the table does not rank it", what, r.Attr, r.Score)
+			t.Errorf("%s: the shipped file ranks %q at %d and the table does not rank it", what, r.Attr.Name, r.Score)
 			continue
 		}
 		if score != r.Score {
-			t.Errorf("%s: the shipped file ranks %v at %d and the table at %d", what, r.Attr, r.Score, score)
+			t.Errorf("%s: the shipped file ranks %q at %d and the table at %d", what, r.Attr.Name, r.Score, score)
 		}
 		delete(got, r.Attr)
 	}
 
 	for a, score := range got {
-		t.Errorf("%s: the table ranks %v at %d and the shipped file does not rank it", what, a, score)
+		t.Errorf("%s: the table ranks %q at %d and the shipped file does not rank it", what, a.Name, score)
 	}
 }
 

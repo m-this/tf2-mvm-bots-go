@@ -9,18 +9,19 @@ charge, which is why so much of this is about weapon slots and charge levels.
 
 // MedicCalls are the answers.
 type MedicCalls struct {
-	ClientHealth           func(client int32) int32
-	EntPropFloat           func(entity int32, propType PropType, prop string) float32
-	IsRangeGreaterThanEx   func(bot Bot, position [3]float32, distance float32) bool
-	IsTaunting             func(client int32) bool
-	IsPlayerMoving         func(client int32) bool
-	CanWeaponAddUberOnHit  func(weapon int32) bool
-	EnemyNearestToMe       func(client int32, maxDistance float32, giantsOnly bool, ignoreUber bool, stunnedOnly bool, class Class) int32
-	DamageAmount           func(d Damage) float32
-	IsRangeLessThanEx      func(bot Bot, position [3]float32, distance float32) bool
-	IsPathToVectorPossible func(client int32, position [3]float32) bool
-	NearestReviveMarker    func(client int32, maxDistance float32) int32
-	AbsOrigin              func(entity int32) [3]float32
+	ClientHealth                 func(client int32) int32
+	EntPropFloat                 func(entity int32, propType PropType, prop string) float32
+	IsRangeGreaterThanEx         func(bot Bot, position [3]float32, distance float32) bool
+	IsTaunting                   func(client int32) bool
+	IsPlayerMoving               func(client int32) bool
+	CanWeaponAddUberOnHit        func(weapon int32) bool
+	EnemyNearestToMe             func(client int32, maxDistance float32, giantsOnly bool, ignoreUber bool, stunnedOnly bool, class Class) int32
+	DamageAmount                 func(d Damage) float32
+	IsRangeLessThanEx            func(bot Bot, position [3]float32, distance float32) bool
+	IsPathToVectorPossible       func(client int32, position [3]float32) bool
+	IsPathToVectorPossibleLength func(client int32, position [3]float32) (bool, float32)
+	NearestReviveMarker          func(client int32, maxDistance float32) int32
+	AbsOrigin                    func(entity int32) [3]float32
 }
 
 var medics MedicCalls
@@ -163,6 +164,18 @@ func IsPathToVectorPossible(client int32, position [3]float32) bool {
 		missing("IsPathToVectorPossible")
 	}
 	return medics.IsPathToVectorPossible(client, position)
+}
+
+// IsPathToVectorPossibleLength is the same search, answering how long the route
+// it found was. The plugin declares the length as a defaulted by-reference
+// parameter, so a caller that wants it takes it as a second result.
+//
+//sp:plugin IsPathToVectorPossible
+func IsPathToVectorPossibleLength(client int32, position [3]float32) (ok bool, length float32) {
+	if medics.IsPathToVectorPossibleLength == nil {
+		missing("IsPathToVectorPossible")
+	}
+	return medics.IsPathToVectorPossibleLength(client, position)
 }
 
 // NearestReviveMarker is the closest reanimator a medic could pick up.

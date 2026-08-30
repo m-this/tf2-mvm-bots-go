@@ -97,7 +97,11 @@ func (e *emitter) opens(d *ast.FuncDecl) map[string]bool {
 		if !ok {
 			return
 		}
-		if x, isExtern := e.externOfCall(call); isExtern && x.Global {
+		// A tag change is a view of a handle somebody else owns, and a
+		// SourcePawn variable's handle outlives every function that
+		// looks at one. Neither is opened here, so neither is owed a
+		// close.
+		if x, isExtern := e.externOfCall(call); isExtern && (x.Global || x.Cast) {
 			return
 		}
 		if id, ok := lhs[0].(*ast.Ident); ok {

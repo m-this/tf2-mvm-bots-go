@@ -3,6 +3,8 @@ package spbody
 import (
 	"fmt"
 	"go/ast"
+	"go/token"
+	"go/types"
 	"strings"
 )
 
@@ -73,10 +75,65 @@ func varName(vs *ast.ValueSpec, d *ast.GenDecl) (string, bool) {
 	return "", false
 }
 
+/*
+	stringTable is a fixed array of names, which SourcePawn spells char x[][]
+
+The one shape of text the subset holds as state. The plugin has two of them, both
+lists of entity classnames walked by index, and neither is ever written to: what
+FindEntityByClassname wants is a real string and there is no id that would do
+instead.
+
+Read-only is the whole of the rule. The emitter has no way to write into one, so
+a body that tries fails on the assignment rather than here.
+*/
+func (e *emitter) stringTable(name *ast.Ident, value ast.Expr, claimed string, t types.Type) bool {
+	arr, ok := types.Unalias(t).(*types.Array)
+	if !ok {
+		return false
+	}
+	basic, ok := types.Unalias(arr.Elem()).(*types.Basic)
+	if !ok || basic.Kind() != types.String {
+		return false
+	}
+	if value == nil {
+		e.fail(name.Pos(), "%s is a table of names with nothing in it", name.Name)
+		return true
+	}
+	lit, ok := value.(*ast.CompositeLit)
+	if !ok {
+		e.fail(name.Pos(), "%s is a table of names and its value is not a literal", name.Name)
+		return true
+	}
+	emitted := e.cfg.Prefix + e.ident(name.Pos(), name.Name)
+	if claimed != "" {
+		emitted = e.ident(name.Pos(), claimed)
+	}
+	names := make([]string, 0, len(lit.Elts))
+	for _, el := range lit.Elts {
+		text, ok := el.(*ast.BasicLit)
+		if !ok || text.Kind != token.STRING {
+			e.fail(el.Pos(), "%s holds something that is not a name", name.Name)
+			return true
+		}
+		names = append(names, text.Value)
+	}
+	e.state = append(e.state, stateVar{name: emitted, tag: "char", dims: []int64{arr.Len(), 0}})
+	e.line("static char %s[][] =", emitted)
+	e.line("{")
+	for _, n := range names {
+		e.line("\t%s,", n)
+	}
+	e.line("};")
+	return true
+}
+
 func (e *emitter) stateVar(name *ast.Ident, value ast.Expr, claimed string) {
 	obj := e.info.Defs[name]
 	if obj == nil {
 		e.fail(name.Pos(), "the variable %s has no type", name.Name)
+		return
+	}
+	if e.stringTable(name, value, claimed, obj.Type()) {
 		return
 	}
 	tag, dims, err := e.spType(obj.Type())

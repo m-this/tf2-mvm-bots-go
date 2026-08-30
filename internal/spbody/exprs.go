@@ -384,6 +384,13 @@ func (e *emitter) callWith(call *ast.CallExpr, extra []string, front ...string) 
 		}
 		return recv + "." + x.Func
 	}
+	if x, ok := e.externOf2(call); ok && x.Cast {
+		if len(call.Args) != 1 {
+			e.fail(call.Pos(), "%s is a tag change and takes one value", x.Func)
+			return ""
+		}
+		return fmt.Sprintf("view_as<%s>(%s)", x.Func, e.expr(call.Args[0]))
+	}
 	if x, ok := e.externOf2(call); ok && x.Choice {
 		if len(call.Args) != 3 {
 			e.fail(call.Pos(), "%s is SourcePawn's ?: and takes a condition and two values", x.Func)

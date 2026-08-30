@@ -174,6 +174,11 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 			// Written on the receiver like a method, and without the
 			// parentheses: convar.BoolValue, not convar.BoolValue().
 			return Extern{Func: name, Method: true, Property: true}, true, nil
+		case "cast":
+			// view_as<Tag>(x): a tag change and nothing else, which is
+			// what a callback handed a raw handle has to do before it
+			// can use the methodmap.
+			return Extern{Func: name, Cast: true}, true, nil
 		case "choice":
 			return Extern{Func: name, Choice: true}, true, nil
 		case "delete":
@@ -203,7 +208,7 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 		case "address":
 			return Extern{Func: "LoadFromAddress", Lead: []string{name}, ReturnsArray: returnsArray}, true, nil
 		default:
-			return Extern{}, false, fmt.Errorf("the directive kind %q is not native, choice, new, method, property, propertyset, delete, global, slot, slotset, body, plugin, sdkcall or address", kind)
+			return Extern{}, false, fmt.Errorf("the directive kind %q is not native, cast, choice, new, method, property, propertyset, delete, global, slot, slotset, body, plugin, sdkcall or address", kind)
 		}
 	}
 	return Extern{}, false, nil

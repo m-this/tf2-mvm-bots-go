@@ -75,6 +75,9 @@ type Extern struct {
 	// buffer, which is the only place GetAngleVectors will take the two
 	// vectors a caller does not want.
 	Trail []string
+	// Cast says the call is SourcePawn's view_as, which is a tag change
+	// written around the value rather than a call at all.
+	Cast bool
 	// Choice says the extern is SourcePawn's ?: and not a call at all. Go
 	// has no conditional expression, and a two-branch if writing a string
 	// is not a thing the emitter can spell: SourcePawn holds text in a

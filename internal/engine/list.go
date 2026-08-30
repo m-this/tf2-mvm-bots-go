@@ -10,6 +10,10 @@ delete at every way out and refuses one that nothing closes.
 
 // ListCalls are the answers.
 type ListCalls struct {
+	SortCustom func(l List, cmp Compare)
+	PushFloat  func(l List, value float32) int32
+	PushAt     func(l List, value int32) int32
+	SetFloatAt func(l List, index int32, value float32, block int32)
 	NewList    func() List
 	NewBlocks  func(blockSize int32) List
 	ListGetAt  func(l List, index int32, block int32) int32
@@ -81,6 +85,68 @@ func (l List) Close() {
 		missing("delete ArrayList")
 	}
 	lists.ListClose(l)
+}
+
+/*
+Handle is SourcePawn's untyped handle, which is what a sort callback is handed.
+
+An ArrayList is a methodmap over one, and the callback's own declaration takes
+the raw handle rather than the methodmap, so the port takes it the same way.
+
+//sp:tag Handle
+*/
+type Handle int32
+
+// Compare is a sort callback: which of two entries comes first.
+type Compare func(index1 int32, index2 int32, array Handle, hndl Handle) int32
+
+// SortCustom sorts by a comparison this port declares. The callback is passed
+// by name, which is the one place a function is a value in the subset.
+//
+//sp:method SortCustom
+func (l List) SortCustom(cmp Compare) {
+	if lists.SortCustom == nil {
+		missing("ArrayList.SortCustom")
+	}
+	lists.SortCustom(l, cmp)
+}
+
+// PushFloat adds a float and answers where it landed, which is what a two-cell
+// entry needs before its second cell is written.
+//
+//sp:method Push
+func (l List) PushFloat(value float32) int32 {
+	if lists.PushFloat == nil {
+		missing("ArrayList.Push")
+	}
+	return lists.PushFloat(l, value)
+}
+
+// PushAt is Push answering where the entry landed.
+//
+//sp:method Push
+func (l List) PushAt(value int32) int32 {
+	if lists.PushAt == nil {
+		missing("ArrayList.Push")
+	}
+	return lists.PushAt(l, value)
+}
+
+// SetFloatAt writes a float into one cell of a wide entry.
+//
+//sp:method Set
+func (l List) SetFloatAt(index int32, value float32, block int32) {
+	if lists.SetFloatAt == nil {
+		missing("ArrayList.Set")
+	}
+	lists.SetFloatAt(l, index, value, block)
+}
+
+// ListOf is the methodmap over a handle a callback was handed.
+//
+//sp:cast ArrayList
+func ListOf(h Handle) List {
+	return List(h)
 }
 
 // NewBlocks makes one whose entries are several cells wide, which is how the

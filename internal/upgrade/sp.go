@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/m-this/tf2-mvm-bots-go/gen/go/attr"
 	"github.com/m-this/tf2-mvm-bots-go/internal/tables"
 )
 
@@ -22,14 +21,9 @@ Everything here is written from the table in table.go, so the scores exist in on
 place and upstream_test.go is what says that place agrees with the plugin.
 */
 
-// enumOf is the SourcePawn constant for an attribute id.
-func enumOf(a attr.Attribute) string {
-	for _, t := range tables.Attributes {
-		if attr.Attribute(t.ID) == a {
-			return t.Enum()
-		}
-	}
-	return "ATTRIBUTE_NONE"
+// enumOf is the SourcePawn constant for an attribute.
+func enumOf(a tables.Attribute) string {
+	return a.Enum()
 }
 
 // cases writes one switch arm per rule, in score order so the file reads as a

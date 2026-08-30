@@ -156,6 +156,18 @@ func lastSlash(s string) int {
 }
 
 func (c *checker) checkValueSpec(spec *ast.ValueSpec, tok token.Token, atPackageLevel bool) {
+	/* A table of names, which SourcePawn spells char x[][]
+
+	The one shape of text the subset holds as state. Both of the plugin's are
+	lists of entity classnames walked by index, and FindEntityByClassname
+	wants a real string: there is no id that would do instead. Read only,
+	which is enforced by there being no way to emit a write into one. */
+	if tok == token.VAR && atPackageLevel && specIsNameTable(spec) {
+		for _, v := range spec.Values {
+			c.checkNameTable(v)
+		}
+		return
+	}
 	if tok == token.VAR && atPackageLevel {
 		// A package-level var is the plugin's own state, emitted as a
 		// SourcePawn global. Its initialiser is written once at load, so
@@ -169,6 +181,48 @@ func (c *checker) checkValueSpec(spec *ast.ValueSpec, tok token.Token, atPackage
 	}
 	for _, v := range spec.Values {
 		c.checkExpr(v)
+	}
+}
+
+// specIsNameTable reads the [N]string off the declaration or off the literal,
+// because both `var x [5]string = ...` and `var x = [5]string{...}` are written.
+func specIsNameTable(spec *ast.ValueSpec) bool {
+	if isStringArray(spec.Type) {
+		return true
+	}
+	for _, v := range spec.Values {
+		if lit, ok := v.(*ast.CompositeLit); ok && isStringArray(lit.Type) {
+			return true
+		}
+	}
+	return false
+}
+
+// isStringArray is the [N]string a table of names is written as.
+func isStringArray(t ast.Expr) bool {
+	arr, ok := t.(*ast.ArrayType)
+	if !ok || arr.Len == nil {
+		return false
+	}
+	elem, ok := arr.Elt.(*ast.Ident)
+	return ok && elem.Name == "string"
+}
+
+// checkNameTable accepts a literal of names and nothing else: no expression, no
+// nesting, no computed element.
+func (c *checker) checkNameTable(v ast.Expr) {
+	lit, ok := v.(*ast.CompositeLit)
+	if !ok {
+		c.refuse(v.Pos(), "a table of names that is not a literal",
+			"write the names out; SourcePawn fills a char[][] at load and computes nothing")
+		return
+	}
+	for _, elt := range lit.Elts {
+		text, ok := elt.(*ast.BasicLit)
+		if !ok || text.Kind != token.STRING {
+			c.refuse(elt.Pos(), "an entry of a name table that is not a name",
+				"write a string literal; the table is emitted as it is written")
+		}
 	}
 }
 

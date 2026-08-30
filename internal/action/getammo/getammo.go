@@ -325,3 +325,135 @@ func IsPossible(actor int32) bool {
 
 	return bPossible
 }
+
+/*
+The classnames a health or ammo search walks.
+
+A table of names rather than ids: FindEntityByClassname wants a real string, and
+two of these carry a wildcard the schema has no id for.
+*/
+//
+//sp:name g_strHealthAndAmmoEntities
+var healthAndAmmoEntities = [5]string{
+	"func_regenerate",
+	"item_ammopack*",
+	"item_health*",
+	"obj_dispenser",
+	"tf_ammo_pack",
+}
+
+/*
+The health and ammo this bot could actually walk to, and how far each one really is
+
+Two costs hide in this and both were paid per candidate: a nav mesh search, and a
+JSON object on the heap. MvM floors are covered in candidates, because tf_ammo_pack
+is what a dead robot leaves behind and a wave leaves hundreds of them.
+
+So the cheap question goes first. Straight-line distance costs a subtraction and
+orders the candidates; the search is run only for the nearest few, because the
+nearest few are where the answer is and the rest were never going to win. A pack
+behind a wall now loses its place to the next one along instead of costing a search
+of its own.
+
+The list is entity index and travel distance, in pairs, and the caller takes the
+shortest.
+*/
+const (
+	//sp:name HEALTH_CANDIDATES_MAX
+	candidatesSeen = 64
+	//sp:name HEALTH_PATHS_MAX
+	pathsMax = candidatesMax
+)
+
+// ComputeVectors fills the list with what is in range, nearest first.
+//
+//sp:name ComputeHealthAndAmmoVectors
+func ComputeVectors(client int32, found engine.List, maxRange float32) {
+	nearby := engine.NewBlocks(2)
+	defer nearby.Close()
+
+	myCentre := engine.WorldSpaceCenter(client)
+
+	for i := int32(0); i < int32(len(healthAndAmmoEntities)); i++ {
+		ammo := int32(-1)
+
+		for {
+			ammo = engine.FindEntityByClassname(ammo, healthAndAmmoEntities[i])
+
+			if ammo == -1 {
+				break
+			}
+
+			// A wave leaves more of these on the floor than anybody is going to walk to
+			if nearby.Length() >= candidatesSeen {
+				break
+			}
+
+			if engine.EntityTeamNumber(ammo) == int32(engine.PlayerEnemyTeam(client)) {
+				continue
+			}
+
+			entityRange := engine.VectorDistance(myCentre, engine.WorldSpaceCenter(ammo))
+
+			if entityRange > maxRange {
+				continue
+			}
+
+			if engine.IsBaseObject(ammo) {
+				// Can't get anything from still building buildings.
+				if engine.IsBuildingUp(ammo) {
+					continue
+				}
+
+				// Skip empty dispenser.
+				if engine.ObjectType(ammo) == engine.ObjectDispenser() && engine.EntProp(ammo, engine.PropSend(), "m_iAmmoMetal") <= 0 {
+					continue
+				}
+			}
+
+			at := nearby.PushFloat(entityRange)
+			nearby.SetAt(at, ammo, 1)
+		}
+	}
+
+	nearby.SortCustom(SortByStraightLineRange)
+
+	searches := int32(0)
+
+	for i := int32(0); i < nearby.Length() && searches < pathsMax; i++ {
+		ammo := nearby.GetAt(i, 1)
+
+		searches++
+
+		reachable, length := engine.IsPathToVectorPossibleLength(client, engine.WorldSpaceCenter(ammo))
+
+		if !reachable {
+			continue
+		}
+
+		if length > maxRange {
+			continue
+		}
+
+		at := found.PushAt(ammo)
+		found.SetFloatAt(at, length, 1)
+	}
+}
+
+// SortByStraightLineRange is the cheap ordering the search runs before it spends
+// a nav mesh query on anything.
+//
+//sp:name SortByStraightLineRange
+//nolint:revive // unused-parameter: the signature is SourceMod's, not ours
+func SortByStraightLineRange(index1 int32, index2 int32, array engine.Handle, hndl engine.Handle) int32 {
+	list := engine.ListOf(array)
+
+	first := engine.AsFloat(list.GetAt(index1, 0))
+	second := engine.AsFloat(list.GetAt(index2, 0))
+
+	if first < second {
+		return -1
+	}
+
+	return engine.ChooseInt(first > second, 1, 0)
+}

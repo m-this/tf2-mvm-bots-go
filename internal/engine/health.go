@@ -91,7 +91,7 @@ func ClampFloat(value float32, low float32, high float32) float32 {
 // ComputeHealthAndAmmoVectors fills the list with what is within range, as an
 // entity and a distance per entry.
 //
-//sp:plugin ComputeHealthAndAmmoVectors
+//sp:body ComputeHealthAndAmmoVectors
 func ComputeHealthAndAmmoVectors(actor int32, into List, maxRange float32) {
 	if healths.ComputeHealthAndAmmoVectors == nil {
 		missing("ComputeHealthAndAmmoVectors")

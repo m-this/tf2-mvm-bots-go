@@ -1,6 +1,6 @@
 package upgrade
 
-import "github.com/m-this/tf2-mvm-bots-go/gen/go/attr"
+import "github.com/m-this/tf2-mvm-bots-go/internal/tables"
 
 /*
 What a bot buys at the upgrade station, as a table.
@@ -49,7 +49,7 @@ const (
 
 // Rule is one attribute and what it is worth.
 type Rule struct {
-	Attr  attr.Attribute
+	Attr  tables.Attribute
 	Score Score
 	// When is Always unless the score depends on something the caller has
 	// to answer.
@@ -69,58 +69,58 @@ Everything else falls through to the class table below.
 var Loadout = map[int32][]Rule{
 	// Kritzkrieg: the crits are the weapon, so the meter is what matters
 	35: {
-		{Attr: attr.AttrUberchargeRateBonus, Score: 330},
+		rule("ubercharge rate bonus", 330),
 	},
 	// Quick-Fix: it heals rather than saves, so it should heal faster
 	411: {
-		{Attr: attr.AttrHealingMastery, Score: 330},
-		{Attr: attr.AttrUberchargeRateBonus, Score: 300},
+		rule("healing mastery", 330),
+		rule("ubercharge rate bonus", 300),
 	},
 	// Brass Beast: the damage minigun, and it cannot reposition to make up for less
 	312: {
-		{Attr: attr.AttrDamageBonus, Score: 320},
+		rule("damage bonus", 320),
 	},
 	// Tomislav: it already fires fast, so damage per bullet beats more bullets
 	424: {
-		{Attr: attr.AttrDamageBonus, Score: 300},
+		rule("damage bonus", 300),
 	},
 	// Hitman's Heatmaker: reach the shot sooner
 	752: {
-		{Attr: attr.AttrSRifleChargeRateIncreased, Score: 300},
+		rule("SRifle Charge rate increased", 300),
 	},
 	// Machina: every shot is a charged one, so damage rides on all of them
 	526: {
-		{Attr: attr.AttrDamageBonus, Score: 300},
+		rule("damage bonus", 300),
 	},
 	// Loose Cannon: a faster cannonball is one a bot can actually land
 	996: {
-		{Attr: attr.AttrProjectileSpeedIncreased, Score: 300},
+		rule("Projectile speed increased", 300),
 	},
 	// Rescue Ranger: every shot and every repair at range costs metal
 	997: {
-		{Attr: attr.AttrMetalRegen, Score: 300},
-		{Attr: attr.AttrMaxammoMetalIncreased, Score: 290},
+		rule("metal regen", 300),
+		rule("maxammo metal increased", 290),
 	},
 	// Beggar's Bazooka: it fires as fast as the button is pressed, so buying that twice is buying nothing
 	730: {
-		{Attr: attr.AttrFireRateBonus, Score: 20},
-		{Attr: attr.AttrClipSizeUpgradeAtomic, Score: 280},
-		{Attr: attr.AttrClipSizeBonusUpgrade, Score: 280},
+		rule("fire rate bonus", 20),
+		rule("clip size upgrade atomic", 280),
+		rule("clip size bonus upgrade", 280),
 	},
 	// Widowmaker: the shot is paid for in metal and paid back in damage dealt
 	527: {
-		{Attr: attr.AttrDamageBonus, Score: 300},
-		{Attr: attr.AttrFireRateBonus, Score: 250},
+		rule("damage bonus", 300),
+		rule("fire rate bonus", 250),
 	},
 	// Short Circuit: it eats projectiles rather than robots, and eats metal doing it
 	528: {
-		{Attr: attr.AttrMetalRegen, Score: 300},
+		rule("metal regen", 300),
 	},
 	// Frontier Justice: the crits are banked by the sentry, so the clip is what holds them
 	141: {
-		{Attr: attr.AttrClipSizeUpgradeAtomic, Score: 260},
-		{Attr: attr.AttrClipSizeBonusUpgrade, Score: 260},
-		{Attr: attr.AttrDamageBonus, Score: 250},
+		rule("clip size upgrade atomic", 260),
+		rule("clip size bonus upgrade", 260),
+		rule("damage bonus", 250),
 	},
 }
 
@@ -133,8 +133,8 @@ fights the wave out of the same supply the sentry is repaired from, and runs out
 of both. Under the sentry's own fire rate, above everything else the class buys.
 */
 var EngineerMetal = []Rule{
-	{Attr: attr.AttrMaxammoMetalIncreased, Score: 310},
-	{Attr: attr.AttrMetalRegen, Score: 305},
+	rule("maxammo metal increased", 310),
+	rule("metal regen", 305),
 }
 
 /*
@@ -167,82 +167,82 @@ var Class = map[Klass]ClassRules{
 	KlassEngineer: {
 		Split: true,
 		Gun: []Rule{
-			{Attr: attr.AttrDamageBonus, Score: 200},
-			{Attr: attr.AttrFireRateBonus, Score: 190},
-			{Attr: attr.AttrClipSizeUpgradeAtomic, Score: 150},
-			{Attr: attr.AttrClipSizeBonusUpgrade, Score: 150},
-			{Attr: attr.AttrFasterReloadRate, Score: 140},
-			{Attr: attr.AttrMaxammoPrimaryIncreased, Score: 130},
-			{Attr: attr.AttrMaxammoSecondaryIncreased, Score: 120},
+			rule("damage bonus", 200),
+			rule("fire rate bonus", 190),
+			rule("clip size upgrade atomic", 150),
+			rule("clip size bonus upgrade", 150),
+			rule("faster reload rate", 140),
+			rule("maxammo primary increased", 130),
+			rule("maxammo secondary increased", 120),
 		},
 		GunFallthrough: 50,
 		Rest: []Rule{
-			{Attr: attr.AttrEngyDispenserRadiusIncreased, Score: 330},
-			{Attr: attr.AttrEngySentryFireRateIncreased, Score: 320},
-			{Attr: attr.AttrEngyBuildingHealthBonus, Score: 260},
-			{Attr: attr.AttrMetalRegen, Score: 220},
-			{Attr: attr.AttrMaxammoMetalIncreased, Score: 210},
-			{Attr: attr.AttrMeleeAttackRateBonus, Score: 200},
-			{Attr: attr.AttrEngyDisposableSentries, Score: 310, When: EngineerDisposable, Otherwise: -10},
+			rule("engy dispenser radius increased", 330),
+			rule("engy sentry fire rate increased", 320),
+			rule("engy building health bonus", 260),
+			rule("metal regen", 220),
+			rule("maxammo metal increased", 210),
+			rule("melee attack rate bonus", 200),
+			conditional("engy disposable sentries", 310, EngineerDisposable, -10),
 		},
 	},
 	KlassMedic: {
 		Rest: []Rule{
-			{Attr: attr.AttrGenerateRageOnHeal, Score: 320},
-			{Attr: attr.AttrUberchargeRateBonus, Score: 300},
-			{Attr: attr.AttrHealingMastery, Score: 280},
-			{Attr: attr.AttrUberDurationBonus, Score: 230},
-			{Attr: attr.AttrOverhealExpert, Score: 210},
-			{Attr: attr.AttrDamageBonus, Score: 40},
-			{Attr: attr.AttrFireRateBonus, Score: 40},
+			rule("generate rage on heal", 320),
+			rule("ubercharge rate bonus", 300),
+			rule("healing mastery", 280),
+			rule("uber duration bonus", 230),
+			rule("overheal expert", 210),
+			rule("damage bonus", 40),
+			rule("fire rate bonus", 40),
 		},
 	},
 	KlassSniper: {
 		Rest: []Rule{
-			{Attr: attr.AttrExplosiveSniperShot, Score: 330},
-			{Attr: attr.AttrFasterReloadRate, Score: 300},
-			{Attr: attr.AttrSRifleChargeRateIncreased, Score: 60},
+			rule("explosive sniper shot", 330),
+			rule("faster reload rate", 300),
+			rule("SRifle Charge rate increased", 60),
 		},
 	},
 	KlassSpy: {
 		MeleeOnly: true,
 		Rest: []Rule{
-			{Attr: attr.AttrArmorPiercing, Score: 330},
-			{Attr: attr.AttrMeleeAttackRateBonus, Score: 280},
-			{Attr: attr.AttrRoboSapper, Score: 70},
+			rule("armor piercing", 330),
+			rule("melee attack rate bonus", 280),
+			rule("robo sapper", 70),
 		},
 	},
 	KlassPyro: {
 		Rest: []Rule{
-			{Attr: attr.AttrDamageBonus, Score: 320},
-			{Attr: attr.AttrAttackProjectiles, Score: 250},
+			rule("damage bonus", 320),
+			rule("attack projectiles", 250),
 		},
 	},
 	KlassSoldier: {
 		Rest: []Rule{
-			{Attr: attr.AttrFasterReloadRate, Score: 310},
-			{Attr: attr.AttrRocketSpecialist, Score: 290},
-			{Attr: attr.AttrHealOnKill, Score: 250},
+			rule("faster reload rate", 310),
+			rule("rocket specialist", 290),
+			rule("heal on kill", 250),
 		},
 	},
 	KlassDemoMan: {
 		Rest: []Rule{
-			{Attr: attr.AttrFasterReloadRate, Score: 310},
-			{Attr: attr.AttrFireRateBonus, Score: 290},
-			{Attr: attr.AttrProjectileSpeedIncreased, Score: 200},
+			rule("faster reload rate", 310),
+			rule("fire rate bonus", 290),
+			rule("Projectile speed increased", 200),
 		},
 	},
 	KlassHeavy: {
 		Rest: []Rule{
-			{Attr: attr.AttrHealOnKill, Score: 320},
-			{Attr: attr.AttrAttackProjectiles, Score: 230},
+			rule("heal on kill", 320),
+			rule("attack projectiles", 230),
 		},
 	},
 	KlassScout: {
 		Rest: []Rule{
-			{Attr: attr.AttrAppliesSnareEffect, Score: 250},
-			{Attr: attr.AttrMadMilkSyringes, Score: 200},
-			{Attr: attr.AttrMoveSpeedBonus, Score: 190},
+			rule("applies snare effect", 250),
+			rule("mad milk syringes", 200),
+			rule("move speed bonus", 190),
 		},
 	},
 }
@@ -257,35 +257,61 @@ deal that damage are in the wave, and very little when they are not: blast
 resistance against a wave of Scouts is three hundred credits spent on nothing.
 */
 var General = []Rule{
-	{Attr: attr.AttrDamageBonus, Score: 260},
-	{Attr: attr.AttrFireRateBonus, Score: 250},
-	{Attr: attr.AttrMeleeAttackRateBonus, Score: 200},
-	{Attr: attr.AttrProjectilePenetration, Score: 190},
-	{Attr: attr.AttrProjectilePenetrationHeavy, Score: 190},
-	{Attr: attr.AttrCritboostOnKill, Score: 180},
-	{Attr: attr.AttrClipSizeUpgradeAtomic, Score: 170},
-	{Attr: attr.AttrClipSizeBonusUpgrade, Score: 170},
-	{Attr: attr.AttrFasterReloadRate, Score: 160},
-	{Attr: attr.AttrMaxammoPrimaryIncreased, Score: 150},
-	{Attr: attr.AttrProjectileSpeedIncreased, Score: 130},
-	{Attr: attr.AttrMaxammoSecondaryIncreased, Score: 120},
-	{Attr: attr.AttrHealOnKill, Score: 110},
-	{Attr: attr.AttrMarkForDeath, Score: 90},
-	{Attr: attr.AttrArmorPiercing, Score: 85},
-	{Attr: attr.AttrAttackProjectiles, Score: 80},
-	{Attr: attr.AttrIncreaseBuffDuration, Score: 75},
-	{Attr: attr.AttrEffectBarRechargeRateIncreased, Score: 70},
-	{Attr: attr.AttrChargeRechargeRateIncreased, Score: 70},
-	{Attr: attr.AttrGenerateRageOnDamage, Score: 60},
-	{Attr: attr.AttrBleedingDuration, Score: 55},
-	{Attr: attr.AttrMoveSpeedBonus, Score: 45},
-	{Attr: attr.AttrHealthRegen, Score: 40},
-	{Attr: attr.AttrDmgTakenFromCritReduced, Score: 30},
-	{Attr: attr.AttrDamageForceReduction, Score: 25},
-	{Attr: attr.AttrIncreasedJumpHeight, Score: 10},
-	{Attr: attr.AttrDmgTakenFromBlastReduced, Score: 210, When: WaveBlast, Otherwise: 25},
-	{Attr: attr.AttrDmgTakenFromBulletsReduced, Score: 210, When: WaveBullet, Otherwise: 25},
-	{Attr: attr.AttrDmgTakenFromFireReduced, Score: 210, When: WaveFire, Otherwise: 25},
+	rule("damage bonus", 260),
+	rule("fire rate bonus", 250),
+	rule("melee attack rate bonus", 200),
+	rule("projectile penetration", 190),
+	rule("projectile penetration heavy", 190),
+	rule("critboost on kill", 180),
+	rule("clip size upgrade atomic", 170),
+	rule("clip size bonus upgrade", 170),
+	rule("faster reload rate", 160),
+	rule("maxammo primary increased", 150),
+	rule("Projectile speed increased", 130),
+	rule("maxammo secondary increased", 120),
+	rule("heal on kill", 110),
+	rule("mark for death", 90),
+	rule("armor piercing", 85),
+	rule("attack projectiles", 80),
+	rule("increase buff duration", 75),
+	rule("effect bar recharge rate increased", 70),
+	rule("charge recharge rate increased", 70),
+	rule("generate rage on damage", 60),
+	rule("bleeding duration", 55),
+	rule("move speed bonus", 45),
+	rule("health regen", 40),
+	rule("dmg taken from crit reduced", 30),
+	rule("damage force reduction", 25),
+	rule("increased jump height", 10),
+	conditional("dmg taken from blast reduced", 210, WaveBlast, 25),
+	conditional("dmg taken from bullets reduced", 210, WaveBullet, 25),
+	conditional("dmg taken from fire reduced", 210, WaveFire, 25),
+}
+
+/*
+rule is one plain score, by the schema name the game gives the attribute.
+
+Written as a name rather than as a generated constant because the generator
+itself reads this table: importing what cmd/gen emits would mean cmd/gen could
+not be built without its own output. The name is checked at init, so a typo is a
+panic on the first run rather than an upgrade that silently never ranks.
+*/
+func rule(name string, score Score) Rule {
+	return Rule{Attr: mustAttr(name), Score: score}
+}
+
+// conditional is a rule whose score depends on something the caller answers.
+func conditional(name string, score Score, when When, otherwise Score) Rule {
+	return Rule{Attr: mustAttr(name), Score: score, When: when, Otherwise: otherwise}
+}
+
+func mustAttr(name string) tables.Attribute {
+	for _, a := range tables.Attributes {
+		if a.Name == name {
+			return a
+		}
+	}
+	panic("upgrade: the ranking names " + name + " and internal/tables does not")
 }
 
 // Klass is the class the ranking asks about, as the id the SourcePawn side
@@ -369,7 +395,7 @@ func (b Bot) scoreOf(r Rule) Score {
 	return r.Otherwise
 }
 
-func (b Bot) lookup(rules []Rule, want attr.Attribute) (Score, bool) {
+func (b Bot) lookup(rules []Rule, want tables.Attribute) (Score, bool) {
 	for _, r := range rules {
 		if r.Attr == want {
 			return b.scoreOf(r), true
@@ -387,7 +413,7 @@ The three layers in the shipped order. A layer that answers wins, and a layer
 that answers zero is a layer with no opinion rather than one saying the upgrade
 is worthless, which is why the shipped code tests `> 0` between them.
 */
-func (b Bot) Priority(slot Slot, a attr.Attribute) (Score, bool) {
+func (b Bot) Priority(slot Slot, a tables.Attribute) (Score, bool) {
 	// The metal upgrades do not hang off the gun, so they are asked before
 	// the slot is looked at at all.
 	if b.Klass == KlassEngineer && b.GunSpendsMetal {
@@ -411,7 +437,7 @@ func (b Bot) Priority(slot Slot, a attr.Attribute) (Score, bool) {
 
 // classPriority is the middle layer, including the two slot restrictions that
 // are part of the answer rather than a detail of it.
-func (b Bot) classPriority(slot Slot, a attr.Attribute) (Score, bool) {
+func (b Bot) classPriority(slot Slot, a tables.Attribute) (Score, bool) {
 	rules, known := Class[b.Klass]
 	if !known {
 		return 0, false

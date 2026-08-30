@@ -180,6 +180,16 @@ func ChooseFloat(cond bool, yes float32, no float32) float32 {
 	return no
 }
 
+// ChooseInt is SourcePawn's ?: over two numbers.
+//
+//sp:choice ?:
+func ChooseInt(cond bool, yes int32, no int32) int32 {
+	if cond {
+		return yes
+	}
+	return no
+}
+
 // StrEqual says whether the buffer holds exactly that.
 //
 //sp:native StrEqual
