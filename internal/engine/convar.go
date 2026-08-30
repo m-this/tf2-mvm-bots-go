@@ -34,6 +34,12 @@ func InstallConVars(c ConVarCalls) func() {
 //sp:tag ConVar
 type ConVar int32
 
+// NoConVar is null: a convar the plugin has not made yet, which is what a
+// describe called before the load hook sees.
+//
+//sp:global null
+func NoConVar() ConVar { return 0 }
+
 // ManagerDebug is redbots_manager_debug, the older and wider of the two debug
 // switches.
 //
