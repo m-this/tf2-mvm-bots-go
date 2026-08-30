@@ -38,6 +38,11 @@ func (e *emitter) expr(x ast.Expr) string {
 			// expression and not a call that fills a parameter.
 			return e.callWith(n, nil)
 		}
+		if x, isExtern := e.externOfCall(n); isExtern && (x.Choice || x.Cast) {
+			// Neither is a call: one is ?: and the other view_as, so
+			// an array coming out of one is the array that went in.
+			return e.callWith(n, nil)
+		}
 		if e.isArrayValue(n) && !e.returnsArrayValue(n) {
 			if tv, isType := e.info.Types[n.Fun]; !isType || !tv.IsType() {
 				e.fail(n.Pos(), "a call returning an array used as a value; SourcePawn fills a parameter, so assign it to a name on a line of its own")
@@ -121,13 +126,13 @@ func (e *emitter) basicLit(lit *ast.BasicLit) string {
 }
 
 /*
-	stringLit is the one string the subset has
+	stringLit is a string the subset passes through
 
-An entity classname, passed to an extern that wants one. Go and SourcePawn
-escape differently, so rather than translate the escapes, anything that is not
-plain printable text is refused: a classname is plain printable text, and a
-generator that guessed wrong here would produce a plugin that compiles and looks
-for the wrong entity.
+An entity classname or a message, passed to an extern that wants one. Go and
+SourcePawn escape the same two characters the same way and differ on everything
+else, so a quote and a backslash pass and anything outside printable ASCII is
+refused: a generator that guessed wrong here would produce a plugin that compiles
+and looks for the wrong entity.
 */
 func (e *emitter) stringLit(lit *ast.BasicLit) string {
 	text, err := strconv.Unquote(lit.Value)
@@ -136,8 +141,13 @@ func (e *emitter) stringLit(lit *ast.BasicLit) string {
 		return ""
 	}
 	for _, r := range text {
-		if r < ' ' || r > '~' || r == '"' || r == '\\' {
-			e.fail(lit.Pos(), "the string %s holds a character this package will not escape for SourcePawn; a classname is plain printable text", lit.Value)
+		// A quote and a backslash are spelled the same way in both
+		// languages, and strconv.Quote below writes exactly that, so
+		// they pass. Anything outside printable ASCII does not: the
+		// escapes differ there, and a generator that guessed would
+		// produce a plugin that compiles and looks for the wrong thing.
+		if r < ' ' || r > '~' {
+			e.fail(lit.Pos(), "the string %s holds a character this package will not escape for SourcePawn; a message is plain printable text", lit.Value)
 			return ""
 		}
 	}

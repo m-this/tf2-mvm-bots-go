@@ -14,10 +14,6 @@ The entrance goes on the way out of spawn, read off the nav mesh's own route rat
 than guessed from spawn geometry, and the exit goes beside the nest rather than on
 top of it.
 
-EngineerTeleporter_LastResult is the one function of this file still hand-written,
-in source/redbots3/teleporter_result.sp: it copies into a buffer its caller sized,
-and a generated function cannot see that length. mvm-z83 carries it.
-
 //sp:action DefenderBuildTeleporter CTFBotMvMEngineerBuildTeleporter
 */
 package engineerbuildteleporter
@@ -569,6 +565,19 @@ func OnEnd(actor int32) {
 	engine.PluginBotOf(actor).SetPathing(false)
 
 	engine.UpdateLookAroundForEnemies(actor, true)
+}
+
+/*
+LastResult is why the last attempt ended, copied into the buffer sm_dump_nest
+handed in.
+
+//sp:name EngineerTeleporter_LastResult
+//sp:length buffer maxlength
+*/
+//
+//nolint:revive,ineffassign,staticcheck,wastedassign // the write is the point: SourcePawn passes the buffer by reference and //sp:length carries its size, which Go has no way to say
+func LastResult(actor int32, buffer engine.Text, maxlength int32) {
+	buffer = engine.CopyTextInto(engine.ChooseText(lastResult[actor][0] == 0, "nothing yet", lastResult[actor]))
 }
 
 // HasGivenUp says he stopped asking for this round.

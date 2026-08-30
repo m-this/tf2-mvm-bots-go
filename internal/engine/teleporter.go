@@ -7,6 +7,10 @@ type TeleporterCalls struct {
 	HasObjectOfType    func(client int32, objectType Object, mode ObjectMode) int32
 	ObjectOfTypeMode   func(client int32, objectType Object, mode ObjectMode) int32
 	IsBuilderSetToMode func(client int32, objectType Object, mode ObjectMode) bool
+	LastResult         func(actor int32, buffer Text, maxlength int32)
+	HasGivenUp         func(actor int32) bool
+	Mode               func(actor int32) ObjectMode
+	Spot               func(actor int32) [3]float32
 }
 
 var teleporters TeleporterCalls
@@ -125,4 +129,44 @@ func IsBuilderSetToMode(client int32, objectType Object, mode ObjectMode) bool {
 		missing("IsBuilderSetTo")
 	}
 	return teleporters.IsBuilderSetToMode(client, objectType, mode)
+}
+
+// TeleporterLastResult is why the last teleporter attempt ended.
+//
+//sp:body EngineerTeleporter_LastResult
+func TeleporterLastResult(actor int32, buffer Text, maxlength int32) {
+	if teleporters.LastResult == nil {
+		missing("EngineerTeleporter_LastResult")
+	}
+	teleporters.LastResult(actor, buffer, maxlength)
+}
+
+// TeleporterHasGivenUp says the engineer stopped asking for this round.
+//
+//sp:body EngineerTeleporter_HasGivenUp
+func TeleporterHasGivenUp(actor int32) bool {
+	if teleporters.HasGivenUp == nil {
+		missing("EngineerTeleporter_HasGivenUp")
+	}
+	return teleporters.HasGivenUp(actor)
+}
+
+// TeleporterMode is which half he is building.
+//
+//sp:body EngineerTeleporter_Mode
+func TeleporterMode(actor int32) ObjectMode {
+	if teleporters.Mode == nil {
+		missing("EngineerTeleporter_Mode")
+	}
+	return teleporters.Mode(actor)
+}
+
+// TeleporterSpot is where this attempt puts it.
+//
+//sp:body EngineerTeleporter_Spot
+func TeleporterSpot(actor int32) (spot [3]float32) {
+	if teleporters.Spot == nil {
+		missing("EngineerTeleporter_Spot")
+	}
+	return teleporters.Spot(actor)
 }

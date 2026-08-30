@@ -201,6 +201,20 @@ func (e *emitter) arrayCall(define bool, lhs, rhs ast.Expr) bool {
 	if tv, isType := e.info.Types[call.Fun]; isType && tv.IsType() {
 		return false // a conversion, which is not a call at all
 	}
+	if x, ok := e.externOfCall(call); ok && x.Fills {
+		/* A fill writes the caller's buffer, which is the one place a
+		parameter is the destination
+
+		Every other write to an array parameter is refused, because Go
+		copies one and SourcePawn passes it by reference: a body that
+		assigns to a parameter reads as local in Go and is not. A fill is
+		the exception the plugin actually writes, and //sp:length is what
+		says the caller's length came with it. */
+		if length, given := e.lengthOf(lhs); given {
+			e.line("%s;", e.callWith(call, nil, e.expr(lhs), length))
+			return true
+		}
+	}
 	if define {
 		e.declareTarget(lhs)
 	} else {
@@ -221,7 +235,7 @@ func (e *emitter) arrayCall(define bool, lhs, rhs ast.Expr) bool {
 		// The buffer and its length come first: Format(buffer, maxlen, ...).
 		n, sized := e.arrayLen(lhs)
 		if !sized {
-			e.fail(lhs.Pos(), "%s writes into a buffer and the destination has no length the generator can see", x.Func)
+			e.fail(lhs.Pos(), "%s writes into a buffer and the destination has no length the generator can see; name the parameter that carries it with //sp:length", x.Func)
 			return true
 		}
 		e.line("%s;", e.callWith(call, nil, e.expr(lhs), fmt.Sprintf("%d", n)))
@@ -255,6 +269,27 @@ func (e *emitter) externOfCall(call *ast.CallExpr) (Extern, bool) {
 }
 
 // arrayLen is how long the destination is, which a sized call has to be told.
+/*
+	lengthOf is the parameter that carries a handed buffer's length
+
+A generated function fills a buffer with the size of its own declaration, which
+is right for one it declared and wrong for one it was handed: writing this port's
+512 into a caller's 64 overruns it. So a function that fills a parameter says
+which other parameter carries the length, and the emitter writes that name where
+it would otherwise write a number.
+*/
+func (e *emitter) lengthOf(x ast.Expr) (string, bool) {
+	id, ok := x.(*ast.Ident)
+	if !ok {
+		return "", false
+	}
+	name, declared := e.lengths[id.Name]
+	if !declared {
+		return "", false
+	}
+	return e.ident(id.Pos(), name), true
+}
+
 func (e *emitter) arrayLen(x ast.Expr) (int64, bool) {
 	t := e.info.Types[x].Type
 	if t == nil {

@@ -67,8 +67,10 @@ func isPublic(d *ast.FuncDecl) bool {
 		return false
 	}
 	for _, c := range d.Doc.List {
-		if strings.TrimSpace(c.Text) == publicDirective {
-			return true
+		for line := range strings.Lines(c.Text) {
+			if strings.TrimSpace(line) == publicDirective {
+				return true
+			}
 		}
 	}
 	return false
@@ -80,10 +82,14 @@ func spName(d *ast.FuncDecl) (string, bool) {
 	if d.Doc == nil {
 		return "", false
 	}
+	// Line by line inside each comment: a doc comment may be one /* */
+	// block with the directive somewhere in the middle of it.
 	for _, c := range d.Doc.List {
-		fields := strings.Fields(c.Text)
-		if len(fields) == 2 && fields[0] == nameDirective {
-			return fields[1], true
+		for line := range strings.Lines(c.Text) {
+			fields := strings.Fields(line)
+			if len(fields) == 2 && fields[0] == nameDirective {
+				return fields[1], true
+			}
 		}
 	}
 	return "", false

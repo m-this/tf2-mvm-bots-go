@@ -1220,3 +1220,117 @@ func ResetAll() {
 		relocateDeadline[i] = -1.0
 	}
 }
+
+/*
+DumpNest is what each engineer has actually got standing, and where.
+
+An engineer who never finishes a building looks the same from outside as one who
+never started, and a teleporter half of a pair looks the same as none. This says
+which, and where each piece ended up, so a spot that refuses everything can be
+walked to with sm_dump_spot.
+*/
+//
+//sp:name Command_DumpNest
+//sp:public
+//
+//nolint:revive // unused-parameter: the signature is SourceMod's, not ours
+func DumpNest(client int32, args int32) engine.Outcome {
+	/* How many areas a nest decision walks, which is the size of everything else here
+
+	PickBuildArea and GetBombInfo both walk the whole mesh, so this number is the unit that any
+	"why did the frame take that long" answer is counted in. */
+	engine.ReplyToCommand(client, "%d nav areas on this map", engine.NavAreaCount())
+
+	/* Every building standing, and who the game says owns it
+
+	Asked for because a play-test found two dispensers with one engineer on the team, which is a
+	thing the game does not let a player do: an engineer placing a second one has his first taken
+	down for him. So one of them belongs to somebody else, or to nobody, and the per-engineer
+	listing below cannot show either. This walks the entities instead of the players. */
+	building := int32(-1)
+	standing := int32(0)
+
+	for {
+		building = engine.FindEntityByClassname(building, "obj_*")
+
+		if building == -1 {
+			break
+		}
+
+		class := engine.EntityClassname(building)
+
+		owner := engine.BuilderOf(building, engine.PropSend(), "m_hBuilder")
+		at := engine.AbsOriginOf(building)
+
+		var whose engine.Text
+
+		if owner > 0 && owner <= engine.MaxClients() && engine.IsClientInGame(owner) {
+			whose = engine.Format("%N", owner)
+		} else {
+			whose = engine.Format("nobody (orphan, owner index %d)", owner)
+		}
+
+		engine.ReplyToCommand(client, "%s #%d at %.0f %.0f %.0f, built by %s", class, building, at[0], at[1], at[2], whose)
+
+		standing++
+	}
+
+	engine.ReplyToCommand(client, "%d buildings standing", standing)
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if !engine.IsClientInGame(i) || engine.PlayerClass(i) != engine.ClassEngineer() {
+			continue
+		}
+
+		nest := engine.NestBuildPosition(engine.NestAreaOf(i))
+
+		engine.ReplyToCommand(client, "%N: nest %.0f %.0f %.0f", i, nest[0], nest[1], nest[2])
+
+		DumpBuilding(client, "sentry", engine.ObjectOfType(i, engine.ObjectSentry()))
+		DumpBuilding(client, "dispenser", engine.ObjectOfType(i, engine.ObjectDispenser()))
+		DumpBuilding(client, "entrance", engine.ObjectOfTypeMode(i, engine.ObjectTeleporter(), engine.ModeEntrance()))
+		DumpBuilding(client, "exit", engine.ObjectOfTypeMode(i, engine.ObjectTeleporter(), engine.ModeExit()))
+
+		// Asking moves the engineer's pending teleporter target, which the idle action recomputes anyway
+		wants := engine.ShouldBuildTeleporter(i)
+
+		var lastResult engine.Text
+
+		engine.TeleporterLastResult(i, lastResult, 64)
+
+		engine.ReplyToCommand(client, "  teleporter: round %d, sentry safe %s, gave up %s, wants %s%s, last \"%s\"",
+			engine.RoundState(),
+			engine.Choose(sentrySafe[i] > engine.GameTime(), "yes", "no"),
+			engine.Choose(engine.TeleporterHasGivenUp(i), "yes", "no"),
+			engine.Choose(wants, "yes", "no"),
+			engine.Choose(engine.LookupEntityActionByName(i, "DefenderBuildTeleporter") != engine.InvalidAction(), ", building one now", ""),
+			lastResult)
+
+		if wants {
+			spot := engine.TeleporterSpot(i)
+
+			engine.ReplyToCommand(client, "  teleporter target: mode %d at %.0f %.0f %.0f",
+				engine.TeleporterMode(i), spot[0], spot[1], spot[2])
+		}
+	}
+
+	return engine.PluginHandled()
+}
+
+// DumpBuilding is one building, or that there is none.
+//
+//sp:name DumpBuilding
+func DumpBuilding(client int32, what string, building int32) {
+	if building == engine.InvalidEntReference() {
+		engine.ReplyToCommand(client, "  %s: none", what)
+
+		return
+	}
+
+	origin := engine.AbsOriginOf(building)
+
+	engine.ReplyToCommand(client, "  %s: level %d, %d of %d health, at %.0f %.0f %.0f%s",
+		what, engine.UpgradeLevel(building), engine.EntityHealth(building),
+		engine.EntityMaxHealth(building), origin[0], origin[1], origin[2],
+		engine.Choose(engine.IsBuildingUp(building), ", still going up", ""))
+}

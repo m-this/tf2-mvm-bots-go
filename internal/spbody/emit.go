@@ -55,6 +55,9 @@ type emitter struct {
 	// emitted under, so a call to a body that claimed the plugin's name
 	// with //sp:name is emitted under that name too.
 	spNames map[string]string
+	// lengths maps a buffer parameter of the function being emitted onto
+	// the parameter that carries its length, from //sp:length.
+	lengths map[string]string
 	// handles are the extern types that have to be deleted, by qualified Go
 	// name. A local of one is a lifetime this package will not leave open.
 	handles map[string]bool

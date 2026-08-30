@@ -106,12 +106,33 @@ func (e *emitter) emittedName(d *ast.FuncDecl) string {
 	return e.cfg.Prefix + e.ident(d.Name.Pos(), d.Name.Name)
 }
 
+// lengthDirective names the parameter carrying a buffer parameter's length.
+const lengthDirective = "//sp:length"
+
+// lengthsOf reads //sp:length <buffer> <parameter> off a declaration.
+func lengthsOf(d *ast.FuncDecl) map[string]string {
+	out := map[string]string{}
+	if d.Doc == nil {
+		return out
+	}
+	for _, c := range d.Doc.List {
+		for line := range strings.Lines(c.Text) {
+			fields := strings.Fields(line)
+			if len(fields) == 3 && fields[0] == lengthDirective {
+				out[fields[1]] = fields[2]
+			}
+		}
+	}
+	return out
+}
+
 func (e *emitter) funcDecl(d *ast.FuncDecl) {
 	obj, ok := e.info.Defs[d.Name].(*types.Func)
 	if !ok {
 		e.fail(d.Pos(), "the function %s has no definition", d.Name.Name)
 		return
 	}
+	e.lengths = lengthsOf(d)
 	sig := obj.Type().(*types.Signature)
 	if sig.Recv() != nil {
 		e.fail(d.Pos(), "a method; write a plain function taking the receiver first")
@@ -237,6 +258,12 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 		}
 		names = append(names, name)
 		if tag == "char" && len(dims) == 1 {
+			if _, written := e.lengths[name]; written {
+				// A buffer this function fills, whose length came
+				// with it. Not const: filling it is the point.
+				params = append(params, "char[] "+e.ident(d.Pos(), name))
+				continue
+			}
 			// A buffer a function is handed is const char[]: the
 			// length belongs to whoever declared it, and writing
 			// this port's own 512 here refuses every caller whose

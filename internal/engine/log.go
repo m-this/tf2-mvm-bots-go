@@ -130,6 +130,7 @@ type TextOps struct {
 	StrContains     func(haystack Text, needle string, caseSensitive bool) int32
 	EntityClassname func(entity int32) Text
 	CopyText        func(from string) Text
+	CopyTextInto    func(from Text) Text
 }
 
 var textOps TextOps
@@ -188,6 +189,17 @@ func ChooseInt(cond bool, yes int32, no int32) int32 {
 		return yes
 	}
 	return no
+}
+
+// CopyTextInto is strcopy into a buffer whose length the caller passed, which
+// is what a function handed a buffer has to write with.
+//
+//sp:native strcopy fills
+func CopyTextInto(from Text) (into Text) {
+	if textOps.CopyTextInto == nil {
+		missing("strcopy")
+	}
+	return textOps.CopyTextInto(from)
 }
 
 // StrEqual says whether the buffer holds exactly that.

@@ -27,6 +27,8 @@ type EngineerCalls struct {
 	AbsAnglesOf            func(entity int32) [3]float32
 	NestRelocateOf         func(client int32) Area
 	EngineerGunSpendsMetal func(client int32) bool
+	NavAreaCount           func() int32
+	BuilderOf              func(building int32, propType PropType, prop string) int32
 	SetNestRelocate        func(client int32, area Area)
 	RunScriptCode          func(client int32, code string)
 	HeadSteadyDuration     func(b Body) float32
@@ -410,4 +412,25 @@ func BuildDisposable() Behaviour {
 		missing("CTFBotMvMEngineerBuildDisposable")
 	}
 	return engineers.BuildDisposable()
+}
+
+// NavAreaCount is how many areas the mesh has, which is the unit every "why did
+// that frame take so long" answer is counted in.
+//
+//sp:global TheNavAreas.Count
+func NavAreaCount() int32 {
+	if engineers.NavAreaCount == nil {
+		missing("TheNavAreas.Count")
+	}
+	return engineers.NavAreaCount()
+}
+
+// BuilderOf is who the game says owns a building.
+//
+//sp:native GetEntPropEnt
+func BuilderOf(building int32, propType PropType, prop string) int32 {
+	if engineers.BuilderOf == nil {
+		missing("GetEntPropEnt")
+	}
+	return engineers.BuilderOf(building, propType, prop)
 }
