@@ -26,6 +26,7 @@ type EngineerCalls struct {
 	ShouldBuildTeleporter  func(actor int32) bool
 	AbsAnglesOf            func(entity int32) [3]float32
 	NestRelocateOf         func(client int32) Area
+	EngineerGunSpendsMetal func(client int32) bool
 	SetNestRelocate        func(client int32, area Area)
 	RunScriptCode          func(client int32, code string)
 	HeadSteadyDuration     func(b Body) float32
@@ -150,6 +151,17 @@ func ShouldBuildTeleporter(actor int32) bool {
 		missing("ShouldBuildTeleporter")
 	}
 	return engineers.ShouldBuildTeleporter(actor)
+}
+
+// EngineerGunSpendsMetal is an engineer carrying a gun that costs metal to
+// fire: the Widowmaker, the Short Circuit and the Rescue Ranger.
+//
+//sp:plugin EngineerGunSpendsMetal
+func EngineerGunSpendsMetal(client int32) bool {
+	if engineers.EngineerGunSpendsMetal == nil {
+		missing("EngineerGunSpendsMetal")
+	}
+	return engineers.EngineerGunSpendsMetal(client)
 }
 
 // NestRelocateOf is the ground the between-waves answer wants this engineer to

@@ -99,3 +99,8 @@ func LogMessage(format string, args ...any) {
 	}
 	ubers.LogMessage(format, args...)
 }
+
+// WeaponJarGas is TF_WEAPON_JAR_GAS, the Gas Passer.
+//
+//sp:global TF_WEAPON_JAR_GAS
+func WeaponJarGas() Weapon { return 74 }

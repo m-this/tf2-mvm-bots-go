@@ -236,6 +236,16 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 			return "", nil, terr
 		}
 		names = append(names, name)
+		if tag == "char" && len(dims) == 1 {
+			// A buffer a function is handed is const char[]: the
+			// length belongs to whoever declared it, and writing
+			// this port's own 512 here refuses every caller whose
+			// buffer is the schema's length instead. Writing into
+			// one needs that length, which is the gap mvm-z83.62
+			// carries.
+			params = append(params, "const char[] "+e.ident(d.Pos(), name))
+			continue
+		}
 		params = append(params, declare(tag, e.ident(d.Pos(), name), dims))
 	}
 	params = e.applyDefaults(d, names, params, e.defaultsOf(d))
