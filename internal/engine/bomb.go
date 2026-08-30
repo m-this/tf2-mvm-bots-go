@@ -128,7 +128,7 @@ func AttackTank() Behaviour {
 
 // DefenderAttack is CTFBotDefenderAttack.
 //
-//sp:plugin CTFBotDefenderAttack
+//sp:body CTFBotDefenderAttack
 func DefenderAttack() Behaviour {
 	if bombs.DefenderAttack == nil {
 		missing("CTFBotDefenderAttack")

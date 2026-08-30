@@ -169,7 +169,7 @@ func ConceptHelp() int32 { return 2 }
 
 // DefenderAttackSelectTarget is the attack behaviour's own precondition.
 //
-//sp:plugin CTFBotDefenderAttack_SelectTarget
+//sp:body CTFBotDefenderAttack_SelectTarget
 func DefenderAttackSelectTarget(client int32) bool {
 	if nav.DefenderAttackSelectTarget == nil {
 		missing("CTFBotDefenderAttack_SelectTarget")
