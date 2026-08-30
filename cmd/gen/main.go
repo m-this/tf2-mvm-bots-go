@@ -14,6 +14,7 @@ import (
 	"github.com/m-this/tf2-mvm-bots-go/internal/body"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spgen"
 	"github.com/m-this/tf2-mvm-bots-go/internal/tables"
+	"github.com/m-this/tf2-mvm-bots-go/internal/upgrade"
 )
 
 func main() {
@@ -44,6 +45,7 @@ func files(root string) (map[string][]byte, error) {
 		"sourcepawn/attributes.sp":         tables.SourcePawnAttributes(),
 		"sourcepawn/features.sp":           tables.SourcePawnFeatures(),
 		"sourcepawn/threat_priority.sp":    spgen.EmitThreatPriority(),
+		"sourcepawn/upgrade_rank.sp":       upgrade.SourcePawnRanking(),
 		"sourcepawn/wave_write.sp":         tables.SourcePawnWaveWriter(),
 		"go/arms/arms.go":                  tables.GoFeatureArms("arms"),
 		"go/attr/attr.go":                  tables.GoAttributes("attr"),

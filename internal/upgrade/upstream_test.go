@@ -75,12 +75,15 @@ func attrOf(t *testing.T, name string) attr.Attribute {
 func rulesOf(t *testing.T, text string) []upgrade.Rule {
 	t.Helper()
 
-	var out []upgrade.Rule
-	for _, m := range strEqualScore.FindAllStringSubmatch(text, -1) {
+	found := strEqualScore.FindAllStringSubmatch(text, -1)
+	out := make([]upgrade.Rule, 0, len(found))
+
+	for _, m := range found {
 		score, err := strconv.Atoi(m[2])
 		if err != nil {
 			t.Fatalf("the score for %q is not a number: %v", m[1], err)
 		}
+		//nolint:gosec // G109: the scores are three digits, written by hand in the shipped file
 		out = append(out, upgrade.Rule{Attr: attrOf(t, m[1]), Score: upgrade.Score(score)})
 	}
 	return out
@@ -116,6 +119,7 @@ func TestTheLoadoutTableIsTheShippedOne(t *testing.T) {
 			end = cases[i+1][0]
 		}
 
+		//nolint:gosec // G115: item definition indexes are four digits in the shipped file
 		compare(t, fmt.Sprintf("item definition %d", def),
 			rulesOf(t, body[split:][c[0]:end]), upgrade.Loadout[int32(def)])
 	}

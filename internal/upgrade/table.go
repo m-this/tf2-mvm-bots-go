@@ -138,8 +138,8 @@ var EngineerMetal = []Rule{
 }
 
 /*
-Class is what this class contributes with, which is not always the weapon in its
-hands.
+ClassRules is what one class contributes with, which is not always the weapon in
+its hands.
 
 Two of these are restricted to a slot, and the restriction is part of the answer
 rather than a detail of it: the engineer's gun rules apply to the gun slots and
