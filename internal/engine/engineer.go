@@ -109,21 +109,27 @@ func PluginStop() Outcome { return 4 }
 func PluginContinue() Outcome { return 0 }
 
 /*
-CreateNestRelocateTimer starts the one timer this port owns.
+CreateTimer starts a repeating timer, taking its callback by name.
 
-SourcePawn takes the callback as an argument and the subset has no function
-value, so the callback and the repeat flag are written into the directive: this
-extern is that one call and nothing else, and the function it names is generated
-beside it.
+A function is a value here in the one way the subset allows: named, as an
+argument to an extern that declares it takes one, which is the same shape
+ArrayList.SortCustom uses.
 
-//sp:native CreateTimer after Timer_EvaluateNestRelocation _ TIMER_REPEAT
+//sp:native CreateTimer
 */
-func CreateNestRelocateTimer(interval float32) Timer {
+//nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
+func CreateTimer(interval float32, callback func(timer Timer) Outcome, data int32, flags int32) Timer {
 	if engineers.CreateRepeatingTimer == nil {
 		missing("CreateTimer")
 	}
 	return engineers.CreateRepeatingTimer(interval)
 }
+
+// TimerNoMapChange is TIMER_FLAG_NO_MAPCHANGE, which stops a timer surviving
+// into a map it knows nothing about.
+//
+//sp:global TIMER_FLAG_NO_MAPCHANGE
+func TimerNoMapChange() int32 { return 2 }
 
 // KillTimer stops it.
 //

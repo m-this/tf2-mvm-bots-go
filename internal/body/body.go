@@ -152,6 +152,10 @@ var All = []Body{
 	{Dir: "internal/body/scan", Out: "sourcepawn/scan.sp", Prefix: "Go_"},
 	{Dir: "internal/body/medic", Out: "sourcepawn/medic.sp", Prefix: "Go_"},
 	{
+		Dir: "internal/body/faults", Out: "sourcepawn/debug_faults.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/debug_faults.sp",
+	},
+	{
 		Dir: "internal/body/stickies", Out: "sourcepawn/demoman_stickies.sp", Prefix: "Go_",
 		Shipped: "source/redbots3/demoman_stickies.sp",
 	},

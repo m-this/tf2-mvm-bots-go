@@ -48,7 +48,7 @@ func IsAmmoFull(client int32) bool {
 // OnAmmoWalkStart arms the injected path refusals, and does nothing unless a
 // debug convar is set.
 //
-//sp:plugin DebugFaults_OnAmmoWalkStart
+//sp:body DebugFaults_OnAmmoWalkStart
 func OnAmmoWalkStart(client int32) {
 	if ammo.OnAmmoWalkStart == nil {
 		missing("DebugFaults_OnAmmoWalkStart")
@@ -58,7 +58,7 @@ func OnAmmoWalkStart(client int32) {
 
 // RefuseAmmoPath is one of those refusals being handed out.
 //
-//sp:plugin DebugFaults_RefuseAmmoPath
+//sp:body DebugFaults_RefuseAmmoPath
 func RefuseAmmoPath(client int32) bool {
 	if ammo.RefuseAmmoPath == nil {
 		missing("DebugFaults_RefuseAmmoPath")

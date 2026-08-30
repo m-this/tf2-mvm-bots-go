@@ -1130,7 +1130,7 @@ func OnWaveComplete() {
 	}
 
 	relocateEvalNext = 1
-	relocateEvalTimer = engine.CreateNestRelocateTimer(relocateEvalInterval)
+	relocateEvalTimer = engine.CreateTimer(relocateEvalInterval, EvaluateNestRelocation, engine.Default(), engine.TimerRepeat())
 }
 
 // StopEvaluating is the wave having started, or the round: whatever the queue had

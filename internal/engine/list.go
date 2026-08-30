@@ -104,6 +104,7 @@ type Compare func(index1 int32, index2 int32, array Handle, hndl Handle) int32
 // by name, which is the one place a function is a value in the subset.
 //
 //sp:method SortCustom
+//nolint:revive // unused-parameter: the comparison is a name the emitter writes, not something the Go calls
 func (l List) SortCustom(cmp Compare) {
 	if lists.SortCustom == nil {
 		missing("ArrayList.SortCustom")
