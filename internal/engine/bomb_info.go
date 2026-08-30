@@ -11,9 +11,10 @@ a struct tag, which is what struct tags are for.
 
 // BombInfoCalls are the answers.
 type BombInfoCalls struct {
-	GetBombInfo          func() (bool, BombInfo)
-	BombHatchPosition    func() [3]float32
-	IsHeadAimingOnTarget func(b Body) bool
+	GetBombInfo                func() (bool, BombInfo)
+	TravelDistanceToBombTarget func(area Area) float32
+	BombHatchPosition          func() [3]float32
+	IsHeadAimingOnTarget       func(b Body) bool
 }
 
 var bombInfos BombInfoCalls
@@ -30,6 +31,9 @@ func InstallBombInfo(c BombInfoCalls) func() {
 //sp:tag BombInfo_t
 type BombInfo struct {
 	Position [3]float32 `sp:"vPosition"`
+	// MaxBattleFront is how far along the route the fighting has reached,
+	// which is what a nest is compared against before it moves forward.
+	MaxBattleFront float32 `sp:"flMaxBattleFront"`
 }
 
 // PropData is Prop_Data, the datamap table rather than the networked one.
@@ -51,6 +55,17 @@ func AimCritical() int32 { return 2 }
 //
 //sp:global FEATURE_STICKY_STACK
 func FeatureStickyStack() int32 { return 3 }
+
+// TravelDistanceToBombTarget is how far this ground is from where the bomb is
+// going, along the route rather than through the walls.
+//
+//sp:plugin GetTravelDistanceToBombTarget
+func TravelDistanceToBombTarget(area Area) float32 {
+	if bombInfos.TravelDistanceToBombTarget == nil {
+		missing("GetTravelDistanceToBombTarget")
+	}
+	return bombInfos.TravelDistanceToBombTarget(area)
+}
 
 // GetBombInfo fills the record, and says whether there was a bomb to fill it
 // from.

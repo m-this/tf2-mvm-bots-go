@@ -58,7 +58,7 @@ func NearestConfiguredSpot(spots List, from [3]float32) (ok bool, spot [3]float3
 
 // IsSentrySafe says the sentry is not currently being taken apart.
 //
-//sp:plugin IsSentrySafe
+//sp:body IsSentrySafe
 func IsSentrySafe(sentry int32) bool {
 	if dispensers.IsSentrySafe == nil {
 		missing("IsSentrySafe")

@@ -113,6 +113,14 @@ var callbacks = map[string]callback{
 		Params: "INextBot nextbot, int entity, QueryResultType& result",
 		Names:  []string{"nextbot", "entity", "result"},
 	},
+	// The engine telling a behaviour the bot arrived where it was walking.
+	// The path is any because the include's typeset says so: a PathFollower
+	// and a Path are both passed to it.
+	"OnMoveToSuccess": {
+		Wire: "OnMoveToSuccess", Returns: "Action",
+		Params: "int actor, any path, ActionDesiredResult result",
+		Names:  []string{"actor", "path", "result"},
+	},
 	"OnStart": {
 		Wire: "OnStart", Returns: "Action",
 		Params: "int actor, BehaviorAction priorAction, ActionResult result",
@@ -146,7 +154,7 @@ var callbacks = map[string]callback{
 // order is the order the constructor wires them in, which is the order the
 // plugin writes and so the order a reviewer expects.
 var order = []string{
-	"OnStart", "Update", "OnEnd", "OnSuspend", "OnResume",
+	"OnStart", "Update", "OnEnd", "OnSuspend", "OnResume", "OnMoveToSuccess",
 	"OnInjured", "OnNavAreaChanged", "OnTerritoryContested", "OnTerritoryLost",
 	"SelectMoreDangerousThreat", "ShouldHurry", "ShouldAttack", "IsHindrance",
 }

@@ -105,7 +105,7 @@ func PickBuildArea(actor int32) Area {
 
 // ShouldAdvanceNestSpot says the idle action wants him somewhere else.
 //
-//sp:plugin CTFBotMvMEngineerIdle_ShouldAdvanceNestSpot
+//sp:body CTFBotMvMEngineerIdle_ShouldAdvanceNestSpot
 func ShouldAdvanceNestSpot(actor int32) bool {
 	if nests.ShouldAdvanceNestSpot == nil {
 		missing("CTFBotMvMEngineerIdle_ShouldAdvanceNestSpot")
