@@ -34,7 +34,7 @@ func MaxTankAttackers() ConVar { return 0 }
 // CountOfBotsWithNamedActionExcept is the same count with one bot left out,
 // which is how a bot asks how many others are already on the job.
 //
-//sp:plugin GetCountOfBotsWithNamedAction
+//sp:body GetCountOfBotsWithNamedAction
 func CountOfBotsWithNamedActionExcept(name string, ignore int32) int32 {
 	if tanks.CountExcept == nil {
 		missing("GetCountOfBotsWithNamedAction")

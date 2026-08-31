@@ -17,6 +17,8 @@ type QueryCalls struct {
 	Intention                  func(b Bot) Intention
 	IntentionReset             func(i Intention)
 	TunedWeaponRanges          func(weapon int32) (bool, float32, float32)
+	VisibleInFOVNow            func(k Known) bool
+	RangeSquaredTo             func(b Bot, entity int32) float32
 }
 
 var queries QueryCalls
@@ -238,3 +240,24 @@ func WeaponPDASpy() Weapon { return 48 }
 //
 //sp:global TF_WEAPON_PUMPKIN_BOMB
 func WeaponPumpkinBomb() Weapon { return 63 }
+
+// VisibleInFOVNow says the bot can see it this frame, in its cone.
+//
+//sp:method IsVisibleInFOVNow
+func (k Known) VisibleInFOVNow() bool {
+	if queries.VisibleInFOVNow == nil {
+		missing("CKnownEntity.IsVisibleInFOVNow")
+	}
+	return queries.VisibleInFOVNow(k)
+}
+
+// RangeSquaredTo is the bot's distance to the entity, squared, which is the
+// form the game compares in.
+//
+//sp:method GetRangeSquaredTo
+func (b Bot) RangeSquaredTo(entity int32) float32 {
+	if queries.RangeSquaredTo == nil {
+		missing("INextBot.GetRangeSquaredTo")
+	}
+	return queries.RangeSquaredTo(b, entity)
+}

@@ -69,7 +69,7 @@ func (k Known) Entity() int32 {
 // SelectCloserThreat is whichever of the two is nearer, which is all a melee
 // bot can act on.
 //
-//sp:plugin SelectCloserThreat
+//sp:body SelectCloserThreat
 func SelectCloserThreat(bot Bot, threat1 Known, threat2 Known) Known {
 	if threats.SelectCloserThreat == nil {
 		missing("SelectCloserThreat")
@@ -113,7 +113,7 @@ func IsLineOfFireClearEntity(client int32, from [3]float32, who int32) bool {
 // CountOfBotsWithNamedAction is how many bots are already doing that, which is
 // how one job is kept to one bot.
 //
-//sp:plugin GetCountOfBotsWithNamedAction
+//sp:body GetCountOfBotsWithNamedAction
 func CountOfBotsWithNamedAction(name string) int32 {
 	if threats.CountOfBotsWithNamedAction == nil {
 		missing("GetCountOfBotsWithNamedAction")

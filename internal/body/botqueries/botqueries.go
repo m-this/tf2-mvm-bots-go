@@ -271,3 +271,112 @@ func GetFlameThrowerAimForTank(tank int32) (aimPos [3]float32) {
 	aimPos[2] += 90.0
 	return aimPos
 }
+
+/*
+TeleporterWorthRiding is how much walking a teleporter has to save before it is
+worth walking to.
+
+Saying yes puts the bot on a walk to the entrance, which is back in the spawn he
+is trying to leave: the walk it saves has to beat the walk it costs.
+*/
+//
+//sp:name TELEPORTER_WORTH_RIDING
+const TeleporterWorthRiding = 1500.0
+
+// ShouldUseTeleporter says the ride beats the walk by enough to bother.
+//
+//sp:name ShouldUseTeleporter
+func ShouldUseTeleporter(client int32) bool {
+	// No bomb in play, so there is no fight to be late for and no reason to
+	// leave the ground.
+	found, bombinfo := engine.GetBombInfo()
+
+	if !found {
+		return false
+	}
+
+	myArea := engine.CombatOf(client).LastKnownArea()
+
+	if myArea == engine.NoNavArea() {
+		return false
+	}
+
+	bombArea := engine.NearestNavArea(bombinfo.Position, false, 10000.0, false, false, engine.TeamAny())
+
+	if bombArea == engine.NullArea() {
+		return false
+	}
+
+	return engine.TravelDistanceToBombTarget(engine.Area(myArea))+TeleporterWorthRiding < engine.TravelDistanceToBombTarget(bombArea)
+}
+
+// GetCountOfBotsWithNamedAction is how many defenders are doing that right now.
+//
+//sp:name GetCountOfBotsWithNamedAction
+//sp:default ignore -1
+func GetCountOfBotsWithNamedAction(name string, ignore int32) int32 {
+	count := int32(0)
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if i != ignore && engine.IsClientInGame(i) && engine.DefenderBotFlag(i) && engine.LookupEntityActionByName(i, name) != engine.InvalidAction() {
+			count++
+		}
+	}
+
+	return count
+}
+
+// HealerOrThreat swaps a player threat for whoever is healing it, when the bot
+// can see the healer.
+//
+//sp:name HealerOrThreat
+//sp:const threat
+func HealerOrThreat(bot engine.Bot, threat engine.Known) engine.Known {
+	if threat == engine.NoKnownEntity() || !engine.IsPlayer(threat.Entity()) {
+		return threat
+	}
+
+	return GetHealerOfThreat(bot, threat)
+}
+
+// GetHealerOfThreat is the first visible medic on the threat, or the threat.
+//
+//sp:name GetHealerOfThreat
+//sp:const threat
+func GetHealerOfThreat(bot engine.Bot, threat engine.Known) engine.Known {
+	if threat == engine.NoKnownEntity() {
+		return engine.NoKnownEntity()
+	}
+
+	playerThreat := threat.Entity()
+
+	for i := int32(0); i < engine.NumHealers(playerThreat); i++ {
+		playerHealer := engine.PlayerHealer(playerThreat, i)
+
+		if playerHealer != -1 && engine.IsPlayer(playerHealer) {
+			knownHealer := bot.Vision().GetKnown(playerHealer)
+
+			if knownHealer != engine.NoKnownEntity() && knownHealer.VisibleInFOVNow() {
+				return knownHealer
+			}
+		}
+	}
+
+	return threat
+}
+
+// SelectCloserThreat is whichever of the two the bot could touch first.
+//
+//sp:name SelectCloserThreat
+//sp:const threat1
+//sp:const threat2
+func SelectCloserThreat(bot engine.Bot, threat1 engine.Known, threat2 engine.Known) engine.Known {
+	rangeSq1 := bot.RangeSquaredTo(threat1.Entity())
+	rangeSq2 := bot.RangeSquaredTo(threat2.Entity())
+
+	if rangeSq1 < rangeSq2 {
+		return threat1
+	}
+
+	return threat2
+}
