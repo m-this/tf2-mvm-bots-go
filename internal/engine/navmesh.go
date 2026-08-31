@@ -158,7 +158,7 @@ func ControlPointByID(pointID int32) int32 {
 // IsFailureImminent says the wave is about to be lost, which outranks holding
 // any point.
 //
-//sp:plugin IsFailureImminent
+//sp:body IsFailureImminent
 func IsFailureImminent(client int32) bool {
 	if nav.IsFailureImminent == nil {
 		missing("IsFailureImminent")

@@ -177,7 +177,7 @@ func IsPointInRespawnRoom(position [3]float32) bool {
 // IsAmmoLow says the bot is running out, which is one of the two reasons to
 // stand at a dispenser.
 //
-//sp:plugin IsAmmoLow
+//sp:body IsAmmoLow
 func IsAmmoLow(client int32) bool {
 	if healths.IsAmmoLow == nil {
 		missing("IsAmmoLow")

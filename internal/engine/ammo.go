@@ -37,7 +37,7 @@ func FeatureAmmoFailover() int32 { return 19 }
 // IsAmmoFull says the bot has nothing left to collect, metal included for an
 // engineer.
 //
-//sp:plugin IsAmmoFull
+//sp:body IsAmmoFull
 func IsAmmoFull(client int32) bool {
 	if ammo.IsAmmoFull == nil {
 		missing("IsAmmoFull")

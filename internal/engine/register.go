@@ -94,9 +94,9 @@ func CreateTimerWith(interval float32, callback func(timer Timer, data int32) Ou
 }
 
 // ResetIntentionInterface makes the bot throw away what it was doing and decide
-// again from the top.
+// again from the top. Ported, botqueries.
 //
-//sp:plugin ResetIntentionInterface
+//sp:body ResetIntentionInterface
 func ResetIntentionInterface(client int32) {
 	if registrations.ResetIntentionInterface == nil {
 		missing("ResetIntentionInterface")

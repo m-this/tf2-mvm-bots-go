@@ -1,0 +1,273 @@
+/*
+Package botqueries is the query layer of source/redbots3/nextbot_behavior.sp:
+the questions a behaviour asks about a bot that need no state of their own.
+
+Every one of these was a plugin extern somewhere; each port here deletes one.
+*/
+package botqueries
+
+import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+
+// GetDesiredPathLookAheadRange is how far along the path a bot of that size
+// aims.
+//
+//sp:name GetDesiredPathLookAheadRange
+func GetDesiredPathLookAheadRange(client int32) float32 {
+	return engine.PathLookaheadRange().Float() * engine.ModelScale(client)
+}
+
+// IsAmmoLow says the bot is worth sending to a resupply.
+//
+//sp:name IsAmmoLow
+func IsAmmoLow(client int32) bool {
+	primary := engine.PlayerWeaponSlot(client, engine.WeaponSlotPrimary())
+
+	if engine.IsValidEntity(primary) && !engine.HasAmmo(primary) {
+		return true
+	}
+
+	myWeapon := engine.ActiveWeapon(client)
+
+	if myWeapon != -1 && engine.WeaponID(myWeapon) != engine.WeaponWrench() {
+		if !engine.IsMeleeWeapon(myWeapon) {
+			flAmmoRation := float32(engine.AmmoCount(client, engine.AmmoPrimary())) / float32(engine.PlayerMaxAmmo(client, engine.AmmoPrimary()))
+			return flAmmoRation < 0.2
+		}
+
+		return false
+	}
+
+	return engine.AmmoCount(client, engine.AmmoMetal()) <= 0
+}
+
+// IsAmmoFull says a resupply has nothing left to give.
+//
+//sp:name IsAmmoFull
+func IsAmmoFull(client int32) bool {
+	isPrimaryFull := engine.AmmoCount(client, engine.AmmoPrimary()) >= engine.PlayerMaxAmmo(client, engine.AmmoPrimary())
+	isSecondaryFull := engine.AmmoCount(client, engine.AmmoSecondary()) >= engine.PlayerMaxAmmo(client, engine.AmmoSecondary())
+
+	if engine.PlayerClass(client) == engine.ClassEngineer() {
+		// In addition, I want some metal as well.
+		return engine.AmmoCount(client, engine.AmmoMetal()) >= 200 && isPrimaryFull && isSecondaryFull
+	}
+
+	return isPrimaryFull && isSecondaryFull
+}
+
+// ResetIntentionInterface makes the bot decide again from the top.
+//
+//sp:name ResetIntentionInterface
+func ResetIntentionInterface(botEntidx int32) {
+	engine.NextBotOf(botEntidx).Intention().Reset()
+}
+
+// UpdateLookAroundForEnemies turns the bot's own looking on or off, so a
+// behaviour that aims for itself is not fought by the game.
+//
+//sp:name UpdateLookAroundForEnemies
+func UpdateLookAroundForEnemies(client int32, bVal bool) {
+	engine.SetLookingAroundForEnemies(client, bVal)
+}
+
+// IsCombatWeapon says the thing in hand can hurt somebody.
+//
+//sp:name IsCombatWeapon
+func IsCombatWeapon(client int32, weapon int32) bool {
+	if !engine.IsValidEntity(weapon) {
+		weapon = engine.ActiveWeapon(client)
+	}
+
+	if engine.IsValidEntity(weapon) {
+		switch engine.WeaponID(weapon) {
+		case engine.WeaponMedigun(), engine.WeaponPDA(), engine.WeaponPDAEngineerBuild(), engine.WeaponPDAEngineerDestroy(), engine.WeaponPDASpy(), engine.WeaponBuilder(), engine.WeaponDispenser(), engine.WeaponInvis(), engine.WeaponLunchbox(), engine.WeaponBuffItem(), engine.WeaponPumpkinBomb():
+			return false
+		}
+	}
+
+	return true
+}
+
+/*
+GetDesiredAttackRange is the distance the bot closes to before it settles.
+
+The Pyro closes whatever is in his hands, because the flamethrower is the only
+reason he is here. The weapon is chosen by range and the range he closes to is
+chosen by the weapon, and letting those two answer separately parked him between
+the two distances holding the wrong gun.
+
+The rocket's twelve fifty is how far out a rocket is worth firing, which is not
+as far as it will travel: everything a defender shoots at is walking, and past
+that range it has left the splash before the rocket arrives.
+*/
+//
+//sp:name GetDesiredAttackRange
+func GetDesiredAttackRange(client int32) float32 {
+	weapon := engine.ActiveWeapon(client)
+
+	if weapon < 1 {
+		return 0.0
+	}
+
+	// The loadout the server handed out is more specific than the weapon's ID.
+	found, tunedDesired, tunedMax := engine.TunedWeaponRanges(weapon)
+	_ = tunedMax
+
+	if found {
+		return tunedDesired
+	}
+
+	weaponID := engine.WeaponID(weapon)
+
+	if weaponID == engine.WeaponKnife() {
+		return 70.0
+	}
+
+	if engine.IsMeleeWeapon(weapon) || weaponID == engine.WeaponFlamethrower() {
+		return 100.0
+	}
+
+	if engine.PlayerClass(client) == engine.ClassPyro() {
+		flamethrower := engine.PlayerWeaponSlot(client, engine.WeaponSlotPrimary())
+
+		if flamethrower != -1 && engine.WeaponID(flamethrower) == engine.WeaponFlamethrower() {
+			return 100.0
+		}
+	}
+
+	if engine.WeaponIDIsSniperRifle(weaponID) {
+		return engine.FloatMax()
+	}
+
+	if weaponID == engine.WeaponRocketLauncher() {
+		if engine.Feature(engine.FeatureSoldierClosesIn()) {
+			return engine.SoldierRocketSettle()
+		}
+
+		return 1250.0
+	}
+
+	// The same answer as the Iron Bomber, which is the launcher this loadout
+	// actually hands out.
+	if weaponID == engine.WeaponGrenadeLauncher() {
+		return engine.DemoPipeSettle()
+	}
+
+	return 500.0
+}
+
+// ShouldBuybackIntoGame is the buyback decision, rolled once per death.
+//
+//sp:name ShouldBuybackIntoGame
+func ShouldBuybackIntoGame(client int32) bool {
+	// Scouts respawn very quickly.
+	if engine.PlayerClass(client) == engine.ClassScout() {
+		return false
+	}
+
+	// Can't afford a buyback.
+	if engine.Currency(client) < engine.BuybackCostPerSecond() {
+		return false
+	}
+
+	// Not opportunistic if we're about to fail.
+	if IsFailureImminent(client) {
+		return true
+	}
+
+	// We're being revived.
+	if engine.BeingRevived(client) {
+		return false
+	}
+
+	// Based on our rolled number, decide to buyback.
+	return engine.BuybackNumber(client) <= engine.BuybackChance().Int()
+}
+
+// ShouldUpgradeMidRound says the bot spawned into a wave and should shop first.
+//
+//sp:name ShouldUpgradeMidRound
+func ShouldUpgradeMidRound(client int32) bool {
+	// If we were revived, we should not bother.
+	if !engine.IsPointInRespawnRoom(engine.WorldSpaceCenter(client)) {
+		return false
+	}
+
+	// Based on our rolled number from spawn, decide to buy upgrades now.
+	return engine.BuyUpgradesNumber(client) > 0 && engine.BuyUpgradesNumber(client) <= engine.BuyUpgradesChance().Int()
+}
+
+// CanBuyUpgradesNow says shopping is affordable and not suicidal.
+//
+//sp:name CanBuyUpgradesNow
+func CanBuyUpgradesNow(client int32) bool {
+	if engine.Currency(client) < 25 {
+		return false
+	}
+
+	if IsFailureImminent(client) {
+		return false
+	}
+
+	return true
+}
+
+// TransientlyConsistentRandomValue is the game's own trick: a number that is
+// random across bots and stable for a period, so a decision does not flicker.
+//
+//sp:name TransientlyConsistentRandomValue
+//sp:default period 10.0
+//sp:default seedValue 0
+func TransientlyConsistentRandomValue(client int32, period float32, seedValue int32) float32 {
+	area := engine.CombatOf(client).LastKnownArea()
+
+	if area == engine.NoNavArea() {
+		return 0.0
+	}
+
+	timeMod := engine.RoundToFloor(engine.GameTime()/period) + 1
+
+	return engine.FloatAbs(engine.Cosine(float32(seedValue + (client * area.ID() * timeMod))))
+}
+
+// IsFailureImminent says a robot is about to pick up a bomb next to the hatch.
+//
+//sp:name IsFailureImminent
+func IsFailureImminent(client int32) bool {
+	// TODO: factor in tank closest to hatch for certain classes
+
+	flag := engine.BombNearestToHatch()
+
+	if flag == -1 {
+		return false
+	}
+
+	bombPosition := engine.WorldSpaceCenter(flag)
+
+	// Bomb is far and not a threat.
+	if engine.VectorDistance(bombPosition, engine.BombHatchPosition()) > engine.BombHatchRangeCritical() {
+		return false
+	}
+
+	closestToHatch := engine.BotNearestToBombNearestToHatch(client)
+
+	// No robot near the bomb close to the hatch, we're probably okay for now.
+	if closestToHatch == -1 {
+		return false
+	}
+
+	threatOrigin := engine.Origin(closestToHatch)
+
+	// Robot about to pick up a bomb very close to the hatch, we're in danger!
+	return engine.VectorDistance(threatOrigin, bombPosition) <= 800.0
+}
+
+// GetFlameThrowerAimForTank aims a bit high: since the March 28 2018 update
+// flamethrower damage is calculated on the oldest particles.
+//
+//sp:name GetFlameThrowerAimForTank
+func GetFlameThrowerAimForTank(tank int32) (aimPos [3]float32) {
+	aimPos = engine.WorldSpaceCenter(tank)
+	aimPos[2] += 90.0
+	return aimPos
+}

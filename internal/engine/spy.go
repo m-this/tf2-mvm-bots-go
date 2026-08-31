@@ -137,9 +137,9 @@ func SnapViewToPosition(client int32, position [3]float32) {
 }
 
 // UpdateLookAroundForEnemies turns the bot's own looking back on or off, so a
-// behaviour that aims for itself is not fought by the game.
+// behaviour that aims for itself is not fought by the game. Ported, botqueries.
 //
-//sp:plugin UpdateLookAroundForEnemies
+//sp:body UpdateLookAroundForEnemies
 func UpdateLookAroundForEnemies(client int32, allow bool) {
 	if spy.UpdateLookAroundForEnemies == nil {
 		missing("UpdateLookAroundForEnemies")
@@ -210,8 +210,9 @@ func RandomFloat(low float32, high float32) float32 {
 }
 
 // DesiredPathLookAheadRange is how far along the path a bot of that class aims.
+// Ported, botqueries.
 //
-//sp:plugin GetDesiredPathLookAheadRange
+//sp:body GetDesiredPathLookAheadRange
 func DesiredPathLookAheadRange(client int32) float32 {
 	if spy.DesiredPathLookAheadRange == nil {
 		missing("GetDesiredPathLookAheadRange")

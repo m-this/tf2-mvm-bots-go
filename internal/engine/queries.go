@@ -1,0 +1,240 @@
+package engine
+
+/*
+What the query layer of nextbot_behavior.sp reaches: ammo, money, the buyback
+dice, and the intention interface a rethink goes through.
+*/
+
+// QueryCalls are the answers.
+type QueryCalls struct {
+	PlayerMaxAmmo              func(client int32, ammo int32) int32
+	Currency                   func(client int32) int32
+	BuybackNumber              func(client int32) int32
+	BuyUpgradesNumber          func(client int32) int32
+	BeingRevived               func(client int32) bool
+	AreaID                     func(n NavArea) int32
+	SetLookingAroundForEnemies func(client int32, allow bool)
+	Intention                  func(b Bot) Intention
+	IntentionReset             func(i Intention)
+	TunedWeaponRanges          func(weapon int32) (bool, float32, float32)
+}
+
+var queries QueryCalls
+
+// InstallQueries puts a set of answers behind them.
+func InstallQueries(c QueryCalls) func() {
+	previous := queries
+	queries = c
+	return func() { queries = previous }
+}
+
+// PlayerMaxAmmo is how much of that ammo the player can carry.
+//
+//sp:native TF2Util_GetPlayerMaxAmmo
+func PlayerMaxAmmo(client int32, ammo int32) int32 {
+	if queries.PlayerMaxAmmo == nil {
+		missing("TF2Util_GetPlayerMaxAmmo")
+	}
+	return queries.PlayerMaxAmmo(client, ammo)
+}
+
+// AmmoPrimary is TF_AMMO_PRIMARY.
+//
+//sp:global TF_AMMO_PRIMARY
+func AmmoPrimary() int32 { return 1 }
+
+// AmmoSecondary is TF_AMMO_SECONDARY.
+//
+//sp:global TF_AMMO_SECONDARY
+func AmmoSecondary() int32 { return 2 }
+
+// AmmoMetal is TF_AMMO_METAL.
+//
+//sp:global TF_AMMO_METAL
+func AmmoMetal() int32 { return 3 }
+
+// Currency is what the player holds right now.
+//
+//sp:native TF2_GetCurrency
+func Currency(client int32) int32 {
+	if queries.Currency == nil {
+		missing("TF2_GetCurrency")
+	}
+	return queries.Currency(client)
+}
+
+// BuybackCostPerSecond is MVM_BUYBACK_COST_PER_SEC, what a second of respawn
+// time costs to skip.
+//
+//sp:global MVM_BUYBACK_COST_PER_SEC
+func BuybackCostPerSecond() int32 { return 5 }
+
+// BuybackNumber is the die this bot rolled for buying back, set on spawn.
+//
+//sp:slot g_iBuybackNumber
+func BuybackNumber(client int32) int32 {
+	if queries.BuybackNumber == nil {
+		missing("g_iBuybackNumber")
+	}
+	return queries.BuybackNumber(client)
+}
+
+// BuyUpgradesNumber is the die for shopping mid-round, set on spawn.
+//
+//sp:slot g_iBuyUpgradesNumber
+func BuyUpgradesNumber(client int32) int32 {
+	if queries.BuyUpgradesNumber == nil {
+		missing("g_iBuyUpgradesNumber")
+	}
+	return queries.BuyUpgradesNumber(client)
+}
+
+// BeingRevived says somebody has a revive marker up over this player.
+//
+//sp:slot g_bIsBeingRevived
+func BeingRevived(client int32) bool {
+	if queries.BeingRevived == nil {
+		missing("g_bIsBeingRevived")
+	}
+	return queries.BeingRevived(client)
+}
+
+// BuybackChance is redbots_manager_bot_buyback_chance.
+//
+//sp:global redbots_manager_bot_buyback_chance
+func BuybackChance() ConVar { return 0 }
+
+// BuyUpgradesChance is redbots_manager_bot_buy_upgrades_chance.
+//
+//sp:global redbots_manager_bot_buy_upgrades_chance
+func BuyUpgradesChance() ConVar { return 0 }
+
+// PathLookaheadRange is tf_bot_path_lookahead_range, the game's own convar,
+// found and kept by the plugin.
+//
+//sp:global tf_bot_path_lookahead_range
+func PathLookaheadRange() ConVar { return 0 }
+
+// ID is the nav area's own number, stable across a session.
+//
+//sp:method GetID
+func (n NavArea) ID() int32 {
+	if queries.AreaID == nil {
+		missing("CNavArea.GetID")
+	}
+	return queries.AreaID(n)
+}
+
+// NoNavArea is what GetLastKnownArea answers for a bot that has never stood on
+// the mesh.
+//
+//sp:global NULL_AREA
+func NoNavArea() NavArea { return 0 }
+
+// BombHatchRangeCritical is BOMB_HATCH_RANGE_CRITICAL, declared by the
+// generated campbomb file.
+//
+//sp:global BOMB_HATCH_RANGE_CRITICAL
+func BombHatchRangeCritical() float32 { return 1000.0 }
+
+// SetLookingAroundForEnemies turns the game's own scanning on or off.
+//
+//sp:plugin SetLookingAroundForEnemies
+func SetLookingAroundForEnemies(client int32, allow bool) {
+	if queries.SetLookingAroundForEnemies == nil {
+		missing("SetLookingAroundForEnemies")
+	}
+	queries.SetLookingAroundForEnemies(client, allow)
+}
+
+// Intention is IIntention, the interface a bot's behaviour hangs off.
+//
+//sp:tag IIntention
+type Intention int32
+
+// Intention is the bot's.
+//
+//sp:method GetIntentionInterface
+func (b Bot) Intention() Intention {
+	if queries.Intention == nil {
+		missing("INextBot.GetIntentionInterface")
+	}
+	return queries.Intention(b)
+}
+
+// Reset throws the behaviour away so the next update rebuilds it.
+//
+//sp:method Reset
+func (i Intention) Reset() {
+	if queries.IntentionReset == nil {
+		missing("IIntention.Reset")
+	}
+	queries.IntentionReset(i)
+}
+
+// TunedWeaponRanges is the range table the loadout tuning emits. Ported,
+// internal/tables.
+//
+//sp:body GetTunedWeaponRanges
+func TunedWeaponRanges(weapon int32) (found bool, desired float32, maxRange float32) {
+	if queries.TunedWeaponRanges == nil {
+		missing("GetTunedWeaponRanges")
+	}
+	return queries.TunedWeaponRanges(weapon)
+}
+
+// FeatureSoldierClosesIn is FEATURE_SOLDIER_CLOSES_IN.
+//
+//sp:global FEATURE_SOLDIER_CLOSES_IN
+func FeatureSoldierClosesIn() int32 { return 21 }
+
+// SoldierRocketSettle is the distance the soldier settles at when the feature
+// is on. Ported, internal/tables.
+//
+//sp:global SOLDIER_ROCKET_SETTLE
+func SoldierRocketSettle() float32 { return 0 }
+
+// DemoPipeSettle is the demoman's, always on.
+//
+//sp:global DEMO_PIPE_SETTLE
+func DemoPipeSettle() float32 { return 0 }
+
+// FloatMax is FLT_MAX, the range that means never stop closing.
+//
+//sp:global FLT_MAX
+func FloatMax() float32 { return 3.4e38 }
+
+// WeaponRocketLauncher is TF_WEAPON_ROCKETLAUNCHER.
+//
+//sp:global TF_WEAPON_ROCKETLAUNCHER
+func WeaponRocketLauncher() Weapon { return 22 }
+
+// WeaponGrenadeLauncher is TF_WEAPON_GRENADELAUNCHER.
+//
+//sp:global TF_WEAPON_GRENADELAUNCHER
+func WeaponGrenadeLauncher() Weapon { return 23 }
+
+// WeaponPDA is TF_WEAPON_PDA.
+//
+//sp:global TF_WEAPON_PDA
+func WeaponPDA() Weapon { return 45 }
+
+// WeaponPDAEngineerBuild is TF_WEAPON_PDA_ENGINEER_BUILD.
+//
+//sp:global TF_WEAPON_PDA_ENGINEER_BUILD
+func WeaponPDAEngineerBuild() Weapon { return 46 }
+
+// WeaponPDAEngineerDestroy is TF_WEAPON_PDA_ENGINEER_DESTROY.
+//
+//sp:global TF_WEAPON_PDA_ENGINEER_DESTROY
+func WeaponPDAEngineerDestroy() Weapon { return 47 }
+
+// WeaponPDASpy is TF_WEAPON_PDA_SPY.
+//
+//sp:global TF_WEAPON_PDA_SPY
+func WeaponPDASpy() Weapon { return 48 }
+
+// WeaponPumpkinBomb is TF_WEAPON_PUMPKIN_BOMB.
+//
+//sp:global TF_WEAPON_PUMPKIN_BOMB
+func WeaponPumpkinBomb() Weapon { return 63 }

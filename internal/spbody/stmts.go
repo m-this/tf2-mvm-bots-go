@@ -111,6 +111,11 @@ func (e *emitter) assign(n *ast.AssignStmt) {
 
 func (e *emitter) assignOne(n *ast.AssignStmt, lhs, rhs ast.Expr) {
 	if id, ok := lhs.(*ast.Ident); ok && id.Name == "_" {
+		// Discarding a plain name is Go bookkeeping with no SourcePawn:
+		// the variable was declared and is simply not read again.
+		if _, plain := rhs.(*ast.Ident); plain {
+			return
+		}
 		e.line("%s;", e.expr(rhs))
 		return
 	}

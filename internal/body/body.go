@@ -152,6 +152,10 @@ var All = []Body{
 	{Dir: "internal/body/scan", Out: "sourcepawn/scan.sp", Prefix: "Go_"},
 	{Dir: "internal/body/medic", Out: "sourcepawn/medic.sp", Prefix: "Go_"},
 	{
+		Dir: "internal/body/botqueries", Out: "sourcepawn/botqueries.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/nextbot_behavior.sp",
+	},
+	{
 		Dir: "internal/body/archipelago", Out: "sourcepawn/archipelago.sp", Prefix: "Go_",
 		Shipped: "source/redbots3/archipelago.sp",
 	},
@@ -311,6 +315,12 @@ func GenerateWith(root string, alsoOwned string) (map[string][]byte, error) {
 	if alsoOwned != "" {
 		owned[alsoOwned] = "a caller's test"
 	}
+
+	// internal/tables emits SourcePawn of its own, outside this list. A body
+	// extern naming one of its functions is as owned as one naming a body's.
+	for _, name := range tablesOwned {
+		owned[name] = "internal/tables"
+	}
 	for _, b := range All {
 		g, err := spbody.GenerateDir(filepath.Join(root, b.Dir), spbody.Config{
 			Prefix:  b.Prefix,
@@ -386,6 +396,13 @@ func SubsetConfig(root string) (gosubset.Config, error) {
 	}
 	cfg.Packages[modulePath+"/"+ExternDir] = names
 	return cfg, nil
+}
+
+// tablesOwned are the functions internal/tables emits, kept by hand because
+// tables has no registry: adding one here is part of adding the table.
+var tablesOwned = []string{
+	"GetTunedWeaponRanges",
+	"AttributeID",
 }
 
 const (

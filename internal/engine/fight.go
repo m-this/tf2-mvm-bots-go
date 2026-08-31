@@ -101,7 +101,7 @@ func ClientEyePosition(client int32) (position [3]float32) {
 
 // DesiredAttackRange is how close this class wants to be.
 //
-//sp:plugin GetDesiredAttackRange
+//sp:body GetDesiredAttackRange
 func DesiredAttackRange(client int32) float32 {
 	if fights.DesiredAttackRange == nil {
 		missing("GetDesiredAttackRange")
