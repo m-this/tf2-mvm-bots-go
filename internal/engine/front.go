@@ -130,7 +130,7 @@ func IsPlayerReady(client int32) bool {
 
 // StuckCountOf is how many times the bot has been wedged this break.
 //
-//sp:plugin StuckCountOf
+//sp:body StuckCountOf
 func StuckCountOf(client int32) int32 {
 	if fronts.StuckCountOf == nil {
 		missing("StuckCountOf")

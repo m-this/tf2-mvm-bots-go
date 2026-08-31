@@ -13,6 +13,8 @@ type PathingCalls struct {
 	EngineTime           func() float32
 	GameTickCount        func() int32
 	UnreachableGoal      func(actor int32) (bool, [3]float32)
+	Pathing              func(b PluginBot) bool
+	MoveWedgedDefender   func(actor int32) bool
 }
 
 var pathings PathingCalls
@@ -90,3 +92,33 @@ func UnreachableGoal(actor int32) (injected bool, goal [3]float32) {
 	}
 	return pathings.UnreachableGoal(actor)
 }
+
+// Pathing is the read half of bPathing: whether the plugin's own walking is on.
+//
+//sp:property bPathing
+func (b PluginBot) Pathing() bool {
+	if pathings.Pathing == nil {
+		missing("PluginBot.bPathing")
+	}
+	return pathings.Pathing(b)
+}
+
+// MoveWedgedDefender teleports a bot off ground it cannot leave on its own.
+//
+//sp:plugin MoveWedgedDefender
+func MoveWedgedDefender(actor int32) bool {
+	if pathings.MoveWedgedDefender == nil {
+		missing("MoveWedgedDefender")
+	}
+	return pathings.MoveWedgedDefender(actor)
+}
+
+// FeatureWatchIdleBots is FEATURE_WATCH_IDLE_BOTS.
+//
+//sp:global FEATURE_WATCH_IDLE_BOTS
+func FeatureWatchIdleBots() int32 { return 17 }
+
+// FeatureWatchLurkingSnipers is FEATURE_WATCH_LURKING_SNIPERS.
+//
+//sp:global FEATURE_WATCH_LURKING_SNIPERS
+func FeatureWatchLurkingSnipers() int32 { return 18 }
