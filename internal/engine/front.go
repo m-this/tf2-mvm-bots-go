@@ -151,7 +151,7 @@ func PathFailuresOf(client int32) int32 {
 // RecoverDefenderFromDisconnectedSpawn puts a bot back on the mesh when the
 // spawn it woke in has no way out.
 //
-//sp:plugin RecoverDefenderFromDisconnectedSpawn
+//sp:body RecoverDefenderFromDisconnectedSpawn
 func RecoverDefenderFromDisconnectedSpawn(actor int32) {
 	if fronts.RecoverDefenderFromDisconnectedSpawn == nil {
 		missing("RecoverDefenderFromDisconnectedSpawn")

@@ -122,3 +122,19 @@ func FeatureWatchIdleBots() int32 { return 17 }
 //
 //sp:global FEATURE_WATCH_LURKING_SNIPERS
 func FeatureWatchLurkingSnipers() int32 { return 18 }
+
+// SpawnNavRecovery is redbots_manager_spawn_nav_recovery, the whole watch's
+// switch.
+//
+//sp:global redbots_manager_spawn_nav_recovery
+func SpawnNavRecovery() ConVar { return 0 }
+
+// SpawnNavRecoveryRadius is how near spawn still counts as in it.
+//
+//sp:global redbots_manager_spawn_nav_recovery_radius
+func SpawnNavRecoveryRadius() ConVar { return 0 }
+
+// SpawnNavRecoveryTime is how long a bot gets to leave before it is moved.
+//
+//sp:global redbots_manager_spawn_nav_recovery_time
+func SpawnNavRecoveryTime() ConVar { return 0 }
