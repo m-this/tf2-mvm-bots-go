@@ -19,6 +19,12 @@ type QueryCalls struct {
 	TunedWeaponRanges          func(weapon int32) (bool, float32, float32)
 	VisibleInFOVNow            func(k Known) bool
 	RangeSquaredTo             func(b Bot, entity int32) float32
+	RemoveCondition            func(client int32, condition Condition)
+	ShouldTakeUpPosition       func(client int32) bool
+	IsWaitingAtTheFront        func(client int32) bool
+	RealPlayerCount            func() int32
+	AnyHumanOnRed              func() bool
+	AnyHumanReadyOnRed         func() bool
 }
 
 var queries QueryCalls
@@ -260,4 +266,81 @@ func (b Bot) RangeSquaredTo(entity int32) float32 {
 		missing("INextBot.GetRangeSquaredTo")
 	}
 	return queries.RangeSquaredTo(b, entity)
+}
+
+// ConditionTaunting is TFCond_Taunting.
+//
+//sp:global TFCond_Taunting
+func ConditionTaunting() Condition { return 7 }
+
+// RemoveCondition takes one off.
+//
+//sp:native TF2_RemoveCondition
+func RemoveCondition(client int32, condition Condition) {
+	if queries.RemoveCondition == nil {
+		missing("TF2_RemoveCondition")
+	}
+	queries.RemoveCondition(client, condition)
+}
+
+// UseUpgrades is redbots_manager_bot_use_upgrades, whether the bots shop at
+// all.
+//
+//sp:global redbots_manager_bot_use_upgrades
+func UseUpgrades() ConVar { return 0 }
+
+// FeatureReadyWhenPrepared is FEATURE_READY_WHEN_PREPARED.
+//
+//sp:global FEATURE_READY_WHEN_PREPARED
+func FeatureReadyWhenPrepared() int32 { return 5 }
+
+// ShouldTakeUpPosition says this bot's class walks to the front before the
+// wave rather than waiting where it shopped.
+//
+//sp:plugin ShouldTakeUpPosition
+func ShouldTakeUpPosition(client int32) bool {
+	if queries.ShouldTakeUpPosition == nil {
+		missing("ShouldTakeUpPosition")
+	}
+	return queries.ShouldTakeUpPosition(client)
+}
+
+// IsWaitingAtTheFront says he got there. Ported, movetofront.
+//
+//sp:body IsWaitingAtTheFront
+func IsWaitingAtTheFront(client int32) bool {
+	if queries.IsWaitingAtTheFront == nil {
+		missing("IsWaitingAtTheFront")
+	}
+	return queries.IsWaitingAtTheFront(client)
+}
+
+// RealPlayerCount is how many humans are on the server.
+//
+//sp:plugin GetRealPlayerCount
+func RealPlayerCount() int32 {
+	if queries.RealPlayerCount == nil {
+		missing("GetRealPlayerCount")
+	}
+	return queries.RealPlayerCount()
+}
+
+// AnyHumanOnRed says the readiness is a person's call, not the bots'.
+//
+//sp:plugin AnyHumanOnRed
+func AnyHumanOnRed() bool {
+	if queries.AnyHumanOnRed == nil {
+		missing("AnyHumanOnRed")
+	}
+	return queries.AnyHumanOnRed()
+}
+
+// AnyHumanReadyOnRed is what that person has said so far.
+//
+//sp:plugin AnyHumanReadyOnRed
+func AnyHumanReadyOnRed() bool {
+	if queries.AnyHumanReadyOnRed == nil {
+		missing("AnyHumanReadyOnRed")
+	}
+	return queries.AnyHumanReadyOnRed()
 }
