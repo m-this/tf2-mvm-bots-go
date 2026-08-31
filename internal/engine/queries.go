@@ -25,6 +25,7 @@ type QueryCalls struct {
 	RealPlayerCount            func() int32
 	AnyHumanOnRed              func() bool
 	AnyHumanReadyOnRed         func() bool
+	IsTFBotPlayer              func(client int32) bool
 }
 
 var queries QueryCalls
@@ -343,4 +344,19 @@ func AnyHumanReadyOnRed() bool {
 		missing("AnyHumanReadyOnRed")
 	}
 	return queries.AnyHumanReadyOnRed()
+}
+
+// FeatureMedicAnswersCall is FEATURE_MEDIC_ANSWERS_CALL.
+//
+//sp:global FEATURE_MEDIC_ANSWERS_CALL
+func FeatureMedicAnswersCall() int32 { return 20 }
+
+// IsTFBotPlayer says the slot is one of the game's own bots. Ported, mission.
+//
+//sp:body IsTFBotPlayer
+func IsTFBotPlayer(client int32) bool {
+	if queries.IsTFBotPlayer == nil {
+		missing("IsTFBotPlayer")
+	}
+	return queries.IsTFBotPlayer(client)
 }
