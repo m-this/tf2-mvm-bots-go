@@ -159,7 +159,7 @@ func TraceEndPosition() (position [3]float32) {
 // PathFailedFor says the route computation keeps failing, which is when the bot
 // is nudged rather than walked.
 //
-//sp:plugin PathFailedFor
+//sp:body PathFailedFor
 func PathFailedFor(actor int32) bool {
 	if stations.PathFailedFor == nil {
 		missing("PathFailedFor")
@@ -169,7 +169,7 @@ func PathFailedFor(actor int32) bool {
 
 // NudgeTowardsGoal moves the bot a step by hand.
 //
-//sp:plugin NudgeTowardsGoal
+//sp:body NudgeTowardsGoal
 func NudgeTowardsGoal(actor int32, bot Bot, goal [3]float32) {
 	if stations.NudgeTowardsGoal == nil {
 		missing("NudgeTowardsGoal")

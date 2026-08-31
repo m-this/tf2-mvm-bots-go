@@ -149,7 +149,7 @@ func UpdateLookAroundForEnemies(client int32, allow bool) {
 
 // RepathToTarget asks the game for a route to an entity.
 //
-//sp:plugin RepathToTarget
+//sp:body RepathToTarget
 func RepathToTarget(actor int32, bot Bot, target int32) {
 	if spy.RepathToTarget == nil {
 		missing("RepathToTarget")

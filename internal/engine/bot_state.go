@@ -124,7 +124,7 @@ func SetCurrencyPack(actor int32, pack int32) {
 
 // RepathToPos asks the game for a route to a point.
 //
-//sp:plugin RepathToPos
+//sp:body RepathToPos
 func RepathToPos(actor int32, bot Bot, goal [3]float32) {
 	if state.RepathToPos == nil {
 		missing("RepathToPos")

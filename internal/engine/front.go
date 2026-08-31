@@ -140,7 +140,7 @@ func StuckCountOf(client int32) int32 {
 
 // PathFailuresOf is how many routes it has been refused.
 //
-//sp:plugin PathFailuresOf
+//sp:body PathFailuresOf
 func PathFailuresOf(client int32) int32 {
 	if fronts.PathFailuresOf == nil {
 		missing("PathFailuresOf")
