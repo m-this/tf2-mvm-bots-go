@@ -45,6 +45,16 @@ type ActionCalls struct {
 	CollectNearMoneySelectTarget func(client int32) bool
 	StickyTrapIsPossible         func(client int32) bool
 	ShouldEmptyStack             func(actor int32) bool
+	SetCallback                  func(a Behaviour, slot string)
+	ResultType                   func(r ActionResult) int32
+	ResultAction                 func(r ActionResult) Behaviour
+	AttackUber                   func() Behaviour
+	AttackUberIsPossible         func(actor int32, medigun int32) bool
+	MedicRevive                  func() Behaviour
+	MedicReviveIsPossible        func(actor int32) bool
+	PointMedicAtBiggestBody      func(action Behaviour, actor int32)
+	MedicUberAndResist           func(actor int32, medigun int32, patient int32)
+	DesiredBotAction             func(client int32, action Behaviour) Outcome
 	Actor                        func() int32
 	TryToSustain                 func() Outcome
 	TryChangeTo                  func(next Behaviour, priority int32, reason string) Outcome
@@ -344,3 +354,187 @@ func ShouldEmptyStack(actor int32) bool {
 //
 //sp:tag ActionResult
 type ActionResult int32
+
+/*
+The callback slots on a BehaviorAction.
+
+SourceMod's actions extension exposes each one as a settable property, so
+overriding a game behaviour is an assignment rather than a hook: the callback is
+named, the extension keeps it, and the game calls it. Every one of these takes
+its callback by name the way CreateTimer does.
+*/
+
+// SetSelectTargetPoint overrides where the bot aims.
+//
+//sp:propertyset SelectTargetPoint
+//nolint:revive // unused-parameter: the callback is a name the emitter writes
+func (a Behaviour) SetSelectTargetPoint(callback func(action Behaviour, nextbot Bot, entity int32, vec [3]float32) Outcome) {
+	if actions.SetCallback == nil {
+		missing("BehaviorAction.SelectTargetPoint")
+	}
+	actions.SetCallback(a, "SelectTargetPoint")
+}
+
+// SetShouldAttack overrides whether a threat is worth shooting.
+//
+//sp:propertyset ShouldAttack
+//nolint:revive // unused-parameter: the callback is a name the emitter writes
+func (a Behaviour) SetShouldAttack(callback func(action Behaviour, nextbot Bot, knownEntity Known, result QueryResult) Outcome) {
+	if actions.SetCallback == nil {
+		missing("BehaviorAction.ShouldAttack")
+	}
+	actions.SetCallback(a, "ShouldAttack")
+}
+
+// SetUpdate overrides the per-think body.
+//
+//sp:propertyset Update
+//nolint:revive // unused-parameter: the callback is a name the emitter writes
+func (a Behaviour) SetUpdate(callback func(action Behaviour, actor int32, interval float32, result ActionResult) Outcome) {
+	if actions.SetCallback == nil {
+		missing("BehaviorAction.Update")
+	}
+	actions.SetCallback(a, "Update")
+}
+
+// SetUpdatePost runs after the game's own think rather than instead of it,
+// which is what the medic nudge needs: the heal action keeps its walking.
+//
+//sp:propertyset UpdatePost
+//nolint:revive // unused-parameter: the callback is a name the emitter writes
+func (a Behaviour) SetUpdatePost(callback func(action Behaviour, actor int32, interval float32, result ActionResult) Outcome) {
+	if actions.SetCallback == nil {
+		missing("BehaviorAction.UpdatePost")
+	}
+	actions.SetCallback(a, "UpdatePost")
+}
+
+// SetOnStart overrides the moment the behaviour begins.
+//
+//sp:propertyset OnStart
+//nolint:revive // unused-parameter: the callback is a name the emitter writes
+func (a Behaviour) SetOnStart(callback func(action Behaviour, actor int32, priorAction Behaviour, result ActionResult) Outcome) {
+	if actions.SetCallback == nil {
+		missing("BehaviorAction.OnStart")
+	}
+	actions.SetCallback(a, "OnStart")
+}
+
+// SetSelectMoreDangerousThreat overrides which of two robots the bot fears.
+//
+//sp:propertyset SelectMoreDangerousThreat
+//nolint:revive // unused-parameter: the callback is a name the emitter writes
+func (a Behaviour) SetSelectMoreDangerousThreat(callback func(action Behaviour, nextbot Bot, entity int32, threat1 Known, threat2 Known, knownEntity Known) Outcome) {
+	if actions.SetCallback == nil {
+		missing("BehaviorAction.SelectMoreDangerousThreat")
+	}
+	actions.SetCallback(a, "SelectMoreDangerousThreat")
+}
+
+// QueryResult is QueryResultType, the answer a ShouldAttack writes through.
+//
+//sp:tag QueryResultType
+type QueryResult int32
+
+// ResultType is the kind of answer a callback's result carries.
+//
+//sp:property type
+func (r ActionResult) ResultType() int32 {
+	if actions.ResultType == nil {
+		missing("ActionResult.type")
+	}
+	return actions.ResultType(r)
+}
+
+// ResultAction is the behaviour the result names, when it names one.
+//
+//sp:property action
+func (r ActionResult) ResultAction() Behaviour {
+	if actions.ResultAction == nil {
+		missing("ActionResult.action")
+	}
+	return actions.ResultAction(r)
+}
+
+// ChangeToResult is CHANGE_TO, the result that swaps the behaviour out next
+// frame.
+//
+//sp:global CHANGE_TO
+func ChangeToResult() int32 { return 1 }
+
+// AttackUber is CTFBotAttackUber. Ported, attackforuber.
+//
+//sp:body CTFBotAttackUber
+func AttackUber() Behaviour {
+	if actions.AttackUber == nil {
+		missing("CTFBotAttackUber")
+	}
+	return actions.AttackUber()
+}
+
+// AttackUberIsPossible says there is an uber worth breaking. Ported,
+// attackforuber.
+//
+//sp:body CTFBotAttackUber_IsPossible
+func AttackUberIsPossible(actor int32, medigun int32) bool {
+	if actions.AttackUberIsPossible == nil {
+		missing("CTFBotAttackUber_IsPossible")
+	}
+	return actions.AttackUberIsPossible(actor, medigun)
+}
+
+// MedicRevive is CTFBotMedicRevive. Ported, medicrevive.
+//
+//sp:body CTFBotMedicRevive
+func MedicRevive() Behaviour {
+	if actions.MedicRevive == nil {
+		missing("CTFBotMedicRevive")
+	}
+	return actions.MedicRevive()
+}
+
+// MedicReviveIsPossible says somebody is down and worth raising. Ported,
+// medicrevive.
+//
+//sp:body CTFBotMedicRevive_IsPossible
+func MedicReviveIsPossible(actor int32) bool {
+	if actions.MedicReviveIsPossible == nil {
+		missing("CTFBotMedicRevive_IsPossible")
+	}
+	return actions.MedicReviveIsPossible(actor)
+}
+
+// FeatureMedicPocketsBiggest is FEATURE_MEDIC_POCKETS_BIGGEST.
+//
+//sp:global FEATURE_MEDIC_POCKETS_BIGGEST
+func FeatureMedicPocketsBiggest() int32 { return 10 }
+
+// PointMedicAtBiggestBodyNow writes the patient handle. Ported, medicnudge.
+//
+//sp:body PointMedicAtBiggestBody
+func PointMedicAtBiggestBodyNow(action Behaviour, actor int32) {
+	if actions.PointMedicAtBiggestBody == nil {
+		missing("PointMedicAtBiggestBody")
+	}
+	actions.PointMedicAtBiggestBody(action, actor)
+}
+
+// MedicUberAndResistNow deploys and cycles. Ported, medicnudge.
+//
+//sp:body MedicUberAndResist
+func MedicUberAndResistNow(actor int32, medigun int32, patient int32) {
+	if actions.MedicUberAndResist == nil {
+		missing("MedicUberAndResist")
+	}
+	actions.MedicUberAndResist(actor, medigun, patient)
+}
+
+// DesiredBotAction is the dispatcher. Ported, dispatch.
+//
+//sp:body GetDesiredBotAction
+func DesiredBotAction(client int32, action Behaviour) Outcome {
+	if actions.DesiredBotAction == nil {
+		missing("GetDesiredBotAction")
+	}
+	return actions.DesiredBotAction(client, action)
+}
