@@ -46,6 +46,14 @@ type QueryCalls struct {
 	CanBeReflected              func(entity int32) bool
 	LocalOrigin                 func(entity int32) [3]float32
 	TransientlyConsistentRandom func(client int32) float32
+	HandleEntity                func(a Behaviour, offset int32) int32
+	SetHandleEntity             func(a Behaviour, offset int32, entity int32)
+	LastDamageType              func(client int32) int32
+	MedicProjectileShield       func(actor int32, patient int32)
+	ShouldDeployUber            func(actor int32, medigun int32, patient int32) bool
+	MedigunType                 func(medigun int32) int32
+	ResistType                  func(medigun int32) int32
+	BiggestBodyFor              func(medic int32, current int32) int32
 	UpdatePosition              func(k Known)
 	ShouldUpgradeMidRoundNow    func(client int32) bool
 	IsSniperStalled             func(client int32) bool
@@ -716,4 +724,119 @@ func TransientlyConsistentRandom(client int32) float32 {
 		missing("TransientlyConsistentRandomValue")
 	}
 	return queries.TransientlyConsistentRandom(client)
+}
+
+// ActionHealPatientOffset is ACTION_HEAL_PATIENT_OFFSET, where
+// CTFBotMedicHeal keeps its patient handle.
+//
+//sp:global ACTION_HEAL_PATIENT_OFFSET
+func ActionHealPatientOffset() int32 { return 0x4850 }
+
+// HandleEntity reads an entity handle out of the action at that offset.
+//
+//sp:method GetHandleEntity
+func (a Behaviour) HandleEntity(offset int32) int32 {
+	if queries.HandleEntity == nil {
+		missing("BehaviorAction.GetHandleEntity")
+	}
+	return queries.HandleEntity(a, offset)
+}
+
+/*
+SetHandleEntity writes one back.
+
+Deliberately narrow: an earlier attempt at writing this field segfaulted the
+server. It runs only from CTFBotMedicHeal_UpdatePost, so the action being
+written is the action the game is running and not one looked up from somewhere
+else, and the value is a checked, living, same team, non medic client.
+*/
+//
+//sp:method SetHandleEntity
+func (a Behaviour) SetHandleEntity(offset int32, entity int32) {
+	if queries.SetHandleEntity == nil {
+		missing("BehaviorAction.SetHandleEntity")
+	}
+	queries.SetHandleEntity(a, offset, entity)
+}
+
+// LastDamageType is what last hurt the player, through the plugin's offset
+// read.
+//
+//sp:plugin GetLastDamageType
+func LastDamageType(client int32) int32 {
+	if queries.LastDamageType == nil {
+		missing("GetLastDamageType")
+	}
+	return queries.LastDamageType(client)
+}
+
+// DamageBullet is DMG_BULLET.
+//
+//sp:global DMG_BULLET
+func DamageBullet() int32 { return 1 << 1 }
+
+// DamageBurn is DMG_BURN.
+//
+//sp:global DMG_BURN
+func DamageBurn() int32 { return 1 << 3 }
+
+// DamageBlast is DMG_BLAST.
+//
+//sp:global DMG_BLAST
+func DamageBlast() int32 { return 1 << 6 }
+
+// MedigunBulletResist is MEDIGUN_BULLET_RESIST.
+//
+//sp:global MEDIGUN_BULLET_RESIST
+func MedigunBulletResist() int32 { return 0 }
+
+// MedigunBlastResist is MEDIGUN_BLAST_RESIST.
+//
+//sp:global MEDIGUN_BLAST_RESIST
+func MedigunBlastResist() int32 { return 1 }
+
+// MedigunFireResist is MEDIGUN_FIRE_RESIST.
+//
+//sp:global MEDIGUN_FIRE_RESIST
+func MedigunFireResist() int32 { return 2 }
+
+// MedicProjectileShield puts the vaccinator's shield up when it is worth it.
+// Ported, uber.
+//
+//sp:body MedicProjectileShield
+func MedicProjectileShield(actor int32, patient int32) {
+	if queries.MedicProjectileShield == nil {
+		missing("MedicProjectileShield")
+	}
+	queries.MedicProjectileShield(actor, patient)
+}
+
+// ShouldDeployUber is the charge decision. Ported, uber.
+//
+//sp:body ShouldDeployUber
+func ShouldDeployUber(actor int32, medigun int32, patient int32) bool {
+	if queries.ShouldDeployUber == nil {
+		missing("ShouldDeployUber")
+	}
+	return queries.ShouldDeployUber(actor, medigun, patient)
+}
+
+// ResistType is which resistance the vaccinator is on. Ported, weapons.
+//
+//sp:body GetResistType
+func ResistType(medigun int32) int32 {
+	if queries.ResistType == nil {
+		missing("GetResistType")
+	}
+	return queries.ResistType(medigun)
+}
+
+// BiggestBodyFor is the medic's ranking. Ported, mediccall.
+//
+//sp:body BiggestBody
+func BiggestBodyFor(medic int32, current int32) int32 {
+	if queries.BiggestBodyFor == nil {
+		missing("BiggestBody")
+	}
+	return queries.BiggestBodyFor(medic, current)
 }
