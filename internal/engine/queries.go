@@ -361,7 +361,7 @@ func RealPlayerCount() int32 {
 
 // AnyHumanOnRed says the readiness is a person's call, not the bots'.
 //
-//sp:plugin AnyHumanOnRed
+//sp:body AnyHumanOnRed
 func AnyHumanOnRed() bool {
 	if queries.AnyHumanOnRed == nil {
 		missing("AnyHumanOnRed")
@@ -371,7 +371,7 @@ func AnyHumanOnRed() bool {
 
 // AnyHumanReadyOnRed is what that person has said so far.
 //
-//sp:plugin AnyHumanReadyOnRed
+//sp:body AnyHumanReadyOnRed
 func AnyHumanReadyOnRed() bool {
 	if queries.AnyHumanReadyOnRed == nil {
 		missing("AnyHumanReadyOnRed")

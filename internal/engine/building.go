@@ -66,7 +66,7 @@ func IsBuilderSetTo(client int32, objectType Object) bool {
 // FakeClientCommandThrottled sends the bot a console command, at a rate the
 // server survives.
 //
-//sp:plugin FakeClientCommandThrottled
+//sp:body FakeClientCommandThrottled
 func FakeClientCommandThrottled(client int32, command string) {
 	if builds.FakeClientCommandThrottled == nil {
 		missing("FakeClientCommandThrottled")

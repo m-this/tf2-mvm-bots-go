@@ -2,20 +2,21 @@ package engine
 
 // PlayerCalls are the answers about players and the server they are on.
 type PlayerCalls struct {
-	SquareRoot          func(value float32) float32
-	VectorLengthSquared func(v [3]float32, squared bool) float32
-	EyePositionOf       func(client int32) [3]float32
-	FakeClientCommand   func(client int32, format string, args ...any)
-	FindConVar          func(name string) ConVar
-	NewKeyValues        func(name string) KeyValues
-	FakeCommandKV       func(client int32, kv KeyValues)
-	CloseKeyValues      func(kv KeyValues)
-	ClientCount         func(inGameOnly bool) int32
-	ResourceEntity      func() int32
-	SetVariantString    func(value string)
-	AcceptEntityInput   func(entity int32, input string, activator int32, caller int32, outputID int32) bool
-	TextLength          func(text Text) int32
-	TextLengthOf        func(text string) int32
+	SquareRoot            func(value float32) float32
+	VectorLengthSquared   func(v [3]float32, squared bool) float32
+	EyePositionOf         func(client int32) [3]float32
+	FakeClientCommand     func(client int32, format string, args ...any)
+	FakeClientCommandText func(client int32, command string)
+	FindConVar            func(name string) ConVar
+	NewKeyValues          func(name string) KeyValues
+	FakeCommandKV         func(client int32, kv KeyValues)
+	CloseKeyValues        func(kv KeyValues)
+	ClientCount           func(inGameOnly bool) int32
+	ResourceEntity        func() int32
+	SetVariantString      func(value string)
+	AcceptEntityInput     func(entity int32, input string, activator int32, caller int32, outputID int32) bool
+	TextLength            func(text Text) int32
+	TextLengthOf          func(text string) int32
 }
 
 var players PlayerCalls
@@ -179,4 +180,15 @@ func TextLength(text Text) int32 {
 		missing("strlen")
 	}
 	return players.TextLength(text)
+}
+
+// FakeClientCommandText is FakeClientCommand handed a command that was built
+// rather than written out, so there is nothing to format.
+//
+//sp:native FakeClientCommand
+func FakeClientCommandText(client int32, command string) {
+	if players.FakeClientCommandText == nil {
+		missing("FakeClientCommand")
+	}
+	players.FakeClientCommandText(client, command)
 }

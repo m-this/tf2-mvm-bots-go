@@ -190,7 +190,6 @@ bool g_bChoosingBotClasses[MAXPLAYERS + 1];
 float g_flEnableBotsCooldown[MAXPLAYERS + 1];
 #endif
 
-static float m_flLastCommandTime[MAXPLAYERS + 1];
 static float m_flLastReadyInputTime[MAXPLAYERS + 1];
 
 //Config
@@ -268,6 +267,7 @@ Address g_pMannVsMachineUpgrades;
 #include "redbots3/generated/blu_assist.sp"
 #include "redbots3/util.sp"
 #include "redbots3/generated/roster_counts.sp"
+#include "redbots3/generated/humans.sp"
 #include "redbots3/generated/lineoffire.sp"
 #include "redbots3/generated/nestscore.sp"
 #include "redbots3/generated/nestpick.sp"
@@ -696,7 +696,7 @@ public void OnClientPutInServer(int client)
 	g_flEnableBotsCooldown[client] = 0.0;
 #endif
 	
-	m_flLastCommandTime[client] = GetGameTime();
+	Go_ResetCommandThrottle(client);
 	m_flLastReadyInputTime[client] = 0.0;
 	
 	g_bHasBoughtUpgrades[client] = false;
@@ -1952,53 +1952,6 @@ public Action Timer_ForgetDetonatingPlayer(Handle timer, any data)
 	return Plugin_Stop;
 }
 
-static float m_flHumanReadinessTime = -1.0;
-static bool m_bHumansOnRed;
-static bool m_bAnyHumanReadyOnRed;
-
-/* Whether anybody who is not a bot is on RED, and whether any of them has said the team is ready
-
-Read once per bot per frame, answered once per frame: the roster cannot change between two bots of
-the same tick, and a walk of every client slot inside something that reads like a cheap question is
-how four of this mod's per-frame costs got there. */
-void RefreshHumanReadiness()
-{
-	if (m_flHumanReadinessTime == GetGameTime())
-		return;
-	
-	m_flHumanReadinessTime = GetGameTime();
-	m_bHumansOnRed = false;
-	m_bAnyHumanReadyOnRed = false;
-	
-	for (int i = 1; i <= MaxClients; i++)
-	{
-		if (!IsClientInGame(i) || IsFakeClient(i) || TF2_GetClientTeam(i) != TFTeam_Red)
-			continue;
-		
-		m_bHumansOnRed = true;
-		
-		if (IsPlayerReady(i))
-		{
-			m_bAnyHumanReadyOnRed = true;
-			break;
-		}
-	}
-}
-
-bool AnyHumanOnRed()
-{
-	RefreshHumanReadiness();
-	
-	return m_bHumansOnRed;
-}
-
-bool AnyHumanReadyOnRed()
-{
-	RefreshHumanReadiness();
-	
-	return m_bAnyHumanReadyOnRed;
-}
-
 public void Timer_ReadyPlayer(Handle timer, int data)
 {
 	if (!IsClientInGame(data))
@@ -2049,19 +2002,6 @@ void FindGameConsoleVariables()
 	tf_bot_health_search_far_range = FindConVar("tf_bot_health_search_far_range");
 	tf_bot_health_search_near_range = FindConVar("tf_bot_health_search_near_range");
 }
-
-bool FakeClientCommandThrottled(int client, const char[] command)
-{
-	if (m_flLastCommandTime[client] > GetGameTime())
-		return false;
-	
-	FakeClientCommand(client, command);
-	
-	m_flLastCommandTime[client] = GetGameTime() + 0.4;
-	
-	return true;
-}
-
 void MakePlayerDance(int client)
 {
 	if (IsPlayerAlive(client))
@@ -2125,18 +2065,6 @@ void ShowPlayerUpgrades(int client, int target, int slot)
 	
 	ShowUpgradesOn(client, weapon, label);
 }
-
-/* Used to check players last command input
-Usually for preventing palyers from sending a command multiple times in a single frame */
-bool ShouldProcessCommand(int client)
-{
-	if (m_flLastCommandTime[client] > GetGameTime())
-		return false;
-	
-	m_flLastCommandTime[client] = GetGameTime() + COMMAND_MAX_RATE;
-	return true;
-}
-
 /* Put a bot back in the slot a player just left
 
 Runs a tick after the disconnect, because the leaving player is still in the game at the point the
