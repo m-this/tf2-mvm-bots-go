@@ -244,3 +244,113 @@ func UpdateStuckWatchdog(actor int32) {
 
 	engine.ApplyNextFrame(FrameUnstickDefender, actor)
 }
+
+// MoveWedgedTries is how many random points are tried per area before giving
+// up on it.
+//
+//sp:name MOVE_WEDGED_TRIES
+const MoveWedgedTries = 8
+
+// AreaEscapePoint is a point in the area far enough from the wedge to be worth
+// standing on.
+//
+//sp:name AreaEscapePoint
+//sp:const here
+func AreaEscapePoint(area engine.Area, here [3]float32) (found bool, destination [3]float32) {
+	for attempt := int32(0); attempt < MoveWedgedTries; attempt++ {
+		point := engine.RandomPointIn(area)
+		point[2] += 10.0
+
+		if engine.VectorDistance(here, point) > StuckRadius {
+			destination = point
+			return true, destination
+		}
+	}
+
+	return false, destination
+}
+
+// WedgeEscapePoint tries the wedge's own area first and then everything
+// touching it.
+//
+//sp:name WedgeEscapePoint
+//sp:const here
+func WedgeEscapePoint(area engine.Area, here [3]float32) (found bool, destination [3]float32) {
+	found, destination = AreaEscapePoint(area, here)
+
+	if found {
+		return true, destination
+	}
+
+	for dir := engine.DirectionNorth(); dir < engine.DirectionCount(); dir++ {
+		count := area.AdjacentCount(dir)
+
+		for i := int32(0); i < count; i++ {
+			next := area.AdjacentArea(dir, i)
+
+			if next != engine.NullArea() {
+				found, destination = AreaEscapePoint(next, here)
+
+				if found {
+					return true, destination
+				}
+			}
+		}
+	}
+
+	return false, destination
+}
+
+/*
+MoveWedgedDefender teleports a bot off ground it cannot leave on its own, to a
+point in its area or a touching one that is far enough away to be different
+ground.
+*/
+//
+//sp:name MoveWedgedDefender
+func MoveWedgedDefender(client int32) bool {
+	here := engine.AbsOriginOf(client)
+
+	area := engine.NearestNavArea(here, true, StuckWedgeSearch, false, true, engine.TeamAny())
+
+	if area == engine.NullArea() {
+		engine.LogMessage("Stuck: %N is wedged at %.0f %.0f %.0f with no nav area within %.0f, so nothing can be done",
+			client, here[0], here[1], here[2], StuckWedgeSearch)
+		return false
+	}
+
+	var destination [3]float32
+
+	if engine.OldWedgeRecovery() {
+		// The pre-2.21.3 behaviour, kept only so a run can measure what
+		// replacing it was worth.
+		destination = engine.RandomPointIn(area)
+		destination[2] += 10.0
+
+		if engine.VectorDistance(here, destination) <= StuckRadius {
+			return false
+		}
+	} else {
+		found, escape := WedgeEscapePoint(area, here)
+
+		if !found {
+			engine.LogMessage("Stuck: %N is wedged at %.0f %.0f %.0f and every point in its area and the ones touching it is too close",
+				client, here[0], here[1], here[2])
+			return false
+		}
+
+		destination = escape
+	}
+
+	var stopped [3]float32
+	engine.TeleportEntity(client, destination, engine.NullVector(), stopped)
+	engine.CombatOf(client).UpdateLastKnownArea()
+
+	engine.SetRepathTime(client, 0.0)
+	stuckWedgeCount[client] = 0
+
+	engine.LogMessage("Stuck: %N was wedged at %.0f %.0f %.0f, moved to %.0f %.0f %.0f",
+		client, here[0], here[1], here[2], destination[0], destination[1], destination[2])
+
+	return true
+}

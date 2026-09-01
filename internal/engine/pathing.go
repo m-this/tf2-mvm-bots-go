@@ -15,6 +15,9 @@ type PathingCalls struct {
 	UnreachableGoal      func(actor int32) (bool, [3]float32)
 	Pathing              func(b PluginBot) bool
 	MoveWedgedDefender   func(actor int32) bool
+	AdjacentCount        func(a Area, dir Direction) int32
+	AdjacentArea         func(a Area, dir Direction, index int32) Area
+	OldWedgeRecovery     func() bool
 }
 
 var pathings PathingCalls
@@ -104,8 +107,9 @@ func (b PluginBot) Pathing() bool {
 }
 
 // MoveWedgedDefender teleports a bot off ground it cannot leave on its own.
+// Ported, stuckwatch.
 //
-//sp:plugin MoveWedgedDefender
+//sp:body MoveWedgedDefender
 func MoveWedgedDefender(actor int32) bool {
 	if pathings.MoveWedgedDefender == nil {
 		missing("MoveWedgedDefender")
@@ -138,3 +142,49 @@ func SpawnNavRecoveryRadius() ConVar { return 0 }
 //
 //sp:global redbots_manager_spawn_nav_recovery_time
 func SpawnNavRecoveryTime() ConVar { return 0 }
+
+// Direction is cbasenpc's NavDirType: the four sides of a nav area.
+//
+//sp:tag NavDirType
+type Direction int32
+
+// DirectionNorth is NORTH, the first side.
+//
+//sp:global NORTH
+func DirectionNorth() Direction { return 0 }
+
+// DirectionCount is NUM_DIRECTIONS.
+//
+//sp:global NUM_DIRECTIONS
+func DirectionCount() Direction { return 4 }
+
+// AdjacentCount is how many areas touch this one on that side.
+//
+//sp:method GetAdjacentCount
+func (a Area) AdjacentCount(dir Direction) int32 {
+	if pathings.AdjacentCount == nil {
+		missing("CNavArea.GetAdjacentCount")
+	}
+	return pathings.AdjacentCount(a, dir)
+}
+
+// AdjacentArea is one of them, by index.
+//
+//sp:method GetAdjacentArea
+func (a Area) AdjacentArea(dir Direction, index int32) Area {
+	if pathings.AdjacentArea == nil {
+		missing("CNavArea.GetAdjacentArea")
+	}
+	return pathings.AdjacentArea(a, dir, index)
+}
+
+// OldWedgeRecovery is the faults injector asking for the pre-2.21.3 behaviour,
+// kept only so a run can measure what replacing it was worth. Ported, faults.
+//
+//sp:body DebugFaults_OldWedgeRecovery
+func OldWedgeRecovery() bool {
+	if pathings.OldWedgeRecovery == nil {
+		missing("DebugFaults_OldWedgeRecovery")
+	}
+	return pathings.OldWedgeRecovery()
+}
