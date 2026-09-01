@@ -32,6 +32,12 @@ type TacticalCalls struct {
 	ShouldUseTeleporterNow   func(client int32) bool
 	ShouldLeaveToBePatchedUp func(client int32, healthRatio float32) bool
 	IsAmmoLowNow             func(client int32) bool
+	FindOnlyOneVisibleEntity func(client int32, first int32, second int32) int32
+	HealerOrThreat           func(bot Bot, threat Known) Known
+	SelectCloserThreat       func(bot Bot, threat1 Known, threat2 Known) Known
+	ThreatPriority           func(threat int32, rangeSq float32) int32
+	ThreatPriorityGenerated  func(threat int32, rangeSq float32) int32
+	ThreatPortAudit          func(threat int32, rangeSq float32)
 }
 
 var tacticals TacticalCalls
@@ -283,3 +289,95 @@ func IsAmmoLowNow(client int32) bool {
 //
 //sp:global tf_bot_health_ok_ratio
 func HealthOkRatio() ConVar { return 0 }
+
+// FindOnlyOneVisibleEntity is the one of the two the bot can see, when it can
+// see exactly one. Ported, lineoffire.
+//
+//sp:body FindOnlyOneVisibleEntity
+func FindOnlyOneVisibleEntity(client int32, first int32, second int32) int32 {
+	if tacticals.FindOnlyOneVisibleEntity == nil {
+		missing("FindOnlyOneVisibleEntity")
+	}
+	return tacticals.FindOnlyOneVisibleEntity(client, first, second)
+}
+
+// HealerOrThreat swaps a player threat for its visible medic. Ported,
+// botqueries.
+//
+//sp:body HealerOrThreat
+func HealerOrThreat(bot Bot, threat Known) Known {
+	if tacticals.HealerOrThreat == nil {
+		missing("HealerOrThreat")
+	}
+	return tacticals.HealerOrThreat(bot, threat)
+}
+
+// SelectCloserThreatOf is the nearer of two. Ported, botqueries.
+//
+//sp:body SelectCloserThreat
+func SelectCloserThreatOf(bot Bot, threat1 Known, threat2 Known) Known {
+	if tacticals.SelectCloserThreat == nil {
+		missing("SelectCloserThreat")
+	}
+	return tacticals.SelectCloserThreat(bot, threat1, threat2)
+}
+
+// FeatureThreatPriority is FEATURE_THREAT_PRIORITY.
+//
+//sp:global FEATURE_THREAT_PRIORITY
+func FeatureThreatPriority() int32 { return 0 }
+
+// FeatureGeneratedThreatPriority is FEATURE_GENERATED_THREAT_PRIORITY, the A/B
+// switch mvm-z83.47 exists to settle.
+//
+//sp:global FEATURE_GENERATED_THREAT_PRIORITY
+func FeatureGeneratedThreatPriority() int32 { return 21 }
+
+/*
+The threat priority pair, still hand-written on purpose.
+
+mvm-z83.47 wants the two played against each other in a running game before the
+hand-written half goes, so both stay plugin externs and the audit that compares
+them stays with them.
+*/
+
+// ThreatPriority is the chain that shipped.
+//
+//sp:plugin ThreatPriority
+func ThreatPriority(threat int32, rangeSq float32) int32 {
+	if tacticals.ThreatPriority == nil {
+		missing("ThreatPriority")
+	}
+	return tacticals.ThreatPriority(threat, rangeSq)
+}
+
+// ThreatPriorityGenerated is the table's answer.
+//
+//sp:plugin ThreatPriorityGenerated
+func ThreatPriorityGenerated(threat int32, rangeSq float32) int32 {
+	if tacticals.ThreatPriorityGenerated == nil {
+		missing("ThreatPriorityGenerated")
+	}
+	return tacticals.ThreatPriorityGenerated(threat, rangeSq)
+}
+
+// ThreatPortAudit records where the two disagree.
+//
+//sp:plugin ThreatPortAudit
+func ThreatPortAudit(threat int32, rangeSq float32) {
+	if tacticals.ThreatPortAudit == nil {
+		missing("ThreatPortAudit")
+	}
+	tacticals.ThreatPortAudit(threat, rangeSq)
+}
+
+// ChooseThreat is the ternary the shipped file writes to pick between two
+// known entities.
+//
+//sp:choice ?:
+func ChooseThreat(cond bool, yes Known, no Known) Known {
+	if cond {
+		return yes
+	}
+	return no
+}

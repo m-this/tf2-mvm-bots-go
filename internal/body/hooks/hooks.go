@@ -375,3 +375,104 @@ func TacticalMonitorUpdate(action engine.Behaviour, actor int32, interval float3
 
 	return engine.PluginContinue()
 }
+
+/*
+MainActionSelectMoreDangerousThreat is which of two robots the bot fears.
+
+Flamethrowers and melee take the closest, because reach is the whole argument.
+One visible threat wins outright. The minigun has two rules of its own: rage
+knockback goes on the bomb carrier or a giant, and tanks come last because the
+minigun does a quarter damage to them.
+
+Otherwise it is the priority table, and every guide written about this mode says
+the same order: the Medic first because a giant being healed cannot be killed at
+all, then the Sniper and the Engineer because they are the two the rest of the
+team cannot reach, then giants, then whoever is holding the bomb. A robot close
+enough to be killing the bot outranks all of it, because a priority target is
+worth nothing to a corpse.
+
+Whatever wins, the beam on it wins instead: killing the healer is killing both.
+*/
+//
+//sp:name CTFBotMainAction_SelectMoreDangerousThreat
+//sp:public
+//
+//nolint:revive,gocritic // unused-parameter, ifElseChain: the action and the entity are the game's, and the chain is the shipped shape
+func MainActionSelectMoreDangerousThreat(action engine.Behaviour, nextbot engine.Bot, entity int32, threat1 engine.Known, threat2 engine.Known) (result engine.Outcome, knownEntity engine.Known) {
+	me := engine.Actor()
+
+	if !engine.DefenderBotFlag(me) {
+		return engine.PluginContinue(), knownEntity
+	}
+
+	myWeapon := engine.ActiveWeapon(me)
+
+	if myWeapon != -1 && (engine.WeaponID(myWeapon) == engine.WeaponFlamethrower() || engine.IsMeleeWeapon(myWeapon)) {
+		// Always target the closest one to us with these weapons.
+		return engine.Changed(), engine.HealerOrThreat(nextbot, engine.SelectCloserThreatOf(nextbot, threat1, threat2))
+	}
+
+	iThreat1 := threat1.Entity()
+	iThreat2 := threat2.Entity()
+
+	// If we can only see one threat, then it's our best target.
+	oneVisible := engine.FindOnlyOneVisibleEntity(me, iThreat1, iThreat2)
+
+	if oneVisible == iThreat1 {
+		return engine.Changed(), engine.HealerOrThreat(nextbot, threat1)
+	}
+
+	if oneVisible == iThreat2 {
+		return engine.Changed(), engine.HealerOrThreat(nextbot, threat2)
+	}
+
+	if myWeapon != -1 && engine.WeaponID(myWeapon) == engine.WeaponMinigun() {
+		if engine.IsRageDraining(me) {
+			// When using knockback rage, focus only on particular threats.
+			if engine.IsPlayer(iThreat1) && (engine.HasTheFlag(iThreat1) || engine.IsMiniBoss(iThreat1)) {
+				return engine.Changed(), threat1
+			}
+
+			if engine.IsPlayer(iThreat2) && (engine.HasTheFlag(iThreat2) || engine.IsMiniBoss(iThreat2)) {
+				return engine.Changed(), threat2
+			}
+		}
+
+		// Minigun deals 75% less damage against tanks so prioritize them
+		// least.
+		if engine.IsBaseBoss(iThreat1) && !engine.IsBaseBoss(iThreat2) {
+			return engine.Changed(), threat2
+		}
+
+		if !engine.IsBaseBoss(iThreat1) && engine.IsBaseBoss(iThreat2) {
+			return engine.Changed(), threat1
+		}
+	}
+
+	rangeSq1 := nextbot.RangeSquaredTo(iThreat1)
+	rangeSq2 := nextbot.RangeSquaredTo(iThreat2)
+
+	generated := engine.Feature(engine.FeatureGeneratedThreatPriority())
+
+	priority1 := engine.ChooseInt(generated, engine.ThreatPriorityGenerated(iThreat1, rangeSq1), engine.ThreatPriority(iThreat1, rangeSq1))
+	priority2 := engine.ChooseInt(generated, engine.ThreatPriorityGenerated(iThreat2, rangeSq2), engine.ThreatPriority(iThreat2, rangeSq2))
+
+	if generated {
+		engine.ThreatPortAudit(iThreat1, rangeSq1)
+		engine.ThreatPortAudit(iThreat2, rangeSq2)
+	}
+
+	if engine.Feature(engine.FeatureThreatPriority()) && priority1 != priority2 {
+		knownEntity = engine.ChooseThreat(priority1 > priority2, threat1, threat2)
+	} else if rangeSq1 < rangeSq2 {
+		// Target the closest visible.
+		knownEntity = threat1
+	} else {
+		knownEntity = threat2
+	}
+
+	// Target the healer.
+	knownEntity = engine.HealerOrThreat(nextbot, knownEntity)
+
+	return engine.Changed(), knownEntity
+}
