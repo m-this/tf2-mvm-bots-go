@@ -26,6 +26,8 @@ type QueryCalls struct {
 	AnyHumanOnRed              func() bool
 	AnyHumanReadyOnRed         func() bool
 	IsTFBotPlayer              func(client int32) bool
+	VisibleRecently            func(k Known) bool
+	LastKnownPosition          func(k Known) [3]float32
 }
 
 var queries QueryCalls
@@ -359,4 +361,29 @@ func IsTFBotPlayer(client int32) bool {
 		missing("IsTFBotPlayer")
 	}
 	return queries.IsTFBotPlayer(client)
+}
+
+// ConditionSlowed is TFCond_Slowed.
+//
+//sp:global TFCond_Slowed
+func ConditionSlowed() Condition { return 0 }
+
+// VisibleRecently says the bot saw it within the vision system's memory.
+//
+//sp:method IsVisibleRecently
+func (k Known) VisibleRecently() bool {
+	if queries.VisibleRecently == nil {
+		missing("CKnownEntity.IsVisibleRecently")
+	}
+	return queries.VisibleRecently(k)
+}
+
+// LastKnownPosition is where the bot last saw it.
+//
+//sp:method GetLastKnownPosition
+func (k Known) LastKnownPosition() (position [3]float32) {
+	if queries.LastKnownPosition == nil {
+		missing("CKnownEntity.GetLastKnownPosition")
+	}
+	return queries.LastKnownPosition(k)
 }
