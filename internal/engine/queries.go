@@ -34,6 +34,10 @@ type QueryCalls struct {
 	PowerupBottleKind          func(bottle int32) int32
 	FindPowerupBottle          func(client int32) int32
 	IsPointInRespawnRoomStrict func(position [3]float32, client int32) bool
+	SetBuyUpgradesNumber       func(client int32, number int32)
+	ShouldUpgradeMidRoundNow   func(client int32) bool
+	IsSniperStalled            func(client int32) bool
+	CollectMoneyIsPossible     func(client int32) bool
 }
 
 var queries QueryCalls
@@ -304,9 +308,9 @@ func UseUpgrades() ConVar { return 0 }
 func FeatureReadyWhenPrepared() int32 { return 5 }
 
 // ShouldTakeUpPosition says this bot's class walks to the front before the
-// wave rather than waiting where it shopped.
+// wave rather than waiting where it shopped. Ported, dispatch.
 //
-//sp:plugin ShouldTakeUpPosition
+//sp:body ShouldTakeUpPosition
 func ShouldTakeUpPosition(client int32) bool {
 	if queries.ShouldTakeUpPosition == nil {
 		missing("ShouldTakeUpPosition")
@@ -505,4 +509,35 @@ func IsPointInRespawnRoomStrict(position [3]float32, client int32) bool {
 		missing("TF2Util_IsPointInRespawnRoom")
 	}
 	return queries.IsPointInRespawnRoomStrict(position, client)
+}
+
+// SetBuyUpgradesNumber writes the shopping die.
+//
+//sp:slotset g_iBuyUpgradesNumber
+func SetBuyUpgradesNumber(client int32, number int32) {
+	if queries.SetBuyUpgradesNumber == nil {
+		missing("g_iBuyUpgradesNumber")
+	}
+	queries.SetBuyUpgradesNumber(client, number)
+}
+
+// ShouldUpgradeMidRoundNow is the mid-round shopping question. Ported,
+// botqueries.
+//
+//sp:body ShouldUpgradeMidRound
+func ShouldUpgradeMidRoundNow(client int32) bool {
+	if queries.ShouldUpgradeMidRoundNow == nil {
+		missing("ShouldUpgradeMidRound")
+	}
+	return queries.ShouldUpgradeMidRoundNow(client)
+}
+
+// IsSniperStalled is the watchdog's mark. Ported, stuckwatch.
+//
+//sp:body IsSniperStalled
+func IsSniperStalled(client int32) bool {
+	if queries.IsSniperStalled == nil {
+		missing("IsSniperStalled")
+	}
+	return queries.IsSniperStalled(client)
 }
