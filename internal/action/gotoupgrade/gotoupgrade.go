@@ -189,3 +189,11 @@ func MapUpgradeStationGoal() (found bool, buffer [3]float32) {
 
 	return false, buffer
 }
+
+// ResetGotoUpgrade forgets the station this bot walked to.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
+func ResetGotoUpgrade(client int32) {
+	station[client] = -1
+}

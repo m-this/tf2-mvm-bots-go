@@ -203,3 +203,11 @@ func IsPossible(actor int32) bool {
 
 	return true
 }
+
+// ResetCollectMoney forgets the credit this bot was walking to.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
+func ResetCollectMoney(client int32) {
+	currencyPack[client] = -1
+}

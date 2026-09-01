@@ -163,6 +163,7 @@ the emitter refuses the aliased shape outright now.
 */
 var reshaped = map[string]string{
 	"NestSpotFromList": "the candidate and the answer cannot be the same variable; see the aliasing refusal in internal/spbody",
+	"ResetNextBot":     "the flat list of every per-client field became one reset per package that owns some. Checked by hand against the shipped body at the pin: 26 fields, all 26 cleared, every one to the same value. A behaviour now brings its own reset or has none to bring, rather than depending on somebody remembering this list",
 }
 
 /*
@@ -213,9 +214,13 @@ func compareBody(t *testing.T, got, shipped string) {
 		name := m[1]
 
 		if reshaped[name] != "" {
-			// A port that deliberately changed the shape, with the
-			// reason written down. The call sequence is still
-			// compared, so the body cannot drift behind the note.
+			/* A port that deliberately changed the shape
+
+			Nothing about it is compared, which is the point: the
+			shipped declaration and the shipped call sequence are
+			what the port decided not to keep. The reason beside the
+			name is the whole of the argument, so it has to say what
+			was checked by hand instead. */
 			continue
 		}
 

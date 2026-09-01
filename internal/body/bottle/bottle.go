@@ -246,3 +246,13 @@ func OpportunisticallyUsePowerupBottle(client int32, activeWeapon int32, bot eng
 
 	return false
 }
+
+// ResetBottle forgets the canteen this bot was wearing, and when it may drink again.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
+func ResetBottle(client int32) {
+	powerupBottle[client] = engine.InvalidEntReference()
+	powerupBottleLook[client] = 0.0
+	nextBottleUseTime[client] = 0.0
+}

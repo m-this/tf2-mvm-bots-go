@@ -154,3 +154,11 @@ func IsPossible(client int32, medigun int32) bool {
 
 	return true
 }
+
+// ResetAttackForUber forgets where this bot started its push.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
+func ResetAttackForUber(client int32) {
+	startArea[client] = engine.NullVector()
+}

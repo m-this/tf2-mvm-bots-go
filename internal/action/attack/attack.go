@@ -289,3 +289,11 @@ func TargetEntityReachable(client int32, target int32) bool {
 
 	return true
 }
+
+// ResetAttack forgets the robot this bot was shooting.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
+func ResetAttack(client int32) {
+	attackTarget[client] = -1
+}

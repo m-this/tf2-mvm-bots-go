@@ -253,3 +253,11 @@ func IsPossible(actor int32) bool {
 
 	return bPossible
 }
+
+// ResetGetHealth forgets the health pack this bot was walking to.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
+func ResetGetHealth(client int32) {
+	healthPack[client] = -1
+}

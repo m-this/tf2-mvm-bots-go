@@ -613,3 +613,11 @@ func EvalSpy(slot int32, weapon int32) int32 {
 		return 10
 	}
 }
+
+// ResetAttackTank forgets the tank this bot was shooting.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
+func ResetAttackTank(client int32) {
+	tankTarget[client] = -1
+}

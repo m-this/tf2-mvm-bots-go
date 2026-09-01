@@ -135,3 +135,11 @@ func UpdateScoutCombatJump(client int32) {
 		scoutDoubleJumpSide[client] = engine.InMoveLeft()
 	}
 }
+
+// ResetScoutJump forgets this scout's jump beat.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
+func ResetScoutJump(client int32) {
+	nextJumpTime[client] = 0.0
+}

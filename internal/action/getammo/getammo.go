@@ -457,3 +457,11 @@ func SortByStraightLineRange(index1 int32, index2 int32, array engine.Handle, hn
 
 	return engine.ChooseInt(first > second, 1, 0)
 }
+
+// ResetGetAmmo forgets the ammo pack this bot was walking to.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
+func ResetGetAmmo(client int32) {
+	ammoPack[client] = -1
+}

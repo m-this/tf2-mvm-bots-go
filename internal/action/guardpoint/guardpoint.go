@@ -179,3 +179,11 @@ func IsPossible(client int32) bool {
 
 	return true
 }
+
+// ResetGuardPoint forgets the ground this bot was holding.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
+func ResetGuardPoint(client int32) {
+	pointDefendArea[client] = engine.NullVector()
+}

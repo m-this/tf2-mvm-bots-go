@@ -96,3 +96,11 @@ func SelectTarget(actor int32) bool {
 
 	return teleporterTarget[actor] != -1
 }
+
+// ResetDestroyTeleporter forgets the teleporter this bot was breaking.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
+func ResetDestroyTeleporter(client int32) {
+	teleporterTarget[client] = -1
+}

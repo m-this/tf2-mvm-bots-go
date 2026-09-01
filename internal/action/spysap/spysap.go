@@ -134,3 +134,11 @@ func IsHindrance(nextbot engine.Bot, entity int32) (changed engine.Outcome, resu
 
 	return engine.Changed(), engine.AnswerUndefined()
 }
+
+// ResetSpySap forgets the building this spy was sapping.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
+func ResetSpySap(client int32) {
+	sapTarget[client] = -1
+}

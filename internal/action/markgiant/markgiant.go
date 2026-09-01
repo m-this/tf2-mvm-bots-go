@@ -195,3 +195,12 @@ func IsPossible(actor int32) bool {
 
 	return victimExists
 }
+
+// ResetMarkGiant forgets the giant this bot marked, and when it may mark again.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
+func ResetMarkGiant(client int32) {
+	target[client] = -1
+	nextMarkTime[client] = 0.0
+}

@@ -147,3 +147,11 @@ func StartBuilderEffectBarRegen(weapon int32) {
 	// When recharged, game will give us ammo TF_AMMO_GRENADES2 for the sapper
 	engine.SetEntPropFloat(weapon, engine.PropSend(), "m_flEffectBarRegenTime", engine.GameTime()+engine.SapperRechargeTime())
 }
+
+// ResetSpySapPlayer forgets the player's building this spy was sapping.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
+func ResetSpySapPlayer(client int32) {
+	playerSapTarget[client] = -1
+}

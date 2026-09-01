@@ -387,3 +387,12 @@ func DumpFront(client int32, args int32) engine.Outcome { //nolint:revive // unu
 
 	return engine.PluginHandled()
 }
+
+// ResetMoveToFront forgets where this bot was walking, and how long it had.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
+func ResetMoveToFront(client int32) {
+	goalArea[client] = engine.NullVector()
+	moveTimeout[client] = 0.0
+}
