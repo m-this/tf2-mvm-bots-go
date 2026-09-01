@@ -698,3 +698,99 @@ func EquipBestWeaponForThreat(client int32, threat engine.Known) {
 		engine.SetPlayerActiveWeapon(client, gun)
 	}
 }
+
+/*
+UtilizeCompressionBlast is the pyro's airblast, in two skill steps.
+
+Step one shoves what is worth shoving: an uber that cannot be shot, a demoman
+mid-charge, and the bomb carrier standing on the hatch. Step two is the
+projectile reflect, gated by a chance the transient draw keeps stable for a
+second so the decision does not flicker inside one approach.
+
+The attack button is released before every blast: holding fire and pressing
+altfire in the same frame is a flamethrower that does neither.
+*/
+//
+//sp:name UtilizeCompressionBlast
+//sp:const threat
+//sp:default enhancedStage 0
+//
+//nolint:revive // unused-parameter: enhancedStage is the caller's, and no branch reads it yet
+func UtilizeCompressionBlast(client int32, bot engine.Bot, threat engine.Known, enhancedStage int32) {
+	if threat == engine.NoKnownEntity() {
+		return
+	}
+
+	if engine.ReflectSkill().Int() < 1 {
+		return
+	}
+
+	iThreat := threat.Entity()
+
+	if engine.IsPlayer(iThreat) {
+		threatOrigin := engine.Origin(iThreat)
+
+		// Make sure we're close enough to actually airblast them.
+		if bot.IsRangeLessThanEx(threatOrigin, 250.0) {
+			if engine.IsInvulnerable(iThreat) {
+				// Shove ubers away from us.
+				engine.ExtraButtonsOf(client).ReleaseButtons(engine.InAttack())
+				engine.PressAltFireButton(client)
+				return
+			}
+
+			if engine.IsPlayerInCondition(iThreat, engine.ConditionCharging()) {
+				// Shove chargers away from us.
+				engine.ExtraButtonsOf(client).ReleaseButtons(engine.InAttack())
+				engine.PressAltFireButton(client)
+				return
+			}
+
+			if engine.HasTheFlag(iThreat) && engine.VectorDistance(threatOrigin, engine.BombHatchPosition()) <= 100.0 {
+				// Shove the bomb carrier off the hatch.
+				engine.ExtraButtonsOf(client).ReleaseButtons(engine.InAttack())
+				engine.PressAltFireButton(client)
+				return
+			}
+		}
+	}
+
+	if engine.ReflectSkill().Int() < 2 {
+		return
+	}
+
+	if engine.ReflectChance().Float() < 100.0 && engine.TransientlyConsistentRandom(client) > engine.ReflectChance().Float()/100.0 {
+		return
+	}
+
+	// Enhanced projectile airblast.
+	myTeam := engine.GetClientTeam(client)
+	myEyePos := engine.ClientEyePosition(client)
+	ent := int32(-1)
+
+	for {
+		ent = engine.FindEntityByClassname(ent, "tf_projectile_*")
+
+		if ent == -1 {
+			break
+		}
+
+		if engine.EntityTeamNumber(ent) == myTeam {
+			continue
+		}
+
+		if !engine.CanBeReflected(ent) {
+			continue
+		}
+
+		origin := engine.LocalOrigin(ent)
+		vec := engine.MakeVectorFromPoints(origin, myEyePos)
+
+		// Airblast the projectile if we are actually facing towards it.
+		if engine.VectorLength(vec) < 150.0 {
+			engine.ExtraButtonsOf(client).ReleaseButtons(engine.InAttack())
+			engine.PressAltFireButton(client)
+			return
+		}
+	}
+}

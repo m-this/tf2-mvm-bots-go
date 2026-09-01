@@ -7,45 +7,49 @@ dice, and the intention interface a rethink goes through.
 
 // QueryCalls are the answers.
 type QueryCalls struct {
-	PlayerMaxAmmo              func(client int32, ammo int32) int32
-	Currency                   func(client int32) int32
-	BuybackNumber              func(client int32) int32
-	BuyUpgradesNumber          func(client int32) int32
-	BeingRevived               func(client int32) bool
-	AreaID                     func(n NavArea) int32
-	SetLookingAroundForEnemies func(client int32, allow bool)
-	Intention                  func(b Bot) Intention
-	IntentionReset             func(i Intention)
-	TunedWeaponRanges          func(weapon int32) (bool, float32, float32)
-	VisibleInFOVNow            func(k Known) bool
-	RangeSquaredTo             func(b Bot, entity int32) float32
-	RemoveCondition            func(client int32, condition Condition)
-	ShouldTakeUpPosition       func(client int32) bool
-	IsWaitingAtTheFront        func(client int32) bool
-	RealPlayerCount            func() int32
-	AnyHumanOnRed              func() bool
-	AnyHumanReadyOnRed         func() bool
-	IsTFBotPlayer              func(client int32) bool
-	VisibleRecently            func(k Known) bool
-	LastKnownPosition          func(k Known) [3]float32
-	IsRangeGreaterThanEntity   func(b Bot, entity int32, distance float32) bool
-	UseActionSlot              func(client int32)
-	PowerupBottleCharges       func(bottle int32) int32
-	PowerupBottleKind          func(bottle int32) int32
-	FindPowerupBottle          func(client int32) int32
-	IsPointInRespawnRoomStrict func(position [3]float32, client int32) bool
-	SetBuyUpgradesNumber       func(client int32, number int32)
-	PressButtonsNow            func(b Buttons, buttons int32)
-	MaxEntities                func() int32
-	WasEverVisible             func(k Known) bool
-	TimeSinceLastSeen          func(k Known) float32
-	StickyLauncherWanted       func(client int32, launcher int32, threat int32, threatRange float32) bool
-	MedicHasPatient            func(client int32, medigun int32) bool
-	Clip1Of                    func(weapon int32) int32
-	UpdatePosition             func(k Known)
-	ShouldUpgradeMidRoundNow   func(client int32) bool
-	IsSniperStalled            func(client int32) bool
-	CollectMoneyIsPossible     func(client int32) bool
+	PlayerMaxAmmo               func(client int32, ammo int32) int32
+	Currency                    func(client int32) int32
+	BuybackNumber               func(client int32) int32
+	BuyUpgradesNumber           func(client int32) int32
+	BeingRevived                func(client int32) bool
+	AreaID                      func(n NavArea) int32
+	SetLookingAroundForEnemies  func(client int32, allow bool)
+	Intention                   func(b Bot) Intention
+	IntentionReset              func(i Intention)
+	TunedWeaponRanges           func(weapon int32) (bool, float32, float32)
+	VisibleInFOVNow             func(k Known) bool
+	RangeSquaredTo              func(b Bot, entity int32) float32
+	RemoveCondition             func(client int32, condition Condition)
+	ShouldTakeUpPosition        func(client int32) bool
+	IsWaitingAtTheFront         func(client int32) bool
+	RealPlayerCount             func() int32
+	AnyHumanOnRed               func() bool
+	AnyHumanReadyOnRed          func() bool
+	IsTFBotPlayer               func(client int32) bool
+	VisibleRecently             func(k Known) bool
+	LastKnownPosition           func(k Known) [3]float32
+	IsRangeGreaterThanEntity    func(b Bot, entity int32, distance float32) bool
+	UseActionSlot               func(client int32)
+	PowerupBottleCharges        func(bottle int32) int32
+	PowerupBottleKind           func(bottle int32) int32
+	FindPowerupBottle           func(client int32) int32
+	IsPointInRespawnRoomStrict  func(position [3]float32, client int32) bool
+	SetBuyUpgradesNumber        func(client int32, number int32)
+	PressButtonsNow             func(b Buttons, buttons int32)
+	MaxEntities                 func() int32
+	WasEverVisible              func(k Known) bool
+	TimeSinceLastSeen           func(k Known) float32
+	StickyLauncherWanted        func(client int32, launcher int32, threat int32, threatRange float32) bool
+	MedicHasPatient             func(client int32, medigun int32) bool
+	Clip1Of                     func(weapon int32) int32
+	ReleaseButtons              func(b Buttons, buttons int32)
+	CanBeReflected              func(entity int32) bool
+	LocalOrigin                 func(entity int32) [3]float32
+	TransientlyConsistentRandom func(client int32) float32
+	UpdatePosition              func(k Known)
+	ShouldUpgradeMidRoundNow    func(client int32) bool
+	IsSniperStalled             func(client int32) bool
+	CollectMoneyIsPossible      func(client int32) bool
 }
 
 var queries QueryCalls
@@ -647,4 +651,69 @@ func Clip1Of(weapon int32) int32 {
 		missing("Clip1")
 	}
 	return queries.Clip1Of(weapon)
+}
+
+// ConditionCharging is TFCond_Charging, the demoman's shield run.
+//
+//sp:global TFCond_Charging
+func ConditionCharging() Condition { return 17 }
+
+// InAttack is IN_ATTACK.
+//
+//sp:global IN_ATTACK
+func InAttack() int32 { return 1 }
+
+// ReleaseButtons lets go of buttons the mod was holding down, which an airblast
+// has to do before it fires.
+//
+//sp:method ReleaseButtons
+func (b Buttons) ReleaseButtons(buttons int32) {
+	if queries.ReleaseButtons == nil {
+		missing("ExtraButtons.ReleaseButtons")
+	}
+	queries.ReleaseButtons(b, buttons)
+}
+
+// ReflectSkill is redbots_manager_bot_reflect_skill: 0 off, 1 shoves, 2 also
+// reflects projectiles.
+//
+//sp:global redbots_manager_bot_reflect_skill
+func ReflectSkill() ConVar { return 0 }
+
+// ReflectChance is redbots_manager_bot_reflect_chance, per cent.
+//
+//sp:global redbots_manager_bot_reflect_chance
+func ReflectChance() ConVar { return 0 }
+
+// CanBeReflected says the projectile is one an airblast turns around. Ported,
+// reflect.
+//
+//sp:body CanBeReflected
+func CanBeReflected(entity int32) bool {
+	if queries.CanBeReflected == nil {
+		missing("CanBeReflected")
+	}
+	return queries.CanBeReflected(entity)
+}
+
+// LocalOrigin is the entity's position in its parent's space, which for a
+// projectile is the world.
+//
+//sp:native BaseEntity_GetLocalOrigin
+func LocalOrigin(entity int32) (origin [3]float32) {
+	if queries.LocalOrigin == nil {
+		missing("BaseEntity_GetLocalOrigin")
+	}
+	return queries.LocalOrigin(entity)
+}
+
+// TransientlyConsistentRandom is the stable-for-a-period draw. Ported,
+// botqueries.
+//
+//sp:body TransientlyConsistentRandomValue after 1.0
+func TransientlyConsistentRandom(client int32) float32 {
+	if queries.TransientlyConsistentRandom == nil {
+		missing("TransientlyConsistentRandomValue")
+	}
+	return queries.TransientlyConsistentRandom(client)
 }
