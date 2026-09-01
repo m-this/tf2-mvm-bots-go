@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
+	"github.com/m-this/tf2-mvm-bots-go/internal/plugin"
 )
 
 // includeRoot is the include tree inside the plugin's test-bed build
@@ -25,7 +25,7 @@ func includeRoot(t *testing.T) string {
 func pluginDir(t *testing.T) string {
 	t.Helper()
 
-	return upstream.SkipOrFail(t)
+	return plugin.SkipOrFail(t)
 }
 
 // generate runs the driver over the real tree, skipping when it is absent.

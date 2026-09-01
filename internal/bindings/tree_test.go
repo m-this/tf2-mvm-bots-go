@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
+	"github.com/m-this/tf2-mvm-bots-go/internal/plugin"
 )
 
 // includeRoot is the include tree inside the plugin's test-bed build
@@ -18,7 +18,7 @@ import (
 func includeRoot(t *testing.T) string {
 	t.Helper()
 
-	return filepath.Join(upstream.SkipOrFail(t), "testbed", "build")
+	return filepath.Join(plugin.SkipOrFail(t), "testbed", "build")
 }
 
 // includeFiles lists every .inc under the tree, skipping the prebuilt copies

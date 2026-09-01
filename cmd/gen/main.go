@@ -19,7 +19,7 @@ import (
 
 func main() {
 	out := flag.String("out", "gen", "directory to write generated files into")
-	upstream := flag.String("upstream", "../tf2-mvm-bots", "the plugin repository, read for the include tree")
+	upstream := flag.String("upstream", "plugin", "the plugin tree, read for the include tree")
 	flag.Parse()
 
 	if err := run(*out, *upstream); err != nil {

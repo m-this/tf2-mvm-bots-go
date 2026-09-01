@@ -7,13 +7,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
+	"github.com/m-this/tf2-mvm-bots-go/internal/plugin"
 )
 
 func pluginRoot(t *testing.T) string {
 	t.Helper()
 
-	return filepath.Join(upstream.SkipOrFail(t), "source")
+	return filepath.Join(plugin.SkipOrFail(t), "source")
 }
 
 // callSite matches an identifier used as a call. The plugin's own helpers and

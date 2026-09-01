@@ -12,15 +12,14 @@ import (
 )
 
 // readUpstream is the pinned plugin file this proof reads. The pin, and why
-// there is one, is internal/upstream. No plugin repository is a skip; a plugin
+// there is one, is internal/plugin. No plugin tree is a skip; a tree
 // repository missing the file at the pin is a failure.
 func readUpstream(t *testing.T, path string) string {
 	t.Helper()
 
-	upstream.SkipOrFail(t)
 	body, err := upstream.Read(path)
 	if err != nil {
-		t.Fatalf("reading %s at %s: %v", path, upstream.Rev, err)
+		t.Fatalf("reading %s: %v", path, err)
 	}
 	return body
 }

@@ -6,28 +6,20 @@ import (
 	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
 )
 
-// readUpstream is the pinned plugin file these proofs read. The pin, and why
-// there is one, is internal/upstream. No plugin repository is a skip; a plugin
-// repository missing the file at the pin is a failure.
+/*
+	readUpstream is the plugin file these proofs read
+
+The shipped text, from the snapshot under internal/upstream rather than from the
+plugin tree: what these check is what the plugin said, and the port deletes that
+from the tree as it goes. Reading the tree would make a proof pass by having
+nothing left to disagree with.
+*/
 func readUpstream(t *testing.T, parts ...string) string {
 	t.Helper()
 
-	upstream.SkipOrFail(t)
 	body, err := upstream.Read(parts...)
 	if err != nil {
-		t.Fatalf("reading %v at %s: %v", parts, upstream.Rev, err)
+		t.Fatalf("reading %v: %v", parts, err)
 	}
 	return body
-}
-
-// TestPinIsNotBehindHEAD says when the pin has fallen behind, without failing:
-// the plugin moving on is normal, and only the proofs going stale is a problem.
-func TestPinIsNotBehindHEAD(t *testing.T) {
-	head, err := upstream.Head()
-	if err != nil {
-		t.Skipf("no upstream HEAD: %v", err)
-	}
-	if head != upstream.Rev {
-		t.Logf("pinned at %s, upstream HEAD is %s: move the pin and re-read the diff", upstream.Rev, head)
-	}
 }

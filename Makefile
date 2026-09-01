@@ -1,7 +1,7 @@
 GO ?= go
 GOLANGCI_VERSION ?= latest
 GOLANGCI := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_VERSION)
-UPSTREAM ?= ../tf2-mvm-bots
+UPSTREAM ?= plugin
 
 # The standalone SourcePawn build tools/spshell.sh caches. Present means the
 # differential tests run; absent means they skip and say so.
@@ -34,7 +34,7 @@ check: toolchain gen vet lint test
 # a clone that has never generated does not build at all. It is cheap and
 # reproducible, so there is no reason to make anybody remember it.
 test: gen
-	MVMBOTS_UPSTREAM=$(UPSTREAM) $(SPENV) $(REQUIRE) $(GO) test -race ./...
+	MVMBOTS_PLUGIN=$(UPSTREAM) $(SPENV) $(REQUIRE) $(GO) test -race ./...
 
 # Builds SourcePawn's own compiler and VM at the pinned commit. Idempotent: a
 # second run finds the binaries and exits.

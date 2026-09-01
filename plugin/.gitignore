@@ -1,0 +1,14 @@
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
+
+# The agent instructions live here and AGENTS.md is a symlink to them, so
+# this one overrides the global ignore of CLAUDE.md.
+!CLAUDE.md
+
+# The runner's single-instance lock, which is state and not source
+testbed/.lock
+testbed/peppy-server.cfg

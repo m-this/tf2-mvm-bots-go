@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/body"
+	"github.com/m-this/tf2-mvm-bots-go/internal/plugin"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spshell"
-	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
 )
 
 /*
@@ -20,7 +20,7 @@ accept and SourceMod would not shows up.
 */
 func TestTheGeneratedFilesCompileUnderTheShippedCompiler(t *testing.T) {
 	local := spshell.ForTest(t)
-	shipped, err := local.WithSourceMod(upstream.SkipOrFail(t))
+	shipped, err := local.WithSourceMod(plugin.SkipOrFail(t))
 	if err != nil {
 		t.Skipf("no SourceMod compiler: %v", err)
 	}

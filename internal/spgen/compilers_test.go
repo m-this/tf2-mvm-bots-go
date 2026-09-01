@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/m-this/tf2-mvm-bots-go/internal/plugin"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spshell"
 	"github.com/m-this/tf2-mvm-bots-go/internal/tables"
-	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
 )
 
 /*
@@ -23,7 +23,7 @@ compiler and nothing else.
 */
 func TestBothCompilersAgreeOnTheGeneratedTable(t *testing.T) {
 	local := spshell.ForTest(t)
-	shipped, err := local.WithSourceMod(upstream.SkipOrFail(t))
+	shipped, err := local.WithSourceMod(plugin.SkipOrFail(t))
 	if err != nil {
 		t.Skipf("no SourceMod compiler: %v", err)
 	}
@@ -69,7 +69,7 @@ It cannot run: it calls the engine. Compiling is the whole check.
 */
 func TestTheGeneratedEdgeCompilesUnderBothCompilers(t *testing.T) {
 	local := spshell.ForTest(t)
-	shipped, err := local.WithSourceMod(upstream.SkipOrFail(t))
+	shipped, err := local.WithSourceMod(plugin.SkipOrFail(t))
 	if err != nil {
 		t.Skipf("no SourceMod compiler: %v", err)
 	}

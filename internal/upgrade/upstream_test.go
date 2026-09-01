@@ -228,10 +228,9 @@ func compare(t *testing.T, what string, shipped, table []upgrade.Rule) {
 func readUpstream(t *testing.T) string {
 	t.Helper()
 
-	upstream.SkipOrFail(t)
 	body, err := upstream.Read("source", "redbots3", "behavior", "upgrade.sp")
 	if err != nil {
-		t.Fatalf("reading upgrade.sp at %s: %v", upstream.Rev, err)
+		t.Fatalf("reading upgrade.sp: %v", err)
 	}
 	return body
 }

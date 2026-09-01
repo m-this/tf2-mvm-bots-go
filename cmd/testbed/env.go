@@ -9,7 +9,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
+	"github.com/m-this/tf2-mvm-bots-go/internal/plugin"
 )
 
 func envOr(key, fallback string) string {
@@ -37,7 +37,7 @@ mvm-x2c it is not, so the path comes from internal/upstream like every other
 reader of that tree.
 */
 func repoRoot() (string, error) {
-	return upstream.Dir()
+	return plugin.Dir()
 }
 
 func compile(ctx context.Context, root string) error {

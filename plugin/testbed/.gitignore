@@ -1,0 +1,6 @@
+# Working directories: the staged build and whatever the last run measured.
+build/
+results/
+
+# The report binary, built by `go build ./testbed/report` into the package directory.
+report/report

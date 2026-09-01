@@ -16,10 +16,9 @@ const shippedFile = "source/redbots3/nextbot_behavior.sp"
 func shippedSource(t *testing.T) string {
 	t.Helper()
 
-	upstream.SkipOrFail(t)
 	body, err := upstream.Read(shippedFile)
 	if err != nil {
-		t.Fatalf("reading %s at %s: %v", shippedFile, upstream.Rev, err)
+		t.Fatalf("reading %s: %v", shippedFile, err)
 	}
 	return body
 }

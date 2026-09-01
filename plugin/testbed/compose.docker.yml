@@ -1,0 +1,67 @@
+# The test-bed for a machine that has Docker and nothing else.
+#
+#   testbed/run.sh --docker
+#
+# One Team Fortress 2 server running this working tree's bots, with nobody
+# playing on it. Same as compose.yml, except the mod is compiled inside the
+# image rather than on the host.
+#
+# Use this when there is no toolchain to build with. Use compose.yml when there
+# is: it starts in under a second, and this pays for a compile, a chown over the
+# staged tree and a layer export on every rebuild.
+
+name: mvmbots-testbed
+
+services:
+  srcds:
+    # Everything is built in the image, including the plugins, so this needs
+    # nothing on the machine but Docker. It is the slow way: every rebuild pays
+    # for a compile, a chown over the staged tree and a layer export.
+    build:
+      context: ..
+      dockerfile: testbed/Dockerfile
+    environment:
+      # Read by the base image's entrypoint
+      SRCDS_STARTMAP: ${TESTBED_MAP:-mvm_decoy}
+      # Thirty-two, and it is not slack. The invading robots are bot players and
+      # they take player slots, so a wave needs room for twenty-odd of them on top
+      # of the defenders. Cutting this to twelve gives a server that spawns almost
+      # no robots and a run that times out with nothing played.
+      SRCDS_MAXPLAYERS: 32
+      SRCDS_PORT: ${TESTBED_PORT:-27025}
+      SRCDS_RCONPW: ${TESTBED_RCONPW:-testbed}
+      # "0" rather than empty: the image passes this to +sv_setsteamaccount
+      SRCDS_TOKEN: "0"
+      # Capped, not uncapped. fps_max 0 makes srcds spin a whole core rendering
+      # nothing, which on a machine that is already paging is how a frame gets
+      # slow enough for the watchdog to call it an infinite loop. The tickrate is
+      # 66, so anything above that is work nobody reads.
+      SRCDS_FPSMAX: 120
+      # Read by our entrypoint, and written into server.cfg
+      BOT_TEAM_SIZE: ${TESTBED_BOT_TEAM_SIZE:-6}
+      BOT_TEAM_COMP: ${TESTBED_BOT_TEAM_COMP:-}
+      BOT_CLASS_BLACKLIST: ${TESTBED_BOT_CLASS_BLACKLIST:-}
+      BOT_USE_UPGRADES: ${TESTBED_BOT_USE_UPGRADES:-1}
+      BOT_NEST_RELOCATE: ${TESTBED_BOT_NEST_RELOCATE:-0}
+      BOT_USE_LOADOUTS: ${TESTBED_BOT_USE_LOADOUTS:-1}
+      STATS_FILE: ${TESTBED_STATS_FILE:-mvmbots_stats.jsonl}
+      TESTBED_HOST: ${TESTBED_HOST:-1}
+      # Comma-separated SteamIDs that get root, for walking a map by hand
+      TESTBED_ADMIN_STEAMIDS: ${TESTBED_ADMIN_STEAMIDS:-}
+    ports:
+      # 27025, not 27015: a machine that already runs a game server is a machine
+      # whose game port is taken, and the whole reason the game is already
+      # downloaded here is that a server is using it.
+      #
+      # The game port answers wherever TESTBED_BIND says, so somebody on the LAN
+      # can join and walk the map. It defaults to loopback: this server has no
+      # password and no Steam session, so opening it is a decision, not a default.
+      - "${TESTBED_BIND:-127.0.0.1}:${TESTBED_PORT:-27025}:${TESTBED_PORT:-27025}/udp"
+      # rcon is the TCP half of the same port, and it never leaves this machine.
+      # The password is in a file in the repository.
+      - "127.0.0.1:${TESTBED_PORT:-27025}:${TESTBED_PORT:-27025}/tcp"
+    volumes:
+      - tf2game:/home/steam/tf-dedicated
+
+volumes:
+  tf2game:

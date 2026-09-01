@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/m-this/tf2-mvm-bots-go/internal/plugin"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spgen"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spshell"
 	"github.com/m-this/tf2-mvm-bots-go/internal/threat"
-	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
 )
 
 // threatEnv is the generated threat file plus the probe ranges, injected the
@@ -78,7 +78,7 @@ func TestGeneratedThreatPriorityAgreesWithGo(t *testing.T) {
 // the compiler the plugin ships with as well, per mvm-z83.13.
 func TestThreatPriorityCompilesUnderBothCompilers(t *testing.T) {
 	local := spshell.ForTest(t)
-	shipped, err := local.WithSourceMod(upstream.SkipOrFail(t))
+	shipped, err := local.WithSourceMod(plugin.SkipOrFail(t))
 	if err != nil {
 		t.Skipf("no SourceMod compiler: %v", err)
 	}

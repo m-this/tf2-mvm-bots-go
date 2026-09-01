@@ -47,6 +47,8 @@ func Dir() (string, error) {
 	}
 	dir := os.Getenv(DirEnv)
 	if dir == "" {
+		// The archived plugin repository, wanted by nothing but the
+		// snapshot: everything else reads plugin/ in this repository.
 		dir = filepath.Join(root, "..", "tf2-mvm-bots")
 	} else if !filepath.IsAbs(dir) {
 		dir = filepath.Join(root, dir)

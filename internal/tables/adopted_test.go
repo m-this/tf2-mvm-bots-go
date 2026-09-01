@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/body"
+	"github.com/m-this/tf2-mvm-bots-go/internal/plugin"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spgen"
 	"github.com/m-this/tf2-mvm-bots-go/internal/tables"
-	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
 )
 
 /*
@@ -29,7 +29,7 @@ which one and what to run.
 func TestAdoptedFilesMatchTheGenerator(t *testing.T) {
 	t.Parallel()
 
-	root := upstream.SkipOrFail(t)
+	root := plugin.SkipOrFail(t)
 
 	bodies, err := body.Generate("../..")
 	if err != nil {

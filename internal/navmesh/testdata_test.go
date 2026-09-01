@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/m-this/tf2-mvm-bots-go/internal/upstream"
+	"github.com/m-this/tf2-mvm-bots-go/internal/plugin"
 )
 
 // shippedMaps is every Valve MvM map the mod has a config for and whose nav
@@ -38,7 +38,7 @@ func loadMap(t *testing.T, name string) *Mesh {
 func configDir(t *testing.T) string {
 	t.Helper()
 
-	dir := filepath.Join(upstream.SkipOrFail(t), "configs", "defenderbots", "map")
+	dir := filepath.Join(plugin.SkipOrFail(t), "configs", "defenderbots", "map")
 	if _, err := os.Stat(dir); err != nil {
 		t.Skipf("no map configs at %s", dir)
 	}
