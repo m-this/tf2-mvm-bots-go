@@ -351,7 +351,7 @@ func IsWaitingAtTheFront(client int32) bool {
 
 // RealPlayerCount is how many humans are on the server.
 //
-//sp:plugin GetRealPlayerCount
+//sp:body GetRealPlayerCount
 func RealPlayerCount() int32 {
 	if queries.RealPlayerCount == nil {
 		missing("GetRealPlayerCount")

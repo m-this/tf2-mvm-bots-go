@@ -189,7 +189,7 @@ though nothing has flagged him yet, which is how a bot the manager has not
 adopted is still recognised. A port that reads the flag where the plugin called
 the function quietly narrows it.
 
-//sp:plugin IsDefenderBot
+//sp:body IsDefenderBot
 */
 func IsDefenderBot(client int32) bool {
 	if fronts.IsDefenderBot == nil {
