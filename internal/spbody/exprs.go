@@ -43,6 +43,11 @@ func (e *emitter) expr(x ast.Expr) string {
 			// an array coming out of one is the array that went in.
 			return e.callWith(n, nil)
 		}
+		if _, _, isProperty := e.propertyExtern(n); isProperty {
+			// A field read is a value whatever its shape: an array one
+			// is the plugin's own g_arr[i].vecField.
+			return e.callWith(n, nil)
+		}
 		if e.isArrayValue(n) && !e.returnsArrayValue(n) {
 			if tv, isType := e.info.Types[n.Fun]; !isType || !tv.IsType() {
 				e.fail(n.Pos(), "a call returning an array used as a value; SourcePawn fills a parameter, so assign it to a name on a line of its own")

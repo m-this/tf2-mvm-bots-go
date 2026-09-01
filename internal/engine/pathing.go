@@ -18,6 +18,10 @@ type PathingCalls struct {
 	AdjacentCount        func(a Area, dir Direction) int32
 	AdjacentArea         func(a Area, dir Direction, index int32) Area
 	OldWedgeRecovery     func() bool
+	HasPathGoalVector    func(b PluginBot) bool
+	HasPathGoalEntity    func(b PluginBot) bool
+	PathGoalVector       func(b PluginBot) [3]float32
+	PathGoalEntity       func(b PluginBot) int32
 }
 
 var pathings PathingCalls
@@ -187,4 +191,44 @@ func OldWedgeRecovery() bool {
 		missing("DebugFaults_OldWedgeRecovery")
 	}
 	return pathings.OldWedgeRecovery()
+}
+
+// HasPathGoalVector says a behaviour set a point to walk to.
+//
+//sp:method HasPathGoalVector
+func (b PluginBot) HasPathGoalVector() bool {
+	if pathings.HasPathGoalVector == nil {
+		missing("PluginBot.HasPathGoalVector")
+	}
+	return pathings.HasPathGoalVector(b)
+}
+
+// HasPathGoalEntity says a behaviour set a thing to walk to.
+//
+//sp:method HasPathGoalEntity
+func (b PluginBot) HasPathGoalEntity() bool {
+	if pathings.HasPathGoalEntity == nil {
+		missing("PluginBot.HasPathGoalEntity")
+	}
+	return pathings.HasPathGoalEntity(b)
+}
+
+// PathGoalVector is the point.
+//
+//sp:property vecPathGoal
+func (b PluginBot) PathGoalVector() [3]float32 {
+	if pathings.PathGoalVector == nil {
+		missing("PluginBot.vecPathGoal")
+	}
+	return pathings.PathGoalVector(b)
+}
+
+// PathGoalEntity is the thing.
+//
+//sp:property iPathGoalEntity
+func (b PluginBot) PathGoalEntity() int32 {
+	if pathings.PathGoalEntity == nil {
+		missing("PluginBot.iPathGoalEntity")
+	}
+	return pathings.PathGoalEntity(b)
 }

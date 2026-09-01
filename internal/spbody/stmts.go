@@ -191,6 +191,9 @@ func (e *emitter) arrayCall(define bool, lhs, rhs ast.Expr) bool {
 	if _, isSlot := e.slotExtern(call); isSlot {
 		return false // a subscript is a value too
 	}
+	if _, _, isProperty := e.propertyExtern(call); isProperty {
+		return false // a field read is a value too
+	}
 	if e.returnsArrayValue(call) {
 		// spcomp takes the float[] form as the right hand side of an
 		// assignment and not as an initialiser, so the declaration and

@@ -208,3 +208,77 @@ func NotePathResult(actor int32, built bool) {
 
 	pathFailed[actor] = failed
 }
+
+// PathRetryInterval is how long a refused path waits before it is asked for
+// again: retrying a refusal on the walking interval is most of a frame's path
+// work for nothing.
+//
+//sp:name PATH_RETRY_INTERVAL
+const PathRetryInterval = 0.5
+
+/*
+PluginBotSimulateFrame is the per-frame walk: whenever a behaviour has set a
+goal and bPathing, this is what actually gets the bot there.
+
+An empty path is a failure the same as a refusal, and it is the shape seen in
+play. The engineer skips it inside his supply runs so the two pathings do not
+fight.
+*/
+//
+//sp:name PluginBot_SimulateFrame
+func PluginBotSimulateFrame(client int32) {
+	// SimulateFrame > PFContext::RecalculatePath. This is used whenever we
+	// want to path somewhere constantly.
+	if engine.PluginBotOf(client).Pathing() {
+		if engine.PlayerClass(client) == engine.ClassEngineer() {
+			// Dumb hack for engineer so pathing does not conflict.
+			if engine.LookupEntityActionByName(client, "DefenderGetAmmo") != engine.InvalidAction() || engine.LookupEntityActionByName(client, "DefenderGetHealth") != engine.InvalidAction() {
+				return
+			}
+		}
+
+		shouldPathToVec := engine.PluginBotOf(client).HasPathGoalVector()
+		shouldPathToEntity := engine.PluginBotOf(client).HasPathGoalEntity()
+
+		if shouldPathToVec || shouldPathToEntity {
+			myBot := engine.NextBotOf(client)
+
+			var goal [3]float32
+
+			if shouldPathToVec {
+				goal = engine.PluginBotOf(client).PathGoalVector()
+			} else {
+				goal = engine.AbsOriginOf(engine.PluginBotOf(client).PathGoalEntity())
+			}
+
+			if engine.RepathTime(client) <= engine.GameTime() && TakePathBudget() {
+				engine.CombatOf(client).UpdateLastKnownArea()
+
+				var built bool
+
+				if shouldPathToVec {
+					vecGoal := engine.PluginBotOf(client).PathGoalVector()
+					built = engine.PathOf(client).ComputeToPosBuilt(myBot, vecGoal, PathLengthCap())
+				} else {
+					built = engine.PathOf(client).ComputeToTargetBuilt(myBot, engine.PluginBotOf(client).PathGoalEntity(), PathLengthCap())
+				}
+
+				failed := !built || engine.PathOf(client).Length() <= 0.0
+
+				if failed && !pathFailed[client] {
+					pathFailures[client]++
+				}
+
+				pathFailed[client] = failed
+
+				engine.SetRepathTime(client, engine.GameTime()+engine.ChooseFloat(failed, PathRetryInterval, 0.2))
+			}
+
+			if pathFailed[client] {
+				NudgeTowardsGoal(client, myBot, goal)
+			} else {
+				engine.PathOf(client).Update(myBot)
+			}
+		}
+	}
+}
