@@ -7,17 +7,19 @@ come from.
 
 // MapConfigCalls are the answers.
 type MapConfigCalls struct {
-	GoBack                  func(kv KeyValues)
-	Vector                  func(kv KeyValues, key string) [3]float32
-	GotoFirstSubKeyKeysOnly func(kv KeyValues, keysOnly bool) bool
-	GotoNextKeyKeysOnly     func(kv KeyValues, keysOnly bool) bool
-	StringOr                func(kv KeyValues, key string) Text
-	BuildPath               func(format string, args []any) Text
-	OpenFile                func(path Text, mode string) File
-	ReadFileLine            func(f File) (bool, Text)
-	CloseFile               func(f File)
-	TrimString              func(text Text)
-	PushStringText          func(l List, text Text)
+	GoBack                   func(kv KeyValues)
+	Vector                   func(kv KeyValues, key string) [3]float32
+	GotoFirstSubKeyKeysOnly  func(kv KeyValues, keysOnly bool) bool
+	GotoNextKeyKeysOnly      func(kv KeyValues, keysOnly bool) bool
+	StringOr                 func(kv KeyValues, key string) Text
+	BuildPath                func(format string, args []any) Text
+	OpenFile                 func(path Text, mode string) File
+	ReadFileLine             func(f File) (bool, Text)
+	CloseFile                func(f File)
+	TrimString               func(text Text)
+	PushStringText           func(l List, text Text)
+	SetClientName            func(client int32, name Text)
+	DoesAnyPlayerUseThisName func(name Text) bool
 }
 
 var mapConfigs MapConfigCalls
@@ -161,3 +163,24 @@ func (l List) PushStringText(text Text) {
 //
 //sp:global m_adtBotNames
 func BotNames() List { return 0 }
+
+// SetClientName renames a player, which the server tells everybody about.
+//
+//sp:native SetClientName
+func SetClientName(client int32, name Text) {
+	if mapConfigs.SetClientName == nil {
+		missing("SetClientName")
+	}
+	mapConfigs.SetClientName(client, name)
+}
+
+// DoesAnyPlayerUseThisName walks the players for one already called that.
+// Ported, stocks.
+//
+//sp:body DoesAnyPlayerUseThisName
+func DoesAnyPlayerUseThisName(name Text) bool {
+	if mapConfigs.DoesAnyPlayerUseThisName == nil {
+		missing("DoesAnyPlayerUseThisName")
+	}
+	return mapConfigs.DoesAnyPlayerUseThisName(name)
+}

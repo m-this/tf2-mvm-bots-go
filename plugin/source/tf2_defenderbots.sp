@@ -269,6 +269,7 @@ Address g_pMannVsMachineUpgrades;
 #include "redbots3/generated/roster_counts.sp"
 #include "redbots3/generated/humans.sp"
 #include "redbots3/generated/mapconfig.sp"
+#include "redbots3/generated/botnames.sp"
 #include "redbots3/generated/lineoffire.sp"
 #include "redbots3/generated/nestscore.sp"
 #include "redbots3/generated/nestpick.sp"
@@ -2143,40 +2144,6 @@ void RemoveAllDefenderBots(char[] reason = "", bool bDanceInstead = false)
 			KickClient(i, reason);
 		}
 	}
-}
-
-static int m_iFindNameTries[MAXPLAYERS + 1];
-void SetRandomNameOnBot(int client)
-{
-	char newName[MAX_NAME_LENGTH]; GetRandomDefenderBotName(newName, sizeof(newName));
-	const int maxTries = 10;
-	
-	if (m_adtBotNames.Length > 0 && DoesAnyPlayerUseThisName(newName) && m_iFindNameTries[client] < maxTries)
-	{
-		m_iFindNameTries[client]++;
-		
-		//Someone's already using my name, mock them for it and try again
-		PrintToChatAll("%s : %s", newName, g_sPlayerUseMyNameResponse[GetRandomInt(0, sizeof(g_sPlayerUseMyNameResponse) - 1)]);
-		SetRandomNameOnBot(client);
-		
-		return;
-	}
-	
-	m_iFindNameTries[client] = 0;
-	SetClientName(client, newName);
-}
-
-void GetRandomDefenderBotName(char[] buffer, int maxlen)
-{
-	if (m_adtBotNames.Length == 0)
-	{
-		strcopy(buffer, maxlen, "You forgot to give me a name!");
-		return;
-	}
-	
-	char botName[MAX_NAME_LENGTH]; m_adtBotNames.GetString(GetRandomInt(0, m_adtBotNames.Length - 1), botName, sizeof(botName));
-	
-	strcopy(buffer, maxlen, botName);
 }
 
 void ManageDefenderBots(bool bManage, bool bAddBots = true)

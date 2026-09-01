@@ -89,12 +89,6 @@ enum eMissionDifficulty
 	MISSION_MAX_COUNT
 }
 
-char g_sPlayerUseMyNameResponse[][] =
-{
-	"You're very funny for using my name.",
-	"You totally stole my name."
-};
-
 //NOTE: Make sure this matches with the eMissionDifficulty enum size
 char g_sMissionDifficultyFilePaths[][] =
 {
