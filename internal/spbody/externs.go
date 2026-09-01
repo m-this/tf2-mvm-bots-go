@@ -202,8 +202,9 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 			// The receiver is what picks it; the name is what
 			// SourcePawn writes after the dot. A method fills a
 			// buffer the same way a native does, so it takes the
-			// same flags.
-			return Extern{Func: name, ReturnsArray: returnsArray, Sized: sized, Fills: fills}, true, nil
+			// same flags, and the same before and after: KeyValues
+			// GetString takes its default after the buffer.
+			return Extern{Func: name, Lead: lead, ReturnsArray: returnsArray, Sized: sized, Fills: fills, Trail: trail}, true, nil
 		case "slot":
 			return Extern{Func: name, Slot: true}, true, nil
 		case "slotset":

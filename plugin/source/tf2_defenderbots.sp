@@ -194,7 +194,7 @@ static float m_flLastReadyInputTime[MAXPLAYERS + 1];
 
 //Config
 esMapConfiguration g_arrMapConfig;
-static ArrayList m_adtBotNames;
+ArrayList m_adtBotNames; //no longer static: generated/mapconfig.sp fills it, and a file-static is invisible from an included file
 
 //Global entities
 int g_iPopulationManager = -1;
@@ -268,6 +268,7 @@ Address g_pMannVsMachineUpgrades;
 #include "redbots3/util.sp"
 #include "redbots3/generated/roster_counts.sp"
 #include "redbots3/generated/humans.sp"
+#include "redbots3/generated/mapconfig.sp"
 #include "redbots3/generated/lineoffire.sp"
 #include "redbots3/generated/nestscore.sp"
 #include "redbots3/generated/nestpick.sp"
@@ -3077,85 +3078,6 @@ void Config_LoadMap()
 		g_arrMapConfig.adtTeleporterExitLocation.Length,
 		g_arrMapConfig.bMovingNests);
 }
-
-/* Every "origin" under a named block, in map order
-
-A block this map does not have leaves the list empty, which is what every caller falls back on:
-the map configurations are hand written one map at a time, so most of them define some blocks and
-not others */
-/* Nest spots, and the zone each one covers
-
-A map with an inside and an outside wants an engineer on each, and nothing in the score says so:
-two spots that both look good get both engineers, and half the map is unheld. A zone is the
-mapper saying "these are the same piece of ground", so the picker can spread across them.
-
-A spot with no zone belongs to no group and competes normally */
-void Config_LoadNestSpots(KeyValues kv, const char[] key, ArrayList locations, ArrayList zones)
-{
-	if (!kv.JumpToKey(key))
-		return;
-	
-	if (kv.GotoFirstSubKey(false))
-	{
-		do
-		{
-			float vec[3]; kv.GetVector("origin", vec);
-			locations.PushArray(vec);
-			
-			char zone[NEST_ZONE_LENGTH]; kv.GetString("zone", zone, sizeof(zone), "");
-			zones.PushString(zone);
-		} while (kv.GotoNextKey(false));
-		
-		kv.GoBack();
-	}
-	
-	kv.GoBack();
-}
-
-void Config_LoadLocations(KeyValues kv, const char[] key, ArrayList locations)
-{
-	if (!kv.JumpToKey(key))
-		return;
-	
-	if (kv.GotoFirstSubKey(false))
-	{
-		do
-		{
-			float vec[3]; kv.GetVector("origin", vec);
-			locations.PushArray(vec);
-		} while (kv.GotoNextKey(false));
-		
-		kv.GoBack();
-	}
-	
-	kv.GoBack();
-}
-
-void Config_LoadBotNames()
-{
-	char filePath[PLATFORM_MAX_PATH]; BuildPath(Path_SM, filePath, sizeof(filePath), "configs/defenderbots/bot_names.txt");
-	File hConfigFile = OpenFile(filePath, "r");
-	char currentLine[MAX_NAME_LENGTH + 1];
-	
-	if (hConfigFile == null)
-	{
-		LogError("Config_LoadBotNames: Could not locate file %s!", filePath);
-		return;
-	}
-	
-	m_adtBotNames.Clear();
-	
-	while (ReadFileLine(hConfigFile, currentLine, sizeof(currentLine)))
-	{
-		TrimString(currentLine);
-		
-		if (strlen(currentLine) > 0)
-			m_adtBotNames.PushString(currentLine);
-	}
-	
-	delete hConfigFile;
-}
-
 eMissionDifficulty Config_GetMissionDifficultyFromName(char[] missionName)
 {
 	char filePath[PLATFORM_MAX_PATH];
