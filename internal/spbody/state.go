@@ -173,6 +173,14 @@ func (e *emitter) stateVar(name *ast.Ident, value ast.Expr, claimed string) {
 		e.line("%s = %s;", decl, elems[0])
 		return
 	}
+	/* A full-length literal of one repeated value is SourcePawn's splat
+
+	Go has no fill syntax, so the literal writes the value out; the two
+	spellings mean the same array, and {v, ...} is the one the plugin wrote. */
+	if len(dims) == 1 && int64(len(elems)) == dims[0] && allSame(elems) {
+		e.line("%s = {%s, ...};", decl, elems[0])
+		return
+	}
 	e.line("%s = {%s};", decl, strings.Join(elems, ", "))
 }
 
@@ -197,6 +205,16 @@ func (e *emitter) staticValues(value ast.Expr, isArray bool) []string {
 		out = append(out, e.expr(elt))
 	}
 	return out
+}
+
+// allSame says every element of the literal folds to the same spelling.
+func allSame(elems []string) bool {
+	for _, e := range elems[1:] {
+		if e != elems[0] {
+			return false
+		}
+	}
+	return len(elems) > 1
 }
 
 // zeroOf is the value a declaration with no initialiser holds, which is what Go

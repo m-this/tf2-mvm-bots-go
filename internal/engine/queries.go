@@ -28,6 +28,12 @@ type QueryCalls struct {
 	IsTFBotPlayer              func(client int32) bool
 	VisibleRecently            func(k Known) bool
 	LastKnownPosition          func(k Known) [3]float32
+	IsRangeGreaterThanEntity   func(b Bot, entity int32, distance float32) bool
+	UseActionSlot              func(client int32)
+	PowerupBottleCharges       func(bottle int32) int32
+	PowerupBottleKind          func(bottle int32) int32
+	FindPowerupBottle          func(client int32) int32
+	IsPointInRespawnRoomStrict func(position [3]float32, client int32) bool
 }
 
 var queries QueryCalls
@@ -386,4 +392,117 @@ func (k Known) LastKnownPosition() (position [3]float32) {
 		missing("CKnownEntity.GetLastKnownPosition")
 	}
 	return queries.LastKnownPosition(k)
+}
+
+// ConditionCritMmmph is TFCond_CritMmmph, the Phlogistinator's crit boost.
+//
+//sp:global TFCond_CritMmmph
+func ConditionCritMmmph() Condition { return 44 }
+
+// WeaponFlameBall is TF_WEAPON_FLAME_BALL, the Dragon's Fury.
+//
+//sp:global TF_WEAPON_FLAME_BALL
+func WeaponFlameBall() Weapon { return 109 }
+
+// FlameballReachRange is FLAMEBALL_REACH_RANGE, the Dragon's Fury's longer
+// reach.
+//
+//sp:global FLAMEBALL_REACH_RANGE
+func FlameballReachRange() float32 { return 526.0 }
+
+// IsRangeGreaterThanEntity is the entity form of the range question.
+//
+//sp:method IsRangeGreaterThan
+func (b Bot) IsRangeGreaterThanEntity(entity int32, distance float32) bool {
+	if queries.IsRangeGreaterThanEntity == nil {
+		missing("INextBot.IsRangeGreaterThan")
+	}
+	return queries.IsRangeGreaterThanEntity(b, entity, distance)
+}
+
+// UseActionSlot drinks whatever is in the action slot. Ported, stocks.
+//
+//sp:body UseActionSlotItem
+func UseActionSlot(client int32) {
+	if queries.UseActionSlot == nil {
+		missing("UseActionSlotItem")
+	}
+	queries.UseActionSlot(client)
+}
+
+// PowerupBottleCharges is how many drinks are left. Ported, state.
+//
+//sp:body PowerupBottle_GetNumCharges
+func PowerupBottleCharges(bottle int32) int32 {
+	if queries.PowerupBottleCharges == nil {
+		missing("PowerupBottle_GetNumCharges")
+	}
+	return queries.PowerupBottleCharges(bottle)
+}
+
+// PowerupBottleKind is what the canteen does. Ported, state.
+//
+//sp:body PowerupBottle_GetType
+func PowerupBottleKind(bottle int32) int32 {
+	if queries.PowerupBottleKind == nil {
+		missing("PowerupBottle_GetType")
+	}
+	return queries.PowerupBottleKind(bottle)
+}
+
+// FindPowerupBottle walks the wearables for the canteen. Ported, state.
+//
+//sp:body GetPowerupBottle
+func FindPowerupBottle(client int32) int32 {
+	if queries.FindPowerupBottle == nil {
+		missing("GetPowerupBottle")
+	}
+	return queries.FindPowerupBottle(client)
+}
+
+// The canteen kinds, the schema's own order.
+const (
+	//nolint:unused // the port reaches the rest of the switch as it needs them
+	powerupBottleNone = iota
+	bottleCritBoost
+	bottleUberCharge
+	bottleRecall
+	bottleRefillAmmo
+	bottleBuildingsInstantUpgrade
+)
+
+// BottleCritBoost is POWERUP_BOTTLE_CRITBOOST.
+//
+//sp:global POWERUP_BOTTLE_CRITBOOST
+func BottleCritBoost() int32 { return bottleCritBoost }
+
+// BottleUberCharge is POWERUP_BOTTLE_UBERCHARGE.
+//
+//sp:global POWERUP_BOTTLE_UBERCHARGE
+func BottleUberCharge() int32 { return bottleUberCharge }
+
+// BottleRecall is POWERUP_BOTTLE_RECALL.
+//
+//sp:global POWERUP_BOTTLE_RECALL
+func BottleRecall() int32 { return bottleRecall }
+
+// BottleRefillAmmo is POWERUP_BOTTLE_REFILL_AMMO.
+//
+//sp:global POWERUP_BOTTLE_REFILL_AMMO
+func BottleRefillAmmo() int32 { return bottleRefillAmmo }
+
+// BottleBuildingsInstantUpgrade is POWERUP_BOTTLE_BUILDINGS_INSTANT_UPGRADE.
+//
+//sp:global POWERUP_BOTTLE_BUILDINGS_INSTANT_UPGRADE
+func BottleBuildingsInstantUpgrade() int32 { return bottleBuildingsInstantUpgrade }
+
+// IsPointInRespawnRoomStrict is the three-argument form: the room must be the
+// player's own team's.
+//
+//sp:native TF2Util_IsPointInRespawnRoom after true
+func IsPointInRespawnRoomStrict(position [3]float32, client int32) bool {
+	if queries.IsPointInRespawnRoomStrict == nil {
+		missing("TF2Util_IsPointInRespawnRoom")
+	}
+	return queries.IsPointInRespawnRoomStrict(position, client)
 }

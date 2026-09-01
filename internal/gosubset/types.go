@@ -119,6 +119,17 @@ func (c *checker) checkConstExpr(expr ast.Expr, what string) {
 	case *ast.BinaryExpr:
 		c.checkConstExpr(e.X, what)
 		c.checkConstExpr(e.Y, what)
+	case *ast.CallExpr:
+		/* A no-argument call into the extern package is a SourcePawn name
+		that already exists, and a //sp:global one is a compile-time
+		constant there: INVALID_ENT_REFERENCE in an initialiser is the
+		plugin's own idiom. Anything with arguments is computation. */
+		if sel, ok := e.Fun.(*ast.SelectorExpr); ok && len(e.Args) == 0 {
+			c.checkSelector(sel)
+			return
+		}
+		c.refuse(expr.Pos(), what+" that is not a constant",
+			"use a literal or a named constant; SourcePawn resolves it at compile time")
 	default:
 		c.refuse(expr.Pos(), what+" that is not a constant",
 			"use a literal or a named constant; SourcePawn resolves it at compile time")
