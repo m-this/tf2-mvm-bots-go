@@ -380,3 +380,121 @@ func SelectCloserThreat(bot engine.Bot, threat1 engine.Known, threat2 engine.Kno
 
 	return threat2
 }
+
+/*
+OpportunisticallyUseWeaponAbilities fires the weapon's own gimmick when the
+moment fits: the Heatmaker's focus while scoped on a visible threat, the
+Phlogistinator's Mmmph in reach, and the minigun's rage on a flag carrier at
+the hatch.
+*/
+//
+//sp:name OpportunisticallyUseWeaponAbilities
+//sp:const threat
+func OpportunisticallyUseWeaponAbilities(client int32, activeWeapon int32, bot engine.Bot, threat engine.Known) bool {
+	if threat == engine.NoKnownEntity() {
+		return false
+	}
+
+	if activeWeapon == -1 {
+		return false
+	}
+
+	weaponID := engine.WeaponID(activeWeapon)
+
+	// Hitmans Heatmaker.
+	if weaponID == engine.WeaponSniperrifle() && engine.IsPlayerInCondition(client, engine.ConditionSlowed()) && threat.VisibleRecently() {
+		if engine.RageMeter(client) >= 0.0 && !engine.IsRageDraining(client) {
+			engine.ExtraButtonsOf(client).PressButtonsNow(engine.InReload())
+			return true
+		}
+	}
+
+	iThreat := threat.Entity()
+
+	// Phlogistinator.
+	if weaponID == engine.WeaponFlamethrower() && bot.IsRangeLessThan(iThreat, engine.FlamethrowerReachRange()) && !engine.IsCritBoosted(client) {
+		if engine.RageMeter(client) >= 100.0 && !engine.IsRageDraining(client) {
+			engine.PressAltFireButton(client)
+			return true
+		}
+	}
+
+	if weaponID == engine.WeaponMinigun() && engine.IsPlayer(iThreat) && engine.RageMeter(client) >= 100.0 {
+		if engine.HasTheFlag(iThreat) {
+			vThreatOrigin := engine.Origin(iThreat)
+
+			if engine.VectorDistance(vThreatOrigin, engine.BombHatchPosition()) <= 100.0 {
+				engine.PressSpecialFireButton(client)
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+/*
+The entity table's size, asked once. SourcePawn keeps it in a function-local
+static; one package-level cell is the same single initialisation.
+*/
+//
+//sp:name s_iMaxEntCount
+var maxEntCount int32 = -1
+
+/*
+MonitorKnownEntities widens the game's own vision with a plain line-of-sight
+check.
+
+IVision::UpdateKnownEntities only collects entities in the bot's FOV, so a known
+entity that leaves it goes obsolete after ten seconds and is dropped. This keeps
+everything the bot could actually see on the list.
+*/
+//
+//sp:name MonitorKnownEntities
+func MonitorKnownEntities(client int32, vision engine.Vision) {
+	if engine.NbBlind().Bool() {
+		return
+	}
+
+	if maxEntCount == -1 {
+		maxEntCount = engine.MaxEntities()
+	}
+
+	myTeam := engine.GetClientTeam(client)
+
+	for i := int32(1); i <= maxEntCount; i++ {
+		if !engine.IsValidEntity(i) {
+			continue
+		}
+
+		if i == client {
+			continue
+		}
+
+		if engine.IsPlayer(i) && !engine.IsPlayerAlive(i) {
+			continue
+		}
+
+		if !engine.EntityOf(i).IsCombatCharacter() {
+			continue
+		}
+
+		if engine.EntityTeamNumber(i) == myTeam {
+			continue
+		}
+
+		if engine.IsLineOfFireClearEntity(client, engine.EyePosition(client), i) {
+			known := vision.GetKnown(i)
+
+			if known != engine.NoKnownEntity() {
+				// We already know about this entity and we can currently
+				// see it.
+				known.UpdatePosition()
+			} else {
+				// We didn't know about it but we can see it now,
+				// recognize it.
+				vision.AddKnownEntity(i)
+			}
+		}
+	}
+}

@@ -35,6 +35,9 @@ type QueryCalls struct {
 	FindPowerupBottle          func(client int32) int32
 	IsPointInRespawnRoomStrict func(position [3]float32, client int32) bool
 	SetBuyUpgradesNumber       func(client int32, number int32)
+	PressButtonsNow            func(b Buttons, buttons int32)
+	MaxEntities                func() int32
+	UpdatePosition             func(k Known)
 	ShouldUpgradeMidRoundNow   func(client int32) bool
 	IsSniperStalled            func(client int32) bool
 	CollectMoneyIsPossible     func(client int32) bool
@@ -540,4 +543,45 @@ func IsSniperStalled(client int32) bool {
 		missing("IsSniperStalled")
 	}
 	return queries.IsSniperStalled(client)
+}
+
+// InReload is IN_RELOAD.
+//
+//sp:global IN_RELOAD
+func InReload() int32 { return 8192 }
+
+// PressButtonsNow is the one-argument press, taking the methodmap's default
+// hold.
+//
+//sp:method PressButtons
+func (b Buttons) PressButtonsNow(buttons int32) {
+	if queries.PressButtonsNow == nil {
+		missing("ExtraButtons.PressButtons")
+	}
+	queries.PressButtonsNow(b, buttons)
+}
+
+// NbBlind is nb_blind, the game's own switch that turns bot vision off.
+//
+//sp:global nb_blind
+func NbBlind() ConVar { return 0 }
+
+// MaxEntities is the entity table's size.
+//
+//sp:native GetMaxEntities
+func MaxEntities() int32 {
+	if queries.MaxEntities == nil {
+		missing("GetMaxEntities")
+	}
+	return queries.MaxEntities()
+}
+
+// UpdatePosition refreshes where the bot thinks the known entity is.
+//
+//sp:method UpdatePosition
+func (k Known) UpdatePosition() {
+	if queries.UpdatePosition == nil {
+		missing("CKnownEntity.UpdatePosition")
+	}
+	queries.UpdatePosition(k)
 }
