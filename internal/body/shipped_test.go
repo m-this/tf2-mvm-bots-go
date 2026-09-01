@@ -88,6 +88,13 @@ way the Go names them. A wrong name is a worse comment; a wrong type is a wrong
 call.
 */
 func shape(fn string) string {
+	/* The by-reference & belongs to neither side
+
+	The plugin writes it both ways in the same file: CKnownEntity& knownEntity
+	and float &length. SourcePawn reads the two identically, so putting it on
+	the type before comparing keeps a formatting choice out of the proof. */
+	fn = strings.ReplaceAll(fn, " &", "& ")
+
 	decl := strings.TrimPrefix(declOf(fn), "stock ")
 	decl = strings.TrimPrefix(decl, "static ")
 	decl = strings.TrimPrefix(decl, "public ")

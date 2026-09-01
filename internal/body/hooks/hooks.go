@@ -179,3 +179,70 @@ func MedicHealUpdatePost(action engine.Behaviour, actor int32, interval float32,
 
 	return engine.PluginContinue()
 }
+
+/*
+SniperLurkSelectMoreDangerousThreat is what a lurking sniper shoots first.
+
+Two things outrank everything else and both are about who dies next: an enemy
+sniper, who is aiming back down the same sightline, and a medic who is either
+healing or charged. Neither is worth picking without line of fire, because a
+sniper who has picked a target he cannot see stops looking for one he can.
+
+Nothing else gets an opinion: the answer is null, which sends the choice back to
+the normal threat targeting.
+*/
+//
+//sp:name CTFBotSniperLurk_SelectMoreDangerousThreat
+//sp:public
+//
+//nolint:revive // unused-parameter: the action, the bot and the entity are the game's
+func SniperLurkSelectMoreDangerousThreat(action engine.Behaviour, nextbot engine.Bot, entity int32, threat1 engine.Known, threat2 engine.Known) (result engine.Outcome, knownEntity engine.Known) {
+	me := engine.Actor()
+
+	if !engine.DefenderBotFlag(me) {
+		return engine.PluginContinue(), knownEntity
+	}
+
+	// Return NULL so the normal threat targeting happens.
+	knownEntity = engine.NoKnownEntity()
+
+	iThreat1 := threat1.Entity()
+
+	if engine.IsPlayer(iThreat1) && engine.IsLineOfFireClearEntity(me, engine.EyePosition(me), iThreat1) {
+		enemyWeapon := engine.ActiveWeapon(iThreat1)
+
+		if enemyWeapon != -1 {
+			enemyWepID := engine.WeaponID(enemyWeapon)
+
+			if engine.WeaponIDIsSniperRifle(enemyWepID) {
+				// This sniper ain't gonna snipe me.
+				return engine.Changed(), threat1
+			} else if enemyWepID == engine.WeaponMedigun() {
+				if engine.EntPropEnt(enemyWeapon, engine.PropSend(), "m_hHealingTarget") != -1 || engine.EntPropFloatOf(enemyWeapon, engine.PropSend(), "m_flChargeLevel") >= 1.0 {
+					// Healers should die first, ideally before they pop.
+					return engine.Changed(), threat1
+				}
+			}
+		}
+	}
+
+	iThreat2 := threat2.Entity()
+
+	if engine.IsPlayer(iThreat2) && engine.IsLineOfFireClearEntity(me, engine.EyePosition(me), iThreat2) {
+		enemyWeapon := engine.ActiveWeapon(iThreat2)
+
+		if enemyWeapon != -1 {
+			enemyWepID := engine.WeaponID(enemyWeapon)
+
+			if engine.WeaponIDIsSniperRifle(enemyWepID) {
+				return engine.Changed(), threat2
+			} else if enemyWepID == engine.WeaponMedigun() {
+				if engine.EntPropEnt(enemyWeapon, engine.PropSend(), "m_hHealingTarget") != -1 || engine.EntPropFloatOf(enemyWeapon, engine.PropSend(), "m_flChargeLevel") >= 1.0 {
+					return engine.Changed(), threat2
+				}
+			}
+		}
+	}
+
+	return engine.Changed(), knownEntity
+}

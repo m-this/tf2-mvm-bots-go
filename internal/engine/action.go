@@ -379,7 +379,7 @@ func (a Behaviour) SetSelectTargetPoint(callback func(action Behaviour, nextbot 
 //
 //sp:propertyset ShouldAttack
 //nolint:revive // unused-parameter: the callback is a name the emitter writes
-func (a Behaviour) SetShouldAttack(callback func(action Behaviour, nextbot Bot, knownEntity Known, result QueryResult) Outcome) {
+func (a Behaviour) SetShouldAttack(callback func(action Behaviour, nextbot Bot, knownEntity Known, result Answer) Outcome) {
 	if actions.SetCallback == nil {
 		missing("BehaviorAction.ShouldAttack")
 	}
@@ -430,11 +430,6 @@ func (a Behaviour) SetSelectMoreDangerousThreat(callback func(action Behaviour, 
 	}
 	actions.SetCallback(a, "SelectMoreDangerousThreat")
 }
-
-// QueryResult is QueryResultType, the answer a ShouldAttack writes through.
-//
-//sp:tag QueryResultType
-type QueryResult int32
 
 // ResultType is the kind of answer a callback's result carries.
 //
