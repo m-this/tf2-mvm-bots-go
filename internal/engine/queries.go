@@ -54,6 +54,7 @@ type QueryCalls struct {
 	MedigunType                 func(medigun int32) int32
 	ResistType                  func(medigun int32) int32
 	BiggestBodyFor              func(medic int32, current int32) int32
+	ApplyNextFrameCell          func(data int32)
 	UpdatePosition              func(k Known)
 	ShouldUpgradeMidRoundNow    func(client int32) bool
 	IsSniperStalled             func(client int32) bool
@@ -839,4 +840,22 @@ func BiggestBodyFor(medic int32, current int32) int32 {
 		missing("BiggestBody")
 	}
 	return queries.BiggestBodyFor(medic, current)
+}
+
+// Cell is SourcePawn's any: one untyped cell, which is what RequestFrame
+// carries and what a frame callback is handed.
+//
+//sp:tag any
+type Cell int32
+
+// ApplyNextFrameCell is RequestFrame where the callback takes the cell
+// untyped, which is how the plugin declares the ones it hands a client index.
+//
+//sp:native RequestFrame
+//nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
+func ApplyNextFrameCell(callback func(data Cell), data int32) {
+	if queries.ApplyNextFrameCell == nil {
+		missing("RequestFrame")
+	}
+	queries.ApplyNextFrameCell(data)
 }

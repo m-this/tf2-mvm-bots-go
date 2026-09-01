@@ -87,12 +87,12 @@ func StuckCountOf(client int32) int32 {
 //
 //sp:name Frame_UnstickDefender
 //sp:public
-func FrameUnstickDefender(client int32) {
-	if !engine.IsClientInGame(client) || !engine.DefenderBotFlag(client) || !engine.IsPlayerAlive(client) {
+func FrameUnstickDefender(client engine.Cell) {
+	if !engine.IsClientInGame(int32(client)) || !engine.DefenderBotFlag(int32(client)) || !engine.IsPlayerAlive(int32(client)) {
 		return
 	}
 
-	engine.ResetIntentionInterface(client)
+	engine.ResetIntentionInterface(int32(client))
 }
 
 // IsSniperStalled says this sniper has been caught stalling and should be sent
@@ -193,7 +193,7 @@ func UpdateStuckWatchdog(actor int32) {
 			actor, here[0], here[1], here[2], SniperStallTime, stuckCount[actor],
 			engine.ChooseText(actions[0] == 0, "no behaviour", actions))
 
-		engine.ApplyNextFrame(FrameUnstickDefender, actor)
+		engine.ApplyNextFrameCell(FrameUnstickDefender, actor)
 
 		return
 	}
@@ -242,7 +242,7 @@ func UpdateStuckWatchdog(actor int32) {
 		return
 	}
 
-	engine.ApplyNextFrame(FrameUnstickDefender, actor)
+	engine.ApplyNextFrameCell(FrameUnstickDefender, actor)
 }
 
 // MoveWedgedTries is how many random points are tried per area before giving

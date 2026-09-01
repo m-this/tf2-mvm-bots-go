@@ -86,12 +86,21 @@ func repoRoot() (string, error) {
 // Read returns one file at Rev, with the path parts joined the way git wants
 // them rather than the way the host spells a path.
 func Read(parts ...string) (string, error) {
+	return ReadAt("", parts...)
+}
+
+// ReadAt is Read at a revision of the caller's choosing, and at the pin when
+// that is empty.
+func ReadAt(rev string, parts ...string) (string, error) {
 	dir, err := Dir()
 	if err != nil {
 		return "", err
 	}
+	if rev == "" {
+		rev = Rev
+	}
 	path := strings.Join(parts, "/")
-	body, err := exec.Command("git", "-C", dir, "show", Rev+":"+path).Output()
+	body, err := exec.Command("git", "-C", dir, "show", rev+":"+path).Output()
 	if err != nil {
 		return "", err
 	}

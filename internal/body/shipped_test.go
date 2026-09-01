@@ -1,6 +1,7 @@
 package body_test
 
 import (
+	"cmp"
 	"regexp"
 	"slices"
 	"strings"
@@ -40,9 +41,9 @@ func TestGeneratedBodiesMatchTheShippedOnes(t *testing.T) {
 		}
 
 		t.Run(b.Dir, func(t *testing.T) {
-			shipped, err := upstream.Read(strings.Split(b.Shipped, "/")...)
+			shipped, err := upstream.ReadAt(b.Rev, strings.Split(b.Shipped, "/")...)
 			if err != nil {
-				t.Fatalf("reading %s at %s: %v", b.Shipped, upstream.Rev, err)
+				t.Fatalf("reading %s at %s: %v", b.Shipped, cmp.Or(b.Rev, upstream.Rev), err)
 			}
 
 			compareBody(t, string(generated[b.Out]), shipped)
@@ -50,9 +51,14 @@ func TestGeneratedBodiesMatchTheShippedOnes(t *testing.T) {
 	}
 }
 
-// emittedNames are the functions a generated file declares, which is what the
-// comparison walks.
-var emittedNames = regexp.MustCompile(`(?m)^stock \w+(?:\[\])? (\w+)\(`)
+/*
+emittedNames are the functions a generated file declares, which is what the
+comparison walks.
+
+public as well as stock: a callback the game calls is still a port of a shipped
+function, and for a while these were emitted and never compared.
+*/
+var emittedNames = regexp.MustCompile(`(?m)^(?:stock|public) \w+(?:\[\])? (\w+)\(`)
 
 /*
 	declarationOf is the function itself, not the first mention of its name
@@ -63,7 +69,7 @@ The declaration is the one at the start of a line, after an optional stock or
 static and a return type.
 */
 func declarationOf(src, name string) (string, bool) {
-	at := regexp.MustCompile(`(?m)^(?:stock |static )?\w+(?:\[\])? ` + regexp.QuoteMeta(name) + `\(`)
+	at := regexp.MustCompile(`(?m)^(?:stock |static |public )?\w+(?:\[\])? ` + regexp.QuoteMeta(name) + `\(`)
 
 	loc := at.FindStringIndex(src)
 	if loc == nil {
@@ -84,6 +90,7 @@ call.
 func shape(fn string) string {
 	decl := strings.TrimPrefix(declOf(fn), "stock ")
 	decl = strings.TrimPrefix(decl, "static ")
+	decl = strings.TrimPrefix(decl, "public ")
 
 	open := strings.Index(decl, "(")
 	if open < 0 {

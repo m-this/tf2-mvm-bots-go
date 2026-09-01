@@ -44,6 +44,7 @@ type ActionCalls struct {
 	MarkGiantIsPossible          func(client int32) bool
 	CollectNearMoneySelectTarget func(client int32) bool
 	StickyTrapIsPossible         func(client int32) bool
+	ShouldEmptyStack             func(actor int32) bool
 	Actor                        func() int32
 	TryToSustain                 func() Outcome
 	TryChangeTo                  func(next Behaviour, priority int32, reason string) Outcome
@@ -316,3 +317,30 @@ func StickyTrapIsPossible(client int32) bool {
 	}
 	return actions.StickyTrapIsPossible(client)
 }
+
+// End is Done with no reason, which the shims that only refuse write.
+//
+//sp:method Done
+func (a Behaviour) End() Outcome {
+	if actions.Done == nil {
+		missing("action.Done")
+	}
+	return actions.Done("")
+}
+
+// ShouldEmptyStack is the faults injector asking for a bot with no behaviour.
+// Ported, faults.
+//
+//sp:body DebugFaults_ShouldEmpty
+func ShouldEmptyStack(actor int32) bool {
+	if actions.ShouldEmptyStack == nil {
+		missing("DebugFaults_ShouldEmpty")
+	}
+	return actions.ShouldEmptyStack(actor)
+}
+
+// ActionResult is the out-parameter the game hands a behaviour callback, which
+// the mod never writes: every answer here goes through the return value.
+//
+//sp:tag ActionResult
+type ActionResult int32
