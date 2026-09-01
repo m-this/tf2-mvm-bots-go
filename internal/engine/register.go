@@ -217,7 +217,7 @@ func PublishActiveFeatures() {
 
 // ThreatPortAuditReport says what the threat port disagreed about.
 //
-//sp:plugin ThreatPortAudit_Report
+//sp:body ThreatPortAudit_Report
 func ThreatPortAuditReport() {
 	if registrations.ThreatPortAuditReport == nil {
 		missing("ThreatPortAudit_Report")

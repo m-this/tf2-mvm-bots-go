@@ -340,16 +340,17 @@ func FeatureThreatPriority() int32 { return 0 }
 func FeatureGeneratedThreatPriority() int32 { return 21 }
 
 /*
-The threat priority pair, still hand-written on purpose.
+The threat priority pair, generated now but still scaffolding.
 
-mvm-z83.47 wants the two played against each other in a running game before the
-hand-written half goes, so both stay plugin externs and the audit that compares
-them stays with them.
+mvm-z83.47 wants the two played against each other in a running game before
+either half goes. Porting them moved the scaffolding rather than settling it:
+the measurement is still what closes that bead, and the chain and the audit are
+deleted then.
 */
 
-// ThreatPriority is the chain that shipped.
+// ThreatPriority is the chain that shipped. Ported, threataudit.
 //
-//sp:plugin ThreatPriority
+//sp:body ThreatPriority
 func ThreatPriority(threat int32, rangeSq float32) int32 {
 	if tacticals.ThreatPriority == nil {
 		missing("ThreatPriority")
@@ -357,9 +358,9 @@ func ThreatPriority(threat int32, rangeSq float32) int32 {
 	return tacticals.ThreatPriority(threat, rangeSq)
 }
 
-// ThreatPriorityGenerated is the table's answer.
+// ThreatPriorityGenerated is the table's answer. Ported, threataudit.
 //
-//sp:plugin ThreatPriorityGenerated
+//sp:body ThreatPriorityGenerated
 func ThreatPriorityGenerated(threat int32, rangeSq float32) int32 {
 	if tacticals.ThreatPriorityGenerated == nil {
 		missing("ThreatPriorityGenerated")
@@ -367,9 +368,9 @@ func ThreatPriorityGenerated(threat int32, rangeSq float32) int32 {
 	return tacticals.ThreatPriorityGenerated(threat, rangeSq)
 }
 
-// ThreatPortAudit records where the two disagree.
+// ThreatPortAudit records where the two disagree. Ported, threataudit.
 //
-//sp:plugin ThreatPortAudit
+//sp:body ThreatPortAudit
 func ThreatPortAudit(threat int32, rangeSq float32) {
 	if tacticals.ThreatPortAudit == nil {
 		missing("ThreatPortAudit")

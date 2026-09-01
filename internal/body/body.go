@@ -181,6 +181,10 @@ var All = []Body{
 	{Dir: "internal/body/scan", Out: "sourcepawn/scan.sp", Prefix: "Go_"},
 	{Dir: "internal/body/medic", Out: "sourcepawn/medic.sp", Prefix: "Go_"},
 	{
+		Dir: "internal/body/threataudit", Out: "sourcepawn/threataudit.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
+	},
+	{
 		Dir: "internal/body/hooks", Out: "sourcepawn/hooks.sp", Prefix: "Go_",
 		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
@@ -385,10 +389,8 @@ func GenerateWith(root string, alsoOwned string) (map[string][]byte, error) {
 		owned[alsoOwned] = "a caller's test"
 	}
 
-	// internal/tables emits SourcePawn of its own, outside this list. A body
-	// extern naming one of its functions is as owned as one naming a body's.
-	for _, name := range tablesOwned {
-		owned[name] = "internal/tables"
+	for _, name := range generatedElsewhere {
+		owned[name] = "a generator outside this list"
 	}
 	for _, b := range All {
 		g, err := spbody.GenerateDir(filepath.Join(root, b.Dir), spbody.Config{
@@ -467,11 +469,18 @@ func SubsetConfig(root string) (gosubset.Config, error) {
 	return cfg, nil
 }
 
-// tablesOwned are the functions internal/tables emits, kept by hand because
-// tables has no registry: adding one here is part of adding the table.
-var tablesOwned = []string{
+/*
+generatedElsewhere are the functions this repository emits from generators that
+are not in the list above: internal/tables and internal/threat.
+
+Kept by hand because neither has a registry, so adding one here is part of
+adding it there. A body extern naming one of these is as owned as one naming a
+body's.
+*/
+var generatedElsewhere = []string{
 	"GetTunedWeaponRanges",
 	"AttributeID",
+	"ThreatPriorityOf",
 }
 
 const (
