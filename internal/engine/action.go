@@ -362,13 +362,17 @@ SourceMod's actions extension exposes each one as a settable property, so
 overriding a game behaviour is an assignment rather than a hook: the callback is
 named, the extension keeps it, and the game calls it. Every one of these takes
 its callback by name the way CreateTimer does.
+
+The signatures are written the Go way, with the by-reference answer as a second
+result: that is what a body declares, and the emitter is what turns it into the
+by-reference parameter SourcePawn passes.
 */
 
 // SetSelectTargetPoint overrides where the bot aims.
 //
 //sp:propertyset SelectTargetPoint
 //nolint:revive // unused-parameter: the callback is a name the emitter writes
-func (a Behaviour) SetSelectTargetPoint(callback func(action Behaviour, nextbot Bot, entity int32, vec [3]float32) Outcome) {
+func (a Behaviour) SetSelectTargetPoint(callback func(action Behaviour, nextbot Bot, entity int32) (Outcome, [3]float32)) {
 	if actions.SetCallback == nil {
 		missing("BehaviorAction.SelectTargetPoint")
 	}
@@ -379,7 +383,7 @@ func (a Behaviour) SetSelectTargetPoint(callback func(action Behaviour, nextbot 
 //
 //sp:propertyset ShouldAttack
 //nolint:revive // unused-parameter: the callback is a name the emitter writes
-func (a Behaviour) SetShouldAttack(callback func(action Behaviour, nextbot Bot, knownEntity Known, result Answer) Outcome) {
+func (a Behaviour) SetShouldAttack(callback func(action Behaviour, nextbot Bot, knownEntity Known) (Outcome, Answer)) {
 	if actions.SetCallback == nil {
 		missing("BehaviorAction.ShouldAttack")
 	}
@@ -424,7 +428,7 @@ func (a Behaviour) SetOnStart(callback func(action Behaviour, actor int32, prior
 //
 //sp:propertyset SelectMoreDangerousThreat
 //nolint:revive // unused-parameter: the callback is a name the emitter writes
-func (a Behaviour) SetSelectMoreDangerousThreat(callback func(action Behaviour, nextbot Bot, entity int32, threat1 Known, threat2 Known, knownEntity Known) Outcome) {
+func (a Behaviour) SetSelectMoreDangerousThreat(callback func(action Behaviour, nextbot Bot, entity int32, threat1 Known, threat2 Known) (Outcome, Known)) {
 	if actions.SetCallback == nil {
 		missing("BehaviorAction.SelectMoreDangerousThreat")
 	}

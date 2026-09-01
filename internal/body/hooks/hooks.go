@@ -624,3 +624,48 @@ func MainActionSelectTargetPoint(action engine.Behaviour, nextbot engine.Bot, en
 	// Let the game do its default aiming.
 	return engine.PluginContinue(), vec
 }
+
+/*
+OnActionCreated is where every override above is attached.
+
+SourceMod's actions extension calls this as each of the game's own behaviours is
+built, and overriding one is an assignment rather than a hook. TFBots are
+players, so anything above MaxClients is another kind of nextbot and none of our
+business.
+
+SelectMoreDangerousThreat is overridden at the TacticalMonitor level rather than
+at MainAction: it is inconsistent there and behaves differently on Windows and
+Linux. TacticalMonitor has no method of its own for it, but every nextbot
+callback is virtual, so the override lands anyway.
+*/
+//
+//sp:name OnActionCreated
+//sp:public
+//
+//nolint:revive,gocritic // unused-parameter, ifElseChain: only the name is read, and the chain is the shipped shape
+func OnActionCreated(action engine.Behaviour, actor int32, name string) {
+	// TFBots are players, ignore all other nextbots.
+	if actor <= engine.MaxClients() {
+		if engine.StrEqualLiteral(name, "MainAction", true) {
+			action.SetSelectTargetPoint(MainActionSelectTargetPoint)
+			action.SetShouldAttack(MainActionShouldAttack)
+			action.SetUpdate(MainActionUpdate)
+		} else if engine.StrEqualLiteral(name, "TacticalMonitor", true) {
+			action.SetUpdate(TacticalMonitorUpdate)
+			action.SetSelectMoreDangerousThreat(MainActionSelectMoreDangerousThreat)
+		} else if engine.StrEqualLiteral(name, "ScenarioMonitor", true) {
+			action.SetUpdate(ScenarioMonitorUpdate)
+		} else if engine.StrEqualLiteral(name, "Heal", true) {
+			action.SetUpdatePost(MedicHealUpdatePost)
+		} else if engine.StrEqualLiteral(name, "FetchFlag", true) {
+			action.SetOnStart(FetchFlagOnStart)
+		} else if engine.StrEqualLiteral(name, "MvMEngineerIdle", true) {
+			action.SetOnStart(MvMEngineerIdleOnStart)
+		} else if engine.StrEqualLiteral(name, "SniperLurk", true) {
+			action.SetUpdate(SniperLurkUpdate)
+			action.SetSelectMoreDangerousThreat(SniperLurkSelectMoreDangerousThreat)
+		} else if engine.StrEqualLiteral(name, "SpyLeaveSpawnRoom", true) {
+			action.SetOnStart(SpyLeaveSpawnRoomOnStart)
+		}
+	}
+}
