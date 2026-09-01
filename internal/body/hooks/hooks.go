@@ -476,3 +476,151 @@ func MainActionSelectMoreDangerousThreat(action engine.Behaviour, nextbot engine
 
 	return engine.Changed(), knownEntity
 }
+
+/*
+MainActionSelectTargetPoint aims for the game where the game's own answer is
+wrong.
+
+Six cases, and each is a different reason. The pipe and sticky launchers get a
+full ballistic lead, because a TFBot cannot compensate an arc whose projectile
+speed it does not know. The Cow Mangler gets a plain lead, because Valve left
+the prediction out of its code entirely, and it falls back to the body when the
+led point has no line of fire. The rocket launcher aims at the feet when there
+is a crowd standing in the splash: Valve aims at the middle of the robot, which
+is right for one robot and wrong for a line of them walking a choke. The sniper
+rifles and the Ambassador look up the head bone. The flamethrower aims above a
+tank, because flames rise and a Pyro at the treads puts half of every puff into
+the ground.
+*/
+//
+//sp:name CTFBotMainAction_SelectTargetPoint
+//sp:public
+//
+//nolint:revive,gocritic // unused-parameter, assignOp: the action and the bot are the game's, and the long form is the shipped one
+func MainActionSelectTargetPoint(action engine.Behaviour, nextbot engine.Bot, entity int32) (result engine.Outcome, vec [3]float32) {
+	me := engine.Actor()
+
+	if !engine.DefenderBotFlag(me) {
+		return engine.PluginContinue(), vec
+	}
+
+	myWeapon := engine.ActiveWeapon(me)
+
+	if myWeapon != -1 {
+		switch engine.WeaponID(myWeapon) {
+		case engine.WeaponGrenadeLauncher(), engine.WeaponPipebombLauncher():
+			// TFBots can't compensate their arc if projectile speed differs,
+			// so we do our own calculation here.
+			var targetPoint [3]float32
+
+			targetPoint = engine.WorldSpaceCenter(entity)
+			vecTarget := engine.AbsOriginOf(entity)
+			vecActor := engine.Origin(me)
+
+			distance := engine.VectorDistance(vecTarget, vecActor)
+
+			if distance > 150.0 {
+				distance = distance / engine.ProjectileSpeed(myWeapon)
+
+				absVelocity := engine.EntityOf(entity).AbsVelocity()
+
+				targetPoint[0] = vecTarget[0] + absVelocity[0]*distance
+				targetPoint[1] = vecTarget[1] + absVelocity[1]*distance
+				targetPoint[2] = vecTarget[2] + absVelocity[2]*distance
+			} else {
+				targetPoint = engine.WorldSpaceCenter(entity)
+			}
+
+			vecToTarget := engine.SubtractVectors(targetPoint, vecActor)
+
+			a5, unit := engine.NormalizeVector(vecToTarget)
+			_ = unit
+
+			ballisticElevation := 0.0125 * a5
+
+			if ballisticElevation > 45.0 {
+				ballisticElevation = 45.0
+			}
+
+			elevation := ballisticElevation * (engine.Pi() / 180.0)
+			sineValue := engine.Sine(elevation)
+			cosineValue := engine.Cosine(elevation)
+
+			if cosineValue != 0.0 {
+				targetPoint[2] += (sineValue * a5) / cosineValue
+			}
+
+			return engine.Changed(), targetPoint
+		case engine.WeaponParticleCannon():
+			// TFBots won't do projectile prediction with the Cow Mangler 5000
+			// since it's left out of the code, so we'll do it ourselves.
+			var targetPoint [3]float32
+
+			vecTarget := engine.AbsOriginOf(entity)
+			vecActor := engine.AbsOriginOf(me)
+
+			distance := engine.VectorDistance(vecTarget, vecActor)
+
+			if distance > 150.0 {
+				distance = distance * 0.00090909092
+
+				absVelocity := engine.EntityOf(entity).AbsVelocity()
+
+				targetPoint[0] = vecTarget[0] + absVelocity[0]*distance
+				targetPoint[1] = vecTarget[1] + absVelocity[1]*distance
+				targetPoint[2] = vecTarget[2] + absVelocity[2]*distance
+
+				if !engine.IsLineOfFireClearPosition(me, engine.EyePosition(me), targetPoint) {
+					vecTarget = engine.WorldSpaceCenter(entity)
+
+					targetPoint[0] = vecTarget[0] + absVelocity[0]*distance
+					targetPoint[1] = vecTarget[1] + absVelocity[1]*distance
+					targetPoint[2] = vecTarget[2] + absVelocity[2]*distance
+				}
+			} else {
+				targetPoint = engine.WorldSpaceCenter(entity)
+			}
+
+			return engine.Changed(), targetPoint
+		case engine.WeaponRocketLauncher():
+			if engine.IsPlayer(entity) && engine.ShouldAimRocketsAtFeet(me, entity, engine.WeaponRocketLauncher()) {
+				return engine.Changed(), engine.AbsOriginOf(entity)
+			}
+		case engine.WeaponSniperrifle(), engine.WeaponSniperrifleDecap(), engine.WeaponSniperrifleClassic():
+			// For sniper rifles, try to look up their head bone to aim at.
+			bone := engine.LookupBone(entity, "bip_head")
+
+			if bone != -1 {
+				head, vEmpty := engine.BonePosition(entity, bone)
+				_ = vEmpty
+				head[2] += 3.0
+
+				return engine.Changed(), head
+			}
+
+			// Otherwise TFBots aim at the eye position on harder difficulties.
+		case engine.WeaponRevolver():
+			// Try to aim for the head with the Ambassador.
+			if engine.CanRevolverHeadshot(myWeapon) {
+				bone := engine.LookupBone(entity, "bip_head")
+
+				if bone != -1 {
+					head, vEmpty := engine.BonePosition(entity, bone)
+					_ = vEmpty
+					head[2] += 3.0
+
+					return engine.Changed(), head
+				}
+
+				return engine.Changed(), engine.EyePosition(entity)
+			}
+		case engine.WeaponFlamethrower():
+			if engine.IsBaseBoss(entity) {
+				return engine.Changed(), engine.FlameThrowerAimForTank(entity)
+			}
+		}
+	}
+
+	// Let the game do its default aiming.
+	return engine.PluginContinue(), vec
+}

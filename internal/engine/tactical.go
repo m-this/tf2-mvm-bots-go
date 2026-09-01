@@ -38,6 +38,12 @@ type TacticalCalls struct {
 	ThreatPriority           func(threat int32, rangeSq float32) int32
 	ThreatPriorityGenerated  func(threat int32, rangeSq float32) int32
 	ThreatPortAudit          func(threat int32, rangeSq float32)
+	ProjectileSpeed          func(weapon int32) float32
+	LookupBone               func(entity int32, name string) int32
+	BonePosition             func(entity int32, bone int32) ([3]float32, [3]float32)
+	ShouldAimRocketsAtFeet   func(client int32, target int32, weaponID Weapon) bool
+	CanRevolverHeadshot      func(weapon int32) bool
+	FlameThrowerAimForTank   func(tank int32) [3]float32
 }
 
 var tacticals TacticalCalls
@@ -381,3 +387,80 @@ func ChooseThreat(cond bool, yes Known, no Known) Known {
 	}
 	return no
 }
+
+/*
+The aiming seam.
+
+The mod aims for the game in six cases, because the game's own aim is written
+for a robot shooting a player and these are the ones where that answer is wrong:
+an arced projectile, an unpredicted one, splash into a crowd, and a head worth
+hitting.
+*/
+
+// ProjectileSpeed is how fast this weapon's projectile travels, which the
+// ballistic lead is computed from.
+//
+//sp:plugin GetProjectileSpeed
+func ProjectileSpeed(weapon int32) float32 {
+	if tacticals.ProjectileSpeed == nil {
+		missing("GetProjectileSpeed")
+	}
+	return tacticals.ProjectileSpeed(weapon)
+}
+
+// LookupBone is the bone's index on that entity, or -1.
+//
+//sp:plugin LookupBone
+func LookupBone(entity int32, name string) int32 {
+	if tacticals.LookupBone == nil {
+		missing("LookupBone")
+	}
+	return tacticals.LookupBone(entity, name)
+}
+
+// BonePosition is where the bone is, and which way it faces.
+//
+//sp:plugin GetBonePosition
+func BonePosition(entity int32, bone int32) (position [3]float32, angles [3]float32) {
+	if tacticals.BonePosition == nil {
+		missing("GetBonePosition")
+	}
+	return tacticals.BonePosition(entity, bone)
+}
+
+// ShouldAimRocketsAtFeet says there is a crowd worth splashing. Ported nowhere
+// yet: botaim.sp still owns it.
+//
+//sp:plugin ShouldAimRocketsAtFeet
+func ShouldAimRocketsAtFeet(client int32, target int32, weaponID Weapon) bool {
+	if tacticals.ShouldAimRocketsAtFeet == nil {
+		missing("ShouldAimRocketsAtFeet")
+	}
+	return tacticals.ShouldAimRocketsAtFeet(client, target, weaponID)
+}
+
+// CanRevolverHeadshot says this revolver is an Ambassador. Ported, state.
+//
+//sp:body CanRevolverHeadshot
+func CanRevolverHeadshot(weapon int32) bool {
+	if tacticals.CanRevolverHeadshot == nil {
+		missing("CanRevolverHeadshot")
+	}
+	return tacticals.CanRevolverHeadshot(weapon)
+}
+
+// FlameThrowerAimForTank is the point above a tank a Pyro aims at. Ported,
+// botqueries.
+//
+//sp:body GetFlameThrowerAimForTank returns
+func FlameThrowerAimForTank(tank int32) [3]float32 {
+	if tacticals.FlameThrowerAimForTank == nil {
+		missing("GetFlameThrowerAimForTank")
+	}
+	return tacticals.FlameThrowerAimForTank(tank)
+}
+
+// Pi is FLOAT_PI.
+//
+//sp:global FLOAT_PI
+func Pi() float32 { return 3.14159265358979323846 }
