@@ -76,7 +76,7 @@ func OwnerEntity(entity int32) int32 {
 
 // EquipBestWeaponForThreat puts the right thing in the bot's hands.
 //
-//sp:plugin EquipBestWeaponForThreat
+//sp:body EquipBestWeaponForThreat
 func EquipBestWeaponForThreat(client int32, threat Known) {
 	if bombs.EquipBestWeaponForThreat == nil {
 		missing("EquipBestWeaponForThreat")

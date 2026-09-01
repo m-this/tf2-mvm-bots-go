@@ -498,3 +498,203 @@ func MonitorKnownEntities(client int32, vision engine.Vision) {
 		}
 	}
 }
+
+// IsThrowableReady says the jar or cleaver has recharged.
+//
+//sp:name IsThrowableReady
+func IsThrowableReady(client int32, weapon int32) bool {
+	switch engine.WeaponID(weapon) {
+	case engine.WeaponJarGas():
+		return engine.EntPropFloatOf(client, engine.PropSend(), "m_flItemChargeMeter") >= 100.0
+
+	case engine.WeaponJar(), engine.WeaponJarMilk(), engine.WeaponCleaver():
+		return engine.EntPropFloatOf(weapon, engine.PropSend(), "m_flEffectBarRegenTime") <= engine.GameTime()
+	}
+
+	return engine.HasAmmo(weapon)
+}
+
+/*
+EquipBestWeaponForThreat is the whole weapon choice, class by class.
+
+The default is the biggest gun that still fires; the classes then correct it:
+the Demoman's launcher rule and the reload trap of eight spent bombs, the
+medigun that is the weapon while the syringe gun is only what he holds, the
+Scout's milk, the Soldier's shotgun that lost the A/B (damage 16890 to 10886
+over six waves on Decoy, so the rocket stays), the Sniper's bow and pee, the
+Pyro closing on soldiers and demomen whatever else says. The last block is the
+one place that asks whether the choice can still shoot.
+*/
+//
+//sp:name EquipBestWeaponForThreat
+//sp:const threat
+//
+//nolint:gocritic,ineffassign,wastedassign // ifElseChain and the redundant seed are the shipped shape
+func EquipBestWeaponForThreat(client int32, threat engine.Known) {
+	// Don't care about any weapon restrictions here.
+	primary := engine.PlayerWeaponSlot(client, engine.WeaponSlotPrimary())
+
+	if !IsCombatWeapon(client, primary) {
+		primary = -1
+	}
+
+	secondary := engine.PlayerWeaponSlot(client, engine.WeaponSlotSecondary())
+
+	if !IsCombatWeapon(client, secondary) {
+		secondary = -1
+	}
+
+	// Don't care about mvm-specific rules here.
+	melee := engine.PlayerWeaponSlot(client, engine.WeaponSlotMelee())
+
+	if !IsCombatWeapon(client, melee) {
+		melee = -1
+	}
+
+	gun := int32(-1)
+
+	if primary != -1 {
+		gun = primary
+	} else if secondary != -1 {
+		gun = secondary
+	} else {
+		gun = melee
+	}
+
+	if threat == engine.NoKnownEntity() || !threat.WasEverVisible() || threat.TimeSinceLastSeen() > 5.0 {
+		if gun != -1 {
+			engine.SetPlayerActiveWeapon(client, gun)
+		}
+
+		return
+	}
+
+	if engine.AmmoCount(client, engine.AmmoPrimary()) <= 0 {
+		primary = -1
+	}
+
+	/* TFWeaponSlot_Secondary is 1 and TF_AMMO_SECONDARY is 2, so this once
+	read primary ammo and retired the secondary along with the primary. A
+	Heavy whose minigun ran dry was left with no shotgun. */
+	if engine.AmmoCount(client, engine.AmmoSecondary()) <= 0 {
+		secondary = -1
+	}
+
+	myBot := engine.NextBotOf(client)
+	threatEnt := threat.Entity()
+
+	switch engine.PlayerClass(client) {
+	case engine.ClassDemoMan():
+		/* The stickybomb launcher, which this switch used to pass over in
+		silence: the Demoman was listed with the classes that only ever want
+		their primary. */
+		threatOrigin := threat.LastKnownPosition()
+		myOrigin := engine.Origin(client)
+		threatRange := engine.VectorDistance(myOrigin, threatOrigin)
+
+		wantSticky := secondary != -1 && engine.StickyLauncherWanted(client, secondary, threatEnt, threatRange)
+
+		/* An empty launcher is not the weapon that lands, whatever the rule
+		above says: holding eight spent bombs through the reload is a second
+		and a half of nothing with a loaded grenade launcher in the other
+		hand. */
+		if wantSticky && engine.Clip1Of(secondary) > 0 {
+			gun = secondary
+		} else if gun != -1 && engine.Clip1Of(gun) == 0 && secondary != -1 && engine.Clip1Of(secondary) != 0 {
+			gun = secondary
+		}
+	case engine.ClassHeavyweapons(), engine.ClassSpy(), engine.ClassEngineer():
+		// Uses primary.
+	case engine.ClassMedic():
+		/* The medigun is the weapon, and the syringe gun is what he holds
+		when there is nobody to point it at. Reported after the 1.3
+		play-test: "the Medics always keep using their Syringe Guns". */
+		if secondary != -1 && engine.MedicHasPatient(client, secondary) {
+			gun = secondary
+		}
+	case engine.ClassScout():
+		if secondary != -1 {
+			weaponID := engine.WeaponID(secondary)
+
+			if (weaponID == engine.WeaponJarMilk() || weaponID == engine.WeaponCleaver()) && IsThrowableReady(client, secondary) && engine.IsPlayer(threatEnt) && !engine.IsInvulnerable(threatEnt) {
+				// Always throw milk at them if we can.
+				gun = secondary
+			} else if gun != -1 && engine.Clip1Of(gun) == 0 {
+				gun = secondary
+			}
+		}
+	case engine.ClassSoldier():
+		/* Handing him the shotgun inside his own blast was tried, with the
+		aim change in botaim, and the pair lost. A rocket that hurts him also
+		kills what is standing on him, and a shotgun does not.
+
+		Not against uber threats, or the detour at
+		DHookCallback_IsIgnored_Pre would flick them ignored and back. */
+		if gun != -1 && engine.Clip1Of(gun) == 0 {
+			if secondary != -1 && engine.Clip1Of(secondary) != 0 && (!engine.IsPlayer(threatEnt) || !engine.IsInvulnerable(threatEnt)) {
+				const closeSoldierRange = 500.0
+
+				lastKnownPos := threat.LastKnownPosition()
+
+				if myBot.IsRangeLessThanEx(lastKnownPos, closeSoldierRange) {
+					gun = secondary
+				}
+			}
+		}
+	case engine.ClassSniper():
+		if secondary != -1 && engine.WeaponID(secondary) == engine.WeaponJar() && IsThrowableReady(client, secondary) && engine.IsPlayer(threatEnt) && !engine.IsInvulnerable(threatEnt) {
+			// Always throw pee at them if we can.
+			gun = secondary
+		} else if primary != -1 && engine.WeaponID(primary) == engine.WeaponCompoundBow() {
+			// Always use the bow, unless it has no ammo.
+			gun = primary
+		} else {
+			const closeSniperRange = 750.0
+
+			lastKnownPos := threat.LastKnownPosition()
+
+			if secondary != -1 && myBot.IsRangeLessThanEx(lastKnownPos, closeSniperRange) {
+				gun = secondary
+			}
+		}
+	case engine.ClassPyro():
+		if secondary != -1 && engine.WeaponID(secondary) == engine.WeaponJarGas() && IsThrowableReady(client, secondary) && engine.IsPlayer(threatEnt) && !engine.IsInvulnerable(threatEnt) {
+			// Always throw gas.
+			gun = secondary
+		} else {
+			const flameRange = 750.0
+
+			lastKnownPos := threat.LastKnownPosition()
+
+			if secondary != -1 && myBot.IsRangeGreaterThanEx(lastKnownPos, flameRange) {
+				gun = secondary
+			}
+
+			if engine.IsPlayer(threatEnt) {
+				threatClass := engine.PlayerClass(threatEnt)
+
+				if threatClass == engine.ClassSoldier() || threatClass == engine.ClassDemoMan() {
+					gun = primary
+				}
+			}
+		}
+	}
+
+	/* Whatever the rules above picked, never walk at a robot holding
+	something that cannot fire. The per class cases only ever choose between
+	weapons; this is the one place that asks whether the choice can still
+	shoot. Melee always can. */
+	if gun != -1 && !engine.IsMeleeWeapon(gun) && !engine.HasAmmo(gun) {
+		if primary != -1 && engine.HasAmmo(primary) {
+			gun = primary
+		} else if secondary != -1 && engine.HasAmmo(secondary) {
+			gun = secondary
+		} else if melee != -1 {
+			gun = melee
+		}
+	}
+
+	if gun != -1 {
+		engine.SetPlayerActiveWeapon(client, gun)
+	}
+}

@@ -37,6 +37,11 @@ type QueryCalls struct {
 	SetBuyUpgradesNumber       func(client int32, number int32)
 	PressButtonsNow            func(b Buttons, buttons int32)
 	MaxEntities                func() int32
+	WasEverVisible             func(k Known) bool
+	TimeSinceLastSeen          func(k Known) float32
+	StickyLauncherWanted       func(client int32, launcher int32, threat int32, threatRange float32) bool
+	MedicHasPatient            func(client int32, medigun int32) bool
+	Clip1Of                    func(weapon int32) int32
 	UpdatePosition             func(k Known)
 	ShouldUpgradeMidRoundNow   func(client int32) bool
 	IsSniperStalled            func(client int32) bool
@@ -584,4 +589,62 @@ func (k Known) UpdatePosition() {
 		missing("CKnownEntity.UpdatePosition")
 	}
 	queries.UpdatePosition(k)
+}
+
+// WasEverVisible says the bot has seen it at least once.
+//
+//sp:method WasEverVisible
+func (k Known) WasEverVisible() bool {
+	if queries.WasEverVisible == nil {
+		missing("CKnownEntity.WasEverVisible")
+	}
+	return queries.WasEverVisible(k)
+}
+
+// TimeSinceLastSeen is how long ago that was.
+//
+//sp:method GetTimeSinceLastSeen
+func (k Known) TimeSinceLastSeen() float32 {
+	if queries.TimeSinceLastSeen == nil {
+		missing("CKnownEntity.GetTimeSinceLastSeen")
+	}
+	return queries.TimeSinceLastSeen(k)
+}
+
+// LoadoutSlotSecondary is TF_LOADOUT_SLOT_SECONDARY, which the charge meter is
+// indexed by.
+//
+//sp:global TF_LOADOUT_SLOT_SECONDARY
+func LoadoutSlotSecondary() int32 { return 1 }
+
+// StickyLauncherWanted is the demoman's launcher rule. Ported,
+// demoman_stickies.
+//
+//sp:body ShouldUseStickyLauncher
+func StickyLauncherWanted(client int32, launcher int32, threat int32, threatRange float32) bool {
+	if queries.StickyLauncherWanted == nil {
+		missing("ShouldUseStickyLauncher")
+	}
+	return queries.StickyLauncherWanted(client, launcher, threat, threatRange)
+}
+
+// MedicHasPatient says the beam has somebody on it. Ported, finders.
+//
+//sp:body MedicHasPatient
+func MedicHasPatient(client int32, medigun int32) bool {
+	if queries.MedicHasPatient == nil {
+		missing("MedicHasPatient")
+	}
+	return queries.MedicHasPatient(client, medigun)
+}
+
+// Clip1Of is the rounds left in the weapon's clip, through the plugin's
+// SDKCall wrapper.
+//
+//sp:plugin Clip1
+func Clip1Of(weapon int32) int32 {
+	if queries.Clip1Of == nil {
+		missing("Clip1")
+	}
+	return queries.Clip1Of(weapon)
 }
