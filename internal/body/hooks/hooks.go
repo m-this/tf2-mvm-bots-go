@@ -246,3 +246,25 @@ func SniperLurkSelectMoreDangerousThreat(action engine.Behaviour, nextbot engine
 
 	return engine.Changed(), knownEntity
 }
+
+/*
+MainActionShouldAttack lets a defender shoot from anywhere.
+
+The game's rule is written for the invaders, who are not supposed to fire out of
+their own spawn. A defender in his spawn shooting into the yard is the whole
+point of standing there.
+*/
+//
+//sp:name CTFBotMainAction_ShouldAttack
+//
+//nolint:revive // unused-parameter: the action, the bot and the threat are the game's
+func MainActionShouldAttack(action engine.Behaviour, nextbot engine.Bot, knownEntity engine.Known) (outcome engine.Outcome, result engine.Answer) {
+	me := engine.Actor()
+
+	if !engine.DefenderBotFlag(me) {
+		return engine.PluginContinue(), result
+	}
+
+	// Always attack even in spawn room because we are not the invaders.
+	return engine.Changed(), engine.AnswerYes()
+}
