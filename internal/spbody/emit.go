@@ -70,6 +70,9 @@ type emitter struct {
 	// mutates are the parameters the function being emitted writes through,
 	// from //sp:mutates.
 	mutates map[string]bool
+	// byrefs are the scalar parameters the caller reads back, from
+	// //sp:byref.
+	byrefs map[string]bool
 	// writable are the text parameters the shipped declaration leaves
 	// writable, from //sp:writable.
 	writable map[string]bool

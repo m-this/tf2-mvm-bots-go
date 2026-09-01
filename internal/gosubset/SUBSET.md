@@ -41,6 +41,7 @@ Refused, with the fix:
 | `*T` | no pointers | pass the value; several results become by-reference parameters in the generated function |
 | `interface`, `any`, `error` | no dispatch on type | the concrete type, and a `bool` or sentinel `int32` for failure |
 | a variadic parameter | nothing to index it with | a fixed-length array and a count, or a final `...any` handed to `VFormat` |
+| a write to a parameter | Go copies, SourcePawn does not | a local, or `//sp:byref` on a scalar the caller reads back |
 | `chan T`, `func(...)` | no concurrency, no function values | remove it, call the function by name |
 | anonymous struct, embedded field, type alias, generics | nothing to name in the output | a named package-level struct with named fields, one function per concrete type |
 

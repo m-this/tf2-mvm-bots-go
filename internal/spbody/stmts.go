@@ -470,6 +470,12 @@ func (e *emitter) checkWritable(lhs ast.Expr) {
 				if e.mutates[id.Name] {
 					return
 				}
+				// A scalar the caller reads back, which
+				// //sp:byref names and the & in the emitted
+				// declaration carries.
+				if e.byrefs[id.Name] {
+					return
+				}
 				e.fail(lhs.Pos(), "a write to the parameter %s, which SourcePawn passes by reference and Go copies; copy it into a local first", id.Name)
 			}
 			return

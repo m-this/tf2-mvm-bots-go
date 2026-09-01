@@ -669,3 +669,65 @@ func OnActionCreated(action engine.Behaviour, actor int32, name string) {
 		}
 	}
 }
+
+/*
+NextBotTraceFilterIgnoreActors is what a nextbot's line of sight walks through.
+
+Everything listed is something the game puts in the world that a bot should not
+treat as a wall: a projectile in flight, a building, a shield bubble, the
+respawn visualiser, a revive marker, a tank and a force field. What is left is
+the world itself and anything that fights, and a fighter is not a wall either.
+*/
+//
+//sp:name NextBotTraceFilterIgnoreActors
+//sp:public
+//
+//nolint:revive,gocritic // unused-parameter, ifElseChain: the mask and the exclusion are the game's, and the chain is the shipped shape
+func NextBotTraceFilterIgnoreActors(entity int32, contentsMask int32, iExclude engine.Cell) bool {
+	class := engine.EntityClassname(entity)
+
+	if engine.StrEqual(class, "entity_medigun_shield") {
+		return false
+	} else if engine.StrEqual(class, "func_respawnroomvisualizer") {
+		return false
+	} else if engine.StrContains(class, "tf_projectile_", false) != -1 {
+		return false
+	} else if engine.StrContains(class, "obj_", false) != -1 {
+		return false
+	} else if engine.StrEqual(class, "entity_revive_marker") {
+		return false
+	} else if engine.StrEqual(class, "tank_boss") {
+		return false
+	} else if engine.StrEqual(class, "func_forcefield") {
+		return false
+	}
+
+	return !engine.EntityOf(entity).IsCombatCharacter()
+}
+
+/*
+IsPathToVectorPossible says the mesh has a route to that point at all.
+
+A whole PathFollower for one question, built and destroyed on the spot: there is
+no cheaper way to ask, which is why the spawn recovery asks it once rather than
+every think.
+*/
+//
+//sp:name IsPathToVectorPossible
+//sp:const vec
+//sp:byref length
+//sp:default length -1.0
+//
+//nolint:revive,ineffassign,staticcheck,wastedassign // the write is the point: SourcePawn passes length by reference
+func IsPathToVectorPossible(botEntidx int32, vec [3]float32, length float32) bool {
+	engine.CombatOf(botEntidx).UpdateLastKnownArea()
+
+	tempPath := engine.NewRoute(engine.FilterIgnoreActors(), engine.FilterOnlyActors())
+	defer tempPath.Close()
+
+	success := tempPath.Compute(engine.NextBotOf(botEntidx), vec)
+
+	length = tempPath.Length()
+
+	return success
+}

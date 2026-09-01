@@ -158,7 +158,7 @@ func (b Bot) IsRangeLessThanEx(position [3]float32, distance float32) bool {
 // IsPathToVectorPossible says whether the bot could actually walk there, which
 // is a whole nav mesh search and not the cheap predicate it reads as.
 //
-//sp:plugin IsPathToVectorPossible
+//sp:body IsPathToVectorPossible
 func IsPathToVectorPossible(client int32, position [3]float32) bool {
 	if medics.IsPathToVectorPossible == nil {
 		missing("IsPathToVectorPossible")
@@ -170,7 +170,7 @@ func IsPathToVectorPossible(client int32, position [3]float32) bool {
 // it found was. The plugin declares the length as a defaulted by-reference
 // parameter, so a caller that wants it takes it as a second result.
 //
-//sp:plugin IsPathToVectorPossible
+//sp:body IsPathToVectorPossible
 func IsPathToVectorPossibleLength(client int32, position [3]float32) (ok bool, length float32) {
 	if medics.IsPathToVectorPossibleLength == nil {
 		missing("IsPathToVectorPossible")

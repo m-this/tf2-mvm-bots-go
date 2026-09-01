@@ -140,6 +140,35 @@ Go there is not a description of what the SourcePawn does to its caller.
 */
 const mutatesDirective = "//sp:mutates"
 
+/*
+	byrefDirective marks a scalar parameter the caller reads back
+
+An array is by reference in SourcePawn already; a float or an int is not, and the
+plugin says so with an & in the declaration. IsPathToVectorPossible is the one
+that needs it: the caller passes a float it wants the path's length written into,
+and the parameter carries a default as well, which a result cannot.
+
+The write goes to the caller either way, so this also says the write is meant.
+*/
+const byrefDirective = "//sp:byref"
+
+// byrefsOf reads //sp:byref <parameter> off a declaration.
+func byrefsOf(d *ast.FuncDecl) map[string]bool {
+	out := map[string]bool{}
+	if d.Doc == nil {
+		return out
+	}
+	for _, c := range d.Doc.List {
+		for line := range strings.Lines(c.Text) {
+			fields := strings.Fields(line)
+			if len(fields) == 2 && fields[0] == byrefDirective {
+				out[fields[1]] = true
+			}
+		}
+	}
+	return out
+}
+
 // mutatesOf reads //sp:mutates <parameter> off a declaration.
 func mutatesOf(d *ast.FuncDecl) map[string]bool {
 	out := map[string]bool{}
@@ -236,6 +265,7 @@ func (e *emitter) funcDecl(d *ast.FuncDecl) {
 	e.lengths = lengthsOf(d)
 	e.consts = constsOf(d)
 	e.mutates = mutatesOf(d)
+	e.byrefs = byrefsOf(d)
 	e.writable = writablesOf(d)
 	sig := obj.Type().(*types.Signature)
 	if sig.Recv() != nil {
@@ -426,6 +456,10 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 		}
 		if e.consts[name] {
 			params = append(params, "const "+declare(tag, e.ident(d.Pos(), name), dims))
+			continue
+		}
+		if e.byrefs[name] && len(dims) == 0 {
+			params = append(params, declare(tag, "&"+e.ident(d.Pos(), name), nil))
 			continue
 		}
 		params = append(params, declare(tag, e.ident(d.Pos(), name), dims))
