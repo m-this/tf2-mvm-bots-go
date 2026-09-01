@@ -93,3 +93,71 @@ func GetCountOfPlayersChoosingBotClasses() int32 {
 
 	return count
 }
+
+/*
+ExtendUpgradeTimeForNewBots gives a bot that joined late enough of the break to
+shop in.
+
+Only when there is little left: a bot added with twenty seconds on the clock
+cannot buy anything and starts the wave stock, which is a seat wasted for the
+whole wave rather than a break made slightly longer.
+*/
+//
+//sp:name ExtendUpgradeTimeForNewBots
+func ExtendUpgradeTimeForNewBots() {
+	restartRoundTime := engine.GameRulesFloat("m_flRestartRoundTime")
+
+	if restartRoundTime <= 0 {
+		return
+	}
+
+	if restartRoundTime-engine.GameTime() <= engine.BuyUpgradesMaxTime() {
+		// Add a little more time for the new bot to ready.
+		engine.SetGameRulesFloat("m_flRestartRoundTime", restartRoundTime+engine.BuyUpgradesMaxTime())
+	}
+}
+
+/*
+ClearBuildingsBeforeKick takes an engineer's nest down with him.
+
+A sentry whose owner has left is somebody else's problem: it keeps shooting, it
+cannot be upgraded or repaired, and nothing will ever remove it. Walked
+backwards because removing one shortens the list.
+*/
+//
+//sp:name ClearBuildingsBeforeKick
+func ClearBuildingsBeforeKick(client int32) {
+	for i := engine.PlayerObjectCount(client) - 1; i >= 0; i-- {
+		building := engine.PlayerObject(client, i)
+
+		if engine.IsValidEntity(building) {
+			engine.RemoveEntity(building)
+		}
+	}
+
+	// The one the game already took out of that list, because he was carrying
+	// it.
+	carried := engine.CarriedObject(client)
+
+	if carried != -1 && engine.IsValidEntity(carried) {
+		engine.RemoveEntity(carried)
+	}
+}
+
+// RecycleDefenderBots clears the team out so a new lineup can be seated, and
+// says how many seats it freed.
+//
+//sp:name RecycleDefenderBots
+func RecycleDefenderBots() int32 {
+	kicked := int32(0)
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if engine.IsClientInGame(i) && IsDefenderBot(i) && engine.ClientTeam(i) == engine.TeamRed() {
+			kicked++
+			ClearBuildingsBeforeKick(i)
+			engine.KickClient(i, "BotManager3: the team changed")
+		}
+	}
+
+	return kicked
+}

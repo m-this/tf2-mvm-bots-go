@@ -20,6 +20,8 @@ type RosterCountCalls struct {
 	SetAnyHumanReady      func(ready bool)
 	HumanReadinessTime    func() float32
 	SetHumanReadinessTime func(when float32)
+	GameRulesFloat        func(prop string) float32
+	SetGameRulesFloat     func(prop string, value float32)
 }
 
 var rosterCounts RosterCountCalls
@@ -61,3 +63,29 @@ func ChoosingBotClasses(client int32) bool {
 	}
 	return rosterCounts.ChoosingBotClasses(client)
 }
+
+// GameRulesFloat reads a float off the game rules entity.
+//
+//sp:native GameRules_GetPropFloat
+func GameRulesFloat(prop string) float32 {
+	if rosterCounts.GameRulesFloat == nil {
+		missing("GameRules_GetPropFloat")
+	}
+	return rosterCounts.GameRulesFloat(prop)
+}
+
+// SetGameRulesFloat writes one.
+//
+//sp:native GameRules_SetPropFloat
+func SetGameRulesFloat(prop string, value float32) {
+	if rosterCounts.SetGameRulesFloat == nil {
+		missing("GameRules_SetPropFloat")
+	}
+	rosterCounts.SetGameRulesFloat(prop, value)
+}
+
+// BuyUpgradesMaxTime is BUY_UPGRADES_MAX_TIME, how long a shopping trip is
+// given.
+//
+//sp:global BUY_UPGRADES_MAX_TIME
+func BuyUpgradesMaxTime() float32 { return 30.0 }
