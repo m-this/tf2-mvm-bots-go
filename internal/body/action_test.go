@@ -37,7 +37,8 @@ neither is a difference in what runs. The body-level proof is the differential
 test the pure bodies get, and an action cannot have one.
 */
 func TestGeneratedActionMatchesTheShippedOne(t *testing.T) {
-	upstream.SkipOrFail(t)
+	// No skip: the shipped text comes from the snapshot under
+	// internal/upstream. See TestGeneratedBodiesMatchTheShippedOnes.
 
 	generated, err := body.Generate("../..")
 	if err != nil {
@@ -57,7 +58,7 @@ func compareAction(t *testing.T, action body.Body, got string) {
 	// the hand written file: the port took it, which is the whole point, and
 	// a comparison that read the tree would have quietly stopped comparing
 	// anything the moment it succeeded.
-	shipped, err := upstream.Read(strings.Split(action.Shipped, "/")...)
+	shipped, err := upstream.ReadAt(action.Rev, strings.Split(action.Shipped, "/")...)
 	if err != nil {
 		t.Fatalf("reading the shipped behaviour at %s: %v", upstream.Rev, err)
 	}

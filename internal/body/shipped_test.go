@@ -28,8 +28,9 @@ body may add a helper the plugin never had, and internal/body/finders holds
 functions from two different files.
 */
 func TestGeneratedBodiesMatchTheShippedOnes(t *testing.T) {
-	upstream.SkipOrFail(t)
-
+	// No skip: the shipped text comes from the snapshot under
+	// internal/upstream, so this proof runs without the plugin repository
+	// and keeps running after it is archived.
 	generated, err := body.Generate("../..")
 	if err != nil {
 		t.Fatalf("generating: %v", err)

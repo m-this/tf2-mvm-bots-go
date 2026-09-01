@@ -9,8 +9,10 @@ two answered different questions about the same file.
 package upstream
 
 import (
+	"embed"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -89,23 +91,50 @@ func Read(parts ...string) (string, error) {
 	return ReadAt("", parts...)
 }
 
-// ReadAt is Read at a revision of the caller's choosing, and at the pin when
-// that is empty.
+/*
+ReadAt is Read at a revision of the caller's choosing, and at the pin when that
+is empty.
+
+It reads the snapshot under shipped/ first. That snapshot is the whole reason
+the plugin repository can be archived: the proofs are what tie this repository
+to it, and a proof that needs another repository's git history is a proof that
+dies with that repository. The snapshot is 700 KiB of text and it is the
+evidence, so it is versioned here beside what it proves.
+
+The git path is still taken when the snapshot has no answer, and
+TestSnapshotMatchesTheRepository checks the two agree wherever the repository is
+present.
+*/
 func ReadAt(rev string, parts ...string) (string, error) {
-	dir, err := Dir()
-	if err != nil {
-		return "", err
-	}
 	if rev == "" {
 		rev = Rev
 	}
 	path := strings.Join(parts, "/")
+
+	if body, err := snapshot.ReadFile("shipped/" + rev + "/" + path); err == nil {
+		return string(body), nil
+	}
+
+	dir, err := Dir()
+	if err != nil {
+		return "", err
+	}
 	body, err := exec.Command("git", "-C", dir, "show", rev+":"+path).Output()
 	if err != nil {
 		return "", err
 	}
 	return string(body), nil
 }
+
+/*
+snapshot is every shipped file a proof reads, at the revision it reads it.
+
+Written by tools/snapshot.sh from the plugin repository. Adding a Body with a
+Shipped path means adding its file here, which the snapshot test says out loud
+when it has not been done.
+*/
+//go:embed shipped
+var snapshot embed.FS
 
 // Head is the plugin's current revision, short, for the drift report.
 func Head() (string, error) {
@@ -118,4 +147,37 @@ func Head() (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(string(out)), nil
+}
+
+// SnapshotFile is one file the snapshot holds, and the revision it was taken
+// at.
+type SnapshotFile struct {
+	Rev  string
+	Path string
+	Body string
+}
+
+// SnapshotFiles is everything under shipped, so a test can walk it without
+// knowing what a Body asked for.
+func SnapshotFiles() ([]SnapshotFile, error) {
+	var out []SnapshotFile
+
+	err := fs.WalkDir(snapshot, "shipped", func(name string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		rest, _ := strings.CutPrefix(name, "shipped/")
+		rev, path, found := strings.Cut(rest, "/")
+		if !found {
+			return fmt.Errorf("%s is not under a revision directory", name)
+		}
+		body, err := snapshot.ReadFile(name)
+		if err != nil {
+			return err
+		}
+		out = append(out, SnapshotFile{Rev: rev, Path: path, Body: string(body)})
+		return nil
+	})
+
+	return out, err
 }
