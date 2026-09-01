@@ -268,3 +268,110 @@ func MainActionShouldAttack(action engine.Behaviour, nextbot engine.Bot, knownEn
 	// Always attack even in spawn room because we are not the invaders.
 	return engine.Changed(), engine.AnswerYes()
 }
+
+/*
+TacticalMonitorUpdate is the busiest of the game's own behaviours, and the mod
+overrides all of it.
+
+Readiness first, before any of the returns below: the upgrade-zone branch used
+to return before it ever ran, so a bot shopping at the station had no readiness
+of its own and the human mirror never applied. Reported as an engineer beside
+spawn who never pressed F4 while a player on RED had; the station is next to
+spawn on Decoy, which is where that bot was standing.
+
+Refusing a decision the game is about to make is done by starting its own
+timer: FindNearbyTeleporter returns null while its timer runs, and there is no
+hook for it.
+
+The order inside the round is deliberate. The buster is above health and ammo
+because a bot walking to a health pack through the blast is a bot that arrives
+dead. The stickies are pressed here rather than in the attack behaviour because
+this holds whatever the bot is doing: a demoman walking to the next fight is
+still standing over his last one.
+*/
+//
+//sp:name CTFBotTacticalMonitor_Update
+//sp:public
+//
+//nolint:revive // unused-parameter: the result is the game's
+func TacticalMonitorUpdate(action engine.Behaviour, actor int32, interval float32, result engine.ActionResult) engine.Outcome {
+	if !engine.DefenderBotFlag(actor) {
+		return engine.PluginContinue()
+	}
+
+	engine.UpdateDefenderReadiness(actor)
+
+	if engine.IsInUpgradeZone(actor) && engine.LookupEntityActionByName(actor, "DefenderUpgrade") != engine.InvalidAction() {
+		iClass := engine.PlayerClass(actor)
+
+		if iClass == engine.ClassDemoMan() || iClass == engine.ClassScout() {
+			pOpportunisticTimer := engine.CountdownAt(engine.OpportunisticTimer(actor))
+
+			if pOpportunisticTimer.Address() != engine.NoAddress() {
+				// We don't do any of these things while upgrading.
+				pOpportunisticTimer.Start(interval)
+			}
+		}
+
+		return engine.PluginContinue()
+	}
+
+	if !engine.ShouldUseTeleporterNow(actor) {
+		pFindTeleporterTimer := engine.CountdownAt(engine.Address(int32(action) + engine.FindTeleporterOffset()))
+
+		if pFindTeleporterTimer.Address() != engine.NoAddress() {
+			// Don't look for any nearby teleporters to use. This forces
+			// CTFBotTacticalMonitor::FindNearbyTeleporter to return NULL.
+			pFindTeleporterTimer.Start(interval)
+		}
+	}
+
+	engine.UpdateStuckWatchdog(actor)
+
+	if engine.RoundState() == engine.RoundStateRunning() {
+		if engine.EvadeBusterIsPossible(actor) {
+			return engine.SuspendFor(engine.EvadeBuster(), "Sentry buster")
+		}
+
+		engine.UpdateScoutCombatJump(actor)
+
+		if engine.ShouldDetonateStickies(actor) {
+			engine.PressAltFireButton(actor)
+		}
+
+		engine.UpdateSpyIntel(actor)
+
+		if engine.SpyCheckIsPossible(actor) {
+			return engine.SuspendFor(engine.SpyCheck(), "Spy check")
+		}
+
+		lowHealth := false
+
+		healthRatio := engine.HealthRatio(actor)
+
+		if (engine.TimeSinceWeaponFired(actor) > 2.0 || engine.PlayerClass(actor) == engine.ClassSniper()) && healthRatio < engine.HealthCriticalRatio().Float() {
+			lowHealth = true
+		} else if healthRatio < engine.HealthOkRatio().Float() {
+			lowHealth = true
+		}
+
+		if lowHealth && engine.ShouldLeaveToBePatchedUp(actor, healthRatio) && engine.GetHealthIsPossible(actor) {
+			return engine.SuspendFor(engine.GetHealth(), "Getting health")
+		}
+
+		primary := engine.PlayerWeaponSlot(actor, engine.WeaponSlotPrimary())
+
+		if primary != -1 && engine.WeaponID(primary) == engine.WeaponFlamethrower() && (engine.IsCritBoosted(actor) || engine.IsPlayerInCondition(actor, engine.ConditionCritMmmph())) {
+			// Don't bother going for ammo while using crits unless our
+			// weapon has completely run out.
+			if !engine.HasAmmo(primary) && engine.GetAmmoIsPossible(actor) {
+				return engine.SuspendFor(engine.GetAmmo(), "Get ammo for crit")
+			}
+		} else if engine.IsAmmoLowNow(actor) && engine.ShouldLeaveToBePatchedUp(actor, healthRatio) && engine.GetAmmoIsPossible(actor) {
+			// Go for ammo when we're low and nearby packs are available.
+			return engine.SuspendFor(engine.GetAmmo(), "Getting ammo")
+		}
+	}
+
+	return engine.PluginContinue()
+}
