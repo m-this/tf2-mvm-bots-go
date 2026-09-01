@@ -349,3 +349,64 @@ func WatchDefenderSpawnExit(client int32) {
 
 	MoveDefenderFromSpawnToBattlefield(client, "made no spawn-exit progress for six seconds")
 }
+
+/*
+CommandDumpSpawnNav says, per bot, everything the watch above is looking at.
+
+Four runs were spent guessing why a bot did or did not get recovered; this
+prints the answer instead. mvm-qhi is why it exists.
+*/
+//
+//sp:name Command_DumpSpawnNav
+//sp:public
+//
+//nolint:revive // unused-parameter: the argument count is the console's, and this command takes none
+func CommandDumpSpawnNav(client int32, args int32) engine.Outcome {
+	engine.ReplyToCommand(client, "Spawn NAV recovery: enabled %d, radius %.0f, max time %.1f", engine.SpawnNavRecovery().Bool(),
+		engine.SpawnNavRecoveryRadius().Float(), engine.SpawnNavRecoveryTime().Float())
+
+	for bot := int32(1); bot <= engine.MaxClients(); bot++ {
+		if !engine.IsClientInGame(bot) || !engine.IsPlayerAlive(bot) || !engine.DefenderBotFlag(bot) {
+			continue
+		}
+
+		strict := engine.IsPointInRespawnRoomStrict(engine.WorldSpaceCenter(bot), bot)
+		distance := DistanceToClosestDefenderSpawn(bot)
+		near := strict || distance >= 0.0 && distance <= engine.SpawnNavRecoveryRadius().Float()
+		now := engine.GameTime()
+		watched := engine.ChooseFloat(spawnExitStartedAt[bot] > 0.0, now-spawnExitStartedAt[bot], 0.0)
+		stalled := engine.ChooseFloat(spawnExitProgressAt[bot] > 0.0, now-spawnExitProgressAt[bot], 0.0)
+		moved := engine.ChooseFloat(spawnExitProgressAt[bot] > 0.0, engine.VectorDistance(engine.AbsOriginOf(bot), spawnExitProgress[bot]), 0.0)
+
+		var anchorSource engine.Text
+		anchorNav := FindSpawnRecoveryArea(bot, anchorSource, 32) != engine.NullArea()
+
+		engine.ReplyToCommand(client, "%N: strict %d, spawn distance %.0f, near %d, eligible %d, upgrade zone %d, watched %.1fs, stalled %.1fs, moved %.0f, anchor %s, anchor NAV %d",
+			bot, strict, distance, near, ShouldWatchDefenderSpawnExit(bot), engine.IsInUpgradeZone(bot), watched, stalled, moved, anchorSource, anchorNav)
+	}
+
+	return engine.PluginHandled()
+}
+
+// CommandRecoverSpawnBots moves every stuck defender at once, for an admin who
+// can see the problem and does not want to wait for the watch.
+//
+//sp:name Command_RecoverSpawnBots
+//sp:public
+//nolint:revive // unused-parameter: the argument count is the console's, and this command takes none
+func CommandRecoverSpawnBots(client int32, args int32) engine.Outcome {
+	var recovered int32
+
+	for bot := int32(1); bot <= engine.MaxClients(); bot++ {
+		if !engine.IsClientInGame(bot) || !engine.IsPlayerAlive(bot) || !engine.DefenderBotFlag(bot) || !IsInOrNearDefenderSpawn(bot) {
+			continue
+		}
+
+		if MoveDefenderFromSpawnToBattlefield(bot, "was manually recovered by an admin") {
+			recovered++
+		}
+	}
+
+	engine.ReplyToCommand(client, "Recovered %d defender bot(s) from the configured spawn radius.", recovered)
+	return engine.PluginHandled()
+}
