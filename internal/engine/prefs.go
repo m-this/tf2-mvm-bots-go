@@ -18,9 +18,9 @@ type PrefCalls struct {
 	SectionName           func(kv KeyValues) Text
 	GotoFirstSubKey       func(kv KeyValues) bool
 	GotoNextKey           func(kv KeyValues) bool
-	ClientAuthID          func(client int32) (bool, Text)
+	ClientAuthID          func(client int32, kind AuthIDKind) (bool, Text)
 	StringToInt           func(text Text) int32
-	IntToString           func(value int32) Text
+	IntToString           func(value int32) (int32, Text)
 	PushString            func(l List, text string)
 	NewStringList         func(blockSize int32) List
 	ClientTeam            func(client int32) Team
@@ -156,12 +156,12 @@ func (kv KeyValues) GotoNextKey() bool {
 
 // ClientAuthID is the Steam ID a preference is filed under.
 //
-//sp:native GetClientAuthId sized after AuthId_Steam3
-func ClientAuthID(client int32) (ok bool, id Text) {
+//sp:native GetClientAuthId sized
+func ClientAuthID(client int32, kind AuthIDKind) (ok bool, id Text) {
 	if prefs.ClientAuthID == nil {
 		missing("GetClientAuthId")
 	}
-	return prefs.ClientAuthID(client)
+	return prefs.ClientAuthID(client, kind)
 }
 
 // StringToInt reads a number out of text.
@@ -176,8 +176,8 @@ func StringToInt(text Text) int32 {
 
 // IntToString writes one into a buffer.
 //
-//sp:native IntToString fills
-func IntToString(value int32) (out Text) {
+//sp:native IntToString sized
+func IntToString(value int32) (written int32, out Text) {
 	if prefs.IntToString == nil {
 		missing("IntToString")
 	}
@@ -220,22 +220,6 @@ The two KeyValues the plugin loads and this reads.
 Both are globals rather than handles this code opens: player_pref.sp still owns
 the loading, and a config the server did not write reads as null.
 */
-
-// ServerLoadout is m_kvServerLoadout, configs/defenderbots/loadout.cfg.
-//
-//sp:global m_kvServerLoadout
-func ServerLoadout() KeyValues { return 0 }
-
-// PlayerPrefData is m_kvPlayerPrefData, what the players asked for.
-//
-//sp:global m_kvPlayerPrefData
-func PlayerPrefData() KeyValues { return 0 }
-
-// PlayerForcedPref is g_iPlayerForcedPref, the client index an admin told the
-// mod to read every preference from, and -1 the rest of the time.
-//
-//sp:global g_iPlayerForcedPref
-func PlayerForcedPref() int32 { return -1 }
 
 // PluginPrefix is PLUGIN_PREFIX, what the mod says before it says anything.
 //
@@ -281,3 +265,14 @@ func IsServerFull() bool {
 	}
 	return prefs.IsServerFull()
 }
+
+// AuthIDKind is SourceMod's AuthIdType, which spelling of a Steam id is wanted.
+//
+//sp:tag AuthIdType
+type AuthIDKind int32
+
+// AuthIDSteam3 is AuthId_Steam3, the [U:1:...] form the preference file is
+// keyed by.
+//
+//sp:global AuthId_Steam3
+func AuthIDSteam3() AuthIDKind { return 2 }

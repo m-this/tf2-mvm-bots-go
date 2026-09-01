@@ -9,6 +9,12 @@ import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
 // Slots is the client array size, MAXPLAYERS + 1.
 const Slots = 65
 
+// BuyUpgradesMaxTime is how long a shopping trip is given, owned here because
+// this file is the first to read it and a define has to come before its reader.
+//
+//sp:name BUY_UPGRADES_MAX_TIME
+const BuyUpgradesMaxTime = 30.0
+
 /*
 IsDefenderBot says the slot holds one of ours.
 
@@ -111,9 +117,9 @@ func ExtendUpgradeTimeForNewBots() {
 		return
 	}
 
-	if restartRoundTime-engine.GameTime() <= engine.BuyUpgradesMaxTime() {
+	if restartRoundTime-engine.GameTime() <= BuyUpgradesMaxTime {
 		// Add a little more time for the new bot to ready.
-		engine.SetGameRulesFloat("m_flRestartRoundTime", restartRoundTime+engine.BuyUpgradesMaxTime())
+		engine.SetGameRulesFloat("m_flRestartRoundTime", restartRoundTime+BuyUpgradesMaxTime)
 	}
 }
 

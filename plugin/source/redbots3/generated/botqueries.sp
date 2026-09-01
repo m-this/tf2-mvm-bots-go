@@ -83,7 +83,7 @@ stock float GetDesiredAttackRange(int client)
 	{
 		return tunedDesired;
 	}
-	TFWeaponType weaponID = TF2Util_GetWeaponID(weapon);
+	int weaponID = TF2Util_GetWeaponID(weapon);
 	if (weaponID == TF_WEAPON_KNIFE)
 	{
 		return 70.0;
@@ -293,7 +293,7 @@ stock bool OpportunisticallyUseWeaponAbilities(int client, int activeWeapon, INe
 	{
 		return false;
 	}
-	TFWeaponType weaponID = TF2Util_GetWeaponID(activeWeapon);
+	int weaponID = TF2Util_GetWeaponID(activeWeapon);
 	if ((weaponID == TF_WEAPON_SNIPERRIFLE) && TF2_IsPlayerInCondition(client, TFCond_Slowed) && threat.IsVisibleRecently())
 	{
 		if ((TF2_GetRageMeter(client) >= 0.0) && !TF2_IsRageDraining(client))
@@ -474,7 +474,7 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 		{
 			if (secondary != -1)
 			{
-				TFWeaponType weaponID = TF2Util_GetWeaponID(secondary);
+				int weaponID = TF2Util_GetWeaponID(secondary);
 				if (((weaponID == TF_WEAPON_JAR_MILK) || (weaponID == TF_WEAPON_CLEAVER)) && IsThrowableReady(client, secondary) && BaseEntity_IsPlayer(threatEnt) && !TF2_IsInvulnerable(threatEnt))
 				{
 					gun = secondary;

@@ -103,19 +103,6 @@ Mannhattan produced and Decoy never did.
 The number is generous on purpose. It is not a leash on where a bot may go: it is the point past
 which the search has plainly failed, and every real route on these maps is far inside it. */
 
-#include "generated/botqueries.sp"
-#include "generated/readiness.sp"
-#include "generated/pathing.sp"
-#include "generated/stuckwatch.sp"
-#include "generated/mediccall.sp"
-#include "generated/spawnexit.sp"
-#include "generated/scoutjump.sp"
-#include "generated/bottle.sp"
-#include "generated/dispatch.sp"
-#include "generated/medicnudge.sp"
-#include "generated/threataudit.sp"
-#include "generated/botreset.sp"
-#include "generated/hooks.sp"
 #include "generated/attack.sp"
 #include "generated/markgiant.sp"
 #include "generated/collectmoney.sp"
@@ -147,26 +134,35 @@ which the search has plainly failed, and every real route on these maps is far i
 #include "generated/guardpoint.sp"
 #include "generated/collectnearmoney.sp"
 
-#endif
+/* What used to be the body of this file, after the behaviours
+
+The shipped file had all of it below the behaviour includes, and two things
+depend on that order. A define a behaviour declares, BOMB_HATCH_RANGE_CRITICAL
+in campbomb, is read by the canteen and the query layer, and a define has to
+be seen before its use where a function does not. And behavior/engineeridle.sp
+declares a static CTFBotMvMEngineerIdle_OnStart with the same name as the
+game-facing override in hooks, so the static one has to come first or spcomp
+calls the second a redefinition. */
+#include "generated/botqueries.sp"
+#include "generated/readiness.sp"
+#include "generated/pathing.sp"
+#include "generated/stuckwatch.sp"
+#include "generated/mediccall.sp"
+#include "generated/spawnexit.sp"
+#include "generated/scoutjump.sp"
+#include "generated/bottle.sp"
+#include "generated/medicnudge.sp"
+#include "generated/threataudit.sp"
+#include "generated/dispatch.sp"
+#include "generated/botreset.sp"
+#include "generated/hooks.sp"
+
 
 /* What a robot is worth killing first
 
 The ranges, the enum and the generated table are in generated/threat_priority.sp, written from
 internal/threat in tf2-mvm-bots-go. The chain below is the one that shipped, kept beside it so the
 two can be played against each other: see FEATURE_GENERATED_THREAT_PRIORITY. */
-
-/* The same question, asked of the generated table
-
-The record is what the move in mvm-z83.6 was for: the decision takes what is known about a threat
-rather than an entity index, so something that occupies no player slot can still be ranked. Every
-threat scan in this mod walks player slots and a tank occupies none, which is mvm-ds3, and this
-does not fix it. It makes fixing it possible.
-
-Every field after isPlayer is filled behind it, not beside it, and the first version of this was
-not. The chain above reads the class, the miniboss flag and the carrier flag only after its player
-test has passed, and all three throw when asked about something that is not a player: measured,
-TF2_HasTheFlag threw 3933 times over four waves on tank_boss and obj_attachment_sapper, and each
-one aborted the whole threat choice for that tick.
 
 /* Where the generated answer and the shipped chain part company, while the port is measured
 
@@ -177,8 +173,6 @@ sides from the same record. Only a running game can answer that.
 Scaffolding, to be deleted with the measurement. It runs on the armed side only, so the other arm
 pays nothing, and it stops writing after twenty lines because a disagreement that happens at all is
 the finding and a log full of them is not more of one. */
-/* Say how much was compared, not only what disagreed
-
 /* A bot is ready when it has done the thing its seat exists for
 
 An engineer pressed ready the moment a sentry entity existed, which is a level one still being
@@ -195,20 +189,6 @@ takes the ready away again while the nest is unfinished, every frame, wherever i
 
 The grace is the important part. A bot that cannot finish, because a buster took the sentry or
 the metal ran out, must not hold the wave forever: past it it is ready whatever it has. */
-
-/* Readying a bot, and ending whatever is stopping it saying so
-
-/* Whether leaving the fight to find a pack is worth what the walk costs the team
-
-For everybody it is. For a medic it almost never is: he heals himself, three health a second and
-six once he has been out of it a while, so the pack buys him what standing still would have bought
-him anyway. What it costs is the medigun, for the length of a trip that the search range prices at
-up to two thousand units.
-
-Coaltown is why this is written down. The health pack there is in the house in the middle of the
-map, so a medic who took eighty percent of a rocket left the front line and walked to the exact
-spot he has now been reported standing in three times. Ammo goes with it: the medigun does not use
-any and the syringe gun is what he holds when there is nobody to heal.
 
 /* A bot that is trying to walk somewhere and not getting anywhere
 
@@ -253,13 +233,6 @@ move, which is mvm-ipf.
 So his own area is tried first and only accepted when the point clears STUCK_RADIUS, then the areas
 touching it. Bounded twice over: the four directions, and MOVE_WEDGED_TRIES points per area. */
 
-/* Put a wedged bot somewhere it can walk, when resetting it has stopped working
-
-The same shape as the spawn recovery below and for the same reason, one step further along: that
-one moves a bot that never left spawn, and this one moves a bot that left and then stopped. Both
-beat leaving it where it is, because a bot that cannot move asks for a path every frame and the
-watchdog kills the server on the answer.
-
 /* A Scout that keeps both feet on the ground
 
 Nothing in this mod ever pressed IN_JUMP. Not in a fight, not to cross a gap, nowhere: a
@@ -292,35 +265,6 @@ action stops its update running and these two are not the part worth reimplement
 The charge is pressed rather than set: the deploy belongs to the game, and this only ever asks
 for it sooner than the game's own dying-patient rule would have. */
 //How much more health another body needs before it is worth breaking a beam for
-
-/* How long a medic call is worth answering for
-
-The game gives one event and no state: nothing says the call is still wanted, and nothing says it
-was met. So the call is a countdown rather than a flag, and it is short. Long enough to cross the
-room he is being called across, short enough that a player who called once during a wave is not
-still holding the beam a minute later.
-
-/* Whether this bot has nowhere of its own to wait out the break
-
-The Engineer has a nest to build, the Spy has somewhere to lurk and the Sniper has a perch, and
-all three get there under their own behaviour.
-
-/* Whether this bot is one of the ones that should fall back to holding the hatch
-
-/* Whether a weapon that fires off a meter has enough of it to fire, which HasAmmo cannot say
-
-HasAmmo is CBaseCombatWeapon::HasAmmo, and a weapon carrying a meter instead of a clip has no ammo
-to run out of, so it answers yes for ever. "Always throw gas whenever HasAmmo" therefore reads as
-"always hold the jar": the Pyro equipped one it could not throw, on every tick, and never picked
-the flamethrower back up. Four runs in six of Decoy ended on the watchdog line because of it, and
-the loadout has carried a shotgun in that slot ever since to keep away from it.
-
-The two kinds of meter are kept in different places, which is why this is not one line. Jarate,
-Mad Milk and the Cleaver refill on a clock the weapon itself carries. The Gas Passer refills out
-of damage dealt, and the game keeps that on the player, per loadout slot, rather than on the
-weapon.
-
-/* The Medic behind whatever we just picked, when there is one
 
 /* Whether a teleporter is worth walking to
 

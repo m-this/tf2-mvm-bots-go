@@ -147,7 +147,7 @@ stock int GetTankToTarget(int actor, float maxDistance = 999999.0)
 	int primaryID = -1;
 	if (primary != -1)
 	{
-		primaryID = view_as<int>(TF2Util_GetWeaponID(primary));
+		primaryID = TF2Util_GetWeaponID(primary);
 	}
 	float bestDistance = 999999.0;
 	int bestEntity = -1;
@@ -163,7 +163,7 @@ stock int GetTankToTarget(int actor, float maxDistance = 999999.0)
 		{
 			continue;
 		}
-		if (primaryID == view_as<int>(TF_WEAPON_FLAMETHROWER))
+		if (primaryID == TF_WEAPON_FLAMETHROWER)
 		{
 			if ((GetEntityFlags(ent) & FL_ONGROUND) == 0)
 			{

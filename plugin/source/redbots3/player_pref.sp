@@ -3,15 +3,12 @@
 /* Override all preferences to be from a specific player instead
 This is meant to be changed by admins for personal use
 The value here is the desired player's client index */
-int g_iPlayerForcedPref = -1;
 
 char g_sPlayerPrefPath[PLATFORM_MAX_PATH];
-KeyValues m_kvPlayerPrefData;
 
 /* A loadout the server sets for every bot, from configs/defenderbots/loadout.cfg
 When the file exists it decides every slot: a slot it leaves out keeps the stock weapon,
 and the players' own preferences are not consulted */
-KeyValues m_kvServerLoadout;
 
 /* The seat of sm_redbots_manager_team_composition a bot fills, counted from 1, and 0 for a bot that
 fills none
@@ -48,12 +45,6 @@ void Config_LoadServerLoadout()
 
 	WarnAboutInvalidLoadoutSeats();
 }
-
-/* Complain about the seats the file names that no bot can ever fill
-
-/* Stand on the block the file writes for one seat, when it writes one this bot may wear
-
-/* The seat decides the whole loadout when it names this bot, and the class decides it otherwise
 
 static Action Timer_SavePrefData(Handle timer)
 {

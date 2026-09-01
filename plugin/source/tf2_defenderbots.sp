@@ -2393,18 +2393,6 @@ public Action Command_DumpCredits(int client, int args)
 	return Plugin_Handled;
 }
 
-/* Take a bot's buildings down before it leaves the server
-
-A sentry outlives the engineer that placed it, and the mod holds hooks on both. Kicking the owner
-and leaving the building standing is the shape of crash a reseat can cause and an ordinary wave
-cannot, so every path that removes a bot mid-mission goes through here first.
-
-/* Send the whole team back through the join path, and say how many went
-
-A lineup change kicks only the bots the new list has no seat for, which is right and is nobody at
-all when the classes did not move. A loadout change moves no class and still has to reach every bot,
-because a weapon is handed out on the way in and never again.
-
 /* Reload the loadout file and put the team back together with it
 
 The launcher rewrites configs/defenderbots/loadout.cfg and then calls this, which is the whole of

@@ -3,7 +3,6 @@
 #define TF_ITEMDEF_DEFAULT	-1
 #endif
 
-
 public Action Timer_GiveCustomLoadout(Handle timer, int client)
 {
 	if (!IsClientInGame(client))

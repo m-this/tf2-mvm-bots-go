@@ -1,4 +1,3 @@
-#define BUY_UPGRADES_MAX_TIME	30.0
 #define BUY_UPGRADES_FAST_MAX_TIME	3.0
 
 /* A building rebuilding cannot improve on: finished being built, and at its top level

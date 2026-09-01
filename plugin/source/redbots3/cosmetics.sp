@@ -18,14 +18,6 @@ upgrade station rewrites all wave, and they were not worth one more thing to bla
 Defender bots only, and never the invading robots: a wave is read by silhouette, and a robot in a
 hat is a robot somebody shoots a moment later than they should. */
 
-
-/* Half a second after the bot spawns, not the moment it does
-
-The game gives its own items on spawn, and the custom loadout replaces them a tenth of a second
-later, and a hat handed to a bot in the middle of that is a hat the game throws away.
-
-/* Put the drawn hat back on
-
 /* Wearables the game refused, standing in the world with nobody wearing them
  *
  * TF2Util_EquipPlayerWearable asserts that the wearable ended up attached, and throws when the
@@ -37,12 +29,6 @@ later, and a hat handed to a bot in the middle of that is a hat the game throws 
  * The equip cannot be tested in advance, so the leak is swept instead of prevented. Anything of
  * ours whose owner is not a player in the game is nobody's hat.
  */
-/* Take the hat off the way the game does it
-
-/* The model this class wears this hat with
-
-/* A bot that has left takes its hat with it
-
 /* What every defender bot is actually wearing, entity by entity
 
 A hat that does not show up is one of four things and they look the same from the outside: never
@@ -82,17 +68,3 @@ public Action Command_DumpHats(int client, int args)
 
 	return Plugin_Handled;
 }
-
-/* Every cosmetic this class may wear, asked of the schema once
-
-Not the medals. What the bots actually drew, almost every time, was a UGC participation medal or
-an ozfortress season badge: a postage stamp on the chest that reads in game as a bot wearing
-nothing at all, while anything with a particle on it still drew the particle, which is why the
-effects looked like the only part that worked. There are far more tournament medals in the schema
-than there are cosmetics, so drawing uniformly from the slot is drawing a medal.
-
-Filed by equip region rather than by slot, because the slot cannot tell them apart: the head slot
-is the game's old single-hat one and no modern item reports it, so every cosmetic and every medal
-alike comes back as misc. The medals are the ones the schema puts in the "medal" region, which is
-one string off a prefab they all share.
-

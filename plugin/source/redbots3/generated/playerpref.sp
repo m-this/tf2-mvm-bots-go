@@ -21,6 +21,9 @@
 
 int m_iBotSeat[65];
 ArrayList m_adtPendingBotSeats;
+KeyValues m_kvServerLoadout;
+KeyValues m_kvPlayerPrefData;
+int g_iPlayerForcedPref = -1;
 
 stock bool IsValidLoadoutSeat(int seat)
 {
@@ -58,7 +61,7 @@ stock bool JumpToServerLoadoutSeat(int seat, const char[] class)
 		return false;
 	}
 	char section[512];
-	IntToString(section, 512, seat);
+	IntToString(seat, section, 512);
 	if (!m_kvServerLoadout.JumpToKey("seats", false) || !m_kvServerLoadout.JumpToKey(section, false))
 	{
 		m_kvServerLoadout.Rewind();
@@ -118,7 +121,7 @@ stock void ForgetBotSeat(int client)
 stock int GetClassPreferencesFlags(int client)
 {
 	char steamID[512];
-	bool found = GetClientAuthId(client, steamID, 512, AuthId_Steam3);
+	bool found = GetClientAuthId(client, AuthId_Steam3, steamID, 512);
 	if (!found)
 	{
 		LogError("GetClassPreferencesFlags: failed to get Steam ID for %L", client);
@@ -170,7 +173,7 @@ stock int GetClassPreferencesFlags(int client)
 stock void SetClassPreferences(int client, const char[] class, int value)
 {
 	char steamID[512];
-	bool found = GetClientAuthId(client, steamID, 512, AuthId_Steam3);
+	bool found = GetClientAuthId(client, AuthId_Steam3, steamID, 512);
 	if (!found)
 	{
 		LogError("SetClassPreferences: failed to get Steam ID for %L", client);
@@ -185,7 +188,7 @@ stock void SetClassPreferences(int client, const char[] class, int value)
 stock int GetWeaponPreference(int client, const char[] class, const char[] slot)
 {
 	char steamID[512];
-	bool found = GetClientAuthId(client, steamID, 512, AuthId_Steam3);
+	bool found = GetClientAuthId(client, AuthId_Steam3, steamID, 512);
 	if (!found)
 	{
 		LogError("GetWeaponPreference: failed to get Steam ID for %L", client);
@@ -235,7 +238,7 @@ stock int GetPreferredWeaponForClass(const char[] class, const char[] slot, int 
 stock void SetWeaponPreference(int client, const char[] class, const char[] slot, int value)
 {
 	char steamID[512];
-	GetClientAuthId(client, steamID, 512, AuthId_Steam3);
+	GetClientAuthId(client, AuthId_Steam3, steamID, 512);
 	m_kvPlayerPrefData.JumpToKey(steamID, true);
 	m_kvPlayerPrefData.JumpToKey("loadout", true);
 	m_kvPlayerPrefData.JumpToKey(class, true);

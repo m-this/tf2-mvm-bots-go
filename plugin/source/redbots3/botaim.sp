@@ -844,7 +844,6 @@ bool IsExplosiveProjectileWeapon(int weapon)
 }
 #endif
 
-
 /* Whether a rocket is worth putting on the ground under a robot rather than into it
 
 The ground is where splash comes from, and splash is worth having when there is a crowd standing

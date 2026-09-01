@@ -66,9 +66,16 @@ type Object int32
 //sp:tag PropType
 type PropType int32
 
-// Weapon is SourceMod's TFWeaponType.
+/*
+Weapon is a TF_WEAPON_* id, which SourceMod spells int.
+
+It was tagged TFWeaponType for a while, a type no include declares: three
+generated files emitted locals of it and nothing compiled them whole until
+TestThePluginCompiles existed. The Go keeps the name so a weapon id cannot be
+handed where an entity index goes; SourcePawn gets the int the natives return.
+*/
 //
-//sp:tag TFWeaponType
+//sp:tag int
 type Weapon int32
 
 // Calls is the set of answers a body gets. A nil field is a call the caller did

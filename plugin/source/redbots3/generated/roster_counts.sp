@@ -2,6 +2,8 @@
 
 #define Go_Slots (65)
 
+#define BUY_UPGRADES_MAX_TIME (30.0)
+
 stock bool IsDefenderBot(int client)
 {
 	if (g_bIsDefenderBot[client])

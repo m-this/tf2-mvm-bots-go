@@ -616,7 +616,9 @@ func MainActionSelectTargetPoint(action engine.Behaviour, nextbot engine.Bot, en
 			}
 		case engine.WeaponFlamethrower():
 			if engine.IsBaseBoss(entity) {
-				return engine.Changed(), engine.FlameThrowerAimForTank(entity)
+				aim := engine.FlameThrowerAimForTank(entity)
+
+				return engine.Changed(), aim
 			}
 		}
 	}

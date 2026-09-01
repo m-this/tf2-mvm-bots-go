@@ -68,6 +68,30 @@ var botSeat [Slots]int32
 //sp:name m_adtPendingBotSeats
 var pendingBotSeats engine.List
 
+/*
+The two config files and the admin override, owned here because this file reads
+them and a global has to be declared before its first reader.
+
+player_pref.sp still loads both files; a config the server did not write reads
+as null.
+*/
+
+// ServerLoadout is configs/defenderbots/loadout.cfg.
+//
+//sp:name m_kvServerLoadout
+var serverLoadout engine.KeyValues
+
+// PlayerPrefData is what the players asked for.
+//
+//sp:name m_kvPlayerPrefData
+var playerPrefData engine.KeyValues
+
+// PlayerForcedPref is the client an admin told the mod to read every preference
+// from, and -1 the rest of the time.
+//
+//sp:name g_iPlayerForcedPref
+var playerForcedPref int32 = -1
+
 // IsValidLoadoutSeat says the file named a seat a bot can actually fill.
 //
 //sp:name IsValidLoadoutSeat
@@ -86,26 +110,26 @@ than the file asking for seat 0.
 //
 //sp:name WarnAboutInvalidLoadoutSeats
 func WarnAboutInvalidLoadoutSeats() {
-	engine.ServerLoadout().Rewind()
+	serverLoadout.Rewind()
 
-	if !engine.ServerLoadout().JumpToKey("seats", false) || !engine.ServerLoadout().GotoFirstSubKey() {
-		engine.ServerLoadout().Rewind()
+	if !serverLoadout.JumpToKey("seats", false) || !serverLoadout.GotoFirstSubKey() {
+		serverLoadout.Rewind()
 		return
 	}
 
 	for {
-		section := engine.ServerLoadout().SectionName()
+		section := serverLoadout.SectionName()
 
 		if !IsValidLoadoutSeat(engine.StringToInt(section)) {
 			engine.LogError("Config_LoadServerLoadout: seat \"%s\" is not between 1 and %d, ignoring it", section, MaxPlayers)
 		}
 
-		if !engine.ServerLoadout().GotoNextKey() {
+		if !serverLoadout.GotoNextKey() {
 			break
 		}
 	}
 
-	engine.ServerLoadout().Rewind()
+	serverLoadout.Rewind()
 }
 
 /*
@@ -123,20 +147,20 @@ func JumpToServerLoadoutSeat(seat int32, class string) bool {
 		return false
 	}
 
-	section := engine.IntToString(seat)
+	_, section := engine.IntToString(seat)
 
-	if !engine.ServerLoadout().JumpToKey("seats", false) || !engine.ServerLoadout().JumpToKeyText(section, false) {
-		engine.ServerLoadout().Rewind()
+	if !serverLoadout.JumpToKey("seats", false) || !serverLoadout.JumpToKeyText(section, false) {
+		serverLoadout.Rewind()
 		return false
 	}
 
-	seatClass := engine.ServerLoadout().String("class")
+	seatClass := serverLoadout.String("class")
 
 	if engine.StrEqualFolded(seatClass, class, false) {
 		return true
 	}
 
-	engine.ServerLoadout().Rewind()
+	serverLoadout.Rewind()
 
 	return false
 }
@@ -152,14 +176,14 @@ the class block's answer.
 //
 //sp:name GetServerLoadoutWeapon
 func GetServerLoadoutWeapon(seat int32, class string, slot string) int32 {
-	engine.ServerLoadout().Rewind()
+	serverLoadout.Rewind()
 
-	if !JumpToServerLoadoutSeat(seat, class) && !engine.ServerLoadout().JumpToKey(class, false) {
+	if !JumpToServerLoadoutSeat(seat, class) && !serverLoadout.JumpToKey(class, false) {
 		return ItemDefDefault
 	}
 
-	weaponIndex := engine.ServerLoadout().Num(slot, ItemDefDefault)
-	engine.ServerLoadout().Rewind()
+	weaponIndex := serverLoadout.Num(slot, ItemDefDefault)
+	serverLoadout.Rewind()
 
 	return weaponIndex
 }
@@ -211,7 +235,7 @@ func ForgetBotSeat(client int32) {
 //
 //sp:name GetClassPreferencesFlags
 func GetClassPreferencesFlags(client int32) int32 {
-	found, steamID := engine.ClientAuthID(client)
+	found, steamID := engine.ClientAuthID(client, engine.AuthIDSteam3())
 
 	if !found {
 		engine.LogError("GetClassPreferencesFlags: failed to get Steam ID for %L", client)
@@ -220,46 +244,46 @@ func GetClassPreferencesFlags(client int32) int32 {
 
 	flags := int32(PrefNone)
 
-	engine.PlayerPrefData().JumpToKeyText(steamID, true)
-	engine.PlayerPrefData().JumpToKey("class", true)
+	playerPrefData.JumpToKeyText(steamID, true)
+	playerPrefData.JumpToKey("class", true)
 
-	if engine.PlayerPrefData().Num("scout", 0) == 1 {
+	if playerPrefData.Num("scout", 0) == 1 {
 		flags |= PrefScout
 	}
 
-	if engine.PlayerPrefData().Num("soldier", 0) == 1 {
+	if playerPrefData.Num("soldier", 0) == 1 {
 		flags |= PrefSoldier
 	}
 
-	if engine.PlayerPrefData().Num("pyro", 0) == 1 {
+	if playerPrefData.Num("pyro", 0) == 1 {
 		flags |= PrefPyro
 	}
 
-	if engine.PlayerPrefData().Num("demoman", 0) == 1 {
+	if playerPrefData.Num("demoman", 0) == 1 {
 		flags |= PrefDemo
 	}
 
-	if engine.PlayerPrefData().Num("heavyweapons", 0) == 1 {
+	if playerPrefData.Num("heavyweapons", 0) == 1 {
 		flags |= PrefHeavy
 	}
 
-	if engine.PlayerPrefData().Num("engineer", 0) == 1 {
+	if playerPrefData.Num("engineer", 0) == 1 {
 		flags |= PrefEngineer
 	}
 
-	if engine.PlayerPrefData().Num("medic", 0) == 1 {
+	if playerPrefData.Num("medic", 0) == 1 {
 		flags |= PrefMedic
 	}
 
-	if engine.PlayerPrefData().Num("sniper", 0) == 1 {
+	if playerPrefData.Num("sniper", 0) == 1 {
 		flags |= PrefSniper
 	}
 
-	if engine.PlayerPrefData().Num("spy", 0) == 1 {
+	if playerPrefData.Num("spy", 0) == 1 {
 		flags |= PrefSpy
 	}
 
-	engine.PlayerPrefData().Rewind()
+	playerPrefData.Rewind()
 
 	return flags
 }
@@ -268,17 +292,17 @@ func GetClassPreferencesFlags(client int32) int32 {
 //
 //sp:name SetClassPreferences
 func SetClassPreferences(client int32, class string, value int32) {
-	found, steamID := engine.ClientAuthID(client)
+	found, steamID := engine.ClientAuthID(client, engine.AuthIDSteam3())
 
 	if !found {
 		engine.LogError("SetClassPreferences: failed to get Steam ID for %L", client)
 		return
 	}
 
-	engine.PlayerPrefData().JumpToKeyText(steamID, true)
-	engine.PlayerPrefData().JumpToKey("class", true)
-	engine.PlayerPrefData().SetNum(class, value)
-	engine.PlayerPrefData().Rewind()
+	playerPrefData.JumpToKeyText(steamID, true)
+	playerPrefData.JumpToKey("class", true)
+	playerPrefData.SetNum(class, value)
+	playerPrefData.Rewind()
 }
 
 // GetWeaponPreference is the item definition index this player wants in that
@@ -286,7 +310,7 @@ func SetClassPreferences(client int32, class string, value int32) {
 //
 //sp:name GetWeaponPreference
 func GetWeaponPreference(client int32, class string, slot string) int32 {
-	found, steamID := engine.ClientAuthID(client)
+	found, steamID := engine.ClientAuthID(client, engine.AuthIDSteam3())
 
 	if !found {
 		engine.LogError("GetWeaponPreference: failed to get Steam ID for %L", client)
@@ -295,11 +319,11 @@ func GetWeaponPreference(client int32, class string, slot string) int32 {
 
 	var weaponIndex int32
 
-	engine.PlayerPrefData().JumpToKeyText(steamID, true)
-	engine.PlayerPrefData().JumpToKey("loadout", true)
-	engine.PlayerPrefData().JumpToKey(class, true)
-	weaponIndex = engine.PlayerPrefData().Num(slot, ItemDefDefault)
-	engine.PlayerPrefData().Rewind()
+	playerPrefData.JumpToKeyText(steamID, true)
+	playerPrefData.JumpToKey("loadout", true)
+	playerPrefData.JumpToKey(class, true)
+	weaponIndex = playerPrefData.Num(slot, ItemDefDefault)
+	playerPrefData.Rewind()
 
 	return weaponIndex
 }
@@ -314,14 +338,14 @@ rather than counting makes the choice proportional instead of majority.
 //
 //sp:name GetPreferredWeaponForClass
 func GetPreferredWeaponForClass(class string, slot string, client int32) int32 {
-	if engine.ServerLoadout() != engine.NoKeyValues() {
+	if serverLoadout != engine.NoKeyValues() {
 		return GetServerLoadoutWeapon(botSeat[client], class, slot)
 	}
 
-	if engine.PlayerForcedPref() != -1 {
+	if playerForcedPref != -1 {
 		// Preference forced by admin, probably wants to use his or
 		// someone else's.
-		return GetWeaponPreference(engine.PlayerForcedPref(), class, slot)
+		return GetWeaponPreference(playerForcedPref, class, slot)
 	}
 
 	weaponPref := engine.NewList()
@@ -353,13 +377,13 @@ func GetPreferredWeaponForClass(class string, slot string, client int32) int32 {
 //
 //sp:name SetWeaponPreference
 func SetWeaponPreference(client int32, class string, slot string, value int32) {
-	_, steamID := engine.ClientAuthID(client)
+	_, steamID := engine.ClientAuthID(client, engine.AuthIDSteam3())
 
-	engine.PlayerPrefData().JumpToKeyText(steamID, true)
-	engine.PlayerPrefData().JumpToKey("loadout", true)
-	engine.PlayerPrefData().JumpToKey(class, true)
-	engine.PlayerPrefData().SetNum(slot, value)
-	engine.PlayerPrefData().Rewind()
+	playerPrefData.JumpToKeyText(steamID, true)
+	playerPrefData.JumpToKey("loadout", true)
+	playerPrefData.JumpToKey(class, true)
+	playerPrefData.SetNum(slot, value)
+	playerPrefData.Rewind()
 }
 
 // IsValidForBotPreferences says this player has an influence on what the bots

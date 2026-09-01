@@ -160,7 +160,6 @@ with a wall on one side is reached from another.
 Shared because the dispenser, the teleporter and the sentry all need it, and they all learned it
 separately before anybody wrote it down once. */
 
-
 /* Every point on the way out of spawn an attempt might use, and where to stand to build on each
 
 The old answer was the spawn point plus the direction to the nest times a distance, and a
@@ -277,5 +276,4 @@ and capped so nothing waits on an engineer for ever. */
 #define BUILD_WALK_SPEED	180.0
 #define BUILD_WALK_TIME_MIN	12.0
 #define BUILD_WALK_TIME_MAX	40.0
-
 

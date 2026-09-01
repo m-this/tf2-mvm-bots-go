@@ -66,7 +66,7 @@ stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INext
 			{
 				return false;
 			}
-			TFWeaponType weaponID = TF2Util_GetWeaponID(activeWeapon);
+			int weaponID = TF2Util_GetWeaponID(activeWeapon);
 			if ((weaponID == TF_WEAPON_FLAMETHROWER) && bot.IsRangeGreaterThan(iThreat, FLAMETHROWER_REACH_RANGE))
 			{
 				return false;

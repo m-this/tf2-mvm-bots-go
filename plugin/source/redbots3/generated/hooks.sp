@@ -118,7 +118,7 @@ public Action CTFBotSniperLurk_SelectMoreDangerousThreat(BehaviorAction action, 
 		int enemyWeapon = BaseCombatCharacter_GetActiveWeapon(iThreat1);
 		if (enemyWeapon != -1)
 		{
-			TFWeaponType enemyWepID = TF2Util_GetWeaponID(enemyWeapon);
+			int enemyWepID = TF2Util_GetWeaponID(enemyWeapon);
 			if (WeaponID_IsSniperRifle(enemyWepID))
 			{
 				knownEntity = threat1;
@@ -141,7 +141,7 @@ public Action CTFBotSniperLurk_SelectMoreDangerousThreat(BehaviorAction action, 
 		int enemyWeapon = BaseCombatCharacter_GetActiveWeapon(iThreat2);
 		if (enemyWeapon != -1)
 		{
-			TFWeaponType enemyWepID = TF2Util_GetWeaponID(enemyWeapon);
+			int enemyWepID = TF2Util_GetWeaponID(enemyWeapon);
 			if (WeaponID_IsSniperRifle(enemyWepID))
 			{
 				knownEntity = threat2;
@@ -461,7 +461,9 @@ public Action CTFBotMainAction_SelectTargetPoint(BehaviorAction action, INextBot
 			{
 				if (IsBaseBoss(entity))
 				{
-					vec = GetFlameThrowerAimForTank(entity);
+					float aim[3];
+					GetFlameThrowerAimForTank(entity, aim);
+					vec = aim;
 					return Plugin_Changed;
 				}
 			}

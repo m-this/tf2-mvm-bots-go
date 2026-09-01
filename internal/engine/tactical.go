@@ -453,8 +453,8 @@ func CanRevolverHeadshot(weapon int32) bool {
 // FlameThrowerAimForTank is the point above a tank a Pyro aims at. Ported,
 // botqueries.
 //
-//sp:body GetFlameThrowerAimForTank returns
-func FlameThrowerAimForTank(tank int32) [3]float32 {
+//sp:body GetFlameThrowerAimForTank
+func FlameThrowerAimForTank(tank int32) (aimPos [3]float32) {
 	if tacticals.FlameThrowerAimForTank == nil {
 		missing("GetFlameThrowerAimForTank")
 	}
