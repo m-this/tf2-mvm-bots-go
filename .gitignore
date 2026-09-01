@@ -8,3 +8,7 @@
 .beads/proxieddb/
 /.gen.first/
 /toolchain/
+
+# The agent instructions live here, so this overrides the global ignore of
+# CLAUDE.md. Without it every edit to the file is silently uncommitted.
+!CLAUDE.md
