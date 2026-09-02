@@ -90,3 +90,95 @@ func MenuHandlerClassPreference(menu engine.Menu, action engine.MenuChoice, para
 
 	return 0
 }
+
+/*
+MenuHandlerBotVote hears the round's vote on whether to have bots at all.
+
+Who called it is remembered on a yes and forgotten on anything else: the caller
+is the one player allowed to send the bots away again, and a vote that failed
+gives nobody that.
+*/
+//
+//sp:name MenuHandler_BotVote
+//
+//nolint:revive,staticcheck // unused-parameter, QF1003: the menu and param2 are SourceMod's, and the if-else is the shipped shape
+func MenuHandlerBotVote(menu engine.Menu, action engine.MenuChoice, param1 int32, param2 int32) int32 {
+	switch action {
+	case engine.MenuVoteEnd():
+		if param1 == 0 {
+			// They said yes.
+			engine.ManageDefenderBotsOn(true)
+		} else if param1 == 1 {
+			// They said no. Forget who called the vote, as they were not
+			// able to summon bots.
+			engine.SetBotSummoner(0)
+
+			engine.PrintToChatAll("%s Bot vote was unsuccessful!", engine.PluginPrefix())
+		}
+	case engine.MenuVoteCancel():
+		engine.SetBotSummoner(0)
+	}
+
+	return 0
+}
+
+/*
+DefenderBotTeamSetupCancelled puts things back when nobody finished picking.
+
+What back means depends on the mode: with preferences behind it the lineup is
+recomputed from what the players asked for, and without them the half-built
+lineup is cleared, or the manager would think one had been chosen.
+*/
+//
+//sp:name DefenderBotTeamSetupCancelled
+func DefenderBotTeamSetupCancelled() {
+	switch engine.BotLineupMode().Int() {
+	case engine.LineupModePreferenceChoose():
+		engine.UpdateChosenBotTeamComposition()
+	case engine.LineupModeChoose():
+		engine.ChosenBotClasses().Clear()
+	}
+}
+
+// MenuHandlerBotPreferenceMain is the root of the preference menus: classes,
+// or weapons when the server allows custom loadouts at all.
+//
+//sp:name MenuHandler_BotPreferenceMain
+//nolint:revive,gocritic // unused-parameter, singleCaseSwitch: the menu is SourceMod's, and the switch is the shipped shape
+func MenuHandlerBotPreferenceMain(menu engine.Menu, action engine.MenuChoice, param1 int32, param2 int32) int32 {
+	switch action {
+	case engine.MenuSelect():
+		switch param2 {
+		case 0:
+			DisplayClassPreferenceMenu(param1, 0)
+		case 1:
+			if !engine.UseCustomLoadouts().Bool() {
+				engine.PrintToChat(param1, "%s Custom loadouts are not enabled.", engine.PluginPrefix())
+				return 0
+			}
+
+			engine.DisplayMenu(engine.WeaponPrefClassMenu(), param1, engine.MenuTimeForever())
+		}
+	}
+
+	return 0
+}
+
+// MenuHandlerShowBotChances hears nothing: the panel it belongs to is a
+// readout, and there is nothing to press.
+//
+//sp:name MenuHandler_ShowBotChances
+//nolint:revive // unused-parameter: SourceMod calls this with the full set and the panel answers none of it
+func MenuHandlerShowBotChances(menu engine.Menu, action engine.MenuChoice, param1 int32, param2 int32) int32 {
+	// Do nothing.
+	return 0
+}
+
+// MenuHandlerShowBotTeamComposition is the same for the lineup readout.
+//
+//sp:name MenuHandler_ShowBotTeamComposition
+//nolint:revive // unused-parameter: SourceMod calls this with the full set and the panel answers none of it
+func MenuHandlerShowBotTeamComposition(menu engine.Menu, action engine.MenuChoice, param1 int32, param2 int32) int32 {
+	// Do nothing.
+	return 0
+}

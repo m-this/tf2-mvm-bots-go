@@ -91,3 +91,80 @@ stock int MenuHandler_ClassPreference(Menu menu, MenuAction action, int param1, 
 	return 0;
 }
 
+stock int MenuHandler_BotVote(Menu menu, MenuAction action, int param1, int param2)
+{
+	switch (action)
+	{
+		case MenuAction_VoteEnd:
+		{
+			if (param1 == 0)
+			{
+				ManageDefenderBots(true);
+			}
+			else
+				if (param1 == 1)
+				{
+					g_iUIDBotSummoner = 0;
+					PrintToChatAll("%s Bot vote was unsuccessful!", PLUGIN_PREFIX);
+				}
+		}
+		case MenuAction_VoteCancel:
+		{
+			g_iUIDBotSummoner = 0;
+		}
+	}
+	return 0;
+}
+
+stock void DefenderBotTeamSetupCancelled()
+{
+	switch (redbots_manager_bot_lineup_mode.IntValue)
+	{
+		case BOT_LINEUP_MODE_PREFERENCE_CHOOSE:
+		{
+			UpdateChosenBotTeamComposition();
+		}
+		case BOT_LINEUP_MODE_CHOOSE:
+		{
+			g_adtChosenBotClasses.Clear();
+		}
+	}
+}
+
+stock int MenuHandler_BotPreferenceMain(Menu menu, MenuAction action, int param1, int param2)
+{
+	switch (action)
+	{
+		case MenuAction_Select:
+		{
+			switch (param2)
+			{
+				case 0:
+				{
+					DisplayClassPreferenceMenu(param1, 0);
+				}
+				case 1:
+				{
+					if (!redbots_manager_use_custom_loadouts.BoolValue)
+					{
+						PrintToChat(param1, "%s Custom loadouts are not enabled.", PLUGIN_PREFIX);
+						return 0;
+					}
+					DisplayMenu(m_hWeaponPrefClassMenu, param1, MENU_TIME_FOREVER);
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+stock int MenuHandler_ShowBotChances(Menu menu, MenuAction action, int param1, int param2)
+{
+	return 0;
+}
+
+stock int MenuHandler_ShowBotTeamComposition(Menu menu, MenuAction action, int param1, int param2)
+{
+	return 0;
+}
+

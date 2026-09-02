@@ -34,6 +34,8 @@ type MenuCalls struct {
 	DisplayMenuAtItem     func(m Menu, client int32, item int32, time int32)
 	ClassPreferencesFlags func(client int32) int32
 	SetClassPreferences   func(client int32, class string, value int32)
+	SetBotSummoner        func(userid int32)
+	ManageDefenderBots    func(manage bool)
 }
 
 var menus MenuCalls
@@ -172,10 +174,10 @@ func ChosenBotClasses() List {
 	return menus.ChosenClasses()
 }
 
-// DefenderBotTeamSetupCancelled puts the vote back when nobody finished
-// picking. Still in menu.sp.
+// DefenderBotTeamSetupCancelled puts things back when nobody finished picking.
+// Ported, prefmenu.
 //
-//sp:plugin DefenderBotTeamSetupCancelled
+//sp:body DefenderBotTeamSetupCancelled
 func DefenderBotTeamSetupCancelled() {
 	if menus.SetupCancelled == nil {
 		missing("DefenderBotTeamSetupCancelled")
@@ -314,3 +316,41 @@ func SetClassPreferences(client int32, class string, value int32) {
 	}
 	menus.SetClassPreferences(client, class, value)
 }
+
+// MenuVoteEnd is MenuAction_VoteEnd, the vote finished and param1 is the item
+// that won.
+//
+//sp:global MenuAction_VoteEnd
+func MenuVoteEnd() MenuChoice { return 1024 }
+
+// MenuVoteCancel is MenuAction_VoteCancel, nobody answered or it was stopped.
+//
+//sp:global MenuAction_VoteCancel
+func MenuVoteCancel() MenuChoice { return 2048 }
+
+// SetBotSummoner writes g_iUIDBotSummoner, the userid of whoever called the
+// vote, kept so the bots can be taken away again by the same player.
+//
+//sp:globalset g_iUIDBotSummoner
+func SetBotSummoner(userid int32) {
+	if menus.SetBotSummoner == nil {
+		missing("g_iUIDBotSummoner")
+	}
+	menus.SetBotSummoner(userid)
+}
+
+// ManageDefenderBotsOn turns the manager on or off. Ported, manage.
+//
+//sp:body ManageDefenderBots
+func ManageDefenderBotsOn(manage bool) {
+	if menus.ManageDefenderBots == nil {
+		missing("ManageDefenderBots")
+	}
+	menus.ManageDefenderBots(manage)
+}
+
+// WeaponPrefClassMenu is m_hWeaponPrefClassMenu, the class list a player picks
+// a loadout for. Kept because every weapon submenu backs out to it.
+//
+//sp:global m_hWeaponPrefClassMenu
+func WeaponPrefClassMenu() Menu { return 0 }

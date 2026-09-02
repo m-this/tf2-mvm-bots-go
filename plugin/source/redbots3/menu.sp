@@ -1,6 +1,7 @@
 
 Menu g_hBotPreferenceMenu;
-static Menu m_hWeaponPrefClassMenu;
+//no longer static: generated/prefmenu.sp shows it, and a file-static is invisible from an included file
+Menu m_hWeaponPrefClassMenu;
 
 static char m_sSelectedClass[MAXPLAYERS + 1][16];
 static char m_sSelectedWeaponSlot[MAXPLAYERS + 1][10];
@@ -569,60 +570,6 @@ bool CreateDisplayPanelBotTeamComposition(int client, const int duration = 30)
 	
 	return bSuccess;
 }
-
-static int MenuHandler_BotVote(Menu menu, MenuAction action, int param1, int param2)
-{
-	switch (action)
-	{
-		case MenuAction_VoteEnd:
-		{
-			if (param1 == 0)
-			{
-				//They said yes
-				ManageDefenderBots(true);
-			}
-			else if (param1 == 1)
-			{
-				//They said no
-				//Forget who called the vote as they were not able to summon bots
-				g_iUIDBotSummoner = 0;
-				
-				PrintToChatAll("%s Bot vote was unsuccessful!", PLUGIN_PREFIX);
-			}
-		}
-		case MenuAction_VoteCancel:
-		{
-			g_iUIDBotSummoner = 0;
-		}
-	}
-	
-	return 0;
-}
-static int MenuHandler_BotPreferenceMain(Menu menu, MenuAction action, int param1, int param2)
-{
-	switch (action)
-	{
-		case MenuAction_Select:
-		{
-			switch (param2)
-			{
-				case 0:	DisplayClassPreferenceMenu(param1);
-				case 1:
-				{
-					if (redbots_manager_use_custom_loadouts.BoolValue == false)
-					{
-						PrintToChat(param1, "%s Custom loadouts are not enabled.", PLUGIN_PREFIX);
-						return 0;
-					}
-					
-					DisplayMenu(m_hWeaponPrefClassMenu, param1, MENU_TIME_FOREVER);
-				}
-			}
-		}
-	}
-	
-	return 0;
-}
 static int MenuHandler_WeaponPreferenceClassList(Menu menu, MenuAction action, int param1, int param2)
 {
 	switch (action)
@@ -742,33 +689,4 @@ static int MenuHandler_AddDefenderBots(Menu menu, MenuAction action, int param1,
 	}
 	
 	return 0;
-}
-
-static int MenuHandler_ShowBotChances(Menu menu, MenuAction action, int param1, int param2)
-{
-	//Do nothing
-	return 0;
-}
-
-static int MenuHandler_ShowBotTeamComposition(Menu menu, MenuAction action, int param1, int param2)
-{
-	//Do nothing
-	return 0;
-}
-
-//no longer static: generated/teammenu.sp calls it, and a file-static is invisible from an included file
-void DefenderBotTeamSetupCancelled()
-{
-	switch (redbots_manager_bot_lineup_mode.IntValue)
-	{
-		case BOT_LINEUP_MODE_PREFERENCE_CHOOSE:
-		{
-			UpdateChosenBotTeamComposition();
-		}
-		case BOT_LINEUP_MODE_CHOOSE:
-		{
-			//Clear this here or else the manager will think we have a chosen lineup already
-			g_adtChosenBotClasses.Clear();
-		}
-	}
 }
