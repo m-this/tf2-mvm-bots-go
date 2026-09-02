@@ -95,7 +95,7 @@ func RecycleDefenderBots() int32 {
 // ReseatDefenderBots kicks and re-adds so the team matches the lineup. Still in
 // tf2_defenderbots.sp.
 //
-//sp:plugin ReseatDefenderBots
+//sp:body ReseatDefenderBots
 func ReseatDefenderBots() int32 {
 	if seatings.ReseatDefenderBots == nil {
 		missing("ReseatDefenderBots")
@@ -246,7 +246,7 @@ func CollectPlayerBotClassPreferences(out List) {
 // CollectMissingTeamComposition names the seats the convar still wants filled
 // and says how many. Still in tf2_defenderbots.sp.
 //
-//sp:plugin CollectMissingTeamComposition
+//sp:body CollectMissingTeamComposition
 func CollectMissingTeamComposition(classes List, seats List, count int32) int32 {
 	if seatings.CollectMissingTeamComposition == nil {
 		missing("CollectMissingTeamComposition")

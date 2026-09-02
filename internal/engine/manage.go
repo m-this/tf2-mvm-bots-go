@@ -148,7 +148,7 @@ func AddBotsFromChosenTeamComposition() {
 // AddBotsFromTeamComposition seats the typed or map lineup and says how many
 // it seated.
 //
-//sp:plugin AddBotsFromTeamComposition
+//sp:body AddBotsFromTeamComposition
 func AddBotsFromTeamComposition(count int32) int32 {
 	if manages.AddBotsFromTeamComposition == nil {
 		missing("AddBotsFromTeamComposition")
@@ -169,7 +169,7 @@ func AddBotsBasedOnPreferences(count int32) {
 // PickAllowedBotClass writes the wanted class, or a random allowed one when
 // the blacklist refuses it.
 //
-//sp:plugin PickAllowedBotClass
+//sp:body PickAllowedBotClass
 func PickAllowedBotClass(wanted Text, buffer Text, maxlen int32) {
 	if manages.PickAllowedBotClass == nil {
 		missing("PickAllowedBotClass")

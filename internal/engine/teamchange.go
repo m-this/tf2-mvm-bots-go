@@ -10,12 +10,14 @@ in, so one member is unreadied to hold the door open.
 
 // TeamChangeCalls are the answers.
 type TeamChangeCalls struct {
-	VoteInProgress  func() bool
-	CancelVote      func()
-	PrintToChatTeam func(team Team, format string, args []any)
-	BotSummoner     func() int32
-	SetAllowBotRedo func(allow bool)
-	CreateTimerVoid func(interval float32, data int32, flags int32) Timer
+	VoteInProgress   func() bool
+	CancelVote       func()
+	PrintToChatTeam  func(team Team, format string, args []any)
+	BotSummoner      func() int32
+	SetAllowBotRedo  func(allow bool)
+	CreateTimerVoid  func(interval float32, data int32, flags int32) Timer
+	ExplodeClassList func(text Text, split string, out [9]Text, maxStrings int32, maxStringLength int32) int32
+	ExplodeSeatList  func(text Text, split string, out [65]Text, maxStrings int32, maxStringLength int32) int32
 }
 
 var teamChanges TeamChangeCalls
@@ -94,4 +96,31 @@ func CreateTimerVoid(interval float32, callback func(timer Timer, data int32), d
 		missing("CreateTimer")
 	}
 	return teamChanges.CreateTimerVoid(interval, data, flags)
+}
+
+/*
+ExplodeClassList splits a comma-separated list into one buffer per class.
+
+Two of these rather than one, because a Go array length is part of its type and
+the plugin explodes into two different widths: nine, one per class, and one per
+seat. Neither can be written generically and neither is worth losing the length
+off.
+
+//sp:native ExplodeString
+*/
+func ExplodeClassList(text Text, split string, out [9]Text, maxStrings int32, maxStringLength int32) int32 {
+	if teamChanges.ExplodeClassList == nil {
+		missing("ExplodeString")
+	}
+	return teamChanges.ExplodeClassList(text, split, out, maxStrings, maxStringLength)
+}
+
+// ExplodeSeatList is the same into one buffer per seat.
+//
+//sp:native ExplodeString
+func ExplodeSeatList(text Text, split string, out [65]Text, maxStrings int32, maxStringLength int32) int32 {
+	if teamChanges.ExplodeSeatList == nil {
+		missing("ExplodeString")
+	}
+	return teamChanges.ExplodeSeatList(text, split, out, maxStrings, maxStringLength)
 }
