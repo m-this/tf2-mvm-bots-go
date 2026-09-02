@@ -7,12 +7,19 @@ how fast it presses the buy button.
 
 // ShoppingCalls are the answers.
 type ShoppingCalls struct {
-	RoundToNearest         func(value float32) int32
-	SessionWallet          func(client int32) int32
-	SpentOnUpgrade         func(client int32, index int32) int32
-	WaveHasExplosiveRobots func() bool
-	WaveHasBulletRobots    func() bool
-	WaveHasFireRobots      func() bool
+	GiveItemToPlayerNamed      func(client int32, classname Text, itemDefIndex int32, level int32, quality int32) int32
+	RemoveWeaponSlot           func(client int32, slot int32)
+	TranslateWeaponEntForClass func(classname Text, maxlen int32, playerClass Class)
+	IsShieldEquipped           func(client int32) bool
+	GivePlayerAmmo             func(client int32, amount int32, ammoType int32, suppressSound bool) int32
+	SetMaxHealth               func(entity int32, health int32)
+	PostInventoryApplication   func(client int32)
+	RoundToNearest             func(value float32) int32
+	SessionWallet              func(client int32) int32
+	SpentOnUpgrade             func(client int32, index int32) int32
+	WaveHasExplosiveRobots     func() bool
+	WaveHasBulletRobots        func() bool
+	WaveHasFireRobots          func() bool
 }
 
 var shopping ShoppingCalls
@@ -74,4 +81,102 @@ func WaveHasFireRobots() bool {
 		missing("WaveHasFireRobots")
 	}
 	return shopping.WaveHasFireRobots()
+}
+
+/*
+Handing a bot its loadout.
+
+Every one of these is part of putting a weapon in a bot's hands after the game
+has already given it the stock one, which is why they all run from one timer a
+tenth of a second after the spawn.
+*/
+
+// RemoveWeaponSlot takes whatever the game put in that slot back out.
+//
+//sp:native TF2_RemoveWeaponSlot
+func RemoveWeaponSlot(client int32, slot int32) {
+	if shopping.RemoveWeaponSlot == nil {
+		missing("TF2_RemoveWeaponSlot")
+	}
+	shopping.RemoveWeaponSlot(client, slot)
+}
+
+// TranslateWeaponEntForClass rewrites a classname into the one that class
+// actually spawns, in place: the schema files several weapons under a name no
+// class uses.
+//
+//sp:native TF2Econ_TranslateWeaponEntForClass
+//nolint:revive // unused-parameter: the buffer is rewritten in place, which is the whole call
+func TranslateWeaponEntForClass(classname Text, maxlen int32, playerClass Class) {
+	if shopping.TranslateWeaponEntForClass == nil {
+		missing("TF2Econ_TranslateWeaponEntForClass")
+	}
+	shopping.TranslateWeaponEntForClass(classname, maxlen, playerClass)
+}
+
+// IsShieldEquipped says the demoman is carrying a shield, which occupies the
+// secondary slot and must not be replaced.
+//
+//sp:native TF2_IsShieldEquipped
+func IsShieldEquipped(client int32) bool {
+	if shopping.IsShieldEquipped == nil {
+		missing("TF2_IsShieldEquipped")
+	}
+	return shopping.IsShieldEquipped(client)
+}
+
+// GivePlayerAmmo fills one ammo type.
+//
+//sp:native GivePlayerAmmo
+func GivePlayerAmmo(client int32, amount int32, ammoType int32, suppressSound bool) int32 {
+	if shopping.GivePlayerAmmo == nil {
+		missing("GivePlayerAmmo")
+	}
+	return shopping.GivePlayerAmmo(client, amount, ammoType, suppressSound)
+}
+
+// SetMaxHealth writes the entity's maximum, which a weapon's attribute can
+// have moved.
+//
+//sp:native BaseEntity_SetMaxHealth
+func SetMaxHealth(entity int32, health int32) {
+	if shopping.SetMaxHealth == nil {
+		missing("BaseEntity_SetMaxHealth")
+	}
+	shopping.SetMaxHealth(entity, health)
+}
+
+// PostInventoryApplication tells the game the loadout is settled, which is what
+// makes the new weapons real to it.
+//
+//sp:native PostInventoryApplication
+func PostInventoryApplication(client int32) {
+	if shopping.PostInventoryApplication == nil {
+		missing("PostInventoryApplication")
+	}
+	shopping.PostInventoryApplication(client)
+}
+
+// WeaponSlotBuilding is TFWeaponSlot_Building, the spy's sapper and the
+// engineer's PDA.
+//
+//sp:global TFWeaponSlot_Building
+func WeaponSlotBuilding() int32 { return 3 }
+
+// AmmoTypeCount is TF_AMMO_COUNT, one past the last ammo type, which is what
+// the refill loop stops at. Not AmmoCount, which is how much of one a player
+// is carrying.
+//
+//sp:global TF_AMMO_COUNT
+func AmmoTypeCount() int32 { return 0 }
+
+// GiveItemToPlayerNamed hands over an item whose classname came out of the
+// schema rather than being written out. Ported, econitem.
+//
+//sp:body GiveItemToPlayer
+func GiveItemToPlayerNamed(client int32, classname Text, itemDefIndex int32, level int32, quality int32) int32 {
+	if shopping.GiveItemToPlayerNamed == nil {
+		missing("GiveItemToPlayer")
+	}
+	return shopping.GiveItemToPlayerNamed(client, classname, itemDefIndex, level, quality)
 }

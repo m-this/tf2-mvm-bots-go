@@ -291,7 +291,6 @@ Address g_pMannVsMachineUpgrades;
 #include "redbots3/offsets.sp"
 #include "redbots3/sdkcalls.sp"
 #include "redbots3/generated/loadouts.sp"
-#include "redbots3/loadouts.sp"
 #include "redbots3/generated/cosmetics.sp"
 #include "redbots3/dhooks.sp"
 #include "redbots3/generated/gameevents.sp"

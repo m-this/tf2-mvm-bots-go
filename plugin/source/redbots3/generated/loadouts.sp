@@ -720,3 +720,121 @@ stock int WeaponPoolAt(const char[] class, const char[] slot, int index)
 	return 0;
 }
 
+public Action Timer_GiveCustomLoadout(Handle timer, int client)
+{
+	if (!IsClientInGame(client))
+	{
+		return Plugin_Stop;
+	}
+	int primary = -1;
+	int secondary = -1;
+	int melee = -1;
+	if (m_iWeaponPrimary[client] > Go_ItemDefDefault)
+	{
+		TF2_RemoveWeaponSlot(client, TFWeaponSlot_Primary);
+		char itemClassname[512];
+		bool named = TF2Econ_GetItemClassName(m_iWeaponPrimary[client], itemClassname, 512);
+		if (named)
+		{
+			TF2Econ_TranslateWeaponEntForClass(itemClassname, 512, TF2_GetPlayerClass(client));
+			primary = GiveItemToPlayer(client, itemClassname, m_iWeaponPrimary[client], 1, 6);
+			if (!g_bHasBoughtUpgrades[client])
+			{
+				switch (m_iWeaponPrimary[client])
+				{
+					case 730:
+					{
+						TF2Attrib_SetByName(primary, "auto fires when full", 1.0);
+					}
+					case 996:
+					{
+						TF2Attrib_SetByName(primary, "grenade launcher mortar mode", 0.0);
+					}
+				}
+			}
+		}
+		else
+		{
+			LogError("Timer_GiveCustomLoadout: Could not add primary %d to %N!", m_iWeaponPrimary[client], client);
+		}
+	}
+	if ((m_iWeaponSecondary[client] > Go_ItemDefDefault) && !TF2_IsShieldEquipped(client))
+	{
+		TF2_RemoveWeaponSlot(client, TFWeaponSlot_Secondary);
+		char itemClassname[512];
+		bool named = TF2Econ_GetItemClassName(m_iWeaponSecondary[client], itemClassname, 512);
+		if (named)
+		{
+			TF2Econ_TranslateWeaponEntForClass(itemClassname, 512, TF2_GetPlayerClass(client));
+			secondary = GiveItemToPlayer(client, itemClassname, m_iWeaponSecondary[client], 1, 6);
+			if (!g_bHasBoughtUpgrades[client] && StrEqual(itemClassname, "tf_weapon_pipebomblauncher"))
+			{
+				TF2Attrib_SetByName(secondary, "stickybomb charge rate", 0.0);
+			}
+		}
+		else
+		{
+			LogError("Timer_GiveCustomLoadout: Could not add secondary %d to %N!", m_iWeaponSecondary[client], client);
+		}
+	}
+	if (m_iWeaponMelee[client] > Go_ItemDefDefault)
+	{
+		TF2_RemoveWeaponSlot(client, TFWeaponSlot_Melee);
+		char itemClassname[512];
+		bool named = TF2Econ_GetItemClassName(m_iWeaponMelee[client], itemClassname, 512);
+		if (named)
+		{
+			TF2Econ_TranslateWeaponEntForClass(itemClassname, 512, TF2_GetPlayerClass(client));
+			melee = GiveItemToPlayer(client, itemClassname, m_iWeaponMelee[client], 1, 6);
+			switch (m_iWeaponMelee[client])
+			{
+				case 1071:
+				{
+					if (!g_bHasBoughtUpgrades[client])
+					{
+						GiveGoldPanStats(melee);
+					}
+				}
+			}
+		}
+		else
+		{
+			LogError("Timer_GiveCustomLoadout: Could not add melee %d to %N!", m_iWeaponMelee[client], client);
+		}
+	}
+	if (m_iWeaponPDA2[client] > Go_ItemDefDefault)
+	{
+		TF2_RemoveWeaponSlot(client, TFWeaponSlot_Building);
+		char itemClassname[512];
+		bool named = TF2Econ_GetItemClassName(m_iWeaponPDA2[client], itemClassname, 512);
+		if (named)
+		{
+			GiveItemToPlayer(client, itemClassname, m_iWeaponPDA2[client], 1, 6);
+		}
+		else
+		{
+			LogError("Timer_GiveCustomLoadout: Could not add pda2 %d to %N!", m_iWeaponPDA2[client], client);
+		}
+	}
+	if (g_bHasBoughtUpgrades[client])
+	{
+		ReapplyItemUpgrades(client, primary, secondary, melee);
+	}
+	for (int i = TF_AMMO_PRIMARY; i < TF_AMMO_COUNT; i++)
+	{
+		GivePlayerAmmo(client, 1000, i, true);
+	}
+	int maxHealth = TF2Util_GetEntityMaxHealth(client);
+	if (GetClientHealth(client) != maxHealth)
+	{
+		BaseEntity_SetMaxHealth(client, maxHealth);
+		SetEntityHealth(client, maxHealth);
+	}
+	PostInventoryApplication(client);
+	if (redbots_manager_debug.BoolValue)
+	{
+		PrintToChatAll("[Timer_GiveCustomLoadout] %N's ammo: %d/%d", client, BaseCombatCharacter_GetAmmoCount(client, TF_AMMO_PRIMARY), TF2Util_GetPlayerMaxAmmo(client, TF_AMMO_PRIMARY));
+	}
+	return Plugin_Stop;
+}
+

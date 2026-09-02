@@ -667,3 +667,137 @@ func WeaponPoolAt(class string, slot string, index int32) int32 {
 
 	return 0
 }
+
+/*
+TimerGiveCustomLoadout puts the chosen weapons in a bot's hands.
+
+A tenth of a second after the spawn rather than on it: the game hands out its
+own items on spawn, and anything given before that is thrown away.
+
+The three weapon entities are kept because the upgrades have to be put back onto
+them afterwards. PDA2 is left out of that: it does not take upgrades.
+
+The attribute fixes are only applied on a bot that has not shopped yet, because
+the upgrade station rewrites them anyway and doing it every spawn is work for
+nothing.
+*/
+//
+//sp:name Timer_GiveCustomLoadout
+//sp:public
+//
+//nolint:revive,gocritic // unused-parameter, singleCaseSwitch: the timer handle is SourceMod's, and the switches are the shipped shape
+func TimerGiveCustomLoadout(timer engine.Timer, client int32) engine.Outcome {
+	if !engine.IsClientInGame(client) {
+		return engine.PluginStop()
+	}
+
+	// These store weapon entity indexes so we can pass them later. PDA2 is
+	// excluded as it does not currently get upgrades.
+	primary := int32(-1)
+	secondary := int32(-1)
+	melee := int32(-1)
+
+	if weaponPrimary[client] > ItemDefDefault {
+		engine.RemoveWeaponSlot(client, engine.WeaponSlotPrimary())
+
+		named, itemClassname := engine.ItemClassName(weaponPrimary[client])
+
+		if named {
+			engine.TranslateWeaponEntForClass(itemClassname, 512, engine.PlayerClass(client))
+			primary = engine.GiveItemToPlayerNamed(client, itemClassname, weaponPrimary[client], 1, 6)
+
+			if !hasBoughtUpgrades[client] {
+				switch weaponPrimary[client] {
+				case 730:
+					// Beggar's Bazooka: prevent overloading.
+					engine.SetAttribByName(primary, "auto fires when full", 1.0)
+				case 996:
+					// Loose Cannon: prevent charging.
+					engine.SetAttribByName(primary, "grenade launcher mortar mode", 0.0)
+				}
+			}
+		} else {
+			engine.LogError("Timer_GiveCustomLoadout: Could not add primary %d to %N!", weaponPrimary[client], client)
+		}
+	}
+
+	if weaponSecondary[client] > ItemDefDefault && !engine.IsShieldEquipped(client) {
+		engine.RemoveWeaponSlot(client, engine.WeaponSlotSecondary())
+
+		named, itemClassname := engine.ItemClassName(weaponSecondary[client])
+
+		if named {
+			engine.TranslateWeaponEntForClass(itemClassname, 512, engine.PlayerClass(client))
+			secondary = engine.GiveItemToPlayerNamed(client, itemClassname, weaponSecondary[client], 1, 6)
+
+			if !hasBoughtUpgrades[client] && engine.StrEqual(itemClassname, "tf_weapon_pipebomblauncher") {
+				// Instant fire stickies.
+				engine.SetAttribByName(secondary, "stickybomb charge rate", 0.0)
+			}
+		} else {
+			engine.LogError("Timer_GiveCustomLoadout: Could not add secondary %d to %N!", weaponSecondary[client], client)
+		}
+	}
+
+	if weaponMelee[client] > ItemDefDefault {
+		engine.RemoveWeaponSlot(client, engine.WeaponSlotMelee())
+
+		named, itemClassname := engine.ItemClassName(weaponMelee[client])
+
+		if named {
+			engine.TranslateWeaponEntForClass(itemClassname, 512, engine.PlayerClass(client))
+			melee = engine.GiveItemToPlayerNamed(client, itemClassname, weaponMelee[client], 1, 6)
+
+			switch weaponMelee[client] {
+			case 1071:
+				// A blunt way to check, but these attributes should not be
+				// written every spawn.
+				if !hasBoughtUpgrades[client] {
+					GiveGoldPanStats(melee)
+				}
+			}
+		} else {
+			engine.LogError("Timer_GiveCustomLoadout: Could not add melee %d to %N!", weaponMelee[client], client)
+		}
+	}
+
+	if weaponPDA2[client] > ItemDefDefault {
+		engine.RemoveWeaponSlot(client, engine.WeaponSlotBuilding())
+
+		named, itemClassname := engine.ItemClassName(weaponPDA2[client])
+
+		if named {
+			engine.GiveItemToPlayerNamed(client, itemClassname, weaponPDA2[client], 1, 6)
+		} else {
+			engine.LogError("Timer_GiveCustomLoadout: Could not add pda2 %d to %N!", weaponPDA2[client], client)
+		}
+	}
+
+	if hasBoughtUpgrades[client] {
+		ReapplyItemUpgrades(client, primary, secondary, melee)
+	}
+
+	/* Certain weapons or upgrades may have changed the health and the ammo
+
+	So both are refilled completely, though the health may end up lower than it
+	was if a weapon's attribute lowered the maximum. */
+	for i := engine.AmmoPrimary(); i < engine.AmmoTypeCount(); i++ {
+		engine.GivePlayerAmmo(client, 1000, i, true)
+	}
+
+	// For players, this is calculated max health.
+	maxHealth := engine.EntityMaxHealth(client)
+
+	if engine.ClientHealth(client) != maxHealth {
+		engine.SetMaxHealth(client, maxHealth)
+		engine.SetEntityHealth(client, maxHealth)
+	}
+
+	engine.PostInventoryApplication(client)
+
+	if engine.ManagerDebug().Bool() {
+		engine.PrintToChatAll("[Timer_GiveCustomLoadout] %N's ammo: %d/%d", client, engine.AmmoCount(client, engine.AmmoPrimary()), engine.PlayerMaxAmmo(client, engine.AmmoPrimary()))
+	}
+
+	return engine.PluginStop()
+}
