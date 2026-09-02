@@ -163,8 +163,9 @@ map origin. The port takes the candidate and returns the answer separately, and
 the emitter refuses the aliased shape outright now.
 */
 var reshaped = map[string]string{
-	"NestSpotFromList": "the candidate and the answer cannot be the same variable; see the aliasing refusal in internal/spbody",
-	"ResetNextBot":     "the flat list of every per-client field became one reset per package that owns some. Checked by hand against the shipped body at the pin: 26 fields, all 26 cleared, every one to the same value. A behaviour now brings its own reset or has none to bring, rather than depending on somebody remembering this list",
+	"NestSpotFromList":                 "the candidate and the answer cannot be the same variable; see the aliasing refusal in internal/spbody",
+	"ResetNextBot":                     "the flat list of every per-client field became one reset per package that owns some. Checked by hand against the shipped body at the pin: 26 fields, all 26 cleared, every one to the same value. A behaviour now brings its own reset or has none to bring, rather than depending on somebody remembering this list",
+	"ShowWeaponPreferenceItemListMenu": "twenty seven blocks, one per class and slot, each the same four lines around a different pool, became one loop over the pool the loadouts chain already knows how to reach. Checked by hand: WeaponPoolCount and WeaponPoolAt are generated from the same pool list GetRandomWeaponForClass uses, the spy's slots keep the shipped one-along filing, and an item the schema cannot name is still skipped",
 }
 
 /*

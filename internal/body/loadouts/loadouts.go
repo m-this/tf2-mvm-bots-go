@@ -416,3 +416,254 @@ func CommandBoughtUpgrades(client int32, args int32) engine.Outcome {
 
 	return engine.PluginHandled()
 }
+
+/*
+WeaponPoolCount is how many items the pool for that class and slot holds.
+
+It and WeaponPoolAt exist so the loadout menu can walk a pool without repeating
+the class-and-slot chain a third time. The menu used to carry its own copy of
+it, twenty seven blocks of the same four lines; the pools live here, so the way
+into them does too.
+*/
+//
+//sp:name WeaponPoolCount
+//nolint:gocritic // ifElseChain: the same chain as GetRandomWeaponForClass, beside it on purpose
+func WeaponPoolCount(class string, slot string) int32 {
+	if engine.StrEqualLiteral(class, "scout", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return int32(len(weaponsScoutPrimary))
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return int32(len(weaponsScoutSecondary))
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return int32(len(weaponsScoutMelee))
+		}
+	} else if engine.StrEqualLiteral(class, "soldier", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return int32(len(weaponsSoldierPrimary))
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return int32(len(weaponsSoldierSecondary))
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return int32(len(weaponsSoldierMelee))
+		}
+	} else if engine.StrEqualLiteral(class, "pyro", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return int32(len(weaponsPyroPrimary))
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return int32(len(weaponsPyroSecondary))
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return int32(len(weaponsPyroMelee))
+		}
+	} else if engine.StrEqualLiteral(class, "demoman", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return int32(len(weaponsDemomanPrimary))
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return int32(len(weaponsDemomanSecondary))
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return int32(len(weaponsDemomanMelee))
+		}
+	} else if engine.StrEqualLiteral(class, "heavyweapons", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return int32(len(weaponsHeavyPrimary))
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return int32(len(weaponsHeavySecondary))
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return int32(len(weaponsHeavyMelee))
+		}
+	} else if engine.StrEqualLiteral(class, "engineer", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return int32(len(weaponsEngineerPrimary))
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return int32(len(weaponsEngineerSecondary))
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return int32(len(weaponsEngineerMelee))
+		}
+	} else if engine.StrEqualLiteral(class, "medic", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return int32(len(weaponsMedicPrimary))
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return int32(len(weaponsMedicSecondary))
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return int32(len(weaponsMedicMelee))
+		}
+	} else if engine.StrEqualLiteral(class, "sniper", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return int32(len(weaponsSniperPrimary))
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return int32(len(weaponsSniperSecondary))
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return int32(len(weaponsSniperMelee))
+		}
+	} else if engine.StrEqualLiteral(class, "spy", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return int32(len(weaponsSpySecondary))
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return int32(len(weaponsSpyBuilding))
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return int32(len(weaponsSpyMelee))
+		}
+
+		if engine.StrEqualLiteral(slot, "pda2", false) {
+			return int32(len(weaponsSpyPda2))
+		}
+	}
+
+	return 0
+}
+
+// WeaponPoolAt is one item out of that pool.
+//
+//sp:name WeaponPoolAt
+//nolint:gocritic // ifElseChain: the same chain as GetRandomWeaponForClass, beside it on purpose
+func WeaponPoolAt(class string, slot string, index int32) int32 {
+	if engine.StrEqualLiteral(class, "scout", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return weaponsScoutPrimary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return weaponsScoutSecondary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return weaponsScoutMelee[index]
+		}
+	} else if engine.StrEqualLiteral(class, "soldier", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return weaponsSoldierPrimary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return weaponsSoldierSecondary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return weaponsSoldierMelee[index]
+		}
+	} else if engine.StrEqualLiteral(class, "pyro", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return weaponsPyroPrimary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return weaponsPyroSecondary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return weaponsPyroMelee[index]
+		}
+	} else if engine.StrEqualLiteral(class, "demoman", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return weaponsDemomanPrimary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return weaponsDemomanSecondary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return weaponsDemomanMelee[index]
+		}
+	} else if engine.StrEqualLiteral(class, "heavyweapons", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return weaponsHeavyPrimary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return weaponsHeavySecondary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return weaponsHeavyMelee[index]
+		}
+	} else if engine.StrEqualLiteral(class, "engineer", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return weaponsEngineerPrimary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return weaponsEngineerSecondary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return weaponsEngineerMelee[index]
+		}
+	} else if engine.StrEqualLiteral(class, "medic", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return weaponsMedicPrimary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return weaponsMedicSecondary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return weaponsMedicMelee[index]
+		}
+	} else if engine.StrEqualLiteral(class, "sniper", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return weaponsSniperPrimary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return weaponsSniperSecondary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return weaponsSniperMelee[index]
+		}
+	} else if engine.StrEqualLiteral(class, "spy", false) {
+		if engine.StrEqualLiteral(slot, "primary", false) {
+			return weaponsSpySecondary[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "secondary", false) {
+			return weaponsSpyBuilding[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "melee", false) {
+			return weaponsSpyMelee[index]
+		}
+
+		if engine.StrEqualLiteral(slot, "pda2", false) {
+			return weaponsSpyPda2[index]
+		}
+	}
+
+	return 0
+}

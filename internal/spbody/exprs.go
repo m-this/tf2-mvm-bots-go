@@ -38,7 +38,7 @@ func (e *emitter) expr(x ast.Expr) string {
 			// expression and not a call that fills a parameter.
 			return e.callWith(n, nil)
 		}
-		if x, isExtern := e.externOfCall(n); isExtern && (x.Choice || x.Cast) {
+		if x, isExtern := e.externOfCall(n); isExtern && (x.Choice || x.Cast || x.Same) {
 			// Neither is a call: one is ?: and the other view_as, so
 			// an array coming out of one is the array that went in.
 			return e.callWith(n, nil)
@@ -412,6 +412,13 @@ func (e *emitter) callWith(call *ast.CallExpr, extra []string, front ...string) 
 			return ""
 		}
 		return fmt.Sprintf("view_as<%s>(%s)", x.Func, e.expr(call.Args[0]))
+	}
+	if x, ok := e.externOf2(call); ok && x.Same {
+		if len(call.Args) != 1 {
+			e.fail(call.Pos(), "%s is the value itself and takes one argument", x.Func)
+			return ""
+		}
+		return e.expr(call.Args[0])
 	}
 	if x, ok := e.externOf2(call); ok && x.Choice {
 		if len(call.Args) != 3 {

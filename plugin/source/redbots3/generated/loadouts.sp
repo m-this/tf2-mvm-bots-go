@@ -416,3 +416,307 @@ public Action Command_BoughtUpgrades(int client, int args)
 	return Plugin_Handled;
 }
 
+stock int WeaponPoolCount(const char[] class, const char[] slot)
+{
+	if (StrEqual(class, "scout", false))
+	{
+		if (StrEqual(slot, "primary", false))
+		{
+			return 31;
+		}
+		if (StrEqual(slot, "secondary", false))
+		{
+			return 27;
+		}
+		if (StrEqual(slot, "melee", false))
+		{
+			return 27;
+		}
+	}
+	else
+		if (StrEqual(class, "soldier", false))
+		{
+			if (StrEqual(slot, "primary", false))
+			{
+				return 31;
+			}
+			if (StrEqual(slot, "secondary", false))
+			{
+				return 22;
+			}
+			if (StrEqual(slot, "melee", false))
+			{
+				return 19;
+			}
+		}
+		else
+			if (StrEqual(class, "pyro", false))
+			{
+				if (StrEqual(slot, "primary", false))
+				{
+					return 31;
+				}
+				if (StrEqual(slot, "secondary", false))
+				{
+					return 21;
+				}
+				if (StrEqual(slot, "melee", false))
+				{
+					return 26;
+				}
+			}
+			else
+				if (StrEqual(class, "demoman", false))
+				{
+					if (StrEqual(slot, "primary", false))
+					{
+						return 17;
+					}
+					if (StrEqual(slot, "secondary", false))
+					{
+						return 31;
+					}
+					if (StrEqual(slot, "melee", false))
+					{
+						return 24;
+					}
+				}
+				else
+					if (StrEqual(class, "heavyweapons", false))
+					{
+						if (StrEqual(slot, "primary", false))
+						{
+							return 34;
+						}
+						if (StrEqual(slot, "secondary", false))
+						{
+							return 14;
+						}
+						if (StrEqual(slot, "melee", false))
+						{
+							return 22;
+						}
+					}
+					else
+						if (StrEqual(class, "engineer", false))
+						{
+							if (StrEqual(slot, "primary", false))
+							{
+								return 18;
+							}
+							if (StrEqual(slot, "secondary", false))
+							{
+								return 23;
+							}
+							if (StrEqual(slot, "melee", false))
+							{
+								return 27;
+							}
+						}
+						else
+							if (StrEqual(class, "medic", false))
+							{
+								if (StrEqual(slot, "primary", false))
+								{
+									return 6;
+								}
+								if (StrEqual(slot, "secondary", false))
+								{
+									return 26;
+								}
+								if (StrEqual(slot, "melee", false))
+								{
+									return 19;
+								}
+							}
+							else
+								if (StrEqual(class, "sniper", false))
+								{
+									if (StrEqual(slot, "primary", false))
+									{
+										return 35;
+									}
+									if (StrEqual(slot, "secondary", false))
+									{
+										return 19;
+									}
+									if (StrEqual(slot, "melee", false))
+									{
+										return 16;
+									}
+								}
+								else
+									if (StrEqual(class, "spy", false))
+									{
+										if (StrEqual(slot, "primary", false))
+										{
+											return 20;
+										}
+										if (StrEqual(slot, "secondary", false))
+										{
+											return 7;
+										}
+										if (StrEqual(slot, "melee", false))
+										{
+											return 29;
+										}
+										if (StrEqual(slot, "pda2", false))
+										{
+											return 7;
+										}
+									}
+	return 0;
+}
+
+stock int WeaponPoolAt(const char[] class, const char[] slot, int index)
+{
+	if (StrEqual(class, "scout", false))
+	{
+		if (StrEqual(slot, "primary", false))
+		{
+			return WEAPONS_SCOUT_PRIMARY[index];
+		}
+		if (StrEqual(slot, "secondary", false))
+		{
+			return WEAPONS_SCOUT_SECONDARY[index];
+		}
+		if (StrEqual(slot, "melee", false))
+		{
+			return WEAPONS_SCOUT_MELEE[index];
+		}
+	}
+	else
+		if (StrEqual(class, "soldier", false))
+		{
+			if (StrEqual(slot, "primary", false))
+			{
+				return WEAPONS_SOLDIER_PRIMARY[index];
+			}
+			if (StrEqual(slot, "secondary", false))
+			{
+				return WEAPONS_SOLDIER_SECONDARY[index];
+			}
+			if (StrEqual(slot, "melee", false))
+			{
+				return WEAPONS_SOLDIER_MELEE[index];
+			}
+		}
+		else
+			if (StrEqual(class, "pyro", false))
+			{
+				if (StrEqual(slot, "primary", false))
+				{
+					return WEAPONS_PYRO_PRIMARY[index];
+				}
+				if (StrEqual(slot, "secondary", false))
+				{
+					return WEAPONS_PYRO_SECONDARY[index];
+				}
+				if (StrEqual(slot, "melee", false))
+				{
+					return WEAPONS_PYRO_MELEE[index];
+				}
+			}
+			else
+				if (StrEqual(class, "demoman", false))
+				{
+					if (StrEqual(slot, "primary", false))
+					{
+						return WEAPONS_DEMOMAN_PRIMARY[index];
+					}
+					if (StrEqual(slot, "secondary", false))
+					{
+						return WEAPONS_DEMOMAN_SECONDARY[index];
+					}
+					if (StrEqual(slot, "melee", false))
+					{
+						return WEAPONS_DEMOMAN_MELEE[index];
+					}
+				}
+				else
+					if (StrEqual(class, "heavyweapons", false))
+					{
+						if (StrEqual(slot, "primary", false))
+						{
+							return WEAPONS_HEAVY_PRIMARY[index];
+						}
+						if (StrEqual(slot, "secondary", false))
+						{
+							return WEAPONS_HEAVY_SECONDARY[index];
+						}
+						if (StrEqual(slot, "melee", false))
+						{
+							return WEAPONS_HEAVY_MELEE[index];
+						}
+					}
+					else
+						if (StrEqual(class, "engineer", false))
+						{
+							if (StrEqual(slot, "primary", false))
+							{
+								return WEAPONS_ENGINEER_PRIMARY[index];
+							}
+							if (StrEqual(slot, "secondary", false))
+							{
+								return WEAPONS_ENGINEER_SECONDARY[index];
+							}
+							if (StrEqual(slot, "melee", false))
+							{
+								return WEAPONS_ENGINEER_MELEE[index];
+							}
+						}
+						else
+							if (StrEqual(class, "medic", false))
+							{
+								if (StrEqual(slot, "primary", false))
+								{
+									return WEAPONS_MEDIC_PRIMARY[index];
+								}
+								if (StrEqual(slot, "secondary", false))
+								{
+									return WEAPONS_MEDIC_SECONDARY[index];
+								}
+								if (StrEqual(slot, "melee", false))
+								{
+									return WEAPONS_MEDIC_MELEE[index];
+								}
+							}
+							else
+								if (StrEqual(class, "sniper", false))
+								{
+									if (StrEqual(slot, "primary", false))
+									{
+										return WEAPONS_SNIPER_PRIMARY[index];
+									}
+									if (StrEqual(slot, "secondary", false))
+									{
+										return WEAPONS_SNIPER_SECONDARY[index];
+									}
+									if (StrEqual(slot, "melee", false))
+									{
+										return WEAPONS_SNIPER_MELEE[index];
+									}
+								}
+								else
+									if (StrEqual(class, "spy", false))
+									{
+										if (StrEqual(slot, "primary", false))
+										{
+											return WEAPONS_SPY_SECONDARY[index];
+										}
+										if (StrEqual(slot, "secondary", false))
+										{
+											return WEAPONS_SPY_BUILDING[index];
+										}
+										if (StrEqual(slot, "melee", false))
+										{
+											return WEAPONS_SPY_MELEE[index];
+										}
+										if (StrEqual(slot, "pda2", false))
+										{
+											return WEAPONS_SPY_PDA2[index];
+										}
+									}
+	return 0;
+}
+

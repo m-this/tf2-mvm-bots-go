@@ -64,6 +64,18 @@ type Extern struct {
 		has to be told rather than guess.
 	*/
 	Borrowed bool
+	/*
+		Same says the call is its own argument.
+
+		SourcePawn does not distinguish a written-out string from a char
+		buffer: both are char[] and either can be passed where the other
+		is expected. Go does distinguish them, so a body that reads a
+		class name out of a per-client buffer cannot hand it to something
+		declared to take a literal without saying, in Go, that they are
+		the same value. This is that saying, and it emits nothing: the
+		argument is written where the call was.
+	*/
+	Same bool
 	// Global says this is not a call at all: SourceMod's MaxClients is a
 	// variable, and the Go declaration is a function only because the
 	// subset has no other way to name something it does not own.

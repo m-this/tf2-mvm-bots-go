@@ -12,37 +12,45 @@ Close is only ever called from the handler.
 
 // MenuCalls are the answers.
 type MenuCalls struct {
-	AddDefenderTFBotNamed  func(count int32, class string, team string, difficulty string)
-	LogAction              func(client int32, target int32, format string, args []any)
-	SetMenuTitleFor        func(m Menu, format string, class string)
-	CopyShort              func(from string) [16]byte
-	AddMenuItemFrom        func(m Menu, info string, display Text)
-	ShowWeaponItemList     func(client int32, class [16]byte, slot string)
-	NewMenu                func(handler string) Menu
-	SetTitle               func(m Menu, format string, args []any)
-	AddItem                func(m Menu, info string, display string)
-	Display                func(m Menu, client int32, time int32)
-	DisplayAt              func(m Menu, client int32, position int32, time int32)
-	DeleteMenu             func(m Menu)
-	SelectionPos           func() int32
-	SetChoosing            func(client int32, choosing bool)
-	PrintToChat            func(client int32, format string, args []any)
-	ChosenClasses          func() List
-	ShowConfirmation       func(client int32)
-	SetupCancelled         func()
-	SetBotClassesLocked    func(locked bool)
-	CreateMenu             func(handler string) Menu
-	SetMenuTitle           func(m Menu, title string)
-	AddMenuItem            func(m Menu, info string, display string)
-	AddMenuItemText        func(m Menu, info string, display string)
-	SetMenuExitBackButton  func(m Menu, on bool)
-	DisplayMenu            func(m Menu, client int32, time int32)
-	DisplayMenuAtItem      func(m Menu, client int32, item int32, time int32)
-	ClassPreferencesFlags  func(client int32) int32
-	SetClassPreferences    func(client int32, class string, value int32)
-	SetBotSummoner         func(userid int32)
-	WeaponPrefMenuItemText func(client int32, class string, slot int32) Text
-	ManageDefenderBots     func(manage bool)
+	AddMenuItemBoth                func(m Menu, info Text, display Text)
+	CopySlot                       func(from string) [10]byte
+	DisplayWeaponPreferenceMenuFor func(client int32, class [16]byte)
+	ItemName                       func(itemDefinition int32) (bool, Text)
+	SetWeaponPreference            func(client int32, class [16]byte, slot [10]byte, itemDefinition int32)
+	MenuItemInfo                   func(m Menu, position int32) (bool, Text)
+	WeaponPoolCount                func(class string, slot string) int32
+	WeaponPoolAt                   func(class string, slot string, index int32) int32
+	AddDefenderTFBotNamed          func(count int32, class string, team string, difficulty string)
+	LogAction                      func(client int32, target int32, format string, args []any)
+	SetMenuTitleFor                func(m Menu, format string, class string)
+	CopyShort                      func(from string) [16]byte
+	AddMenuItemFrom                func(m Menu, info string, display Text)
+	ShowWeaponItemList             func(client int32, class [16]byte, slot string)
+	NewMenu                        func(handler string) Menu
+	SetTitle                       func(m Menu, format string, args []any)
+	AddItem                        func(m Menu, info string, display string)
+	Display                        func(m Menu, client int32, time int32)
+	DisplayAt                      func(m Menu, client int32, position int32, time int32)
+	DeleteMenu                     func(m Menu)
+	SelectionPos                   func() int32
+	SetChoosing                    func(client int32, choosing bool)
+	PrintToChat                    func(client int32, format string, args []any)
+	ChosenClasses                  func() List
+	ShowConfirmation               func(client int32)
+	SetupCancelled                 func()
+	SetBotClassesLocked            func(locked bool)
+	CreateMenu                     func(handler string) Menu
+	SetMenuTitle                   func(m Menu, title string)
+	AddMenuItem                    func(m Menu, info string, display string)
+	AddMenuItemText                func(m Menu, info string, display string)
+	SetMenuExitBackButton          func(m Menu, on bool)
+	DisplayMenu                    func(m Menu, client int32, time int32)
+	DisplayMenuAtItem              func(m Menu, client int32, item int32, time int32)
+	ClassPreferencesFlags          func(client int32) int32
+	SetClassPreferences            func(client int32, class string, value int32)
+	SetBotSummoner                 func(userid int32)
+	WeaponPrefMenuItemText         func(client int32, class string, slot int32) Text
+	ManageDefenderBots             func(manage bool)
 }
 
 var menus MenuCalls
@@ -399,15 +407,15 @@ func AddMenuItemFrom(m Menu, info string, display Text) {
 	menus.AddMenuItemFrom(m, info, display)
 }
 
-// ShowWeaponPreferenceItemListMenu lists the items for one slot of one class.
-// Still in menu.sp.
+// AddMenuItemBoth is AddMenuItem where the row and its label both came out of
+// buffers, which is what a list built from the item schema is.
 //
-//sp:plugin ShowWeaponPreferenceItemListMenu
-func ShowWeaponPreferenceItemListMenu(client int32, class [16]byte, slot string) {
-	if menus.ShowWeaponItemList == nil {
-		missing("ShowWeaponPreferenceItemListMenu")
+//sp:native AddMenuItem
+func AddMenuItemBoth(m Menu, info Text, display Text) {
+	if menus.AddMenuItemBoth == nil {
+		missing("AddMenuItem")
 	}
-	menus.ShowWeaponItemList(client, class, slot)
+	menus.AddMenuItemBoth(m, info, display)
 }
 
 // AddDefenderTFBotNamed is AddDefenderTFBot called the way the menus call it:
@@ -419,4 +427,93 @@ func AddDefenderTFBotNamed(count int32, class string, team string, difficulty st
 		missing("AddDefenderTFBot")
 	}
 	menus.AddDefenderTFBotNamed(count, class, team, difficulty)
+}
+
+// DisplayWeaponPreferenceMenuFor is DisplayWeaponPreferenceMenu called with the
+// class read back out of the per-client buffer rather than written out.
+// Ported, prefmenu.
+//
+//sp:body DisplayWeaponPreferenceMenu
+func DisplayWeaponPreferenceMenuFor(client int32, class [16]byte) {
+	if menus.DisplayWeaponPreferenceMenuFor == nil {
+		missing("DisplayWeaponPreferenceMenu")
+	}
+	menus.DisplayWeaponPreferenceMenuFor(client, class)
+}
+
+// ItemName is the schema's display name for an item definition, and false when
+// the schema has none.
+//
+//sp:native TF2Econ_GetItemName sized
+func ItemName(itemDefinition int32) (ok bool, name Text) {
+	if menus.ItemName == nil {
+		missing("TF2Econ_GetItemName")
+	}
+	return menus.ItemName(itemDefinition)
+}
+
+// SetWeaponPreference writes what this player wants a bot of that class to
+// carry in that slot. Still in player_pref.sp.
+//
+//sp:body SetWeaponPreference
+func SetWeaponPreference(client int32, class [16]byte, slot [10]byte, itemDefinition int32) {
+	if menus.SetWeaponPreference == nil {
+		missing("SetWeaponPreference")
+	}
+	menus.SetWeaponPreference(client, class, slot, itemDefinition)
+}
+
+// MenuItemInfo is the info string stored on a row, and false when the row is
+// not there.
+//
+//sp:method GetItem sized
+func (m Menu) MenuItemInfo(position int32) (ok bool, info Text) {
+	if menus.MenuItemInfo == nil {
+		missing("Menu.GetItem")
+	}
+	return menus.MenuItemInfo(m, position)
+}
+
+// WeaponPoolCount is how many items that class and slot can carry. Ported,
+// loadouts.
+//
+//sp:body WeaponPoolCount
+func WeaponPoolCount(class string, slot string) int32 {
+	if menus.WeaponPoolCount == nil {
+		missing("WeaponPoolCount")
+	}
+	return menus.WeaponPoolCount(class, slot)
+}
+
+// WeaponPoolAt is one of them. Ported, loadouts.
+//
+//sp:body WeaponPoolAt
+func WeaponPoolAt(class string, slot string, index int32) int32 {
+	if menus.WeaponPoolAt == nil {
+		missing("WeaponPoolAt")
+	}
+	return menus.WeaponPoolAt(class, slot, index)
+}
+
+// CopySlot is strcopy into the per-client slot-name buffer.
+//
+//sp:native strcopy fills
+func CopySlot(from string) (out [10]byte) {
+	if menus.CopySlot == nil {
+		missing("strcopy")
+	}
+	return menus.CopySlot(from)
+}
+
+/*
+TextOfSlot reads a fixed buffer where a written-out string is expected.
+
+SourcePawn has one char[] and passes either wherever the other is wanted; Go
+does not, so this says the two are the same value. It emits nothing: the buffer
+is written where the call was.
+*/
+//
+//sp:same TextOfSlot
+func TextOfSlot(from [16]byte) string {
+	return string(from[:])
 }

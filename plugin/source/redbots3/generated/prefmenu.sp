@@ -13,6 +13,7 @@
 char m_sSelectedClass[65][16];
 Menu g_hBotPreferenceMenu;
 Menu m_hWeaponPrefClassMenu;
+char m_sSelectedWeaponSlot[65][10];
 
 stock void DisplayClassPreferenceMenu(int client, int item = 0)
 {
@@ -301,6 +302,55 @@ stock int MenuHandler_WeaponPreference(Menu menu, MenuAction action, int param1,
 			if (param2 == MenuCancel_ExitBack)
 			{
 				DisplayMenu(m_hWeaponPrefClassMenu, param1, MENU_TIME_FOREVER);
+			}
+		}
+	}
+	return 0;
+}
+
+stock void ShowWeaponPreferenceItemListMenu(int client, const char[] class, const char[] slot)
+{
+	strcopy(m_sSelectedWeaponSlot[client], 10, slot);
+	Menu hMenu = new Menu(MenuHandler_WeaponPreferenceItemList);
+	for (int i = 0; i < WeaponPoolCount(class, slot); i++)
+	{
+		int itemDefinition = WeaponPoolAt(class, slot, i);
+		char weaponName[512];
+		bool named = TF2Econ_GetItemName(itemDefinition, weaponName, 512);
+		if (named)
+		{
+			char menuInfo[512];
+			IntToString(itemDefinition, menuInfo, 512);
+			AddMenuItem(hMenu, menuInfo, weaponName);
+		}
+	}
+	hMenu.Display(client, MENU_TIME_FOREVER);
+}
+
+stock int MenuHandler_WeaponPreferenceItemList(Menu menu, MenuAction action, int param1, int param2)
+{
+	switch (action)
+	{
+		case MenuAction_Select:
+		{
+			char info[512];
+			bool found = menu.GetItem(param2, info, 512);
+			if (found)
+			{
+				int itemDefIndex = StringToInt(info);
+				SetWeaponPreference(param1, m_sSelectedClass[param1], m_sSelectedWeaponSlot[param1], itemDefIndex);
+				DisplayWeaponPreferenceMenu(param1, m_sSelectedClass[param1]);
+			}
+		}
+		case MenuAction_End:
+		{
+			menu.Close();
+		}
+		case MenuAction_Cancel:
+		{
+			if (param2 == MenuCancel_ExitBack)
+			{
+				DisplayWeaponPreferenceMenu(param1, m_sSelectedClass[param1]);
 			}
 		}
 	}

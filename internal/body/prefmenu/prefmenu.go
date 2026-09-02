@@ -311,19 +311,86 @@ func MenuHandlerWeaponPreference(menu engine.Menu, action engine.MenuChoice, par
 	case engine.MenuSelect():
 		switch param2 {
 		case 0:
-			engine.ShowWeaponPreferenceItemListMenu(param1, selectedClass[param1], "primary")
+			ShowWeaponPreferenceItemListMenu(param1, engine.TextOfSlot(selectedClass[param1]), "primary")
 		case 1:
-			engine.ShowWeaponPreferenceItemListMenu(param1, selectedClass[param1], "secondary")
+			ShowWeaponPreferenceItemListMenu(param1, engine.TextOfSlot(selectedClass[param1]), "secondary")
 		case 2:
-			engine.ShowWeaponPreferenceItemListMenu(param1, selectedClass[param1], "melee")
+			ShowWeaponPreferenceItemListMenu(param1, engine.TextOfSlot(selectedClass[param1]), "melee")
 		case 3:
-			engine.ShowWeaponPreferenceItemListMenu(param1, selectedClass[param1], "pda2")
+			ShowWeaponPreferenceItemListMenu(param1, engine.TextOfSlot(selectedClass[param1]), "pda2")
 		}
 	case engine.MenuEnd():
 		menu.Close()
 	case engine.MenuCancel():
 		if param2 == engine.MenuCancelExitBack() {
 			engine.DisplayMenu(weaponPrefClassMenu, param1, engine.MenuTimeForever())
+		}
+	}
+
+	return 0
+}
+
+// The slot a player is picking an item for, alongside the class.
+//
+//sp:name m_sSelectedWeaponSlot
+var selectedWeaponSlot [65][10]byte
+
+/*
+ShowWeaponPreferenceItemListMenu lists every item that class can carry in that
+slot.
+
+The shipped file wrote this as twenty seven blocks, one per class and slot, each
+the same four lines around a different pool. The pools live in loadouts with the
+chain that draws from them, so this asks that chain for the count and the item
+and walks it once. Same items, same order.
+
+An item the schema has no name for is skipped rather than shown blank, which is
+what the shipped file did by testing the name before adding the row.
+*/
+//
+//sp:name ShowWeaponPreferenceItemListMenu
+func ShowWeaponPreferenceItemListMenu(client int32, class string, slot string) {
+	// Tell us the weapon slot that we now want to edit.
+	selectedWeaponSlot[client] = engine.CopySlot(slot)
+
+	hMenu := engine.NewMenu(MenuHandlerWeaponPreferenceItemList)
+
+	for i := int32(0); i < engine.WeaponPoolCount(class, slot); i++ {
+		itemDefinition := engine.WeaponPoolAt(class, slot, i)
+
+		named, weaponName := engine.ItemName(itemDefinition)
+
+		if named {
+			// Menu item info stores the item definition index as a string.
+			_, menuInfo := engine.IntToString(itemDefinition)
+			engine.AddMenuItemBoth(hMenu, menuInfo, weaponName)
+		}
+	}
+
+	hMenu.Display(client, engine.MenuTimeForever())
+}
+
+// MenuHandlerWeaponPreferenceItemList records the item that was pressed and
+// goes back to the slot list.
+//
+//sp:name MenuHandler_WeaponPreferenceItemList
+func MenuHandlerWeaponPreferenceItemList(menu engine.Menu, action engine.MenuChoice, param1 int32, param2 int32) int32 {
+	switch action {
+	case engine.MenuSelect():
+		found, info := menu.MenuItemInfo(param2)
+
+		if found {
+			// Info should be storing an item's definition index.
+			itemDefIndex := engine.StringToInt(info)
+
+			engine.SetWeaponPreference(param1, selectedClass[param1], selectedWeaponSlot[param1], itemDefIndex)
+			engine.DisplayWeaponPreferenceMenuFor(param1, selectedClass[param1])
+		}
+	case engine.MenuEnd():
+		menu.Close()
+	case engine.MenuCancel():
+		if param2 == engine.MenuCancelExitBack() {
+			engine.DisplayWeaponPreferenceMenuFor(param1, selectedClass[param1])
 		}
 	}
 

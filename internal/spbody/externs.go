@@ -192,6 +192,9 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 			// what a callback handed a raw handle has to do before it
 			// can use the methodmap.
 			return Extern{Func: name, Cast: true}, true, nil
+		case "same":
+			// The value itself, with no call around it: see Same.
+			return Extern{Func: name, Same: true}, true, nil
 		case "choice":
 			return Extern{Func: name, Choice: true}, true, nil
 		case "delete":
