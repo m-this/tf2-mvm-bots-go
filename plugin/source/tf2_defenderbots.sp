@@ -175,9 +175,7 @@ static float m_flDeadRethinkTime[MAXPLAYERS + 1];
 int g_iBuybackNumber[MAXPLAYERS + 1];
 int g_iBuyUpgradesNumber[MAXPLAYERS + 1];
 
-#if !defined IDLEBOT_AIMING
 static float m_flNextSnipeFireTime[MAXPLAYERS + 1];
-#endif
 
 #if defined MOD_ROLL_THE_DICE_REVAMPED
 static float m_flNextRollTime[MAXPLAYERS + 1];
@@ -347,12 +345,7 @@ public void OnPluginStart()
 {
 	Archipelago_Init();
 	
-#if defined TESTING_ONLY
-	BuildPath(Path_SM, g_sPlayerPrefPath, PLATFORM_MAX_PATH, "data/testing/db_botpref.txt");
-	PrintToServer("[BOTS MANAGER] DEBUG BUILD: FOR DEV USE ONLY");
-#else
 	BuildPath(Path_SM, g_sPlayerPrefPath, PLATFORM_MAX_PATH, "data/db_botpref.txt");
-#endif
 	
 	redbots_manager_debug = CreateConVar("sm_redbots_manager_debug", "0", _, FCVAR_NONE);
 	redbots_manager_debug_actions = CreateConVar("sm_redbots_manager_debug_actions", "0", _, FCVAR_NONE);
@@ -419,9 +412,6 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_cbt", Command_ChooseBotClasses);
 	RegConsoleCmd("sm_redobots", Command_RedoBotTeamLineup);
 	
-#if defined TESTING_ONLY
-	RegConsoleCmd("sm_bots_start_now", Command_BotsReadyNow);
-#endif
 	
 	RegAdminCmd("sm_addbots", Command_AddBots, ADMFLAG_GENERIC);
 	RegAdminCmd("sm_purgebots", Command_RemoveAllBots, ADMFLAG_GENERIC);
@@ -462,10 +452,6 @@ public void OnPluginStart()
 		
 		if (!g_pMannVsMachineUpgrades)
 			LogError("OnPluginStart: Failed to find Address to g_MannVsMachineUpgrades!");
-#if defined TESTING_ONLY
-		else
-			LogMessage("OnPluginStart: Found \"g_MannVsMachineUpgrades\" @ 0x%X", g_pMannVsMachineUpgrades);
-#endif
 #endif
 		
 		if (!InitSDKCalls(hGamedata))
@@ -502,9 +488,6 @@ public void OnPluginStart()
 	
 	InitNextBotPathing();
 	
-#if defined IDLEBOT_AIMING
-	InitTFBotAim();
-#endif
 	
 	FindGameConsoleVariables();
 }
@@ -710,9 +693,6 @@ public void OnClientPutInServer(int client)
 	ResetNextBot(client);
 	ResetSpawnExitWatch(client);
 	
-#if defined IDLEBOT_AIMING
-	BotAim(client).Reset();
-#endif
 }
 
 public void OnEntityCreated(int entity, const char[] classname)
@@ -775,22 +755,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		PluginBot_SimulateFrame(client);
 #endif
 		
-#if defined IDLEBOT_AIMING
-		if (m_ctReload[client] > GetGameTime())
-		{
-			buttons |= IN_RELOAD;
-		}
-		
-		if (m_ctFire[client] > GetGameTime())
-		{
-			buttons |= IN_ATTACK;
-		}
-		
-		if (m_ctAltFire[client] > GetGameTime())
-		{
-			buttons |= IN_ATTACK2;
-		}
-#endif
 		
 		if (GameRules_GetRoundState() != RoundState_BetweenRounds)
 		{
@@ -801,14 +765,12 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			{
 				switch (weaponID)
 				{
-#if !defined IDLEBOT_AIMING
 					case TF_WEAPON_MINIGUN:
 					{
 						//Don't keep spinning the minigun if it ran out of ammo
 						if (!HasAmmo(myWeapon))
 							buttons &= ~IN_ATTACK;
 					}
-#endif
 					case TF_WEAPON_SNIPERRIFLE_CLASSIC:
 					{
 						//For the classic, let go on a full charge
@@ -846,14 +808,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			if ((weaponID == TF_WEAPON_FLAMETHROWER || weaponID == TF_WEAPON_FLAME_BALL) && CanWeaponAirblast(myWeapon))
 				UtilizeCompressionBlast(client, myBot, threat, 1);
 			
-#if defined IDLEBOT_AIMING
-			if (threat)
-			{
-				//TODO: disable on engineers for now until we make a proper better behavior
-				if (TF2_GetPlayerClass(client) != TFClass_Engineer)
-					BotAim(client).AimHeadTowardsEntity(threat.GetEntity(), CRITICAL, 0.1);
-			}
-#else
 			if (WeaponID_IsSniperRifle(weaponID))
 			{
 				if (TF2_IsPlayerInCondition(client, TFCond_Zoomed))
@@ -950,7 +904,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 					}
 				}
 			}
-#endif
 			
 #if defined MOD_ROLL_THE_DICE_REVAMPED
 			if (redbots_manager_bot_rtd_variance.FloatValue >= COMMAND_MAX_RATE)
@@ -963,24 +916,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			}
 #endif
 			
-#if defined TESTING_ONLY
-			if (GetEntityFlags(client) & FL_ONGROUND == 0 && !TF2_IsJumping(client))
-			{
-				//TFBots have no air control in mvm, keep us moving
-				PathFollower myPath = myBot.GetCurrentPath();
-				
-				if (myPath)
-				{
-					Segment pGoal = myPath.GetCurrentGoal();
-					
-					if (pGoal)
-					{
-						float vGoal[3]; pGoal.GetPosition(vGoal);
-						MovePlayerTowardsGoal(client, vGoal, vel);
-					}
-				}
-			}
-#endif
 		}
 		
 		//TODO: is this too expensive? use global per-player variable otherwise
@@ -990,10 +925,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			vel = NULL_VECTOR;
 		}
 		
-#if defined IDLEBOT_AIMING
-		BotAim(client).Upkeep();
-		BotAim(client).FireWeaponAtEnemy();
-#endif
 	}
 	else
 	{
@@ -1159,13 +1090,11 @@ public Action Command_ShowNewBotTeamComposition(int client, int args)
 
 public Action Command_RerollNewBotTeamComposition(int client, int args)
 {
-#if !defined TESTING_ONLY
 	if (TF2_GetClientTeam(client) != TFTeam_Red)
 	{
 		ReplyToCommand(client, "%s Your team is not allowed to use this.", PLUGIN_PREFIX);
 		return Plugin_Handled;
 	}
-#endif
 	
 	switch (redbots_manager_bot_lineup_mode.IntValue)
 	{
@@ -1412,16 +1341,6 @@ public Action Command_RedoBotTeamLineup(int client, int args)
 	
 	return Plugin_Handled;
 }
-
-#if defined TESTING_ONLY
-public Action Command_BotsReadyNow(int client, int args)
-{
-	int target = GetClientAimTarget(client);
-	SpawnSapper(client, target);
-	
-	return Plugin_Handled;
-}
-#endif
 
 public Action Command_AddBots(int client, int args)
 {
@@ -1945,15 +1864,7 @@ public void DefenderBot_TouchPost(int entity, int other)
 	//Call out enemy spies upon contact
 	if (BaseEntity_IsPlayer(other) && GetClientTeam(other) != GetClientTeam(entity) && TF2_IsPlayerInCondition(other, TFCond_Disguised))
 	{
-#if defined TFBOT_CUSTOM_SPY_CONTACT
-		DataPack pack;
-		CreateDataTimer(redbots_manager_bot_notice_spy_time.FloatValue, Timer_RealizeSpy, pack, TIMER_FLAG_NO_MAPCHANGE);
-		pack.WriteCell(GetClientUserId(entity));
-		pack.WriteCell(GetClientUserId(other));
-		pack.Reset();
-#else
 		TFBot_NoticeThreat(entity, other);
-#endif
 	}
 }
 
