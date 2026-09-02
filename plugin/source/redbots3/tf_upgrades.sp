@@ -190,3 +190,30 @@ class CMannVsMachineUpgradeManager
 	CUtlMap< const char*, int > m_AttribMap;
 } */
 #endif
+/* Thin wrappers over the game's own upgrade objects
+
+The generated shopping code reaches these by name. Each is one methodmap call:
+the methodmap is this file's, built on the gamedata offsets, and a generated
+body has no form for a methodmap on an Address. */
+
+int UpgradeUIGroupOf(Address upgrade)
+{
+	return view_as<CMannVsMachineUpgrades>(upgrade).m_iUIGroup();
+}
+
+char[] UpgradeAttributeOf(Address upgrade)
+{
+	char attribute[MAX_ATTRIBUTE_DESCRIPTION_LENGTH];
+	attribute = view_as<CMannVsMachineUpgrades>(upgrade).m_szAttribute();
+	return attribute;
+}
+
+Address UpgradeAddressByIndex(int index)
+{
+	return CMannVsMachineUpgradeManager().GetUpgradeByIndex(index).Address;
+}
+
+int AttributeDefinitionIndexOf(Address attr)
+{
+	return view_as<CEconItemAttributeDefinition>(attr).GetIndex();
+}

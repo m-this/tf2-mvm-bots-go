@@ -4,8 +4,24 @@
 
 #define UPGRADE_ATTRIBUTE_SHARE (0.5)
 
+#define MAX_INT (99999999)
+
+#define MIN_INT (-99999999)
+
+#define Go_rowClass (0)
+#define Go_rowSlot (1)
+#define Go_rowIndex (2)
+#define Go_rowRandom (3)
+#define Go_rowPriority (4)
+#define Go_rowCells (5)
+
 int m_iSessionWallet[65];
 int m_iSpentOnUpgrade[65][128];
+ArrayList CTFPlayerUpgrades[65];
+float m_flNextUpgrade[65];
+int m_nPurchasedUpgrades[65];
+float m_flUpgradingTime[65];
+bool m_bRefusedUpgrade[65][128];
 
 stock bool NothingLeftToBuild(int building)
 {
@@ -53,5 +69,285 @@ stock float GetUpgradeInterval()
 	float interval = 1.25;
 	float variance = 0.3;
 	return GetRandomFloat(0.95, 1.55);
+}
+
+stock int GetUpgradePriority(int client, int slot, int index, TFClassType pclass)
+{
+	if (slot == TF_LOADOUT_SLOT_ACTION)
+	{
+		return -10;
+	}
+	Address upgrade = UpgradeAddressByIndex(index);
+	if (upgrade == Address_Null)
+	{
+		return UnrankedUpgradePriority();
+	}
+	char attribute[512];
+	attribute = UpgradeAttributeOf(upgrade);
+	if (attribute[0] == 0)
+	{
+		return UnrankedUpgradePriority();
+	}
+	if (IsUpgradeWasted(client, attribute))
+	{
+		return -10;
+	}
+	int id = AttributeID(attribute);
+	int priority = 0;
+	if ((TF2_GetPlayerClass(client) == TFClass_Engineer) && EngineerGunSpendsMetal(client))
+	{
+		priority = UpgradeRankEngineerMetal(id);
+	}
+	if ((priority <= 0) && (slot >= TF_LOADOUT_SLOT_PRIMARY) && (slot <= TF_LOADOUT_SLOT_MELEE))
+	{
+		int weapon = GetPlayerWeaponSlot(client, slot);
+		if ((weapon > 0) && HasEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex"))
+		{
+			priority = UpgradeRankLoadout(GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex"), id);
+		}
+	}
+	if (priority > 0)
+	{
+		return priority;
+	}
+	priority = UpgradeRankClass(pclass, slot, id);
+	if (priority > 0)
+	{
+		return priority;
+	}
+	return UpgradeRankGeneral(id);
+}
+
+stock int SortUpgradesHighestFirst(int index1, int index2, Handle array, Handle hndl)
+{
+	ArrayList list = view_as<ArrayList>(array);
+	int first = list.Get(index1, Go_rowPriority);
+	int second = list.Get(index2, Go_rowPriority);
+	if (first > second)
+	{
+		return -1;
+	}
+	return (first < second ? 1 : 0);
+}
+
+stock void CollectUpgrades(int client)
+{
+	if (CTFPlayerUpgrades[client] != null)
+	{
+		CTFPlayerUpgrades[client].Close();
+	}
+	CTFPlayerUpgrades[client] = new ArrayList(Go_rowCells);
+	ArrayList iArraySlots = new ArrayList();
+	iArraySlots.Push(-1);
+	bool bDemoKnight = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary) == -1;
+	bool bEngineer = TF2_GetPlayerClass(client) == TFClass_Engineer;
+	if (bEngineer)
+	{
+		iArraySlots.Push(TF_LOADOUT_SLOT_MELEE);
+		iArraySlots.Push(TF_LOADOUT_SLOT_BUILDING);
+		iArraySlots.Push(TF_LOADOUT_SLOT_PDA);
+		iArraySlots.Push(TF_LOADOUT_SLOT_PRIMARY);
+		iArraySlots.Push(TF_LOADOUT_SLOT_SECONDARY);
+	}
+	else
+	{
+		if (TF2_GetPlayerClass(client) == TFClass_Sniper)
+		{
+			iArraySlots.Push(TF_LOADOUT_SLOT_PRIMARY);
+			iArraySlots.Push(TF_LOADOUT_SLOT_MELEE);
+		}
+		else
+			if (TF2_GetPlayerClass(client) == TFClass_Medic)
+			{
+				iArraySlots.Push(TF_LOADOUT_SLOT_SECONDARY);
+			}
+			else
+				if (TF2_GetPlayerClass(client) == TFClass_Spy)
+				{
+					iArraySlots.Push(TF_LOADOUT_SLOT_BUILDING);
+					iArraySlots.Push(TF_LOADOUT_SLOT_MELEE);
+				}
+		iArraySlots.Push((bDemoKnight ? TF_LOADOUT_SLOT_MELEE : TF_LOADOUT_SLOT_PRIMARY));
+		if (TF2_IsShieldEquipped(client))
+		{
+			iArraySlots.Push(TF_LOADOUT_SLOT_SECONDARY);
+		}
+		else
+		{
+			int secondary = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
+			int weaponID = (secondary != -1 ? TF2Util_GetWeaponID(secondary) : -1);
+			switch (weaponID)
+			{
+				case TF_WEAPON_JAR, TF_WEAPON_JAR_MILK, TF_WEAPON_BUFF_ITEM, TF_WEAPON_JAR_GAS:
+				{
+					iArraySlots.Push(TF_LOADOUT_SLOT_SECONDARY);
+				}
+				case TF_WEAPON_PIPEBOMBLAUNCHER:
+				{
+					if (bDemoKnight)
+					{
+						iArraySlots.Push(TF_LOADOUT_SLOT_SECONDARY);
+					}
+				}
+			}
+		}
+	}
+	for (int i = 0; i < iArraySlots.Length; i++)
+	{
+		int slot = iArraySlots.Get(i);
+		int upgradeCount = UpgradeCount();
+		for (int index = 0; index < upgradeCount; index++)
+		{
+			Address upgrade = UpgradeAddressByIndex(index);
+			if ((UpgradeUIGroupOf(upgrade) == UIGROUP_UPGRADE_ATTACHED_TO_PLAYER) && (slot != -1))
+			{
+				continue;
+			}
+			if (UpgradeUIGroupOf(upgrade) == UIGROUP_POWERUPBOTTLE)
+			{
+				continue;
+			}
+			Address attr = CEIAD_GetAttributeDefinitionByName(UpgradeAttributeOf(upgrade));
+			if (attr == Address_Null)
+			{
+				continue;
+			}
+			if (!CanUpgradeWithAttrib(client, slot, AttributeDefinitionIndexOf(attr), upgrade))
+			{
+				continue;
+			}
+			TFClassType pclass = TF2_GetPlayerClass(client);
+			int row = CTFPlayerUpgrades[client].Push(view_as<int>(pclass));
+			CTFPlayerUpgrades[client].Set(row, slot, Go_rowSlot);
+			CTFPlayerUpgrades[client].Set(row, index, Go_rowIndex);
+			CTFPlayerUpgrades[client].Set(row, GetRandomInt(MIN_INT, MAX_INT), Go_rowRandom);
+			CTFPlayerUpgrades[client].Set(row, GetUpgradePriority(client, slot, index, pclass), Go_rowPriority);
+		}
+	}
+	CTFPlayerUpgrades[client].SortCustom(SortUpgradesHighestFirst);
+	if (redbots_manager_debug_actions.BoolValue)
+	{
+		PrintToServer("\nPreferred upgrades for #%d \"%N\"\n", client, client);
+		PrintToServer("%3s %4s %4s %5s %-64s\n", "#", "SLOT", "COST", "INDEX", "ATTRIBUTE");
+		for (int i = 0; i < CTFPlayerUpgrades[client].Length; i++)
+		{
+			int index = CTFPlayerUpgrades[client].Get(i, Go_rowIndex);
+			int slot = CTFPlayerUpgrades[client].Get(i, Go_rowSlot);
+			int pclass = CTFPlayerUpgrades[client].Get(i, Go_rowClass);
+			int cost = GetCostForUpgrade(UpgradeAddressByIndex(index), slot, pclass, client);
+			PrintToServer("%3d %4d %4d %5d %-64s", i, slot, cost, index, UpgradeAttributeOf(UpgradeAddressByIndex(index)));
+		}
+	}
+	delete iArraySlots;
+}
+
+stock int CTFBotPurchaseUpgrades_ChooseUpgrade(int actor)
+{
+	int currency = TF2_GetCurrency(actor);
+	if ((CTFPlayerUpgrades[actor] == null) || (CTFPlayerUpgrades[actor].Length == 0))
+	{
+		CollectUpgrades(actor);
+	}
+	for (int i = 0; i < CTFPlayerUpgrades[actor].Length; i++)
+	{
+		int index = CTFPlayerUpgrades[actor].Get(i, Go_rowIndex);
+		int slot = CTFPlayerUpgrades[actor].Get(i, Go_rowSlot);
+		int pclass = CTFPlayerUpgrades[actor].Get(i, Go_rowClass);
+		Address upgrade = UpgradeAddressByIndex(index);
+		if (upgrade == Address_Null)
+		{
+			if (redbots_manager_debug_actions.BoolValue)
+			{
+				PrintToServer("CMannVsMachineUpgrades is NULL");
+			}
+			return -1;
+		}
+		Address attr = CEIAD_GetAttributeDefinitionByName(UpgradeAttributeOf(upgrade));
+		if (attr == Address_Null)
+		{
+			continue;
+		}
+		if (m_bRefusedUpgrade[actor][index])
+		{
+			continue;
+		}
+		if (!CanUpgradeWithAttrib(actor, slot, AttributeDefinitionIndexOf(attr), upgrade))
+		{
+			continue;
+		}
+		int iCost = GetCostForUpgrade(upgrade, slot, pclass, actor);
+		if (!WithinAttributeShare(actor, index, iCost))
+		{
+			continue;
+		}
+		if (iCost > currency)
+		{
+			continue;
+		}
+		if (GetUpgradePriority(actor, slot, index, view_as<TFClassType>(pclass)) < 0)
+		{
+			continue;
+		}
+		int tier = GetUpgradeTier(index);
+		if (tier != 0)
+		{
+			if (!IsUpgradeTierEnabled(actor, slot, tier))
+			{
+				continue;
+			}
+		}
+		return i;
+	}
+	return -1;
+}
+
+stock bool CTFBotPurchaseUpgrades_PurchaseUpgrade(int actor, int row)
+{
+	int slot = CTFPlayerUpgrades[actor].Get(row, Go_rowSlot);
+	int index = CTFPlayerUpgrades[actor].Get(row, Go_rowIndex);
+	int pclass = CTFPlayerUpgrades[actor].Get(row, Go_rowClass);
+	int cost = GetCostForUpgrade(UpgradeAddressByIndex(index), slot, pclass, actor);
+	int currencyBefore = TF2_GetCurrency(actor);
+	int count = 1;
+	if (cost > 0)
+	{
+		Address upgrade = UpgradeAddressByIndex(index);
+		int tiers = UPGRADE_TIERS_MAX;
+		if (upgrade != Address_Null)
+		{
+			tiers = UpgradeTierCap(UpgradeAttributeOf(upgrade));
+		}
+		count = currencyBefore / cost;
+		if (count > tiers)
+		{
+			count = tiers;
+		}
+		if (count < 1)
+		{
+			count = 1;
+		}
+	}
+	KV_MVM_Upgrade(actor, count, slot, index);
+	int spent = currencyBefore - TF2_GetCurrency(actor);
+	if ((cost > 0) && (spent <= 0))
+	{
+		return false;
+	}
+	m_nPurchasedUpgrades[actor] += (cost > 0 ? spent / cost : 1);
+	if ((index >= 0) && (index < MAX_UPGRADES))
+	{
+		m_iSpentOnUpgrade[actor][index] += spent;
+	}
+	return true;
+}
+
+stock int Go_RowIndexOf(int actor, int row)
+{
+	return CTFPlayerUpgrades[actor].Get(row, Go_rowIndex);
+}
+
+stock void Go_SetRefusedUpgrade(int actor, int index)
+{
+	m_bRefusedUpgrade[actor][index] = true;
 }
 

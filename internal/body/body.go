@@ -541,6 +541,11 @@ var generatedElsewhere = []string{
 	"AttributeID",
 	"ThreatPriorityOf",
 	"DemoPipeMaxRange",
+	"UpgradeRankGeneral",
+	"UpgradeRankClass",
+	"UpgradeRankLoadout",
+	"UpgradeRankEngineerMetal",
+	"UnrankedUpgradePriority",
 }
 
 const (
