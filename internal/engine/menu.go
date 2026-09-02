@@ -660,3 +660,9 @@ func CreateVoteMenu(handler func(menu Menu, action MenuChoice, param1 int32, par
 	}
 	return menus.CreateVoteMenu("")
 }
+
+// BotPreferenceMenuOf is the root preference menu. Ported, prefmenu, which
+// owns the global.
+//
+//sp:global g_hBotPreferenceMenu
+func BotPreferenceMenuOf() Menu { return 0 }

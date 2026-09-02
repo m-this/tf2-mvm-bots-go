@@ -307,6 +307,7 @@ Address g_pMannVsMachineUpgrades;
 #include "redbots3/generated/threat_priority.sp"
 #include "redbots3/nextbot_behavior.sp"
 #include "redbots3/generated/statnatives.sp"
+#include "redbots3/generated/botcommands.sp"
 #include "redbots3/generated/aimweapons.sp"
 
 public Plugin myinfo =
@@ -986,32 +987,6 @@ public Action Command_Votebots(int client, int args)
 		}
 	}
 }
-
-public Action Command_BotPreferences(int client, int args)
-{
-	DisplayMenu(g_hBotPreferenceMenu, client, MENU_TIME_FOREVER);
-	return Plugin_Handled;
-}
-
-public Action Command_ShowBotChances(int client, int args)
-{
-	ShowCurrentBotClassChances(client);
-	return Plugin_Handled;
-}
-
-public Action Command_ShowNewBotTeamComposition(int client, int args)
-{
-	if (!CreateDisplayPanelBotTeamComposition(client))
-	{
-		ReplyToCommand(client, "%s There is no bot lineup currently active.", PLUGIN_PREFIX);
-		return Plugin_Handled;
-	}
-	
-	ReplyToCommand(client, "Use command !rerollbotclasses to reshuffle the bot class lineup.");
-	
-	return Plugin_Handled;
-}
-
 public Action Command_RerollNewBotTeamComposition(int client, int args)
 {
 	if (TF2_GetClientTeam(client) != TFTeam_Red)
@@ -1265,46 +1240,6 @@ public Action Command_RedoBotTeamLineup(int client, int args)
 	
 	return Plugin_Handled;
 }
-
-public Action Command_AddBots(int client, int args)
-{
-	if (args > 0)
-	{
-		char arg1[3]; GetCmdArg(1, arg1, sizeof(arg1));
-		int amount = StringToInt(arg1);
-		AddBotsBasedOnLineupMode(amount, false);
-		
-		return Plugin_Handled;
-	}
-	
-	CreateDisplayMenuAddDefenderBots(client);
-	return Plugin_Handled;
-}
-
-public Action Command_RemoveAllBots(int client, int args)
-{
-	if (args > 0)
-	{
-		char arg1[3]; GetCmdArg(1, arg1, sizeof(arg1));
-		
-		if (StringToInt(arg1) == 1)
-			ManageDefenderBots(false);
-	}
-	
-	RemoveAllDefenderBots("Admin request");
-	ShowActivity2(client, "[SM] ", "Purged all bots.");
-	
-	return Plugin_Handled;
-}
-
-public Action Command_StopManagingBots(int client, int args)
-{
-	ManageDefenderBots(false);
-	ReplyToCommand(client, "Stopped manaing bots.");
-	
-	return Plugin_Handled;
-}
-
 /* Every upgrade the game holds, by the index it holds it at
 
 tf2-archipelago names an upgrade by counting "attribute" lines in

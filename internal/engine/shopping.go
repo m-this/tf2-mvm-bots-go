@@ -7,21 +7,28 @@ how fast it presses the buy button.
 
 // ShoppingCalls are the answers.
 type ShoppingCalls struct {
-	NativeCell                 func(position int32) int32
-	RangeRepairStallsOf        func(client int32) int32
-	GiveItemToPlayerNamed      func(client int32, classname Text, itemDefIndex int32, level int32, quality int32) int32
-	RemoveWeaponSlot           func(client int32, slot int32)
-	TranslateWeaponEntForClass func(classname Text, maxlen int32, playerClass Class)
-	IsShieldEquipped           func(client int32) bool
-	GivePlayerAmmo             func(client int32, amount int32, ammoType int32, suppressSound bool) int32
-	SetMaxHealth               func(entity int32, health int32)
-	PostInventoryApplication   func(client int32)
-	RoundToNearest             func(value float32) int32
-	SessionWallet              func(client int32) int32
-	SpentOnUpgrade             func(client int32, index int32) int32
-	WaveHasExplosiveRobots     func() bool
-	WaveHasBulletRobots        func() bool
-	WaveHasFireRobots          func() bool
+	CmdArg                         func(position int32) (int32, Text)
+	ShowActivity2                  func(client int32, tag string, format string, args []any)
+	ShowCurrentBotClassChances     func(client int32)
+	RemoveAllDefenderBotsFor       func(reason string)
+	DisplayPanelBotTeamComposition func(client int32) bool
+	DisplayMenuAddDefenderBots     func(client int32)
+	AddBotsBasedOnLineupModeNow    func(count int32, adjustTime bool)
+	NativeCell                     func(position int32) int32
+	RangeRepairStallsOf            func(client int32) int32
+	GiveItemToPlayerNamed          func(client int32, classname Text, itemDefIndex int32, level int32, quality int32) int32
+	RemoveWeaponSlot               func(client int32, slot int32)
+	TranslateWeaponEntForClass     func(classname Text, maxlen int32, playerClass Class)
+	IsShieldEquipped               func(client int32) bool
+	GivePlayerAmmo                 func(client int32, amount int32, ammoType int32, suppressSound bool) int32
+	SetMaxHealth                   func(entity int32, health int32)
+	PostInventoryApplication       func(client int32)
+	RoundToNearest                 func(value float32) int32
+	SessionWallet                  func(client int32) int32
+	SpentOnUpgrade                 func(client int32, index int32) int32
+	WaveHasExplosiveRobots         func() bool
+	WaveHasBulletRobots            func() bool
+	WaveHasFireRobots              func() bool
 }
 
 var shopping ShoppingCalls
@@ -210,4 +217,79 @@ func RangeRepairStallsOf(client int32) int32 {
 		missing("RangeRepairStallsOf")
 	}
 	return shopping.RangeRepairStallsOf(client)
+}
+
+// CmdArg is one argument of the console command being handled.
+//
+//sp:native GetCmdArg sized
+func CmdArg(position int32) (length int32, arg Text) {
+	if shopping.CmdArg == nil {
+		missing("GetCmdArg")
+	}
+	return shopping.CmdArg(position)
+}
+
+// ShowActivity2 tells the server what an admin just did, with the prefix the
+// admin log wants.
+//
+//sp:native ShowActivity2
+func ShowActivity2(client int32, tag string, format string, args ...any) {
+	if shopping.ShowActivity2 == nil {
+		missing("ShowActivity2")
+	}
+	shopping.ShowActivity2(client, tag, format, args)
+}
+
+// ShowCurrentBotClassChances puts the class-share panel up. Still in
+// player_pref.sp.
+//
+//sp:plugin ShowCurrentBotClassChances
+func ShowCurrentBotClassChances(client int32) {
+	if shopping.ShowCurrentBotClassChances == nil {
+		missing("ShowCurrentBotClassChances")
+	}
+	shopping.ShowCurrentBotClassChances(client)
+}
+
+// RemoveAllDefenderBotsFor kicks the team, saying why. Still in
+// tf2_defenderbots.sp.
+//
+//sp:plugin RemoveAllDefenderBots
+func RemoveAllDefenderBotsFor(reason string) {
+	if shopping.RemoveAllDefenderBotsFor == nil {
+		missing("RemoveAllDefenderBots")
+	}
+	shopping.RemoveAllDefenderBotsFor(reason)
+}
+
+// DisplayPanelBotTeamComposition shows the lineup and says whether there was
+// one. Ported, panels.
+//
+//sp:body CreateDisplayPanelBotTeamComposition
+func DisplayPanelBotTeamComposition(client int32) bool {
+	if shopping.DisplayPanelBotTeamComposition == nil {
+		missing("CreateDisplayPanelBotTeamComposition")
+	}
+	return shopping.DisplayPanelBotTeamComposition(client)
+}
+
+// DisplayMenuAddDefenderBots shows the manual add menu. Ported, addmenu.
+//
+//sp:body CreateDisplayMenuAddDefenderBots
+func DisplayMenuAddDefenderBots(client int32) {
+	if shopping.DisplayMenuAddDefenderBots == nil {
+		missing("CreateDisplayMenuAddDefenderBots")
+	}
+	shopping.DisplayMenuAddDefenderBots(client)
+}
+
+// AddBotsBasedOnLineupModeNow fills the team from the lineup mode. Ported,
+// manage.
+//
+//sp:body AddBotsBasedOnLineupMode
+func AddBotsBasedOnLineupModeNow(count int32, adjustTime bool) {
+	if shopping.AddBotsBasedOnLineupModeNow == nil {
+		missing("AddBotsBasedOnLineupMode")
+	}
+	shopping.AddBotsBasedOnLineupModeNow(count, adjustTime)
 }
