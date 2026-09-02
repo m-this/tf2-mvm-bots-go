@@ -9,30 +9,32 @@ is what a convar change hands a callback.
 
 // SettingsCalls are the answers.
 type SettingsCalls struct {
-	SetConVarInt                func(c ConVar, value int32)
-	IsNoConVar                  func(c ConVar) bool
-	FreeChosenBotTeamAnnouncing func(announce bool)
-	ArchipelagoRecheck          func()
-	DebugFaultsOnGameFrame      func()
-	SetPopulationManager        func(entity int32)
-	DHooksOnEntityCreated       func(entity int32, classname Text)
-	SetDetonatingPlayer         func(client int32)
-	NoticeThreat                func(client int32, threat int32)
-	CreateTimerData             func(interval float32, data int32) Timer
-	SetAddingBotTime            func(when float32)
-	SetPlayerForcedPref         func(client int32)
-	PlayerForcedPref            func() int32
-	ResetMapHintNests           func()
-	ConfigLoadServerLoadout     func()
-	ConfigLoadBotNames          func()
-	ConfigLoadMap               func()
-	CreateBotPreferenceMenu     func()
-	ResetSpawnExitWatch         func(client int32)
-	ResetLoadouts               func(client int32)
-	ForgetBotSeat               func(client int32)
-	ForgetBotCosmetics          func(client int32)
-	ReseatOnMapStart            func()
-	CreateTimerFlags            func(interval float32, flags int32) Timer
+	SetConVarInt                      func(c ConVar, value int32)
+	IsNoConVar                        func(c ConVar) bool
+	FreeChosenBotTeamAnnouncing       func(announce bool)
+	ArchipelagoRecheck                func()
+	DebugFaultsOnGameFrame            func()
+	SetPopulationManager              func(entity int32)
+	DHooksOnEntityCreated             func(entity int32, classname Text)
+	SetDetonatingPlayer               func(client int32)
+	NoticeThreat                      func(client int32, threat int32)
+	CreateTimerData                   func(interval float32, data int32) Timer
+	SetAddingBotTime                  func(when float32)
+	SetPlayerForcedPref               func(client int32)
+	PlayerForcedPref                  func() int32
+	ResetMapHintNests                 func()
+	ConfigLoadServerLoadout           func()
+	ConfigLoadBotNames                func()
+	ConfigLoadMap                     func()
+	CreateBotPreferenceMenu           func()
+	ResetSpawnExitWatch               func(client int32)
+	ResetLoadouts                     func(client int32)
+	ForgetBotSeat                     func(client int32)
+	ForgetBotCosmetics                func(client int32)
+	ReseatOnMapStart                  func()
+	CreateTimerFlags                  func(interval float32, flags int32) Timer
+	CompareTextTo                     func(a Text, b string) int32
+	UpdateChosenBotTeamCompositionFor func(caller int32)
 }
 
 var settings SettingsCalls
@@ -302,4 +304,26 @@ func CreateTimerFlags(interval float32, callback func(timer Timer) Outcome, flag
 		missing("CreateTimer")
 	}
 	return settings.CreateTimerFlags(interval, flags)
+}
+
+// CompareTextTo is strcmp against a literal, with the case flag left at its
+// default, which is how the plugin writes it.
+//
+//sp:native strcmp
+func CompareTextTo(a Text, b string) int32 {
+	if settings.CompareTextTo == nil {
+		missing("strcmp")
+	}
+	return settings.CompareTextTo(a, b)
+}
+
+// UpdateChosenBotTeamCompositionFor decides the lineup and names who asked.
+// Ported, seating.
+//
+//sp:body UpdateChosenBotTeamComposition
+func UpdateChosenBotTeamCompositionFor(caller int32) {
+	if settings.UpdateChosenBotTeamCompositionFor == nil {
+		missing("UpdateChosenBotTeamComposition")
+	}
+	settings.UpdateChosenBotTeamCompositionFor(caller)
 }

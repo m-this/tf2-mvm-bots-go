@@ -325,6 +325,7 @@ char g_sBotTeamCompositions[][][] =
 #include "redbots3/generated/composition.sp"
 #include "redbots3/generated/settings.sp"
 #include "redbots3/generated/lifecycle.sp"
+#include "redbots3/generated/commands.sp"
 #include "redbots3/generated/teammenu.sp"
 #include "redbots3/generated/prefmenu.sp"
 #include "redbots3/generated/addmenu.sp"
@@ -1011,29 +1012,6 @@ public Action Command_Votebots(int client, int args)
 		}
 	}
 }
-public Action Command_RerollNewBotTeamComposition(int client, int args)
-{
-	if (TF2_GetClientTeam(client) != TFTeam_Red)
-	{
-		ReplyToCommand(client, "%s Your team is not allowed to use this.", PLUGIN_PREFIX);
-		return Plugin_Handled;
-	}
-	
-	switch (redbots_manager_bot_lineup_mode.IntValue)
-	{
-		case BOT_LINEUP_MODE_CHOOSE:
-		{
-			ReplyToCommand(client, "%s This cannot be used with the current lineup mode.", PLUGIN_PREFIX);
-			return Plugin_Handled;
-		}
-	}
-	
-	UpdateChosenBotTeamComposition(client);
-	CreateDisplayPanelBotTeamComposition(client);
-	
-	return Plugin_Handled;
-}
-
 public Action Command_JoinBluePlayWithBots(int client, int args)
 {
 	if (redbots_manager_mode.IntValue < MANAGER_MODE_MANUAL_BOTS)
@@ -1441,29 +1419,6 @@ public Action Command_ViewBotUpgrades(int client, int args)
 	return Plugin_Handled;
 }
 
-public Action Command_ForcePlayerPreference(int client, int args)
-{
-	if (args < 1)
-	{
-		ReplyToCommand(client, "[SM] Usage: sm_db_use_pref_of_player <#userid|name>");
-		return Plugin_Handled;
-	}
-	
-	char arg[4]; GetCmdArg(1, arg, sizeof(arg));
-	
-	//TODO: this is a terrible mockup, please change this
-	//We only want one target at a time here
-	if (!strcmp(arg, "@me"))
-	{
-		g_iPlayerForcedPref = client;
-		return Plugin_Handled;
-	}
-	
-	//TODO: for admin to force use someone else's instead
-	
-	return Plugin_Handled;
-}
-
 public void ConVarChanged_ManagerMode(ConVar convar, const char[] oldValue, const char[] newValue)
 {
 	int mode = StringToInt(newValue);
@@ -1694,57 +1649,6 @@ public void Timer_RealizeSpy(Handle timer, DataPack pack)
 		return;
 	
 	TFBot_NoticeThreat(client, threat);
-}
-
-/* What every bot on RED is holding, so a lineup change can be checked for losing it
-
-A bot that changes class leaves and comes back, and the join path is what decides its balance. This
-prints the number that path arrived at, next to the wave accounting it should match, because reading
-SetCurrencyWithBundles is not the same as knowing what it produced */
-public Action Command_DumpCredits(int client, int args)
-{
-	int earned = GetStartingCurrency(g_iPopulationManager) + GetAcquiredCreditsOfAllWaves();
-
-	ReplyToCommand(client, "[SM] starting plus acquired is %d, before anything Archipelago paid", earned);
-
-	for (int i = 1; i <= MaxClients; i++)
-	{
-		if (!IsClientInGame(i) || TF2_GetClientTeam(i) != TFTeam_Red)
-			continue;
-
-		char name[MAX_NAME_LENGTH]; GetClientName(i, name, sizeof(name));
-
-		ReplyToCommand(client, "[SM] %-20s %-14s %6d credits%s", name, g_sRawPlayerClassNames[view_as<int>(TF2_GetPlayerClass(i))],
-			TF2_GetCurrency(i), IsDefenderBot(i) ? "" : " (human)");
-	}
-
-	return Plugin_Handled;
-}
-
-/* Reload the loadout file and put the team back together with it
-
-The launcher rewrites configs/defenderbots/loadout.cfg and then calls this, which is the whole of
-applying a loadout change to a running server. Nothing else reads that file between map changes */
-public Action Command_ReseatBots(int client, int args)
-{
-	Config_LoadServerLoadout();
-
-	if (GameRules_GetRoundState() == RoundState_RoundRunning)
-	{
-		m_bRecyclePending = true;
-		ReplyToCommand(client, "%s The new team takes effect when this wave ends.", PLUGIN_PREFIX);
-		PrintToChatAll("%s The new team takes effect when this wave ends.", PLUGIN_PREFIX);
-		return Plugin_Handled;
-	}
-
-	int kicked = RecycleDefenderBots();
-	LogMessage("Reseat: the team was retyped, recycled %d bot(s)", kicked);
-	ReplyToCommand(client, "%s Rebuilding %d bot(s) from the new team.", PLUGIN_PREFIX, kicked);
-
-	if (kicked > 0)
-		PrintToChatAll("%s Rebuilding %d bot(s) from the new team...", PLUGIN_PREFIX, kicked);
-
-	return Plugin_Handled;
 }
 
 void AddBotsWithPresetTeamComp(int count = 6, int teamType = 0)
