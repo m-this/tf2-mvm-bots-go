@@ -74,3 +74,144 @@ public Action Command_ReseatBots(int client, int args)
 	return Plugin_Handled;
 }
 
+public Action Command_JoinBluePlayWithBots(int client, int args)
+{
+	if (redbots_manager_mode.IntValue < MANAGER_MODE_MANUAL_BOTS)
+	{
+		ReplyToCommand(client, "%s Currently not allowed.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	if (g_bBotsEnabled)
+	{
+		ReplyToCommand(client, "%s Bots are already enabled for this round.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	if (TF2_GetClientTeam(client) != TFTeam_Blue)
+	{
+		ReplyToCommand(client, "%s Your team is not allowed to use this.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	if (GetHumanAndDefenderBotCount(TFTeam_Red) > 0)
+	{
+		ReplyToCommand(client, "%s You cannot use this with players on RED team.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	AddRandomDefenderBots(redbots_manager_defender_team_size.IntValue);
+	g_bBotsEnabled = true;
+	PrintToChatAll("%s You will play a game with bots.", PLUGIN_PREFIX);
+	return Plugin_Handled;
+}
+
+public Action Command_ChooseBotClasses(int client, int args)
+{
+	if (g_bBotsEnabled)
+	{
+		ReplyToCommand(client, "%s Bots are already enabled.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	if (redbots_manager_bot_lineup_mode.IntValue != BOT_LINEUP_MODE_CHOOSE)
+	{
+		ReplyToCommand(client, "%s Not allowed in the current manager lineup mode.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	if (TF2_GetClientTeam(client) != TFTeam_Red)
+	{
+		ReplyToCommand(client, "%s Your team is not allowed to use this.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	if (g_bBotClassesLocked)
+	{
+		ReplyToCommand(client, "%s Someone has already chosen the lineup for the next game.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	if (g_bChoosingBotClasses[client])
+	{
+		ReplyToCommand(client, "%s You are already choosing the next team lineup.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	if (GetCountOfPlayersChoosingBotClasses() > 0)
+	{
+		ReplyToCommand(client, "%s Someone is currently choosing the next team lineup.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	if (GameRules_GetRoundState() != RoundState_BetweenRounds)
+	{
+		ReplyToCommand(client, "%s This can only be used between waves.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	int redTeamCount = GetHumanAndDefenderBotCount(TFTeam_Red);
+	int defenderTeamSize = redbots_manager_defender_team_size.IntValue;
+	if (redTeamCount >= defenderTeamSize)
+	{
+		ReplyToCommand(client, "%s You are not solo.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	ShowDefenderBotTeamSetupMenu(client, 0, true, defenderTeamSize - redTeamCount);
+	PrintToChatAll("%N is choosing the current bot team lineup.", client);
+	return Plugin_Handled;
+}
+
+public Action Command_RedoBotTeamLineup(int client, int args)
+{
+	if (!g_bBotsEnabled)
+	{
+		ReplyToCommand(client, "%s The bots aren't here, dummy.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	if (!g_bAllowBotTeamRedo)
+	{
+		ReplyToCommand(client, "%s This is currently not allowed.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	if (TF2_GetClientTeam(client) != TFTeam_Red)
+	{
+		ReplyToCommand(client, "%s Your team is not allowed to use this.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	if (g_bChoosingBotClasses[client])
+	{
+		ReplyToCommand(client, "%s You are already choosing the next team lineup.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	if (GetCountOfPlayersChoosingBotClasses() > 0)
+	{
+		ReplyToCommand(client, "%s Someone is currently choosing the next team lineup.", PLUGIN_PREFIX);
+		return Plugin_Handled;
+	}
+	switch (redbots_manager_bot_lineup_mode.IntValue)
+	{
+		case BOT_LINEUP_MODE_RANDOM:
+		{
+			g_bBotsEnabled = false;
+			RemoveAllDefenderBots("DB redo bots");
+			g_bBotClassesLocked = false;
+			UpdateChosenBotTeamComposition();
+		}
+		case BOT_LINEUP_MODE_PREFERENCE:
+		{
+			g_bBotsEnabled = false;
+			RemoveAllDefenderBots("DB redo bots");
+			g_bBotClassesLocked = false;
+			UpdateChosenBotTeamComposition();
+		}
+		case BOT_LINEUP_MODE_CHOOSE:
+		{
+			g_bBotsEnabled = false;
+			RemoveAllDefenderBots("DB redo bots");
+			FreeChosenBotTeam(false);
+			Command_ChooseBotClasses(client, 0);
+		}
+		case BOT_LINEUP_MODE_PREFERENCE_CHOOSE:
+		{
+			g_bBotsEnabled = false;
+			RemoveAllDefenderBots("DB redo bots");
+			g_bBotClassesLocked = false;
+			UpdateChosenBotTeamComposition();
+		}
+	}
+	g_bAllowBotTeamRedo = GetTeamHumanClientCount(TFTeam_Red) == 1;
+	PrintToChatAll("%s %N has decided to repick the bot team lineup.", PLUGIN_PREFIX, client);
+	LogAction(client, -1, "%L triggered defender bot redo", client);
+	return Plugin_Handled;
+}
+

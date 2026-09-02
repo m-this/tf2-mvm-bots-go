@@ -35,6 +35,9 @@ type SettingsCalls struct {
 	CreateTimerFlags                  func(interval float32, flags int32) Timer
 	CompareTextTo                     func(a Text, b string) int32
 	UpdateChosenBotTeamCompositionFor func(caller int32)
+	AllowBotRedo                      func() bool
+	ShowDefenderBotTeamSetupMenu      func(client int32, itemPosition int32, initialize bool, numBotsToAdd int32)
+	TeamHumanClientCount              func(team Team) int32
 }
 
 var settings SettingsCalls
@@ -326,4 +329,34 @@ func UpdateChosenBotTeamCompositionFor(caller int32) {
 		missing("UpdateChosenBotTeamComposition")
 	}
 	settings.UpdateChosenBotTeamCompositionFor(caller)
+}
+
+// AllowBotRedo reads g_bAllowBotTeamRedo.
+//
+//sp:global g_bAllowBotTeamRedo
+func AllowBotRedo() bool {
+	if settings.AllowBotRedo == nil {
+		missing("g_bAllowBotTeamRedo")
+	}
+	return settings.AllowBotRedo()
+}
+
+// ShowDefenderBotTeamSetupMenu puts the lineup menu up. Ported, teammenu.
+//
+//sp:body ShowDefenderBotTeamSetupMenu
+func ShowDefenderBotTeamSetupMenu(client int32, itemPosition int32, initialize bool, numBotsToAdd int32) {
+	if settings.ShowDefenderBotTeamSetupMenu == nil {
+		missing("ShowDefenderBotTeamSetupMenu")
+	}
+	settings.ShowDefenderBotTeamSetupMenu(client, itemPosition, initialize, numBotsToAdd)
+}
+
+// TeamHumanClientCount is how many people, not bots, are on that team.
+//
+//sp:native GetTeamHumanClientCount
+func TeamHumanClientCount(team Team) int32 {
+	if settings.TeamHumanClientCount == nil {
+		missing("GetTeamHumanClientCount")
+	}
+	return settings.TeamHumanClientCount(team)
 }

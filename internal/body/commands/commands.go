@@ -112,3 +112,160 @@ func CommandReseatBots(client int32, args int32) engine.Outcome {
 
 	return engine.PluginHandled()
 }
+
+// CommandJoinBluePlayWithBots puts the caller on BLU and fills RED with bots,
+// which is the one-player-against-the-mod game.
+//
+//sp:name Command_JoinBluePlayWithBots
+//sp:public
+//nolint:revive // unused-parameter: the argument count is the console's, and this command takes none
+func CommandJoinBluePlayWithBots(client int32, args int32) engine.Outcome {
+	if engine.ManagerMode().Int() < engine.ManagerModeManualBots() {
+		engine.ReplyToCommand(client, "%s Currently not allowed.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.BotsEnabled() {
+		engine.ReplyToCommand(client, "%s Bots are already enabled for this round.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.ClientTeam(client) != engine.TeamBlue() {
+		engine.ReplyToCommand(client, "%s Your team is not allowed to use this.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.HumanAndDefenderBotCount(engine.TeamRed()) > 0 {
+		engine.ReplyToCommand(client, "%s You cannot use this with players on RED team.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	engine.AddRandomDefenderBots(engine.DefenderTeamSize().Int())
+	engine.SetBotsEnabled(true)
+	engine.PrintToChatAll("%s You will play a game with bots.", engine.PluginPrefix())
+
+	return engine.PluginHandled()
+}
+
+/*
+	CommandChooseBotClasses opens the lineup menu for a solo player
+
+Only between waves and only while solo, so the current team count is always one
+and the menu asks for the rest of the seats.
+*/
+//
+//sp:name Command_ChooseBotClasses
+//sp:public
+//nolint:revive // unused-parameter: the argument count is the console's, and this command takes none
+func CommandChooseBotClasses(client int32, args int32) engine.Outcome {
+	if engine.BotsEnabled() {
+		engine.ReplyToCommand(client, "%s Bots are already enabled.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.BotLineupMode().Int() != engine.LineupModeChoose() {
+		engine.ReplyToCommand(client, "%s Not allowed in the current manager lineup mode.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.ClientTeam(client) != engine.TeamRed() {
+		engine.ReplyToCommand(client, "%s Your team is not allowed to use this.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.BotClassesLocked() {
+		engine.ReplyToCommand(client, "%s Someone has already chosen the lineup for the next game.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.ChoosingBotClasses(client) {
+		engine.ReplyToCommand(client, "%s You are already choosing the next team lineup.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.PlayersChoosingClasses() > 0 {
+		engine.ReplyToCommand(client, "%s Someone is currently choosing the next team lineup.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.RoundState() != engine.RoundStateBetweenRounds() {
+		engine.ReplyToCommand(client, "%s This can only be used between waves.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	redTeamCount := engine.HumanAndDefenderBotCount(engine.TeamRed())
+	defenderTeamSize := engine.DefenderTeamSize().Int()
+
+	if redTeamCount >= defenderTeamSize {
+		engine.ReplyToCommand(client, "%s You are not solo.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	engine.ShowDefenderBotTeamSetupMenu(client, 0, true, defenderTeamSize-redTeamCount)
+	engine.PrintToChatAll("%N is choosing the current bot team lineup.", client)
+
+	return engine.PluginHandled()
+}
+
+// CommandRedoBotTeamLineup throws the current bots away and picks again.
+//
+//sp:name Command_RedoBotTeamLineup
+//sp:public
+//nolint:revive // unused-parameter: the argument count is the console's, and this command takes none
+func CommandRedoBotTeamLineup(client int32, args int32) engine.Outcome {
+	if !engine.BotsEnabled() {
+		engine.ReplyToCommand(client, "%s The bots aren't here, dummy.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if !engine.AllowBotRedo() {
+		engine.ReplyToCommand(client, "%s This is currently not allowed.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.ClientTeam(client) != engine.TeamRed() {
+		engine.ReplyToCommand(client, "%s Your team is not allowed to use this.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.ChoosingBotClasses(client) {
+		engine.ReplyToCommand(client, "%s You are already choosing the next team lineup.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.PlayersChoosingClasses() > 0 {
+		engine.ReplyToCommand(client, "%s Someone is currently choosing the next team lineup.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	switch engine.BotLineupMode().Int() {
+	case engine.LineupModeRandom():
+		engine.SetBotsEnabled(false)
+		engine.RemoveAllDefenderBotsFor("DB redo bots")
+		engine.SetBotClassesLocked(false)
+		engine.UpdateChosenBotTeamComposition()
+	case engine.LineupModePreference():
+		engine.SetBotsEnabled(false)
+		engine.RemoveAllDefenderBotsFor("DB redo bots")
+		engine.SetBotClassesLocked(false)
+		engine.UpdateChosenBotTeamComposition()
+	case engine.LineupModeChoose():
+		engine.SetBotsEnabled(false)
+		engine.RemoveAllDefenderBotsFor("DB redo bots")
+		engine.FreeChosenBotTeamAnnouncing(false)
+		CommandChooseBotClasses(client, 0)
+	case engine.LineupModePreferenceChoose():
+		engine.SetBotsEnabled(false)
+		engine.RemoveAllDefenderBotsFor("DB redo bots")
+		engine.SetBotClassesLocked(false)
+		engine.UpdateChosenBotTeamComposition()
+	}
+
+	// Solo players are always allowed to repick their bot lineup.
+	engine.SetAllowBotRedo(engine.TeamHumanClientCount(engine.TeamRed()) == 1)
+
+	engine.PrintToChatAll("%s %N has decided to repick the bot team lineup.", engine.PluginPrefix(), client)
+	engine.LogAction(client, -1, "%L triggered defender bot redo", client)
+
+	return engine.PluginHandled()
+}
