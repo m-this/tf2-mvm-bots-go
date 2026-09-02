@@ -228,7 +228,7 @@ func PluginPrefix() string { return "" }
 
 // AddDefenderTFBotOf adds bots of one class to a team at one difficulty.
 //
-//sp:plugin AddDefenderTFBot
+//sp:body AddDefenderTFBot
 func AddDefenderTFBotOf(count int32, class Text, team string, difficulty string) {
 	if prefs.AddDefenderTFBot == nil {
 		missing("AddDefenderTFBot")
@@ -238,7 +238,7 @@ func AddDefenderTFBotOf(count int32, class Text, team string, difficulty string)
 
 // AddRandomDefenderBots adds that many, class unchosen.
 //
-//sp:plugin AddRandomDefenderBots
+//sp:body AddRandomDefenderBots
 func AddRandomDefenderBots(amount int32) {
 	if prefs.AddRandomDefenderBots == nil {
 		missing("AddRandomDefenderBots")

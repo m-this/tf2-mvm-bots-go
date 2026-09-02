@@ -270,6 +270,7 @@ Address g_pMannVsMachineUpgrades;
 #include "redbots3/generated/humans.sp"
 #include "redbots3/generated/mapconfig.sp"
 #include "redbots3/generated/botnames.sp"
+#include "redbots3/generated/manage.sp"
 #include "redbots3/generated/lineoffire.sp"
 #include "redbots3/generated/nestscore.sp"
 #include "redbots3/generated/nestpick.sp"
@@ -1901,47 +1902,6 @@ public Action SoundHook_General(int clients[MAXPLAYERS], int &numClients, char s
 	
 	return Plugin_Continue;
 }
-
-public Action Timer_CheckBotImbalance(Handle timer)
-{
-	if (!g_bBotsEnabled)
-		return Plugin_Stop;
-	
-	switch (redbots_manager_mode.IntValue)
-	{
-		case MANAGER_MODE_MANUAL_BOTS, MANAGER_MODE_READY_BOTS:
-		{
-			//Bots are added pre-round, but we can also monitor them during the round
-			if (GameRules_GetRoundState() != RoundState_BetweenRounds && GameRules_GetRoundState() != RoundState_RoundRunning)
-				return Plugin_Stop;
-			
-			int defenderCount = GetHumanAndDefenderBotCount(TFTeam_Red);
-			
-			if (defenderCount < redbots_manager_defender_team_size.IntValue)
-			{
-				int amount = redbots_manager_defender_team_size.IntValue - defenderCount;
-				AddBotsBasedOnLineupMode(amount);
-			}
-		}
-		case MANAGER_MODE_AUTO_BOTS:
-		{
-			//Bots are added when rhe wave begins, only monitor them during the round
-			if (GameRules_GetRoundState() != RoundState_RoundRunning)
-				return Plugin_Stop;
-			
-			int defenderCount = GetHumanAndDefenderBotCount(TFTeam_Red);
-			
-			if (defenderCount < redbots_manager_defender_team_size.IntValue)
-			{
-				int amount = redbots_manager_defender_team_size.IntValue - defenderCount;
-				AddBotsBasedOnLineupMode(amount);
-			}
-		}
-	}
-	
-	return Plugin_Continue;
-}
-
 public Action Timer_ForgetDetonatingPlayer(Handle timer, any data)
 {
 	//They should have detonated by now
@@ -2145,63 +2105,6 @@ void RemoveAllDefenderBots(char[] reason = "", bool bDanceInstead = false)
 		}
 	}
 }
-
-void ManageDefenderBots(bool bManage, bool bAddBots = true)
-{
-	if (bManage)
-	{
-		if (bAddBots)
-			AddBotsFromChosenTeamComposition();
-		
-		CreateTimer(1.0, Timer_CheckBotImbalance, _, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
-		g_bBotsEnabled = true;
-		
-		PrintToChatAll("%s Bots have been enabled.", PLUGIN_PREFIX);
-	}
-	else
-	{
-		g_bBotsEnabled = false;
-	}
-}
-
-void AddBotsBasedOnLineupMode(int count, bool bAdjustTime = true)
-{
-	LogMessage("Fill: asked for %d, RED holds %d of %d", count, GetHumanAndDefenderBotCount(TFTeam_Red),
-		redbots_manager_defender_team_size.IntValue);
-
-	//The lineup mode fills what the named team left, and not the whole ask again: a three seat team
-	//and an ask for six used to be nine bots on RED
-	count -= AddBotsFromTeamComposition(count);
-
-	if (count < 1)
-	{
-		if (bAdjustTime)
-			ExtendUpgradeTimeForNewBots();
-
-		return;
-	}
-	LogMessage("Fill: the lineup mode adds %d more", count);
-
-	switch (redbots_manager_bot_lineup_mode.IntValue)
-	{
-		case BOT_LINEUP_MODE_RANDOM:
-		{
-			AddRandomDefenderBots(count);
-		}
-		case BOT_LINEUP_MODE_PREFERENCE, BOT_LINEUP_MODE_CHOOSE, BOT_LINEUP_MODE_PREFERENCE_CHOOSE:
-		{
-			AddBotsBasedOnPreferences(count);
-		}
-		default:
-		{
-			ThrowError("Unhandled lineup mode %d", redbots_manager_bot_lineup_mode.IntValue);
-		}
-	}
-	
-	if (bAdjustTime)
-		ExtendUpgradeTimeForNewBots();
-}
-
 /* The seats sm_redbots_manager_team_composition still wants filled, in its order, at most count of
 them. Zero when the convar is empty, and the caller falls back to the lineup mode
 
@@ -2555,29 +2458,6 @@ void HandleTeamPlayerCountChanged(TFTeam team, int iWhoChanging = -1)
 		}
 	}
 }
-
-void AddDefenderTFBot(int count, char[] class, char[] team = "red", char[] difficulty = "expert", bool quotaManaged = false, bool honorBlacklist = true)
-{
-	char allowed[TF2_CLASS_MAX_NAME_LENGTH]; strcopy(allowed, sizeof(allowed), class);
-
-	if (honorBlacklist)
-		PickAllowedBotClass(class, allowed, sizeof(allowed));
-
-	//Says why a bot is the class it is, which nothing did: the wanted class, what the blacklist left
-	//of it, and whether the lineup was typed into the console or read off the map config
-	if (!StrEqual(class, allowed) || redbots_manager_debug.BoolValue)
-	{
-		char typed[128]; redbots_manager_team_composition.GetString(typed, sizeof(typed));
-
-		LogMessage("Adding %s (wanted %s), lineup from %s", allowed, class,
-			typed[0] != '\0' ? "the convar" : (g_arrMapConfig.strComposition[0] != '\0' ? "the map config" : "the lineup mode"));
-	}
-
-	//Send command as many times as needed because custom names aren't supported when adding multiple
-	for (int i = 0; i < count; i++)
-		ServerCommand("tf_bot_add %d %s %s %s %s %s", 1, allowed, team, difficulty, quotaManaged ? "" : "noquota", TFBOT_IDENTITY_NAME);
-}
-
 //A blacklisted class becomes a random class that is not, so every path that adds a bot obeys the list
 void PickAllowedBotClass(const char[] wanted, char[] buffer, int maxlen)
 {
@@ -2724,15 +2604,6 @@ public void ConVarChanged_DefenderTeamSize(ConVar convar, const char[] before, c
 	//The hook fires again on this write, and the second pass returns at the equality above
 	convar.SetInt(allowed);
 }
-
-void AddRandomDefenderBots(int amount)
-{
-	PrintToChatAll("%s Adding %d bot(s)...", PLUGIN_PREFIX, amount);
-	
-	for (int i = 1; i <= amount; i++)
-		AddDefenderTFBot(1, g_sRawPlayerClassNames[GetRandomInt(1, 9)], "red", "expert");
-}
-
 void AddBotsWithPresetTeamComp(int count = 6, int teamType = 0)
 {
 	int total = 0;

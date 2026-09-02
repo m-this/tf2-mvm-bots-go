@@ -282,7 +282,7 @@ func RemoveOrphanedWearables() {
 
 // ManageDefenderBots adds or removes bots to match what the server asked for.
 //
-//sp:plugin ManageDefenderBots
+//sp:body ManageDefenderBots
 func ManageDefenderBots(force bool) {
 	if registrations.ManageDefenderBots == nil {
 		missing("ManageDefenderBots")

@@ -423,6 +423,14 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 				params = append(params, "char[] "+e.ident(d.Pos(), name))
 				continue
 			}
+			// The shipped declaration leaves a few buffers
+			// writable that the function never writes, and hands
+			// them on to something that demands one. //sp:writable
+			// says which, the same way it does for a string.
+			if e.writable[name] {
+				params = append(params, "char[] "+e.ident(d.Pos(), name))
+				continue
+			}
 			// A buffer a function is handed is const char[]: the
 			// length belongs to whoever declared it, and writing
 			// this port's own 512 here refuses every caller whose
