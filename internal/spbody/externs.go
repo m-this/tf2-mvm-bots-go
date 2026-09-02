@@ -214,6 +214,10 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 			return Extern{Func: name, Slot: true}, true, nil
 		case "slotset":
 			return Extern{Func: name, Slot: true, Set: true}, true, nil
+		case "slot2":
+			return Extern{Func: name, Slot: true, Slot2: true}, true, nil
+		case "slot2set":
+			return Extern{Func: name, Slot: true, Slot2: true, Set: true}, true, nil
 		case "global":
 			return Extern{Func: name, Global: true}, true, nil
 		case "globalset":

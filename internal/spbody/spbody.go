@@ -76,6 +76,15 @@ type Extern struct {
 		argument is written where the call was.
 	*/
 	Same bool
+	/*
+		Slot2 is a plugin array indexed twice.
+
+		m_iSpentOnUpgrade[client][index] is the one: what a bot has put
+		into each attribute this trip. A slot with one index cannot
+		reach it, and the shape is common enough in the plugin to name
+		rather than to work around.
+	*/
+	Slot2 bool
 	// Global says this is not a call at all: SourceMod's MaxClients is a
 	// variable, and the Go declaration is a function only because the
 	// subset has no other way to name something it does not own.

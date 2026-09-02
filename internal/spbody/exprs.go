@@ -272,19 +272,26 @@ ordinary package state, the two declarations go, and the subscript is the
 generator's own.
 */
 func (e *emitter) slot(call *ast.CallExpr, x Extern) string {
-	want := 1
+	indices := 1
+	if x.Slot2 {
+		indices = 2
+	}
+	want := indices
 	if x.Set {
-		want = 2
+		want = indices + 1
 	}
 	if len(call.Args) != want {
 		e.fail(call.Pos(), "%s takes %d argument(s), and was given %d", x.Func, want, len(call.Args))
 		return ""
 	}
 	read := fmt.Sprintf("%s[%s]", x.Func, e.expr(call.Args[0]))
+	if x.Slot2 {
+		read += fmt.Sprintf("[%s]", e.expr(call.Args[1]))
+	}
 	if !x.Set {
 		return read
 	}
-	return fmt.Sprintf("%s = %s", read, e.expr(call.Args[1]))
+	return fmt.Sprintf("%s = %s", read, e.expr(call.Args[want-1]))
 }
 
 // propertyExtern is a read written without parentheses, which is what

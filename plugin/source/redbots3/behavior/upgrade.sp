@@ -1,19 +1,4 @@
 #define BUY_UPGRADES_FAST_MAX_TIME	3.0
-
-/* A building rebuilding cannot improve on: finished being built, and at its top level
-
-Its own rather than nextbot_behavior's IsBuildingFinished, which this file is included ahead of. */
-static bool NothingLeftToBuild(int building)
-{
-	if (building == INVALID_ENT_REFERENCE || !IsValidEntity(building))
-		return false;
-	
-	if (TF2_IsBuilding(building))
-		return false;
-	
-	return TF2_IsMiniBuilding(building) || TF2_GetUpgradeLevel(building) >= 3;
-}
-
 static int MAX_INT = 99999999;
 static int MIN_INT = -99999999;
 
@@ -43,10 +28,7 @@ the wrong thing, and this stops it either way.
 
 Half, and never less than two steps of whatever it is: a small wallet that could only afford one
 thing would otherwise buy nothing at all. */
-#define UPGRADE_ATTRIBUTE_SHARE	0.5
 
-static int m_iSessionWallet[MAXPLAYERS + 1];
-static int m_iSpentOnUpgrade[MAXPLAYERS + 1][MAX_UPGRADES];
 
 /* What the game refused this trip, so the next choice is a different one
  *
@@ -55,21 +37,6 @@ static int m_iSpentOnUpgrade[MAXPLAYERS + 1][MAX_UPGRADES];
  * the refusal rather than to stop shopping: ten of forty five trips measured on Bavarian Botbash
  * ended this way, with money still in the wallet and a list still worth walking. */
 static bool m_bRefusedUpgrade[MAXPLAYERS + 1][MAX_UPGRADES];
-
-//What one more step of this upgrade would take the bot past, or false when it would not
-static bool WithinAttributeShare(int client, int index, int cost)
-{
-	if (index < 0 || index >= MAX_UPGRADES)
-		return true;
-	
-	int allowed = RoundToNearest(float(m_iSessionWallet[client]) * UPGRADE_ATTRIBUTE_SHARE);
-	
-	if (allowed < cost * 2)
-		allowed = cost * 2;
-	
-	return m_iSpentOnUpgrade[client][index] + cost <= allowed;
-}
-
 public Action CTFBotUpgrade_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
@@ -108,28 +75,6 @@ public Action CTFBotUpgrade_OnStart(BehaviorAction action, int actor, BehaviorAc
 	
 	return action.Continue();
 }
-
-/* Why a shopping trip ended, and what was still in the wallet when it did
- *
- * The test-bed says the team finishes a wave holding a median of 3328 credits it never spent, and
- * a trip can end three ways: the window ran out, the game refused a purchase, or the ranking ran
- * out of things it was willing to buy. Those are three different faults and nothing said which. */
-static void LogUpgradeSessionEnd(int actor, const char[] why)
-{
-	/* And what the wave looked like while he was spending
-	
-	A resistance is ranked at 210 when the coming wave deals that damage and 25 when it does not,
-	so the three answers below decide whether a resistance was ever worth buying on this trip.
-	Reported from play as "the bots really need to buy resistance upgrades", and the ranking was
-	already there and already ahead of most of the table: what nobody could see was whether
-	WaveHasClassIcon had anything to read. tf_objective_resource carries the wave bar, and a trip
-	that shops before the game has filled it in sees an empty wave and prices every resistance at
-	nothing. */
-	LogMessage("Shopping: %N stopped, %s, %d credits left, wave deals blast=%d bullet=%d fire=%d",
-		actor, why, TF2_GetCurrency(actor),
-		WaveHasExplosiveRobots(), WaveHasBulletRobots(), WaveHasFireRobots());
-}
-
 public Action CTFBotUpgrade_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
 	if (!TF2_IsInUpgradeZone(actor)) 
@@ -561,11 +506,6 @@ int GetUpgradePriority(int client, JSONObject info)
 	return UpgradeRankGeneral(id);
 }
 
-
-
-
-
-
 void KV_MvM_UpgradesBegin(int client)
 {
 	m_nPurchasedUpgrades[client] = 0;
@@ -574,24 +514,6 @@ void KV_MvM_UpgradesBegin(int client)
 	FakeClientCommandKeyValues(client, kv);
 	delete kv;
 }
-
-float GetUpgradeInterval()
-{
-	float customInterval = redbots_manager_bot_upgrade_interval.FloatValue;
-	
-	if (customInterval >= 0.0)
-		return customInterval;
-	
-	//Upgrading during an active round, buy upgrades fast
-	if (GameRules_GetRoundState() == RoundState_RoundRunning)
-		return GetRandomFloat(0.1, 0.75);
-	
-	const float interval = 1.25;
-	const float variance = 0.3;
-	
-	return GetRandomFloat(interval - variance, interval + variance);
-}
-
 JSONObject CTFBotPurchaseUpgrades_ChooseUpgrade(int actor)
 {
 	int currency = TF2_GetCurrency(actor);
@@ -698,7 +620,6 @@ top until it maxes out, so the steps bought here in one go are the ones the next
 would have bought anyway. The bot just finishes sooner and says so once */
 
 //No stock upgrade has more steps than this, and asking for steps that do not exist buys nothing
-
 
 bool CTFBotPurchaseUpgrades_PurchaseUpgrade(int actor, JSONObject info)
 {

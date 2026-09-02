@@ -110,6 +110,7 @@ which the search has plainly failed, and every real route on these maps is far i
 #include "generated/attributes.sp"
 #include "generated/upgrade_rank.sp"
 #include "generated/upgrade_rules.sp"
+#include "generated/shopping.sp"
 #include "behavior/upgrade.sp"
 #include "generated/getammo.sp"
 #include "generated/movetofront.sp"
