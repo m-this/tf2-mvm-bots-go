@@ -12,6 +12,8 @@ Close is only ever called from the handler.
 
 // MenuCalls are the answers.
 type MenuCalls struct {
+	WeaponPreference               func(client int32, class string, slot string) int32
+	FormatNamed                    func(format string, name Text) Text
 	AddMenuItemBoth                func(m Menu, info Text, display Text)
 	CopySlot                       func(from string) [10]byte
 	DisplayWeaponPreferenceMenuFor func(client int32, class [16]byte)
@@ -358,17 +360,6 @@ func ManageDefenderBotsOn(manage bool) {
 	menus.ManageDefenderBots(manage)
 }
 
-// WeaponPrefMenuItemText is one row of the weapon menu: the slot's name and
-// what this player has picked for it. Still in menu.sp.
-//
-//sp:plugin GetWeaponPrefMenuItemText returns
-func WeaponPrefMenuItemText(client int32, class string, slot int32) Text {
-	if menus.WeaponPrefMenuItemText == nil {
-		missing("GetWeaponPrefMenuItemText")
-	}
-	return menus.WeaponPrefMenuItemText(client, class, slot)
-}
-
 // WeaponSlotItem1 is TFWeaponSlot_Item1, where the spy keeps his watch.
 //
 //sp:global TFWeaponSlot_Item1
@@ -516,4 +507,26 @@ is written where the call was.
 //sp:same TextOfSlot
 func TextOfSlot(from [16]byte) string {
 	return string(from[:])
+}
+
+// WeaponPreference is the item this player wants a bot of that class to carry
+// in that slot. Ported, playerpref.
+//
+//sp:body GetWeaponPreference
+func WeaponPreference(client int32, class string, slot string) int32 {
+	if menus.WeaponPreference == nil {
+		missing("GetWeaponPreference")
+	}
+	return menus.WeaponPreference(client, class, slot)
+}
+
+// FormatNamed writes one substitution into a buffer, which is a menu row's
+// label.
+//
+//sp:native Format fills
+func FormatNamed(format string, name Text) (out Text) {
+	if menus.FormatNamed == nil {
+		missing("Format")
+	}
+	return menus.FormatNamed(format, name)
 }

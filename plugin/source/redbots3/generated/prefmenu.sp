@@ -357,3 +357,53 @@ stock int MenuHandler_WeaponPreferenceItemList(Menu menu, MenuAction action, int
 	return 0;
 }
 
+stock char[] GetWeaponPrefMenuItemText(int client, char[] class, int slot)
+{
+	char menuText[512];
+	switch (slot)
+	{
+		case TFWeaponSlot_Primary:
+		{
+			char weaponName[512];
+			bool named = TF2Econ_GetItemName(GetWeaponPreference(client, class, "primary"), weaponName, 512);
+			if (named)
+			{
+				Format(menuText, 512, "Primary: %s", weaponName);
+			}
+		}
+		case TFWeaponSlot_Secondary:
+		{
+			char weaponName[512];
+			bool named = TF2Econ_GetItemName(GetWeaponPreference(client, class, "secondary"), weaponName, 512);
+			if (named)
+			{
+				Format(menuText, 512, "Secondary: %s", weaponName);
+			}
+		}
+		case TFWeaponSlot_Melee:
+		{
+			char weaponName[512];
+			bool named = TF2Econ_GetItemName(GetWeaponPreference(client, class, "melee"), weaponName, 512);
+			if (named)
+			{
+				Format(menuText, 512, "Melee: %s", weaponName);
+			}
+		}
+		case TFWeaponSlot_Item1:
+		{
+			char weaponName[512];
+			bool named = TF2Econ_GetItemName(GetWeaponPreference(client, class, "pda2"), weaponName, 512);
+			if (named)
+			{
+				Format(menuText, 512, "PDA2: %s", weaponName);
+			}
+		}
+		default:
+		{
+			PrintToChatAll("[GetWeaponPrefMenuItemText] Unspecified weapon slot.");
+			LogError("GetWeaponPrefMenuItemText: Unspecified weapon slot.");
+		}
+	}
+	return menuText;
+}
+

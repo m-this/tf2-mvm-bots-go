@@ -26,42 +26,6 @@ bool StartBotVote(int voteCaller)
 	
 	return false;
 }
-char[] GetWeaponPrefMenuItemText(int client, char[] class, int slot)
-{
-	char menuText[PLATFORM_MAX_PATH];
-	char weaponName[PLATFORM_MAX_PATH];
-	
-	switch (slot)
-	{
-		case TFWeaponSlot_Primary:
-		{
-			if (TF2Econ_GetItemName(GetWeaponPreference(client, class, "primary"), weaponName, sizeof(weaponName)))
-				Format(menuText, sizeof(menuText), "Primary: %s", weaponName);
-		}
-		case TFWeaponSlot_Secondary:
-		{
-			if (TF2Econ_GetItemName(GetWeaponPreference(client, class, "secondary"), weaponName, sizeof(weaponName)))
-				Format(menuText, sizeof(menuText), "Secondary: %s", weaponName);
-		}
-		case TFWeaponSlot_Melee:
-		{
-			if (TF2Econ_GetItemName(GetWeaponPreference(client, class, "melee"), weaponName, sizeof(weaponName)))
-				Format(menuText, sizeof(menuText), "Melee: %s", weaponName);
-		}
-		case TFWeaponSlot_Item1:
-		{
-			if (TF2Econ_GetItemName(GetWeaponPreference(client, class, "pda2"), weaponName, sizeof(weaponName)))
-				Format(menuText, sizeof(menuText), "PDA2: %s", weaponName);
-		}
-		default:
-		{
-			PrintToChatAll("[GetWeaponPrefMenuItemText] Unspecified weapon slot.");
-			LogError("GetWeaponPrefMenuItemText: Unspecified weapon slot.");
-		}
-	}
-	
-	return menuText;
-}
 void CreateDisplayPanelBotPercentages(int client, float classPercents[TFClass_Engineer], const int duration = 30)
 {
 	if (IsFakeClient(client))

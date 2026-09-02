@@ -249,12 +249,12 @@ func DisplayWeaponPreferenceMenu(client int32, class string, item int32) {
 	hWeaponPrefMenu := engine.CreateMenu(MenuHandlerWeaponPreference)
 	engine.SetMenuTitleFor(hWeaponPrefMenu, "Bot Weapon Preferences: %s", class)
 	engine.SetMenuExitBackButton(hWeaponPrefMenu, true)
-	engine.AddMenuItemFrom(hWeaponPrefMenu, "0", engine.WeaponPrefMenuItemText(client, class, engine.WeaponSlotPrimary()))
-	engine.AddMenuItemFrom(hWeaponPrefMenu, "1", engine.WeaponPrefMenuItemText(client, class, engine.WeaponSlotSecondary()))
-	engine.AddMenuItemFrom(hWeaponPrefMenu, "2", engine.WeaponPrefMenuItemText(client, class, engine.WeaponSlotMelee()))
+	engine.AddMenuItemFrom(hWeaponPrefMenu, "0", GetWeaponPrefMenuItemText(client, class, engine.WeaponSlotPrimary()))
+	engine.AddMenuItemFrom(hWeaponPrefMenu, "1", GetWeaponPrefMenuItemText(client, class, engine.WeaponSlotSecondary()))
+	engine.AddMenuItemFrom(hWeaponPrefMenu, "2", GetWeaponPrefMenuItemText(client, class, engine.WeaponSlotMelee()))
 
 	if engine.StrEqualLiteral(class, "spy", false) {
-		engine.AddMenuItemFrom(hWeaponPrefMenu, "3", engine.WeaponPrefMenuItemText(client, class, engine.WeaponSlotItem1()))
+		engine.AddMenuItemFrom(hWeaponPrefMenu, "3", GetWeaponPrefMenuItemText(client, class, engine.WeaponSlotItem1()))
 	}
 
 	engine.DisplayMenuAtItem(hWeaponPrefMenu, client, item, engine.MenuTimeForever())
@@ -395,4 +395,46 @@ func MenuHandlerWeaponPreferenceItemList(menu engine.Menu, action engine.MenuCho
 	}
 
 	return 0
+}
+
+/*
+GetWeaponPrefMenuItemText is one row of the slot menu: the slot's name and what
+this player has picked for it.
+
+An empty row is what a player who has picked nothing sees, and what a pick the
+schema cannot name sees too: the buffer is only written when the name comes
+back.
+*/
+//
+//sp:name GetWeaponPrefMenuItemText
+//sp:returns
+//sp:writable class
+func GetWeaponPrefMenuItemText(client int32, class string, slot int32) (menuText engine.Text) {
+	switch slot {
+	case engine.WeaponSlotPrimary():
+		named, weaponName := engine.ItemName(engine.WeaponPreference(client, class, "primary"))
+		if named {
+			menuText = engine.FormatNamed("Primary: %s", weaponName)
+		}
+	case engine.WeaponSlotSecondary():
+		named, weaponName := engine.ItemName(engine.WeaponPreference(client, class, "secondary"))
+		if named {
+			menuText = engine.FormatNamed("Secondary: %s", weaponName)
+		}
+	case engine.WeaponSlotMelee():
+		named, weaponName := engine.ItemName(engine.WeaponPreference(client, class, "melee"))
+		if named {
+			menuText = engine.FormatNamed("Melee: %s", weaponName)
+		}
+	case engine.WeaponSlotItem1():
+		named, weaponName := engine.ItemName(engine.WeaponPreference(client, class, "pda2"))
+		if named {
+			menuText = engine.FormatNamed("PDA2: %s", weaponName)
+		}
+	default:
+		engine.PrintToChatAll("[GetWeaponPrefMenuItemText] Unspecified weapon slot.")
+		engine.LogError("GetWeaponPrefMenuItemText: Unspecified weapon slot.")
+	}
+
+	return menuText
 }
