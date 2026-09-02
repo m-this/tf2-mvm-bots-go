@@ -12,19 +12,28 @@ Close is only ever called from the handler.
 
 // MenuCalls are the answers.
 type MenuCalls struct {
-	NewMenu             func(handler string) Menu
-	SetTitle            func(m Menu, format string, args []any)
-	AddItem             func(m Menu, info string, display string)
-	Display             func(m Menu, client int32, time int32)
-	DisplayAt           func(m Menu, client int32, position int32, time int32)
-	DeleteMenu          func(m Menu)
-	SelectionPos        func() int32
-	SetChoosing         func(client int32, choosing bool)
-	PrintToChat         func(client int32, format string, args []any)
-	ChosenClasses       func() List
-	ShowConfirmation    func(client int32)
-	SetupCancelled      func()
-	SetBotClassesLocked func(locked bool)
+	NewMenu               func(handler string) Menu
+	SetTitle              func(m Menu, format string, args []any)
+	AddItem               func(m Menu, info string, display string)
+	Display               func(m Menu, client int32, time int32)
+	DisplayAt             func(m Menu, client int32, position int32, time int32)
+	DeleteMenu            func(m Menu)
+	SelectionPos          func() int32
+	SetChoosing           func(client int32, choosing bool)
+	PrintToChat           func(client int32, format string, args []any)
+	ChosenClasses         func() List
+	ShowConfirmation      func(client int32)
+	SetupCancelled        func()
+	SetBotClassesLocked   func(locked bool)
+	CreateMenu            func(handler string) Menu
+	SetMenuTitle          func(m Menu, title string)
+	AddMenuItem           func(m Menu, info string, display string)
+	AddMenuItemText       func(m Menu, info string, display string)
+	SetMenuExitBackButton func(m Menu, on bool)
+	DisplayMenu           func(m Menu, client int32, time int32)
+	DisplayMenuAtItem     func(m Menu, client int32, item int32, time int32)
+	ClassPreferencesFlags func(client int32) int32
+	SetClassPreferences   func(client int32, class string, value int32)
 }
 
 var menus MenuCalls
@@ -183,4 +192,125 @@ func SetBotClassesLocked(locked bool) {
 		missing("g_bBotClassesLocked")
 	}
 	menus.SetBotClassesLocked(locked)
+}
+
+/*
+The function-style menu API.
+
+SourceMod has both: the methodmap the team menu uses, and these, which the
+preference menus were written against. They are the same objects, so a menu made
+by one can be shown by the other; the port keeps whichever the shipped file
+wrote.
+*/
+
+// CreateMenu makes one behind a handler named by the emitter.
+//
+//sp:native CreateMenu borrowed
+//nolint:revive // unused-parameter: the handler is a name the emitter writes
+func CreateMenu(handler func(menu Menu, action MenuChoice, param1 int32, param2 int32) int32) Menu {
+	if menus.CreateMenu == nil {
+		missing("CreateMenu")
+	}
+	return menus.CreateMenu("")
+}
+
+// SetMenuTitle writes the line above the items.
+//
+//sp:native SetMenuTitle
+func SetMenuTitle(m Menu, title string) {
+	if menus.SetMenuTitle == nil {
+		missing("SetMenuTitle")
+	}
+	menus.SetMenuTitle(m, title)
+}
+
+// AddMenuItem adds one row.
+//
+//sp:native AddMenuItem
+func AddMenuItem(m Menu, info string, display string) {
+	if menus.AddMenuItem == nil {
+		missing("AddMenuItem")
+	}
+	menus.AddMenuItem(m, info, display)
+}
+
+// AddMenuItemText is the same row where the label was built rather than
+// written out, which a toggle needs.
+//
+//sp:native AddMenuItem
+func AddMenuItemText(m Menu, info string, display string) {
+	if menus.AddMenuItemText == nil {
+		missing("AddMenuItem")
+	}
+	menus.AddMenuItemText(m, info, display)
+}
+
+// SetMenuExitBackButton puts a back button on it, which is what makes a
+// submenu a submenu.
+//
+//sp:native SetMenuExitBackButton
+func SetMenuExitBackButton(m Menu, on bool) {
+	if menus.SetMenuExitBackButton == nil {
+		missing("SetMenuExitBackButton")
+	}
+	menus.SetMenuExitBackButton(m, on)
+}
+
+// DisplayMenu shows it.
+//
+//sp:native DisplayMenu
+func DisplayMenu(m Menu, client int32, time int32) {
+	if menus.DisplayMenu == nil {
+		missing("DisplayMenu")
+	}
+	menus.DisplayMenu(m, client, time)
+}
+
+// DisplayMenuAtItem shows it scrolled to a row, so a menu redrawn after a
+// toggle keeps its place.
+//
+//sp:native DisplayMenuAtItem
+func DisplayMenuAtItem(m Menu, client int32, item int32, time int32) {
+	if menus.DisplayMenuAtItem == nil {
+		missing("DisplayMenuAtItem")
+	}
+	menus.DisplayMenuAtItem(m, client, item, time)
+}
+
+// MenuTimeForever is MENU_TIME_FOREVER: up until it is answered.
+//
+//sp:global MENU_TIME_FOREVER
+func MenuTimeForever() int32 { return 0 }
+
+// MenuCancelExitBack is MenuCancel_ExitBack, the back button rather than a
+// close.
+//
+//sp:global MenuCancel_ExitBack
+func MenuCancelExitBack() int32 { return -6 }
+
+// BotPreferenceMenu is g_hBotPreferenceMenu, the root of the preference
+// menus, kept because every submenu backs out to it.
+//
+//sp:global g_hBotPreferenceMenu
+func BotPreferenceMenu() Menu { return 0 }
+
+// ClassPreferencesFlags is what classes this player will accept as bots.
+// Ported, playerpref.
+//
+//sp:body GetClassPreferencesFlags
+func ClassPreferencesFlags(client int32) int32 {
+	if menus.ClassPreferencesFlags == nil {
+		missing("GetClassPreferencesFlags")
+	}
+	return menus.ClassPreferencesFlags(client)
+}
+
+// SetClassPreferences writes one class's answer. Still in player_pref.sp.
+//
+//sp:body SetClassPreferences
+func SetClassPreferences(client int32, class string, value int32) {
+	if menus.SetClassPreferences == nil {
+		missing("SetClassPreferences")
+	}
+	menus.SetClassPreferences(client, class, value)
 }

@@ -54,26 +54,6 @@ void CreateBotPreferenceMenu()
 	AddMenuItem(m_hWeaponPrefClassMenu, "7", "Sniper");
 	AddMenuItem(m_hWeaponPrefClassMenu, "8", "Spy");
 }
-
-void DisplayClassPreferenceMenu(int client, int item = 0)
-{
-	int flags = GetClassPreferencesFlags(client);
-	
-	Menu hClassPrefMenu = CreateMenu(MenuHandler_ClassPreference);
-	SetMenuTitle(hClassPrefMenu, "Bot Class Preferences");
-	SetMenuExitBackButton(hClassPrefMenu, true);
-	AddMenuItem(hClassPrefMenu, "0", flags & PREF_FL_SCOUT ? "Scout: Yes" : "Scout: No");
-	AddMenuItem(hClassPrefMenu, "1", flags & PREF_FL_SOLDIER ? "Soldier: Yes" : "Soldier: No");
-	AddMenuItem(hClassPrefMenu, "2", flags & PREF_FL_PYRO ? "Pyro: Yes" : "Pyro: No");
-	AddMenuItem(hClassPrefMenu, "3", flags & PREF_FL_DEMO ? "Demoman: Yes" : "Demoman: No");
-	AddMenuItem(hClassPrefMenu, "4", flags & PREF_FL_HEAVY ? "Heavy: Yes" : "Heavy: No");
-	AddMenuItem(hClassPrefMenu, "5", flags & PREF_FL_ENGINEER ? "Engineer: Yes" : "Engineer: No");
-	AddMenuItem(hClassPrefMenu, "6", flags & PREF_FL_MEDIC ? "Medic: Yes" : "Medic: No");
-	AddMenuItem(hClassPrefMenu, "7", flags & PREF_FL_SNIPER ? "Sniper: Yes" : "Sniper: No");
-	AddMenuItem(hClassPrefMenu, "8", flags & PREF_FL_SPY ? "Spy: Yes" : "Spy: No");
-	DisplayMenuAtItem(hClassPrefMenu, client, item, MENU_TIME_FOREVER);
-}
-
 void DisplayWeaponPreferenceMenu(int client, char[] class, int item = 0)
 {
 	//Tell us the class we just chose so everything else will get the correct data for this class
@@ -643,45 +623,6 @@ static int MenuHandler_BotPreferenceMain(Menu menu, MenuAction action, int param
 	
 	return 0;
 }
-
-static int MenuHandler_ClassPreference(Menu menu, MenuAction action, int param1, int param2)
-{
-	switch (action)
-	{
-		case MenuAction_Select:
-		{
-			int flags = GetClassPreferencesFlags(param1);
-			
-			switch (param2)
-			{
-				//This may look weird, but we do the opposite because this is them toggling the value
-				case 0:	SetClassPreferences(param1, "scout", flags & PREF_FL_SCOUT ? 0 : 1);
-				case 1:	SetClassPreferences(param1, "soldier", flags & PREF_FL_SOLDIER ? 0 : 1);
-				case 2:	SetClassPreferences(param1, "pyro", flags & PREF_FL_PYRO ? 0 : 1);
-				case 3:	SetClassPreferences(param1, "demoman", flags & PREF_FL_DEMO ? 0 : 1);
-				case 4:	SetClassPreferences(param1, "heavyweapons", flags & PREF_FL_HEAVY ? 0 : 1);
-				case 5:	SetClassPreferences(param1, "engineer", flags & PREF_FL_ENGINEER ? 0 : 1);
-				case 6:	SetClassPreferences(param1, "medic", flags & PREF_FL_MEDIC ? 0 : 1);
-				case 7:	SetClassPreferences(param1, "sniper", flags & PREF_FL_SNIPER ? 0 : 1);
-				case 8:	SetClassPreferences(param1, "spy", flags & PREF_FL_SPY ? 0 : 1);
-			}
-			
-			DisplayClassPreferenceMenu(param1, GetMenuSelectionPosition());
-		}
-		case MenuAction_End:
-		{
-			delete menu;
-		}
-		case MenuAction_Cancel:
-		{
-			if (param2 == MenuCancel_ExitBack)
-				DisplayMenu(g_hBotPreferenceMenu, param1, MENU_TIME_FOREVER);
-		}
-	}
-	
-	return 0;
-}
-
 static int MenuHandler_WeaponPreferenceClassList(Menu menu, MenuAction action, int param1, int param2)
 {
 	switch (action)
