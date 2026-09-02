@@ -142,3 +142,21 @@ func FreeChosenBotTeam(bAnnounce bool) {
 		engine.PrintToChatAll("%s Bot team lineup can now be changed.", engine.PluginPrefix())
 	}
 }
+
+/*
+	FindGameConsoleVariables looks up the game's own convars once
+
+They belong to the bot code the game ships, not to this mod, so they exist
+whether or not this plugin does and there is nothing to create.
+*/
+//
+//sp:name FindGameConsoleVariables
+func FindGameConsoleVariables() {
+	engine.SetBlind(engine.FindConVar("nb_blind"))
+	engine.SetPathLookaheadRange(engine.FindConVar("tf_bot_path_lookahead_range"))
+	engine.SetHealthCriticalRatio(engine.FindConVar("tf_bot_health_critical_ratio"))
+	engine.SetHealthOkRatio(engine.FindConVar("tf_bot_health_ok_ratio"))
+	engine.SetAmmoSearchRange(engine.FindConVar("tf_bot_ammo_search_range"))
+	engine.SetHealthSearchFarRange(engine.FindConVar("tf_bot_health_search_far_range"))
+	engine.SetHealthSearchNearRange(engine.FindConVar("tf_bot_health_search_near_range"))
+}

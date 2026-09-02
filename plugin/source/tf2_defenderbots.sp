@@ -291,6 +291,7 @@ char g_sBotTeamCompositions[][][] =
 #include "redbots3/generated/humans.sp"
 #include "redbots3/generated/mapconfig.sp"
 #include "redbots3/generated/seating.sp"
+#include "redbots3/generated/upgradereport.sp"
 #include "redbots3/generated/botnames.sp"
 #include "redbots3/generated/manage.sp"
 #include "redbots3/generated/lineoffire.sp"
@@ -1844,71 +1845,6 @@ public void DefenderBot_TouchPost(int entity, int other)
 	}
 }
 
-void FindGameConsoleVariables()
-{
-	nb_blind = FindConVar("nb_blind");
-	tf_bot_path_lookahead_range = FindConVar("tf_bot_path_lookahead_range");
-	tf_bot_health_critical_ratio = FindConVar("tf_bot_health_critical_ratio");
-	tf_bot_health_ok_ratio = FindConVar("tf_bot_health_ok_ratio");
-	tf_bot_ammo_search_range = FindConVar("tf_bot_ammo_search_range");
-	tf_bot_health_search_far_range = FindConVar("tf_bot_health_search_far_range");
-	tf_bot_health_search_near_range = FindConVar("tf_bot_health_search_near_range");
-}
-/* What a bot is actually carrying, by name, printed wherever the command came from
-
-Every line of this used PrintToChat, which needs a client, and rcon has not got one: run from the
-console it printed nothing at all and looked like a bot with no upgrades. That is the one place
-anybody would run it from on a test server.
-
-The attribute index alone was not much better. "INDEX 56, VALUE 0.800000" is the answer to a
-question nobody asked; the schema has the name and it costs a lookup. */
-static void ShowUpgradesOn(int client, int entity, const char[] what)
-{
-	int attribIndexes[MAX_RUNTIME_ATTRIBUTES];
-	int count = TF2Attrib_ListDefIndices(entity, attribIndexes, sizeof(attribIndexes));
-	
-	ReplyToCommand(client, "%s: %d upgrades", what, count);
-	
-	for (int i = 0; i < count; i++)
-	{
-		Address pAttr = TF2Attrib_GetByDefIndex(entity, attribIndexes[i]);
-		float value = TF2Attrib_GetValue(pAttr);
-		
-		char name[128];
-		
-		if (!TF2Econ_GetAttributeName(attribIndexes[i], name, sizeof(name)))
-			strcopy(name, sizeof(name), "(unnamed)");
-		
-		ReplyToCommand(client, "  %-48s %.3f", name, value);
-	}
-}
-
-void ShowPlayerUpgrades(int client, int target, int slot)
-{
-	char who[MAX_NAME_LENGTH]; GetClientName(target, who, sizeof(who));
-	
-	if (slot == -1)
-	{
-		char label[160]; FormatEx(label, sizeof(label), "%s, on himself", who);
-		
-		ShowUpgradesOn(client, target, label);
-		
-		return;
-	}
-	
-	int weapon = GetPlayerWeaponSlot(target, slot);
-	
-	if (weapon == -1)
-	{
-		ReplyToCommand(client, "%s has nothing in slot %d.", who, slot);
-		
-		return;
-	}
-	
-	char label[160]; FormatEx(label, sizeof(label), "%s, slot %d", who, slot);
-	
-	ShowUpgradesOn(client, weapon, label);
-}
 /* Put a bot back in the slot a player just left
 
 Runs a tick after the disconnect, because the leaving player is still in the game at the point the

@@ -22,6 +22,7 @@ type SeatingCalls struct {
 	PlayersChoosingClasses func() int32
 	ChosenBotSeats         func() List
 	BotClassesLocked       func() bool
+	SetGameConVar          func(name string, c ConVar)
 }
 
 var seatings SeatingCalls
@@ -154,4 +155,55 @@ func BotClassesLocked() bool {
 		missing("g_bBotClassesLocked")
 	}
 	return seatings.BotClassesLocked()
+}
+
+/*
+The game's own convars, found once at startup.
+
+The plugin declares each one and this writes it. A globalset per convar rather
+than one call taking a name, because the name is what SourcePawn writes on the
+left of the assignment and there is nothing generic to hold.
+*/
+
+// SetBlind writes nb_blind.
+//
+//sp:globalset nb_blind
+func SetBlind(c ConVar) { seatings.set("nb_blind", c) }
+
+// SetPathLookaheadRange writes tf_bot_path_lookahead_range.
+//
+//sp:globalset tf_bot_path_lookahead_range
+func SetPathLookaheadRange(c ConVar) { seatings.set("tf_bot_path_lookahead_range", c) }
+
+// SetHealthCriticalRatio writes tf_bot_health_critical_ratio.
+//
+//sp:globalset tf_bot_health_critical_ratio
+func SetHealthCriticalRatio(c ConVar) { seatings.set("tf_bot_health_critical_ratio", c) }
+
+// SetHealthOkRatio writes tf_bot_health_ok_ratio.
+//
+//sp:globalset tf_bot_health_ok_ratio
+func SetHealthOkRatio(c ConVar) { seatings.set("tf_bot_health_ok_ratio", c) }
+
+// SetAmmoSearchRange writes tf_bot_ammo_search_range.
+//
+//sp:globalset tf_bot_ammo_search_range
+func SetAmmoSearchRange(c ConVar) { seatings.set("tf_bot_ammo_search_range", c) }
+
+// SetHealthSearchFarRange writes tf_bot_health_search_far_range.
+//
+//sp:globalset tf_bot_health_search_far_range
+func SetHealthSearchFarRange(c ConVar) { seatings.set("tf_bot_health_search_far_range", c) }
+
+// SetHealthSearchNearRange writes tf_bot_health_search_near_range.
+//
+//sp:globalset tf_bot_health_search_near_range
+func SetHealthSearchNearRange(c ConVar) { seatings.set("tf_bot_health_search_near_range", c) }
+
+// set records one, which is all a Go process can do with it.
+func (s SeatingCalls) set(name string, c ConVar) {
+	if s.SetGameConVar == nil {
+		missing(name)
+	}
+	s.SetGameConVar(name, c)
 }

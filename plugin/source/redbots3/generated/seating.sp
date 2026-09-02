@@ -84,3 +84,14 @@ stock void FreeChosenBotTeam(bool bAnnounce = false)
 	}
 }
 
+stock void FindGameConsoleVariables()
+{
+	nb_blind = FindConVar("nb_blind");
+	tf_bot_path_lookahead_range = FindConVar("tf_bot_path_lookahead_range");
+	tf_bot_health_critical_ratio = FindConVar("tf_bot_health_critical_ratio");
+	tf_bot_health_ok_ratio = FindConVar("tf_bot_health_ok_ratio");
+	tf_bot_ammo_search_range = FindConVar("tf_bot_ammo_search_range");
+	tf_bot_health_search_far_range = FindConVar("tf_bot_health_search_far_range");
+	tf_bot_health_search_near_range = FindConVar("tf_bot_health_search_near_range");
+}
+
