@@ -144,12 +144,6 @@ void InitMvMUpgrades(GameData hGamedata)
 	offset_nTier = hGamedata.GetOffset("CMannVsMachineUpgrades::nTier");
 	CMannVsMachineUpgrades_Size = offset_nTier + 4;
 	
-#if defined TESTING_ONLY
-	LogMessage("InitMvMUpgrades: CMannVsMachineUpgrades->flCap = %d", offset_flCap);
-	LogMessage("InitMvMUpgrades: CMannVsMachineUpgrades->nUIGroup = %d", offset_nUIGroup);
-	LogMessage("InitMvMUpgrades: CMannVsMachineUpgrades->nTier = %d", offset_nTier);
-	LogMessage("InitMvMUpgrades: Size of CMannVsMachineUpgrades = %d", CMannVsMachineUpgrades_Size);
-#endif
 }
 
 /* TECHNICAL DATA FOR REFERENCE

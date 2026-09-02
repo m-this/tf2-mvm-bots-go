@@ -17,19 +17,6 @@ void InitOffsets(GameData hGamedata)
 	SetOffset(hGamedata, "CTFRevolver", "m_flLastAccuracyCheck");
 	SetOffset(hGamedata, "CTFNavArea", "m_distanceToBombTarget");
 	
-#if defined TESTING_ONLY
-	//Dump offsets
-	LogMessage("InitOffsets: CTFPlayer->m_LastDamageType = %d", GetOffset("CTFPlayer", "m_LastDamageType"));
-	LogMessage("InitOffsets: CObjectSentrygun->m_bPlacementOK = %d", GetOffset("CObjectSentrygun", "m_bPlacementOK"));
-	LogMessage("InitOffsets: CObjectSentrygun->m_vecCurAngles = %d", GetOffset("CObjectSentrygun", "m_vecCurAngles"));
-	LogMessage("InitOffsets: CTFBot->m_isLookingAroundForEnemies = %d", GetOffset("CTFBot", "m_isLookingAroundForEnemies"));
-	LogMessage("InitOffsets: CTFBot->m_mission = %d", GetOffset("CTFBot", "m_mission"));
-	LogMessage("InitOffsets: CTFBot->m_opportunisticTimer = %d", GetOffset("CTFBot", "m_opportunisticTimer"));
-	LogMessage("InitOffsets: CPopulationManager->m_nStartingCurrency = %d", GetOffset("CPopulationManager", "m_nStartingCurrency"));
-	LogMessage("InitOffsets: CTFBuffItem->m_bPlayingHorn = %d", GetOffset("CTFBuffItem", "m_bPlayingHorn"));
-	LogMessage("InitOffsets: CTFRevolver->m_flLastAccuracyCheck = %d", GetOffset("CTFRevolver", "m_flLastAccuracyCheck"));
-	LogMessage("InitOffsets: CTFNavArea->m_distanceToBombTarget = %d", GetOffset("CTFNavArea", "m_distanceToBombTarget"));
-#endif
 }
 
 static void SetOffset(GameData hGamedata, const char[] cls, const char[] prop)

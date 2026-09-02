@@ -16,10 +16,6 @@ static Handle m_hGetUpgradeTier;
 static Handle m_hIsUpgradeTierEnabled;
 #endif
 
-#if defined IDLEBOT_AIMING
-static Handle m_hGetProjectileGravity;
-#endif
-
 static Handle m_hShouldCollide;
 
 bool InitSDKCalls(GameData hGamedata)
@@ -174,16 +170,6 @@ bool InitSDKCalls(GameData hGamedata)
 	}
 #endif
 	
-#if defined IDLEBOT_AIMING
-	StartPrepSDKCall(SDKCall_Entity);
-	PrepSDKCall_SetFromConf(hGamedata, SDKConf_Virtual, "CTFWeaponBaseGun::GetProjectileGravity");
-	PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_Plain);
-	if ((m_hGetProjectileGravity = EndPrepSDKCall()) == null)
-	{
-		LogError("Failed to create SDKCall for CTFWeaponBaseGun::GetProjectileGravity!");
-		iFailCount++;
-	}
-#endif
 	
 	//SDKHooks gamedata
 	char sTempConfFileName[] = "sdkhooks.games/engine.ep2v";
@@ -280,13 +266,6 @@ int GetUpgradeTier(int iUpgrade)
 bool IsUpgradeTierEnabled(int pTFPlayer, int iItemSlot, int iUpgrade)
 {
 	return SDKCall(m_hIsUpgradeTierEnabled, pTFPlayer, iItemSlot, iUpgrade);
-}
-#endif
-
-#if defined IDLEBOT_AIMING
-float GetProjectileGravity(int weapon)
-{
-	return SDKCall(m_hGetProjectileGravity, weapon);
 }
 #endif
 

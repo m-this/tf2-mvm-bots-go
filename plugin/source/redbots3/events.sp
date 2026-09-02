@@ -249,10 +249,6 @@ static Action Timer_PlayerSpawn(Handle timer, int data)
 		
 		DHooks_DefenderBot(data);
 		
-#if defined IDLEBOT_AIMING
-		//In this build we handle the bot's aiming manually, so don't have any of its nextbot aiming interfere with ours
-		VS_AddBotAttribute(data, CTFBot_IGNORE_ENEMIES);
-#endif
 		
 #if defined MOD_REQUEST_CREDITS
 		if (redbots_manager_bot_request_credits.BoolValue)
