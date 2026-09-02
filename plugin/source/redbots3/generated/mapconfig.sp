@@ -77,3 +77,114 @@ stock void Config_LoadBotNames()
 	delete hConfigFile;
 }
 
+stock void Config_LoadMap()
+{
+	g_arrMapConfig.Reset();
+	char mapName[512];
+	GetCurrentMap(mapName, 512);
+	char filePath[512];
+	BuildPath(Path_SM, filePath, 512, "configs/defenderbots/map/%s.cfg", mapName);
+	KeyValues kv = new KeyValues("MapConfig");
+	if (!kv.ImportFromFile(filePath))
+	{
+		CloseHandle(kv);
+		LogError("Config_LoadMap: File not found (%s)", filePath);
+		return;
+	}
+	Config_LoadLocations(kv, "SniperSpot", g_arrMapConfig.adtSniperSpot);
+	Config_LoadNestSpots(kv, "EngineerNest", g_arrMapConfig.adtEngineerNestLocation, g_arrMapConfig.adtEngineerNestZone);
+	Config_LoadLocations(kv, "TeleporterEntrance", g_arrMapConfig.adtTeleporterEntranceLocation);
+	Config_LoadLocations(kv, "TeleporterExit", g_arrMapConfig.adtTeleporterExitLocation);
+	Config_LoadNestSpots(kv, "DispenserSpot", g_arrMapConfig.adtDispenserLocation, g_arrMapConfig.adtDispenserZone);
+	Config_LoadLocations(kv, "NestTankOnly", g_arrMapConfig.adtNestTankOnlyLocation);
+	Config_LoadLocations(kv, "NestNoTank", g_arrMapConfig.adtNestNoTankLocation);
+	kv.GetString("Composition", g_arrMapConfig.strComposition, sizeof(g_arrMapConfig.strComposition), "");
+	g_arrMapConfig.bMovingNests = kv.GetNum("MovingNests", 0) != 0;
+	CloseHandle(kv);
+	LogMessage("Config_LoadMap: %s: %d sniper, %d nest, %d nest-tank, %d nest-notank, %d dispenser, %d tele-in, %d tele-out, moving nests %d", mapName, g_arrMapConfig.adtSniperSpot.Length, g_arrMapConfig.adtEngineerNestLocation.Length, g_arrMapConfig.adtNestTankOnlyLocation.Length, g_arrMapConfig.adtNestNoTankLocation.Length, g_arrMapConfig.adtDispenserLocation.Length, g_arrMapConfig.adtTeleporterEntranceLocation.Length, g_arrMapConfig.adtTeleporterExitLocation.Length, g_arrMapConfig.bMovingNests);
+}
+
+stock eMissionDifficulty Config_GetMissionDifficultyFromName(char[] missionName)
+{
+	for (eMissionDifficulty i = MISSION_NORMAL; i < MISSION_MAX_COUNT; i++)
+	{
+		char filePath[512];
+		BuildPath(Path_SM, filePath, 512, g_sMissionDifficultyFilePaths[i]);
+		File hOpenedFile = OpenFile(filePath, "r");
+		if (hOpenedFile == null)
+		{
+			if (redbots_manager_debug.BoolValue)
+			{
+				LogMessage("Config_GetMissionDifficultyFromName: Could not locate file %s. Skipping...", filePath);
+			}
+			continue;
+		}
+		for (;;)
+		{
+			char currentLine[512];
+			bool ok = ReadFileLine(hOpenedFile, currentLine, 512);
+			if (!ok)
+			{
+				break;
+			}
+			TrimString(currentLine);
+			if (StrEqual(currentLine, missionName))
+			{
+				hOpenedFile.Close();
+				return i;
+			}
+		}
+		hOpenedFile.Close();
+	}
+	return MISSION_UNKNOWN;
+}
+
+stock eMissionDifficulty GetMissionDifficulty()
+{
+	int rsrc = FindEntityByClassname(MaxClients + 1, "tf_objective_resource");
+	if (rsrc == -1)
+	{
+		LogError("GetMissionDifficulty: Could not find entity tf_objective_resource!");
+		return MISSION_UNKNOWN;
+	}
+	char missionName[512];
+	TF2_GetMvMPopfileName(rsrc, missionName, 512);
+	ReplaceString(missionName, PLATFORM_MAX_PATH, "scripts/population/", "");
+	ReplaceString(missionName, PLATFORM_MAX_PATH, ".pop", "");
+	eMissionDifficulty missionType = Config_GetMissionDifficultyFromName(missionName);
+	if (missionType == MISSION_UNKNOWN)
+	{
+		char mapName[512];
+		GetCurrentMap(mapName, 512);
+		if (StrEqual(missionName, mapName) || (StrContains(missionName, "_norm_", false) != -1))
+		{
+			missionType = MISSION_NORMAL;
+		}
+		else
+			if ((StrContains(missionName, "_intermediate", false) != -1) || (StrContains(missionName, "_int_", false) != -1))
+			{
+				missionType = MISSION_INTERMEDIATE;
+			}
+			else
+				if ((StrContains(missionName, "_advanced", false) != -1) || (StrContains(missionName, "_adv_", false) != -1))
+				{
+					missionType = MISSION_ADVANCED;
+				}
+				else
+					if ((StrContains(missionName, "_expert", false) != -1) || (StrContains(missionName, "_exp_", false) != -1))
+					{
+						missionType = MISSION_EXPERT;
+					}
+					else
+						if (StrContains(missionName, "_night_", false) != -1)
+						{
+							missionType = MISSION_NIGHTMARE;
+						}
+	}
+	if (redbots_manager_debug.BoolValue)
+	{
+		PrintToChatAll("GetMissionDifficulty: Current difficulty is %d", missionType);
+	}
+	return missionType;
+}
+

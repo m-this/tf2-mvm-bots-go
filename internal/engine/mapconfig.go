@@ -184,3 +184,186 @@ func DoesAnyPlayerUseThisName(name Text) bool {
 	}
 	return mapConfigs.DoesAnyPlayerUseThisName(name)
 }
+
+/*
+The map file and the mission's difficulty.
+
+Both are read once a map has loaded and neither is a decision: the file says
+what it says, and the difficulty comes off the popfile's name.
+*/
+
+// MapConfigMapCalls are the answers for those.
+type MapConfigMapCalls struct {
+	ResetMapConfig            func()
+	StringInto                func(kv KeyValues, key string, out Text, maxlen int32, def string)
+	SetMovingNests            func(on bool)
+	MvMPopfileName            func(resource int32) Text
+	ReplaceString             func(text Text, maxlen int32, search string, replace string)
+	MapConfigCounts           func() [7]int32
+	MovingNestsIsSet          func() bool
+	BuildPathText             func(format Text) Text
+	CloseHandle               func(kv KeyValues)
+	MissionDifficultyFilePath func(difficulty MissionDifficulty) Text
+}
+
+var mapConfigMaps MapConfigMapCalls
+
+// InstallMapConfigMaps puts a set of answers behind them.
+func InstallMapConfigMaps(c MapConfigMapCalls) func() {
+	previous := mapConfigMaps
+	mapConfigMaps = c
+	return func() { mapConfigMaps = previous }
+}
+
+// ResetMapConfig empties every list on the record and clears the two plain
+// fields, which is the enum struct's own method.
+//
+//sp:plugin g_arrMapConfig.Reset
+func ResetMapConfig() {
+	if mapConfigMaps.ResetMapConfig == nil {
+		missing("g_arrMapConfig.Reset")
+	}
+	mapConfigMaps.ResetMapConfig()
+}
+
+// StringInto is GetString written out: the destination is a buffer that
+// already exists, which the sized form cannot express because it makes one.
+//
+//sp:method GetString
+func (kv KeyValues) StringInto(key string, out Text, maxlen int32, def string) {
+	if mapConfigMaps.StringInto == nil {
+		missing("KeyValues.GetString")
+	}
+	mapConfigMaps.StringInto(kv, key, out, maxlen, def)
+}
+
+// MapCompositionSize is sizeof(g_arrMapConfig.strComposition).
+//
+//sp:global sizeof(g_arrMapConfig.strComposition)
+func MapCompositionSize() int32 { return 128 }
+
+// SetMovingNests writes whether this map's nests move.
+//
+//sp:globalset g_arrMapConfig.bMovingNests
+func SetMovingNests(on bool) {
+	if mapConfigMaps.SetMovingNests == nil {
+		missing("g_arrMapConfig.bMovingNests")
+	}
+	mapConfigMaps.SetMovingNests(on)
+}
+
+// MovingNests says whether they do.
+//
+//sp:global g_arrMapConfig.bMovingNests
+func MovingNests() bool {
+	if mapConfigMaps.MovingNestsIsSet == nil {
+		missing("g_arrMapConfig.bMovingNests")
+	}
+	return mapConfigMaps.MovingNestsIsSet()
+}
+
+// MvMPopfileName is the mission being played, path and extension included.
+//
+//sp:native TF2_GetMvMPopfileName sized
+func MvMPopfileName(resource int32) (name Text) {
+	if mapConfigMaps.MvMPopfileName == nil {
+		missing("TF2_GetMvMPopfileName")
+	}
+	return mapConfigMaps.MvMPopfileName(resource)
+}
+
+// ReplaceString rewrites every occurrence in place.
+//
+//sp:native ReplaceString
+func ReplaceString(text Text, maxlen int32, search string, replace string) {
+	if mapConfigMaps.ReplaceString == nil {
+		missing("ReplaceString")
+	}
+	mapConfigMaps.ReplaceString(text, maxlen, search, replace)
+}
+
+/*
+The difficulty a mission is, and the files that name them.
+
+internal/body/shared declares the enum and the table on the SourcePawn side. A
+body may only import this package, so both are reached through it.
+*/
+
+// MissionDifficulty is eMissionDifficulty.
+//
+//sp:tag eMissionDifficulty
+type MissionDifficulty int32
+
+// MissionUnknown is the answer for a popfile nothing recognises.
+//
+//sp:global MISSION_UNKNOWN
+func MissionUnknown() MissionDifficulty { return 0 }
+
+// MissionNormal is the first real one, which is where the search starts.
+//
+//sp:global MISSION_NORMAL
+func MissionNormal() MissionDifficulty { return 1 }
+
+// MissionIntermediate is the second.
+//
+//sp:global MISSION_INTERMEDIATE
+func MissionIntermediate() MissionDifficulty { return 2 }
+
+// MissionAdvanced is the third.
+//
+//sp:global MISSION_ADVANCED
+func MissionAdvanced() MissionDifficulty { return 3 }
+
+// MissionExpert is the fourth.
+//
+//sp:global MISSION_EXPERT
+func MissionExpert() MissionDifficulty { return 4 }
+
+// MissionNightmare is the fifth, which no official mission uses.
+//
+//sp:global MISSION_NIGHTMARE
+func MissionNightmare() MissionDifficulty { return 5 }
+
+// MissionMaxCount is one past the last, which is where the search stops.
+//
+//sp:global MISSION_MAX_COUNT
+func MissionMaxCount() MissionDifficulty { return 6 }
+
+// MissionDifficultyFilePath is the file listing the missions of that
+// difficulty, relative to SourceMod's own directory.
+//
+//sp:slot g_sMissionDifficultyFilePaths
+func MissionDifficultyFilePath(difficulty MissionDifficulty) Text {
+	if mapConfigMaps.MissionDifficultyFilePath == nil {
+		missing("g_sMissionDifficultyFilePaths")
+	}
+	return mapConfigMaps.MissionDifficultyFilePath(difficulty)
+}
+
+// CloseHandle releases a handle by the older spelling. The map config writes
+// it rather than delete, and a port does not change what runs.
+//
+//sp:native CloseHandle frees
+func CloseHandle(kv KeyValues) {
+	if mapConfigMaps.CloseHandle == nil {
+		missing("CloseHandle")
+	}
+	mapConfigMaps.CloseHandle(kv)
+}
+
+// PathMax is PLATFORM_MAX_PATH, the length of every path buffer the plugin
+// declares.
+//
+//sp:global PLATFORM_MAX_PATH
+func PathMax() int32 { return 256 }
+
+// BuildPathText is BuildPath handed a buffer rather than a literal, which is
+// how the difficulty files are named: the path comes off a table.
+//
+//sp:native BuildPath fills before Path_SM
+func BuildPathText(format Text) (out Text) {
+	if mapConfigMaps.BuildPathText == nil {
+		missing("BuildPath")
+	}
+	return mapConfigMaps.BuildPathText(format)
+}

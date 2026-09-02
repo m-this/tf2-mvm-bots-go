@@ -119,6 +119,13 @@ type Extern struct {
 	// makes the receiver's type a handle: a lifetime the emitter tracks and
 	// refuses to leave open.
 	Delete bool
+
+	/* Frees says the native releases the handle it is handed
+
+	CloseHandle is delete written the older way. The lifetime check
+	only knew the delete form, so a body that wrote what the shipped
+	file writes was told to close a handle it already closes. */
+	Frees bool
 	// Property says the method is written without parentheses, which is what
 	// SourcePawn calls a property: convar.BoolValue.
 	Property bool

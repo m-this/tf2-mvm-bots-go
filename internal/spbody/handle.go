@@ -160,6 +160,12 @@ func (e *emitter) checkClosed(d *ast.FuncDecl) {
 				closed[id.Name] = true
 			}
 		}
+		// A plain native marked frees closes its one argument.
+		if x, ok := e.externOf(sel); ok && x.Frees && len(call.Args) == 1 {
+			if id, ok := call.Args[0].(*ast.Ident); ok {
+				closed[id.Name] = true
+			}
+		}
 		return true
 	})
 
