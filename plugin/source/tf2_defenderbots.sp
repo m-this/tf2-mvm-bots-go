@@ -318,7 +318,6 @@ char g_sBotTeamCompositions[][][] =
 #include "redbots3/dhooks.sp"
 #include "redbots3/generated/gameevents.sp"
 #include "redbots3/generated/behaviourreset.sp"
-#include "redbots3/events.sp"
 #include "redbots3/generated/playerpref.sp"
 #include "redbots3/player_pref.sp"
 #include "redbots3/generated/teammenu.sp"

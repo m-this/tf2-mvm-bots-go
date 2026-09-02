@@ -68,7 +68,7 @@ func RegConsoleCmd(name string, callback func(client int32, args int32) Outcome)
 //
 //sp:native HookEvent
 //nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
-func HookEvent(name string, callback func(event Event, name string, dontBroadcast bool) Outcome) {
+func HookEvent(name string, callback func(event Event, name string, dontBroadcast bool)) {
 	if registrations.HookEvent == nil {
 		missing("HookEvent")
 	}

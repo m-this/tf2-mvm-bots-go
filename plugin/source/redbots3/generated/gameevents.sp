@@ -117,3 +117,193 @@ public void Event_MvmWaveFailed(Event event, const char[] name, bool dontBroadca
 	CreateTimer(0.1, Timer_WaveFailure, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
+stock void InitGameEventHooks()
+{
+	HookEvent("player_spawn", Event_PlayerSpawn);
+	HookEvent("mvm_wave_failed", Event_MvmWaveFailed);
+	HookEvent("mvm_wave_complete", Event_MvmWaveComplete);
+	HookEvent("revive_player_notify", Event_RevivePlayerNotify);
+	HookEvent("mvm_begin_wave", Event_MvmWaveBegin);
+	HookEvent("player_team", Event_PlayerTeam);
+	HookEvent("mvm_mission_update", Event_MvmMissionUpdate, EventHookMode_Pre);
+	HookEvent("teamplay_round_start", Event_TeamplayRoundStart);
+	HookEvent("player_death", Event_PlayerDeath);
+}
+
+stock Action Listener_VoiceMenu(int client, const char[] command, int argc)
+{
+	if ((client < 1) || (client > MaxClients) || !IsClientInGame(client))
+	{
+		return Plugin_Continue;
+	}
+	if ((argc < 2) || IsTFBotPlayer(client))
+	{
+		return Plugin_Continue;
+	}
+	char menu[512];
+	GetCmdArg(1, menu, 512);
+	char entry[512];
+	GetCmdArg(2, entry, 512);
+	if ((StringToInt(menu) == 0) && (StringToInt(entry) == 0))
+	{
+		NoteMedicCall(client);
+	}
+	return Plugin_Continue;
+}
+
+stock void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
+{
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	if ((TF2_GetClientTeam(client) == TFTeam_Red) && IsTFBotPlayer(client))
+	{
+		CreateTimer(0.2, Timer_PlayerSpawn, client, TIMER_FLAG_NO_MAPCHANGE);
+	}
+	if ((TF2_GetClientTeam(client) == TFTeam_Blue) && IsFakeClient(client))
+	{
+		BluAssist_OnRobotSpawn(client);
+	}
+	if (g_bIsDefenderBot[client])
+	{
+		GiveBotCosmeticsSoon(client);
+		g_bIsBeingRevived[client] = false;
+		g_iBuyUpgradesNumber[client] = (CanBuyUpgradesNow(client) ? GetRandomInt(1, 100) : 0);
+		if (redbots_manager_debug.BoolValue)
+		{
+			PrintToChatAll("[Event_PlayerSpawn] g_iBuyUpgradesNumber[%d] = %d", client, g_iBuyUpgradesNumber[client]);
+		}
+	}
+}
+
+stock void Event_MvmWaveComplete(Event event, const char[] name, bool dontBroadcast)
+{
+	OpenTheBreak();
+	Reseat_OnBreak();
+	EngineerNestRelocation_OnWaveComplete();
+	bool bRequestCredits = redbots_manager_bot_request_credits.BoolValue;
+	if (redbots_manager_kick_bots.BoolValue)
+	{
+		RemoveAllDefenderBots("BotManager3: Wave complete!", IsFinalWave());
+		ManageDefenderBots(false);
+		CreateTimer(0.1, Timer_UpdateChosenBotTeamComposition, _, TIMER_FLAG_NO_MAPCHANGE);
+		PrintToChatAll("%s Use command !viewbotlineup to view the next bot team composition", PLUGIN_PREFIX);
+	}
+	for (int i = 1; i <= MaxClients; i++)
+	{
+		if (IsClientInGame(i) && g_bIsDefenderBot[i])
+		{
+			ClearSniperStall(i);
+			ResetIntentionInterface(i);
+			if (bRequestCredits)
+			{
+				FakeClientCommand(i, "sm_requestcredits");
+			}
+		}
+	}
+}
+
+stock void Event_PlayerTeam(Event event, const char[] name, bool dontBroadcast)
+{
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	TFTeam team = view_as<TFTeam>(event.GetInt("team"));
+	TFTeam oldTeam = view_as<TFTeam>(event.GetInt("oldteam"));
+	bool isDisconnect = event.GetBool("disconnect");
+	if (!IsFakeClient(client))
+	{
+		if ((isDisconnect && (oldTeam == TFTeam_Red)) || (!isDisconnect && ((team == TFTeam_Red) || (oldTeam == TFTeam_Red))))
+		{
+			CreateTimer(0.1, Timer_UpdateChosenBotTeamComposition, _, TIMER_FLAG_NO_MAPCHANGE);
+			if (oldTeam == TFTeam_Red)
+			{
+				HandleTeamPlayerCountChanged(TFTeam_Red, client);
+			}
+		}
+		if (!isDisconnect && (team == TFTeam_Red) && (oldTeam == TFTeam_Blue) && !CheckCommandAccess(client, NULL_STRING, ADMFLAG_GENERIC, true))
+		{
+			if (g_flEnableBotsCooldown[client] <= GetGameTime())
+			{
+				g_flEnableBotsCooldown[client] = GetGameTime() + 30.0;
+			}
+			else
+			{
+				g_flEnableBotsCooldown[client] = g_flEnableBotsCooldown[client] + 10.0;
+			}
+		}
+	}
+}
+
+stock void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
+{
+	int attacker = GetClientOfUserId(event.GetInt("attacker"));
+	int victim = GetClientOfUserId(event.GetInt("userid"));
+	if (!IsValidClientIndex(attacker) || !IsValidClientIndex(victim) || (attacker == victim))
+	{
+		return;
+	}
+	if (TF2_GetPlayerClass(attacker) != TFClass_Spy)
+	{
+		return;
+	}
+	if (TF2_GetClientTeam(attacker) != TFTeam_Blue)
+	{
+		return;
+	}
+	float origin[3];
+	GetClientAbsOrigin(victim, origin);
+	NoteSpySighting(origin);
+}
+
+public Action Timer_PlayerSpawn(Handle timer, int data)
+{
+	if (!IsClientInGame(data) || !IsTFBotPlayer(data) || (TF2_GetClientTeam(data) != TFTeam_Red))
+	{
+		return Plugin_Stop;
+	}
+	if (g_bIsDefenderBot[data])
+	{
+		if (redbots_manager_bot_request_credits.BoolValue && (GameRules_GetRoundState() == RoundState_BetweenRounds))
+		{
+			FakeClientCommand(data, "sm_requestcredits");
+		}
+		if (redbots_manager_debug.BoolValue)
+		{
+			PrintToChatAll("[Timer_PlayerSpawn] %N's currency: %d", data, TF2_GetCurrency(data));
+		}
+		return Plugin_Stop;
+	}
+	char clientName[512];
+	GetClientName(data, clientName, 512);
+	if (StrContains(clientName, TFBOT_IDENTITY_NAME, true) != -1)
+	{
+		g_bIsDefenderBot[data] = true;
+		g_bHasBoughtUpgrades[data] = false;
+		GiveBotCosmeticsSoon(data);
+		if (redbots_manager_use_custom_loadouts.BoolValue)
+		{
+			TF2_RespawnPlayer(data);
+		}
+		else
+		{
+			if (TF2_GetPlayerClass(data) == TFClass_Sniper)
+			{
+				SetMission(data, CTFBot_MISSION_SNIPER);
+			}
+		}
+		VS_AddBotAttribute(data, CTFBot_PROJECTILE_SHIELD);
+		BaseEntity_MarkNeedsNamePurge(data);
+		SetCurrencyWithBundles(data, GetStartingCurrency(g_iPopulationManager) + GetAcquiredCreditsOfAllWaves());
+		SetFakeClientConVar(data, "fov_desired", "90");
+		SDKHook(data, SDKHook_TouchPost, DefenderBot_TouchPost);
+		DHooks_DefenderBot(data);
+		if (redbots_manager_bot_request_credits.BoolValue)
+		{
+			FakeClientCommand(data, "sm_requestcredits");
+		}
+		if (TF2Attrib_IsValidAttributeName("cannot be sapped"))
+		{
+			TF2Attrib_SetByName(data, "cannot be sapped", 1.0);
+		}
+		SetRandomNameOnBot(data);
+	}
+	return Plugin_Stop;
+}
+
