@@ -324,6 +324,7 @@ char g_sBotTeamCompositions[][][] =
 #include "redbots3/generated/teamchange.sp"
 #include "redbots3/generated/composition.sp"
 #include "redbots3/generated/settings.sp"
+#include "redbots3/generated/lifecycle.sp"
 #include "redbots3/generated/teammenu.sp"
 #include "redbots3/generated/prefmenu.sp"
 #include "redbots3/generated/addmenu.sp"
@@ -442,25 +443,6 @@ public Plugin myinfo =
 	version = "2.46.0",
 	url = "https://github.com/OfficerSpy/TF2-MvM-Defender-TFBots"
 };
-
-/* The Archipelago plugin can come and go while this one runs, so its native is looked for again
-whenever any plugin registers or drops a library rather than once at startup. */
-public void OnLibraryAdded(const char[] name)
-{
-	if (StrEqual(name, "tf2_archipelago"))
-		Archipelago_Recheck();
-}
-
-public void OnLibraryRemoved(const char[] name)
-{
-	if (StrEqual(name, "tf2_archipelago"))
-		Archipelago_Recheck();
-}
-
-public void OnAllPluginsLoaded()
-{
-	Archipelago_Recheck();
-}
 
 public void OnPluginStart()
 {
@@ -613,11 +595,6 @@ public void OnPluginStart()
 	FindGameConsoleVariables();
 }
 
-public void OnPluginEnd()
-{
-	RemoveAllDefenderBots("BM3 OnPluginEnd");
-}
-
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
 	g_bLateLoad = late;
@@ -648,25 +625,6 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	
 	return APLRes_Success;
 }
-/* The features that are on, published once the server's own configs have run
-
-They were published only when a wave began, and the statistics plugin reads the list in its own
-handler for that same event. Whichever of the two hooks first is whichever SourceMod loaded first,
-so the first wave of every run recorded an empty list: a results file that does not say which mod
-produced it, which is the one thing the list exists for.
-
-OnConfigsExecuted is after server.cfg and before anybody plays, which is where the answer stops
-being the defaults and starts being what the server was asked for. */
-public void OnConfigsExecuted()
-{
-	PublishActiveFeatures();
-}
-
-public void OnGameFrame()
-{
-	DebugFaults_OnGameFrame();
-}
-
 public void OnMapStart()
 {
 	g_bBotsEnabled = false;
@@ -739,14 +697,6 @@ public void OnClientPutInServer(int client)
 	ResetNextBot(client);
 	ResetSpawnExitWatch(client);
 	
-}
-
-public void OnEntityCreated(int entity, const char[] classname)
-{
-	if (StrEqual(classname, "info_populator"))
-		g_iPopulationManager = entity;
-	
-	DHooks_OnEntityCreated(entity, classname);
 }
 
 /* NOTE: This forward is not consistent with nextbot functionalities such as Action::Update
@@ -1003,16 +953,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	}
 	
 	return Plugin_Continue;
-}
-
-public void TF2_OnConditionAdded(int client, TFCond condition)
-{
-	if (condition == TFCond_Taunting && TF2_GetClientTeam(client) == TFTeam_Blue && IsSentryBusterRobot(client))
-	{
-		//Keep track of the player that is detonating
-		g_iDetonatingPlayer = client;
-		CreateTimer(2.0, Timer_ForgetDetonatingPlayer, client);
-	}
 }
 
 public Action Command_Votebots(int client, int args)
@@ -1778,18 +1718,6 @@ public Action SoundHook_General(int clients[MAXPLAYERS], int &numClients, char s
 	
 	return Plugin_Continue;
 }
-public Action Timer_ForgetDetonatingPlayer(Handle timer, any data)
-{
-	//They should have detonated by now
-	
-	//Another player might have started detonating
-	//Don't forget the newest one so soon
-	if (g_iDetonatingPlayer == data)
-		g_iDetonatingPlayer = -1;
-	
-	return Plugin_Stop;
-}
-
 public void Timer_RealizeSpy(Handle timer, DataPack pack)
 {
 	int client = GetClientOfUserId(pack.ReadCell());
@@ -1803,15 +1731,6 @@ public void Timer_RealizeSpy(Handle timer, DataPack pack)
 		return;
 	
 	TFBot_NoticeThreat(client, threat);
-}
-
-public void DefenderBot_TouchPost(int entity, int other)
-{
-	//Call out enemy spies upon contact
-	if (BaseEntity_IsPlayer(other) && GetClientTeam(other) != GetClientTeam(entity) && TF2_IsPlayerInCondition(other, TFCond_Disguised))
-	{
-		TFBot_NoticeThreat(entity, other);
-	}
 }
 
 /* What every bot on RED is holding, so a lineup change can be checked for losing it
