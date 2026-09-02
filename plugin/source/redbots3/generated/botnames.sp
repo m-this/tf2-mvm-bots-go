@@ -4,7 +4,7 @@
 
 #define Go_MaxTries (10)
 
-static char g_sPlayerUseMyNameResponse[][] =
+char g_sPlayerUseMyNameResponse[][] =
 {
 	"You're very funny for using my name.",
 	"You totally stole my name.",

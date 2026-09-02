@@ -29,7 +29,7 @@ int m_iAmmoCandidate[65];
 int m_iAmmoRepathFails[65];
 float m_ctAmmoAsk[65];
 bool m_bAmmoPossible[65];
-static char g_strHealthAndAmmoEntities[][] =
+char g_strHealthAndAmmoEntities[][] =
 {
 	"func_regenerate",
 	"item_ammopack*",

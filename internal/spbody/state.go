@@ -118,7 +118,17 @@ func (e *emitter) stringTable(name *ast.Ident, value ast.Expr, claimed string, t
 		names = append(names, text.Value)
 	}
 	e.state = append(e.state, stateVar{name: emitted, tag: "char", dims: []int64{arr.Len(), 0}})
-	e.line("static char %s[][] =", emitted)
+	/* static only when the port chose the name
+
+	A table nobody outside the file reads is file-static, which is what the
+	plugin wrote for its own. One that keeps the plugin's name is one other
+	files still read, and a file-static is invisible from an included file:
+	the same trap the port hit with m_adtBotNames and m_sSelectedClass. */
+	keyword := "static char"
+	if claimed != "" {
+		keyword = "char"
+	}
+	e.line("%s %s[][] =", keyword, emitted)
 	e.line("{")
 	for _, n := range names {
 		e.line("\t%s,", n)

@@ -24,7 +24,7 @@ enum struct Go_Wardrobe
 	int HatEffect;
 }
 
-static char ITEMS_GAME_CLASS[][] =
+char ITEMS_GAME_CLASS[][] =
 {
 	"",
 	"scout",

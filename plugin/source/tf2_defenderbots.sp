@@ -263,7 +263,30 @@ Address g_pMannVsMachineUpgrades;
 #include "redbots3/generated/buildings.sp"
 #include "redbots3/generated/scan.sp"
 #include "redbots3/generated/blu_assist.sp"
-#include "redbots3/util.sp"
+#include <stocklib_officerspy/tf/tf_bot>
+#include <stocklib_officerspy/tf/tf_player>
+#include <stocklib_officerspy/tf/tf_obj>
+#include <stocklib_officerspy/tf/tf_objective_resource>
+#include <stocklib_officerspy/tf/stocklib_extra_vscript>
+#include <stocklib_officerspy/econ_item_view>
+#include <stocklib_officerspy/tf/tf_weaponbase>
+#include <stocklib_officerspy/tf/entity_capture_flag>
+#include <stocklib_officerspy/shared/util_shared>
+#include <stocklib_officerspy/mathlib/vector>
+#include "redbots3/generated/shared.sp"
+
+/* The three preset lineups AddBotsWithPresetTeamComp draws from
+
+Both are dead: nothing calls that function, which is mvm-z83.71. They stayed
+behind when the rest of util.sp was ported because a two dimensional table of
+names is a shape the generator has no form for, and porting a dead table to add
+one would be work for something that is going to be deleted. */
+char g_sBotTeamCompositions[][][] =
+{
+	{"scout", "soldier", "demoman", "heavyweapons", "engineer", "medic"},
+	{"scout", "heavyweapons", "heavyweapons", "heavyweapons", "engineer", "sniper"},
+	{"scout", "heavyweapons", "heavyweapons", "pyro", "engineer", "demoman"}
+};
 #include "redbots3/generated/roster_counts.sp"
 #include "redbots3/generated/humans.sp"
 #include "redbots3/generated/mapconfig.sp"

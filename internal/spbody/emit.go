@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"go/types"
 	"math"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -58,6 +59,8 @@ type emitter struct {
 	// emitted under, so a call to a body that claimed the plugin's name
 	// with //sp:name is emitted under that name too.
 	spNames map[string]string
+	// typeNames are the tags a //sp:name on a type declaration claimed.
+	typeNames map[string]string
 	// lengths maps a buffer parameter of the function being emitted onto
 	// the parameter that carries its length, from //sp:length.
 	lengths map[string]string
@@ -139,6 +142,8 @@ func (e *emitter) run(files []*ast.File) {
 	e.helpers = make(map[string]helper)
 	e.valueReturners = make(map[string]bool)
 	e.spNames = make(map[string]string)
+	e.typeNames = make(map[string]string)
+	e.typeNames = make(map[string]string)
 	e.borrowed = make(map[string]bool)
 	for _, f := range files {
 		if isGenerated(f) {
@@ -157,6 +162,24 @@ func (e *emitter) run(files []*ast.File) {
 			}
 			if isBorrowed(fn) {
 				e.borrowed[fn.Name.Name] = true
+			}
+		}
+		// A type claims one too, and it has to be read here rather than
+		// where it is emitted: an enum comes out with its constants,
+		// which is a pass that runs before the type is reached.
+		for _, decl := range f.Decls {
+			g, ok := decl.(*ast.GenDecl)
+			if !ok || g.Tok != token.TYPE {
+				continue
+			}
+			for _, spec := range g.Specs {
+				ts, ok := spec.(*ast.TypeSpec)
+				if !ok {
+					continue
+				}
+				if name, claimed := typeName(ts, g); claimed {
+					e.typeNames[ts.Name.Name] = name
+				}
 			}
 		}
 		// Package level vars and constants claim a name the same way, and
@@ -247,7 +270,7 @@ func (e *emitter) genDecl(d *ast.GenDecl) {
 	case token.IMPORT:
 	case token.TYPE:
 		for _, spec := range d.Specs {
-			e.typeSpec(spec.(*ast.TypeSpec))
+			e.typeSpec(d, spec.(*ast.TypeSpec))
 		}
 	case token.CONST:
 		e.constDecl(d)
@@ -261,7 +284,7 @@ func (e *emitter) genDecl(d *ast.GenDecl) {
 // typeSpec emits a named struct as an enum struct and a named integer as an
 // enum. The enum's constants come from the const declarations, not from here,
 // because their order is the order they were written in.
-func (e *emitter) typeSpec(spec *ast.TypeSpec) {
+func (e *emitter) typeSpec(d *ast.GenDecl, spec *ast.TypeSpec) {
 	obj, ok := e.info.Defs[spec.Name].(*types.TypeName)
 	if !ok {
 		e.fail(spec.Pos(), "the type %s has no definition", spec.Name.Name)
@@ -276,7 +299,17 @@ func (e *emitter) typeSpec(spec *ast.TypeSpec) {
 	if !isStruct {
 		return // an enum, emitted with its constants
 	}
-	e.line("enum struct %s%s", e.cfg.Prefix, spec.Name.Name)
+	/* A record keeps the plugin's names, type and fields alike
+
+	It is one declaration shared by everything that reads it, so a port that
+	renamed it would rename it for files that have not moved. //sp:name says
+	the type's name and an sp struct tag says each field's, the same way
+	fieldName reads one at a call site. */
+	name := e.cfg.Prefix + spec.Name.Name
+	if claimed, ok := typeName(spec, d); ok {
+		name = e.ident(spec.Pos(), claimed)
+	}
+	e.line("enum struct %s", name)
 	e.line("{")
 	e.indent++
 	for i := range st.NumFields() {
@@ -286,11 +319,33 @@ func (e *emitter) typeSpec(spec *ast.TypeSpec) {
 			e.fail(spec.Pos(), "field %s: %v", f.Name(), err)
 			continue
 		}
-		e.line("%s;", declare(tag, e.ident(spec.Pos(), f.Name()), dims))
+		field := e.ident(spec.Pos(), f.Name())
+		if claimed, ok := reflect.StructTag(st.Tag(i)).Lookup("sp"); ok {
+			field = claimed
+		}
+		e.line("%s;", declare(tag, field, dims))
 	}
 	e.indent--
 	e.line("}")
 	e.blank()
+}
+
+// typeName reads //sp:name off a type declaration, from its own doc.
+func typeName(spec *ast.TypeSpec, d *ast.GenDecl) (string, bool) {
+	// A lone type declaration carries its doc on the group, not the spec,
+	// which is where a var declaration keeps it too.
+	for _, doc := range []*ast.CommentGroup{spec.Doc, d.Doc} {
+		if doc == nil {
+			continue
+		}
+		for _, c := range doc.List {
+			fields := strings.Fields(c.Text)
+			if len(fields) == 2 && fields[0] == nameDirective {
+				return fields[1], true
+			}
+		}
+	}
+	return "", false
 }
 
 // constDecl emits one const block. A block whose constants share a named
@@ -353,7 +408,16 @@ func (e *emitter) constDecl(d *ast.GenDecl) {
 		e.blank()
 		return
 	}
-	e.line("enum %s%s", e.cfg.Prefix, tagName)
+	/* An enum keeps the plugin's names when the port claimed them
+
+	The members already carry whatever //sp:name said, so prefixing them here
+	renamed exactly the constants the port had asked to keep. The tag is the
+	same: it is a type other files declare variables of. */
+	enumName := e.cfg.Prefix + tagName
+	if claimed, ok := e.typeNames[tagName]; ok {
+		enumName = claimed
+	}
+	e.line("enum %s", enumName)
 	e.line("{")
 	e.indent++
 	for i, c := range group {
@@ -361,7 +425,11 @@ func (e *emitter) constDecl(d *ast.GenDecl) {
 		if i == len(group)-1 {
 			comma = ""
 		}
-		e.line("%s%s = %s%s", e.cfg.Prefix, c.name, c.value, comma)
+		prefix := e.cfg.Prefix
+		if claimedName {
+			prefix = ""
+		}
+		e.line("%s%s = %s%s", prefix, c.name, c.value, comma)
 	}
 	e.indent--
 	e.line("};")
