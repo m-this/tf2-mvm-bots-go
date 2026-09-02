@@ -625,43 +625,6 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	
 	return APLRes_Success;
 }
-public void OnMapStart()
-{
-	g_bBotsEnabled = false;
-	g_flAddingBotTime = 0.0;
-	g_flNextReadyTime = 0.0;
-	g_bBotClassesLocked = false;
-	g_bAllowBotTeamRedo = false;
-	Reseat_OnMapStart();
-	
-	ResetMapHintNests();
-	
-	Config_LoadMap();
-	Config_LoadBotNames();
-	Config_LoadServerLoadout();
-	
-
-	CreateBotPreferenceMenu();
-}
-
-public void OnClientDisconnect(int client)
-{
-	if (client == g_iPlayerForcedPref)
-		g_iPlayerForcedPref = -1;
-	
-	if (!IsFakeClient(client))
-		CreateTimer(0.1, Timer_RefillDefenderTeam, _, TIMER_FLAG_NO_MAPCHANGE);
-	
-	g_bIsDefenderBot[client] = false;
-	ResetSpawnExitWatch(client);
-	
-	g_bChoosingBotClasses[client] = false;
-	
-	ResetLoadouts(client);
-	ForgetBotSeat(client);
-	ForgetBotCosmetics(client);
-}
-
 public void OnClientPutInServer(int client)
 {
 	if (!IsFakeClient(client))

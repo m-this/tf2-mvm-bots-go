@@ -19,6 +19,20 @@ type SettingsCalls struct {
 	SetDetonatingPlayer         func(client int32)
 	NoticeThreat                func(client int32, threat int32)
 	CreateTimerData             func(interval float32, data int32) Timer
+	SetAddingBotTime            func(when float32)
+	SetPlayerForcedPref         func(client int32)
+	PlayerForcedPref            func() int32
+	ResetMapHintNests           func()
+	ConfigLoadServerLoadout     func()
+	ConfigLoadBotNames          func()
+	ConfigLoadMap               func()
+	CreateBotPreferenceMenu     func()
+	ResetSpawnExitWatch         func(client int32)
+	ResetLoadouts               func(client int32)
+	ForgetBotSeat               func(client int32)
+	ForgetBotCosmetics          func(client int32)
+	ReseatOnMapStart            func()
+	CreateTimerFlags            func(interval float32, flags int32) Timer
 }
 
 var settings SettingsCalls
@@ -131,4 +145,161 @@ func CreateTimerData(interval float32, callback func(timer Timer, data Cell) Out
 		missing("CreateTimer")
 	}
 	return settings.CreateTimerData(interval, data)
+}
+
+/*
+The map's start and a client's departure reach into every subject at once.
+
+Both are the plugin's own forwards, so each is a list of resets that belong to
+other packages. Every one of these is generated already; this is how a forward
+in one package calls into another.
+*/
+
+// SetAddingBotTime writes g_flAddingBotTime, when the last bot was asked for.
+//
+//sp:globalset g_flAddingBotTime
+func SetAddingBotTime(when float32) {
+	if settings.SetAddingBotTime == nil {
+		missing("g_flAddingBotTime")
+	}
+	settings.SetAddingBotTime(when)
+}
+
+// SetPlayerForcedPref writes g_iPlayerForcedPref, the one player whose
+// preferences stand in for everybody's.
+//
+//sp:globalset g_iPlayerForcedPref
+func SetPlayerForcedPref(client int32) {
+	if settings.SetPlayerForcedPref == nil {
+		missing("g_iPlayerForcedPref")
+	}
+	settings.SetPlayerForcedPref(client)
+}
+
+// PlayerForcedPref reads it.
+//
+//sp:global g_iPlayerForcedPref
+func PlayerForcedPref() int32 {
+	if settings.PlayerForcedPref == nil {
+		missing("g_iPlayerForcedPref")
+	}
+	return settings.PlayerForcedPref()
+}
+
+// ResetMapHintNests drops the nest spots the last map's hints put down. Ported,
+// nesthint.
+//
+//sp:body ResetMapHintNests
+func ResetMapHintNests() {
+	if settings.ResetMapHintNests == nil {
+		missing("ResetMapHintNests")
+	}
+	settings.ResetMapHintNests()
+}
+
+// ConfigLoadServerLoadout reads the server's own loadout file. Ported,
+// playerpref.
+//
+//sp:body Config_LoadServerLoadout
+func ConfigLoadServerLoadout() {
+	if settings.ConfigLoadServerLoadout == nil {
+		missing("Config_LoadServerLoadout")
+	}
+	settings.ConfigLoadServerLoadout()
+}
+
+// ConfigLoadBotNames reads the names the bots are drawn from. Ported,
+// mapconfig.
+//
+//sp:body Config_LoadBotNames
+func ConfigLoadBotNames() {
+	if settings.ConfigLoadBotNames == nil {
+		missing("Config_LoadBotNames")
+	}
+	settings.ConfigLoadBotNames()
+}
+
+// ConfigLoadMap reads the file for the map being played. Ported, mapconfig.
+//
+//sp:body Config_LoadMap
+func ConfigLoadMap() {
+	if settings.ConfigLoadMap == nil {
+		missing("Config_LoadMap")
+	}
+	settings.ConfigLoadMap()
+}
+
+// CreateBotPreferenceMenu builds the menu once, for everybody. Ported,
+// prefmenu.
+//
+//sp:body CreateBotPreferenceMenu
+func CreateBotPreferenceMenu() {
+	if settings.CreateBotPreferenceMenu == nil {
+		missing("CreateBotPreferenceMenu")
+	}
+	settings.CreateBotPreferenceMenu()
+}
+
+// ResetSpawnExitWatch forgets what that client was doing on the way out of
+// spawn. Ported, spawnexit.
+//
+//sp:body ResetSpawnExitWatch
+func ResetSpawnExitWatch(client int32) {
+	if settings.ResetSpawnExitWatch == nil {
+		missing("ResetSpawnExitWatch")
+	}
+	settings.ResetSpawnExitWatch(client)
+}
+
+// ResetLoadouts forgets the weapons that client was given. Ported, loadouts.
+//
+//sp:body ResetLoadouts
+func ResetLoadouts(client int32) {
+	if settings.ResetLoadouts == nil {
+		missing("ResetLoadouts")
+	}
+	settings.ResetLoadouts(client)
+}
+
+// ForgetBotSeat gives the seat back. Ported, playerpref.
+//
+//sp:body ForgetBotSeat
+func ForgetBotSeat(client int32) {
+	if settings.ForgetBotSeat == nil {
+		missing("ForgetBotSeat")
+	}
+	settings.ForgetBotSeat(client)
+}
+
+// ForgetBotCosmetics drops the hats that client was wearing. Ported,
+// cosmetics.
+//
+//sp:body ForgetBotCosmetics
+func ForgetBotCosmetics(client int32) {
+	if settings.ForgetBotCosmetics == nil {
+		missing("ForgetBotCosmetics")
+	}
+	settings.ForgetBotCosmetics(client)
+}
+
+// ReseatOnMapStart drops a pending lineup change. Ported, seating.
+//
+//sp:body Reseat_OnMapStart
+func ReseatOnMapStart() {
+	if settings.ReseatOnMapStart == nil {
+		missing("Reseat_OnMapStart")
+	}
+	settings.ReseatOnMapStart()
+}
+
+// CreateTimerFlags is CreateTimer with no data cell, which is the fourth shape
+// the plugin writes.
+//
+//sp:native CreateTimer
+//nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
+func CreateTimerFlags(interval float32, callback func(timer Timer) Outcome, flags int32) Timer {
+	if settings.CreateTimerFlags == nil {
+		missing("CreateTimer")
+	}
+	return settings.CreateTimerFlags(interval, flags)
 }

@@ -116,3 +116,81 @@ func DefenderBotTouchPost(entity int32, other int32) {
 		engine.NoticeThreat(entity, other)
 	}
 }
+
+/*
+	TimerRefillDefenderTeam puts a bot back in the seat a player just left
+
+Runs a tick after the disconnect, because the leaving player is still in the
+game at the point the forward fires and would otherwise still be counted.
+Nobody is left to play with if the last player leaves, so an empty defending
+team is left empty rather than filled with six bots holding a hatch for no one.
+*/
+//
+//sp:name Timer_RefillDefenderTeam
+//nolint:revive // unused-parameter: the handle is the timer's own, and nothing here needs it
+func TimerRefillDefenderTeam(timer engine.Timer) engine.Outcome {
+	if !engine.BotsEnabled() {
+		return engine.PluginStop()
+	}
+
+	if engine.RealPlayerCount() < 1 {
+		return engine.PluginStop()
+	}
+
+	missing := engine.DefenderTeamSize().Int() - engine.HumanAndDefenderBotCount(engine.TeamRed())
+
+	if missing > 0 {
+		engine.AddBotsBasedOnLineupModeNow(missing, true)
+	}
+
+	return engine.PluginStop()
+}
+
+// OnMapStart puts the mod back to nothing and reads the new map's files.
+//
+//sp:name OnMapStart
+//sp:public
+func OnMapStart() {
+	engine.SetBotsEnabled(false)
+	engine.SetAddingBotTime(0.0)
+	engine.SetNextReadyTime(0.0)
+	engine.SetBotClassesLocked(false)
+	engine.SetAllowBotRedo(false)
+	engine.ReseatOnMapStart()
+
+	engine.ResetMapHintNests()
+
+	engine.ConfigLoadMap()
+	engine.ConfigLoadBotNames()
+	engine.ConfigLoadServerLoadout()
+
+	engine.CreateBotPreferenceMenu()
+}
+
+/*
+	OnClientDisconnect forgets everything that was true of that slot
+
+The refill runs a tick later, because the leaving player is still in the game
+here and would otherwise still be counted.
+*/
+//
+//sp:name OnClientDisconnect
+//sp:public
+func OnClientDisconnect(client int32) {
+	if client == engine.PlayerForcedPref() {
+		engine.SetPlayerForcedPref(-1)
+	}
+
+	if !engine.IsFakeClient(client) {
+		engine.CreateTimerFlags(0.1, TimerRefillDefenderTeam, engine.TimerNoMapChange())
+	}
+
+	engine.SetDefenderBotFlag(client, false)
+	engine.ResetSpawnExitWatch(client)
+
+	engine.SetChoosingBotClasses(client, false)
+
+	engine.ResetLoadouts(client)
+	engine.ForgetBotSeat(client)
+	engine.ForgetBotCosmetics(client)
+}

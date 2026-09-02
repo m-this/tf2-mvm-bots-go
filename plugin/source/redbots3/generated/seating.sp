@@ -97,24 +97,6 @@ stock void FindGameConsoleVariables()
 	tf_bot_health_search_near_range = FindConVar("tf_bot_health_search_near_range");
 }
 
-stock Action Timer_RefillDefenderTeam(Handle timer)
-{
-	if (!g_bBotsEnabled)
-	{
-		return Plugin_Stop;
-	}
-	if (GetRealPlayerCount() < 1)
-	{
-		return Plugin_Stop;
-	}
-	int missing = redbots_manager_defender_team_size.IntValue - GetHumanAndDefenderBotCount(TFTeam_Red);
-	if (missing > 0)
-	{
-		AddBotsBasedOnLineupMode(missing, true);
-	}
-	return Plugin_Stop;
-}
-
 stock void UpdateChosenBotTeamComposition(int caller = -1)
 {
 	if (g_bBotClassesLocked)

@@ -162,35 +162,6 @@ func FindGameConsoleVariables() {
 }
 
 /*
-	TimerRefillDefenderTeam puts a bot back in the seat a player just left
-
-Runs a tick after the disconnect, because the leaving player is still in the
-game at the point the forward fires and would otherwise still be counted.
-Nobody is left to play with if the last player leaves, so an empty defending
-team is left empty rather than filled with six bots holding a hatch for no one.
-*/
-//
-//sp:name Timer_RefillDefenderTeam
-//nolint:revive // unused-parameter: the handle is the timer's own, and nothing here needs it
-func TimerRefillDefenderTeam(timer engine.Timer) engine.Outcome {
-	if !engine.BotsEnabled() {
-		return engine.PluginStop()
-	}
-
-	if engine.RealPlayerCount() < 1 {
-		return engine.PluginStop()
-	}
-
-	missing := engine.DefenderTeamSize().Int() - engine.HumanAndDefenderBotCount(engine.TeamRed())
-
-	if missing > 0 {
-		engine.AddBotsBasedOnLineupModeNow(missing, true)
-	}
-
-	return engine.PluginStop()
-}
-
-/*
 	UpdateChosenBotTeamComposition decides the lineup the next fill will use
 
 The named team is decided here, where every lineup is decided, and not where the
