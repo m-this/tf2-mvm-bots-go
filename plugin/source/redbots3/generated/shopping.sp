@@ -351,3 +351,81 @@ stock void Go_SetRefusedUpgrade(int actor, int index)
 	m_bRefusedUpgrade[actor][index] = true;
 }
 
+stock void KV_MvM_UpgradesBegin(int client)
+{
+	m_nPurchasedUpgrades[client] = 0;
+	KeyValues kv = new KeyValues("MvM_UpgradesBegin");
+	FakeClientCommandKeyValues(client, kv);
+	delete kv;
+}
+
+stock void KV_MVM_Upgrade(int client, int count, int slot, int index)
+{
+	KeyValues kv = new KeyValues("MVM_Upgrade");
+	kv.JumpToKey("upgrade", true);
+	kv.SetNum("itemslot", slot);
+	kv.SetNum("upgrade", index);
+	kv.SetNum("count", count);
+	FakeClientCommandKeyValues(client, kv);
+	delete kv;
+}
+
+stock void KV_MvM_UpgradesDone(int client)
+{
+	KeyValues kv = new KeyValues("MvM_UpgradesDone");
+	kv.SetNum("num_upgrades", m_nPurchasedUpgrades[client]);
+	FakeClientCommandKeyValues(client, kv);
+	delete kv;
+}
+
+stock void UpgradeMidRoundPostActivity(int client)
+{
+	switch (TF2_GetPlayerClass(client))
+	{
+		case TFClass_Medic:
+		{
+			int secondary = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
+			if (secondary != -1)
+			{
+				SetEntPropFloat(secondary, Prop_Send, "m_flChargeLevel", 1.0);
+			}
+			SetEntPropFloat(client, Prop_Send, "m_flRageMeter", 100.0);
+		}
+	}
+}
+
+public void CTFBotUpgrade_OnEnd(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
+{
+	KV_MvM_UpgradesDone(actor);
+	if ((TF2_GetPlayerClass(actor) == TFClass_Engineer) && (GameRules_GetRoundState() == RoundState_BetweenRounds))
+	{
+		bool nestMoved = m_aNestAreaRelocate[actor] != NULL_AREA;
+		if (nestMoved)
+		{
+			m_aNestArea[actor] = m_aNestAreaRelocate[actor];
+			m_aNestAreaRelocate[actor] = NULL_AREA;
+		}
+		if (nestMoved || !NothingLeftToBuild(GetObjectOfType(actor, TFObject_Sentry)))
+		{
+			DetonateObjectOfType(actor, TFObject_Sentry);
+		}
+		if (nestMoved || !NothingLeftToBuild(GetObjectOfType(actor, TFObject_Dispenser)))
+		{
+			DetonateObjectOfType(actor, TFObject_Dispenser);
+		}
+	}
+	if (IsPlayerAlive(actor))
+	{
+		Command_BoughtUpgrades(actor, 0);
+		if ((GameRules_GetRoundState() == RoundState_RoundRunning) && !g_bHasUpgraded[actor])
+		{
+			UpgradeMidRoundPostActivity(actor);
+		}
+		g_bHasUpgraded[actor] = true;
+		g_bShoppedThisBreak[actor] = true;
+		g_iBuyUpgradesNumber[actor] = 0;
+		TF2_SetInUpgradeZone(actor, false);
+		RecoverDefenderFromDisconnectedSpawn(actor);
+	}
+}
+

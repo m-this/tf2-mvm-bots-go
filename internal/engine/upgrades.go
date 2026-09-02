@@ -10,6 +10,12 @@ internal/upgrade.
 
 // UpgradeCalls are the answers.
 type UpgradeCalls struct {
+	SetHasUpgraded            func(client int32, done bool)
+	SetShoppedThisBreak       func(client int32, shopped bool)
+	SetBuyUpgradesNumber      func(client int32, count int32)
+	SetNestArea               func(actor int32, area Area)
+	SetNestRelocate           func(actor int32, area Area)
+	BoughtUpgradesCommand     func(client int32, args int32) Outcome
 	UpgradeTier               func(upgrade int32) int32
 	IsUpgradeTierEnabled      func(client int32, slot int32, tier int32) bool
 	UpgradeTierCap            func(attribute Text) int32
@@ -296,16 +302,6 @@ func UpgradeTierCap(attribute Text) int32 {
 	return upgrades.UpgradeTierCap(attribute)
 }
 
-// BuyUpgrade sends the station the purchase. Still in behavior/upgrade.sp.
-//
-//sp:plugin KV_MVM_Upgrade
-func BuyUpgrade(client int32, count int32, slot int32, index int32) {
-	if upgrades.BuyUpgrade == nil {
-		missing("KV_MVM_Upgrade")
-	}
-	upgrades.BuyUpgrade(client, count, slot, index)
-}
-
 // PurchasedUpgrades is how many steps this bot has bought this trip, and
 // SetPurchasedUpgradesOf writes it.
 //
@@ -325,4 +321,15 @@ func SetPurchasedUpgradesOf(client int32, count int32) {
 		missing("m_nPurchasedUpgrades")
 	}
 	upgrades.SetPurchasedUpgrades(client, count)
+}
+
+// BoughtUpgradesCommand records what this bot bought, for the stats plugin.
+// Ported, loadouts.
+//
+//sp:body Command_BoughtUpgrades
+func BoughtUpgradesCommand(client int32, args int32) Outcome {
+	if upgrades.BoughtUpgradesCommand == nil {
+		missing("Command_BoughtUpgrades")
+	}
+	return upgrades.BoughtUpgradesCommand(client, args)
 }

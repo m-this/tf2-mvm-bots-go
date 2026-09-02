@@ -539,7 +539,7 @@ func PurchaseUpgrade(actor int32, row int32) bool {
 		}
 	}
 
-	engine.BuyUpgrade(actor, count, slot, index)
+	KVUpgrade(actor, count, slot, index)
 
 	spent := currencyBefore - engine.Currency(actor)
 
@@ -572,4 +572,136 @@ func RowIndexOf(actor int32, row int32) int32 {
 //sp:name Go_SetRefusedUpgrade
 func SetRefusedUpgrade(actor int32, index int32) {
 	refusedUpgrade[actor][index] = true
+}
+
+/*
+The three messages the station listens for.
+
+A purchase is not a native but a KeyValues the client sends, the same one the
+menu sends when a player clicks. Begin resets the count, Upgrade is one buy, and
+Done tells the station how many steps were taken so it can say so.
+*/
+
+// KVUpgradesBegin opens the session.
+//
+//sp:name KV_MvM_UpgradesBegin
+func KVUpgradesBegin(client int32) {
+	purchasedUpgrades[client] = 0
+
+	kv := engine.NewKeyValues("MvM_UpgradesBegin")
+	defer kv.Close()
+
+	engine.FakeCommandKV(client, kv)
+}
+
+// KVUpgrade buys count steps of one upgrade in one slot.
+//
+//sp:name KV_MVM_Upgrade
+func KVUpgrade(client int32, count int32, slot int32, index int32) {
+	kv := engine.NewKeyValues("MVM_Upgrade")
+	defer kv.Close()
+
+	kv.JumpToKey("upgrade", true)
+	kv.SetNum("itemslot", slot)
+	kv.SetNum("upgrade", index)
+	kv.SetNum("count", count)
+	engine.FakeCommandKV(client, kv)
+}
+
+// KVUpgradesDone closes the session, saying how many steps were taken.
+//
+//sp:name KV_MvM_UpgradesDone
+func KVUpgradesDone(client int32) {
+	kv := engine.NewKeyValues("MvM_UpgradesDone")
+	defer kv.Close()
+
+	kv.SetNum("num_upgrades", purchasedUpgrades[client])
+	engine.FakeCommandKV(client, kv)
+}
+
+/*
+UpgradeMidRoundPostActivity gives a bot that joined mid-round what it would have
+had if it had shopped with everybody else.
+
+Only the medic, and only the two things a wave in progress has already given the
+others: a full charge and a full rage meter. Mainly for the auto mode, where bots
+arrive when the wave begins rather than before it.
+*/
+//
+//sp:name UpgradeMidRoundPostActivity
+//
+//nolint:gocritic // singleCaseSwitch: the shipped file is a switch, and the other classes may join it
+func UpgradeMidRoundPostActivity(client int32) {
+	switch engine.PlayerClass(client) {
+	case engine.ClassMedic():
+		secondary := engine.PlayerWeaponSlot(client, engine.WeaponSlotSecondary())
+
+		if secondary != -1 {
+			engine.SetEntPropFloat(secondary, engine.PropSend(), "m_flChargeLevel", 1.0)
+		}
+
+		engine.SetEntPropFloat(client, engine.PropSend(), "m_flRageMeter", 100.0)
+	}
+}
+
+/*
+UpgradeOnEnd closes the shopping trip.
+
+What is left over stays in the wallet. This spent it on canteens, every session,
+on the reasoning that money not spent is money wasted. It is the other way round
+in this mode: credits carry between waves and upgrades do not expire, so an
+unspent hundred is a hundred towards the four hundred upgrade that actually
+changes a wave. A canteen is used once and gone.
+
+What comes down after a trip is whatever rebuilding could improve on. Everything
+used to, which was right about a level 1 and wrong about a level 3: taking one
+down means a walk, three hundred metal, and another go at every way placing a
+building can fail. Reported from play as the engineer destroying perfectly good
+buildings between waves on a path that had not changed. A finished building on
+ground the nest still occupies stays; anything short of finished comes down, and
+so does everything when the nest has moved, because then it is in the wrong
+place however good it is.
+*/
+//
+//sp:name CTFBotUpgrade_OnEnd
+//sp:public
+//
+//nolint:revive // unused-parameter: the action, the prior action and the result are the game's
+func UpgradeOnEnd(action engine.Behaviour, actor int32, priorAction engine.Behaviour, result engine.ActionResult) {
+	KVUpgradesDone(actor)
+
+	if engine.PlayerClass(actor) == engine.ClassEngineer() && engine.RoundState() == engine.RoundStateBetweenRounds() {
+		nestMoved := engine.NestRelocateOf(actor) != engine.NullArea()
+
+		if nestMoved {
+			engine.SetNestArea(actor, engine.NestRelocateOf(actor))
+			engine.SetNestRelocate(actor, engine.NullArea())
+		}
+
+		if nestMoved || !NothingLeftToBuild(engine.ObjectOfType(actor, engine.ObjectSentry())) {
+			engine.DetonateObjectOfType(actor, engine.ObjectSentry())
+		}
+
+		if nestMoved || !NothingLeftToBuild(engine.ObjectOfType(actor, engine.ObjectDispenser())) {
+			engine.DetonateObjectOfType(actor, engine.ObjectDispenser())
+		}
+	}
+
+	if engine.IsPlayerAlive(actor) {
+		// Remember this bot's upgrades.
+		engine.BoughtUpgradesCommand(actor, 0)
+
+		// The first session after joining gives everything as if the bot had
+		// prepared beforehand, which is what the auto mode needs.
+		if engine.RoundState() == engine.RoundStateRunning() && !engine.HasUpgraded(actor) {
+			UpgradeMidRoundPostActivity(actor)
+		}
+
+		engine.SetHasUpgraded(actor, true)
+		engine.SetShoppedThisBreak(actor, true)
+		engine.SetBuyUpgradesNumber(actor, 0)
+
+		engine.SetInUpgradeZone(actor, false)
+		engine.RecoverDefenderFromDisconnectedSpawn(actor)
+	}
 }
