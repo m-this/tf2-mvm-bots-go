@@ -419,3 +419,41 @@ func GetWeaponPrefMenuItemText(client int32, class string, slot int32) (menuText
 
 	return menuText
 }
+
+/*
+StartBotVote asks RED whether to have bots this round.
+
+The voter list is a fixed array rather than one sized to MaxClients, which is
+what every other client walk in this repository does: the slots are bounded at
+compile time and VoteMenu takes the count separately anyway.
+*/
+//
+//sp:name StartBotVote
+func StartBotVote(voteCaller int32) bool {
+	vMenu := engine.CreateVoteMenu(MenuHandlerBotVote)
+	engine.SetMenuTitleFrom(vMenu, "%N wants to enable bots for this round.\nBots will fill in for missing teammates.", voteCaller)
+	engine.AddMenuItem(vMenu, "0", "Add bots for this game.")
+	engine.AddMenuItem(vMenu, "1", "Don't add bots this game.")
+	engine.SetMenuExitButton(vMenu, false)
+
+	engine.PrintToChatAll("%s A player started a bot game vote.", engine.PluginPrefix())
+
+	total := int32(0)
+
+	var players [65]int32
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if engine.IsClientInGame(i) && engine.ClientTeam(i) == engine.TeamRed() {
+			players[total] = i
+			total++
+		}
+	}
+
+	if engine.VoteMenu(vMenu, players, total, 15) {
+		// Remember who started the vote.
+		engine.SetBotSummoner(engine.ClientUserID(voteCaller))
+		return true
+	}
+
+	return false
+}

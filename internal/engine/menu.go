@@ -12,6 +12,10 @@ Close is only ever called from the handler.
 
 // MenuCalls are the answers.
 type MenuCalls struct {
+	VoteMenu                       func(m Menu, clients [65]int32, numClients int32, time int32) bool
+	SetMenuExitButton              func(m Menu, on bool)
+	SetMenuTitleFrom               func(m Menu, format string, client int32)
+	CreateVoteMenu                 func(handler string) Menu
 	NewPanel                       func() Panel
 	PanelSetTitle                  func(p Panel, title string)
 	PanelDrawItem                  func(p Panel, text Text)
@@ -606,4 +610,53 @@ func FormatPercent(format string, name string, percent float32) (out Text) {
 		missing("Format")
 	}
 	return menus.FormatPercent(format, name, percent)
+}
+
+// VoteMenu puts a menu to a list of players and says whether a vote started.
+//
+//sp:native VoteMenu
+func VoteMenu(m Menu, clients [65]int32, numClients int32, time int32) bool {
+	if menus.VoteMenu == nil {
+		missing("VoteMenu")
+	}
+	return menus.VoteMenu(m, clients, numClients, time)
+}
+
+// SetMenuExitButton puts the close button on it, or takes it off, which is how
+// a vote refuses to be dismissed.
+//
+//sp:native SetMenuExitButton
+func SetMenuExitButton(m Menu, on bool) {
+	if menus.SetMenuExitButton == nil {
+		missing("SetMenuExitButton")
+	}
+	menus.SetMenuExitButton(m, on)
+}
+
+// SetMenuTitleFrom writes a title naming a player.
+//
+//sp:native SetMenuTitle
+func SetMenuTitleFrom(m Menu, format string, client int32) {
+	if menus.SetMenuTitleFrom == nil {
+		missing("SetMenuTitle")
+	}
+	menus.SetMenuTitleFrom(m, format, client)
+}
+
+// MenuActionsAll is MENU_ACTIONS_ALL, which a vote needs so its handler hears
+// the end and the cancel as well as a selection.
+//
+//sp:global MENU_ACTIONS_ALL
+func MenuActionsAll() int32 { return 0 }
+
+// CreateVoteMenu is CreateMenu with the action set written out, which only a
+// vote passes.
+//
+//sp:native CreateMenu borrowed after MENU_ACTIONS_ALL
+//nolint:revive // unused-parameter: the handler is a name the emitter writes
+func CreateVoteMenu(handler func(menu Menu, action MenuChoice, param1 int32, param2 int32) int32) Menu {
+	if menus.CreateVoteMenu == nil {
+		missing("CreateMenu")
+	}
+	return menus.CreateVoteMenu("")
 }
