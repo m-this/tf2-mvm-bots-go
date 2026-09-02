@@ -12,18 +12,19 @@ Close is only ever called from the handler.
 
 // MenuCalls are the answers.
 type MenuCalls struct {
-	NewMenu          func(handler string) Menu
-	SetTitle         func(m Menu, format string, args []any)
-	AddItem          func(m Menu, info string, display string)
-	Display          func(m Menu, client int32, time int32)
-	DisplayAt        func(m Menu, client int32, position int32, time int32)
-	DeleteMenu       func(m Menu)
-	SelectionPos     func() int32
-	SetChoosing      func(client int32, choosing bool)
-	PrintToChat      func(client int32, format string, args []any)
-	ChosenClasses    func() List
-	ShowConfirmation func(client int32)
-	SetupCancelled   func()
+	NewMenu             func(handler string) Menu
+	SetTitle            func(m Menu, format string, args []any)
+	AddItem             func(m Menu, info string, display string)
+	Display             func(m Menu, client int32, time int32)
+	DisplayAt           func(m Menu, client int32, position int32, time int32)
+	DeleteMenu          func(m Menu)
+	SelectionPos        func() int32
+	SetChoosing         func(client int32, choosing bool)
+	PrintToChat         func(client int32, format string, args []any)
+	ChosenClasses       func() List
+	ShowConfirmation    func(client int32)
+	SetupCancelled      func()
+	SetBotClassesLocked func(locked bool)
 }
 
 var menus MenuCalls
@@ -162,17 +163,6 @@ func ChosenBotClasses() List {
 	return menus.ChosenClasses()
 }
 
-// ShowDefenderBotTeamConfirmationMenu asks the player to accept the lineup
-// they built. Still in menu.sp.
-//
-//sp:plugin ShowDefenderBotTeamConfirmationMenu
-func ShowDefenderBotTeamConfirmationMenu(client int32) {
-	if menus.ShowConfirmation == nil {
-		missing("ShowDefenderBotTeamConfirmationMenu")
-	}
-	menus.ShowConfirmation(client)
-}
-
 // DefenderBotTeamSetupCancelled puts the vote back when nobody finished
 // picking. Still in menu.sp.
 //
@@ -182,4 +172,15 @@ func DefenderBotTeamSetupCancelled() {
 		missing("DefenderBotTeamSetupCancelled")
 	}
 	menus.SetupCancelled()
+}
+
+// SetBotClassesLocked writes g_bBotClassesLocked: the lineup a player accepted
+// is held until the bots that use it are seated.
+//
+//sp:globalset g_bBotClassesLocked
+func SetBotClassesLocked(locked bool) {
+	if menus.SetBotClassesLocked == nil {
+		missing("g_bBotClassesLocked")
+	}
+	menus.SetBotClassesLocked(locked)
 }

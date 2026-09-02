@@ -377,6 +377,11 @@ func (e *emitter) constLiteral(c *types.Const) (string, error) {
 	if c.Val().Kind() == constant.String {
 		text := constant.StringVal(c.Val())
 		for _, r := range text {
+			// The same three escapes stringLit allows, for the
+			// same reason: SourcePawn spells them identically.
+			if r == '\n' || r == '\t' || r == '\r' {
+				continue
+			}
 			if r < ' ' || r > '~' {
 				return "", fmt.Errorf("the text %q holds a character this package will not escape for SourcePawn", text)
 			}

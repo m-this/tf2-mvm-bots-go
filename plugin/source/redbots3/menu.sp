@@ -1,4 +1,3 @@
-#define CHOOSE_BOT_CLASSES_TIME_SHORT	15
 
 Menu g_hBotPreferenceMenu;
 static Menu m_hWeaponPrefClassMenu;
@@ -32,35 +31,6 @@ bool StartBotVote(int voteCaller)
 	
 	return false;
 }
-void ShowDefenderBotTeamConfirmationMenu(int client)
-{
-	Menu hMenu = new Menu(MenuHandler_DefenderBotTeamConfirmation);
-	
-	char botClassesList[PLATFORM_MAX_PATH];
-	char className[13];
-	
-	for (int i = 0; i < g_adtChosenBotClasses.Length; i++)
-	{
-		if (i == 0)
-		{
-			//First one is just set as the name directly
-			g_adtChosenBotClasses.GetString(i, botClassesList, sizeof(botClassesList));
-		}
-		else
-		{
-			//Append to it on the others after the first element
-			g_adtChosenBotClasses.GetString(i, className, sizeof(className));
-			StrCat(botClassesList, sizeof(botClassesList), ", ");
-			StrCat(botClassesList, sizeof(botClassesList), className);
-		}
-	}
-	
-	hMenu.SetTitle("Your chosen team is %s\nDo you accept?", botClassesList);
-	hMenu.AddItem("0", "Yes");
-	hMenu.AddItem("1", "No");
-	hMenu.Display(client, CHOOSE_BOT_CLASSES_TIME_SHORT);
-}
-
 void CreateBotPreferenceMenu()
 {
 	delete g_hBotPreferenceMenu;
@@ -648,41 +618,6 @@ static int MenuHandler_BotVote(Menu menu, MenuAction action, int param1, int par
 	
 	return 0;
 }
-static int MenuHandler_DefenderBotTeamConfirmation(Menu menu, MenuAction action, int param1, int param2)
-{
-	switch (action)
-	{
-		case MenuAction_Select:
-		{
-			switch (param2)
-			{
-				case 0:
-				{
-					g_bChoosingBotClasses[param1] = false;
-					g_bBotClassesLocked = true;
-					PrintToChat(param1, "%s Very well. The next group of bots will use this lineup.", PLUGIN_PREFIX);
-				}
-				case 1:
-				{
-					ShowDefenderBotTeamSetupMenu(param1, _, true, redbots_manager_defender_team_size.IntValue - GetHumanAndDefenderBotCount(TFTeam_Red));
-				}
-			}
-		}
-		case MenuAction_Cancel:
-		{
-			g_bChoosingBotClasses[param1] = false;
-			DefenderBotTeamSetupCancelled();
-			PrintToChatAll("%s %N is no longer selecting the bot team.", PLUGIN_PREFIX, param1);
-		}
-		case MenuAction_End:
-		{
-			delete menu;
-		}
-	}
-	
-	return 0;
-}
-
 static int MenuHandler_BotPreferenceMain(Menu menu, MenuAction action, int param1, int param2)
 {
 	switch (action)

@@ -2,6 +2,8 @@
 
 #define CHOOSE_BOT_CLASSES_TIME (30)
 
+#define CHOOSE_BOT_CLASSES_TIME_SHORT (15)
+
 int m_iBotsLeftToChoose;
 
 stock void ShowDefenderBotTeamSetupMenu(int client, int itemPosition = 0, bool bInitialize = false, int numBotsToAdd = 0)
@@ -90,6 +92,64 @@ stock int MenuHandler_DefenderBotTeamSetup(Menu menu, MenuAction action, int par
 				return 0;
 			}
 			ShowDefenderBotTeamSetupMenu(param1, GetMenuSelectionPosition(), false, 0);
+		}
+		case MenuAction_Cancel:
+		{
+			g_bChoosingBotClasses[param1] = false;
+			DefenderBotTeamSetupCancelled();
+			PrintToChatAll("%s %N is no longer selecting the bot team.", PLUGIN_PREFIX, param1);
+		}
+		case MenuAction_End:
+		{
+			menu.Close();
+		}
+	}
+	return 0;
+}
+
+stock void ShowDefenderBotTeamConfirmationMenu(int client)
+{
+	Menu hMenu = new Menu(MenuHandler_DefenderBotTeamConfirmation);
+	char botClassesList[512];
+	for (int i = 0; i < g_adtChosenBotClasses.Length; i++)
+	{
+		if (i == 0)
+		{
+			g_adtChosenBotClasses.GetString(i, botClassesList, 512);
+		}
+		else
+		{
+			char className[512];
+			g_adtChosenBotClasses.GetString(i, className, 512);
+			StrCat(botClassesList, 512, ", ");
+			StrCat(botClassesList, 512, className);
+		}
+	}
+	hMenu.SetTitle("Your chosen team is %s\nDo you accept?", botClassesList);
+	hMenu.AddItem("0", "Yes");
+	hMenu.AddItem("1", "No");
+	hMenu.Display(client, CHOOSE_BOT_CLASSES_TIME_SHORT);
+}
+
+stock int MenuHandler_DefenderBotTeamConfirmation(Menu menu, MenuAction action, int param1, int param2)
+{
+	switch (action)
+	{
+		case MenuAction_Select:
+		{
+			switch (param2)
+			{
+				case 0:
+				{
+					g_bChoosingBotClasses[param1] = false;
+					g_bBotClassesLocked = true;
+					PrintToChat(param1, "%s Very well. The next group of bots will use this lineup.", PLUGIN_PREFIX);
+				}
+				case 1:
+				{
+					ShowDefenderBotTeamSetupMenu(param1, 0, true, redbots_manager_defender_team_size.IntValue - GetHumanAndDefenderBotCount(TFTeam_Red));
+				}
+			}
 		}
 		case MenuAction_Cancel:
 		{

@@ -146,11 +146,18 @@ func (e *emitter) stringLit(lit *ast.BasicLit) string {
 		return ""
 	}
 	for _, r := range text {
-		// A quote and a backslash are spelled the same way in both
-		// languages, and strconv.Quote below writes exactly that, so
-		// they pass. Anything outside printable ASCII does not: the
-		// escapes differ there, and a generator that guessed would
-		// produce a plugin that compiles and looks for the wrong thing.
+		/* A quote and a backslash are spelled the same way in both
+		languages, and strconv.Quote below writes exactly that, so they
+		pass. So do a newline, a tab and a carriage return: SourcePawn
+		writes \n, \t and \r for those and means the same thing, and a
+		menu title with a line in it needs the first.
+
+		Anything else outside printable ASCII does not pass: the escapes
+		differ there, and a generator that guessed would produce a plugin
+		that compiles and looks for the wrong thing. */
+		if r == '\n' || r == '\t' || r == '\r' {
+			continue
+		}
 		if r < ' ' || r > '~' {
 			e.fail(lit.Pos(), "the string %s holds a character this package will not escape for SourcePawn; a message is plain printable text", lit.Value)
 			return ""
