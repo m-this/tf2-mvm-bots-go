@@ -12,6 +12,12 @@ Close is only ever called from the handler.
 
 // MenuCalls are the answers.
 type MenuCalls struct {
+	NewPanel                       func() Panel
+	PanelSetTitle                  func(p Panel, title string)
+	PanelDrawItem                  func(p Panel, text Text)
+	PanelSend                      func(p Panel, client int32, duration int32) bool
+	PanelClose                     func(p Panel)
+	FormatPercent                  func(format string, name string, percent float32) Text
 	WeaponPreference               func(client int32, class string, slot string) int32
 	FormatNamed                    func(format string, name Text) Text
 	AddMenuItemBoth                func(m Menu, info Text, display Text)
@@ -529,4 +535,75 @@ func FormatNamed(format string, name Text) (out Text) {
 		missing("Format")
 	}
 	return menus.FormatNamed(format, name)
+}
+
+/*
+Panel is SourceMod's Panel: a menu that shows and asks nothing.
+
+Unlike a Menu, the caller owns it: Send shows it and returns, and the panel is
+deleted on the spot. Its handler exists only because Send demands one.
+*/
+//
+//sp:tag Panel
+type Panel int32
+
+// NewPanel makes one. The caller owns it.
+//
+//sp:new Panel
+func NewPanel() Panel {
+	if menus.NewPanel == nil {
+		missing("new Panel")
+	}
+	return menus.NewPanel()
+}
+
+// SetTitle writes the line above the rows.
+//
+//sp:method SetTitle
+func (p Panel) SetTitle(title string) {
+	if menus.PanelSetTitle == nil {
+		missing("Panel.SetTitle")
+	}
+	menus.PanelSetTitle(p, title)
+}
+
+// DrawItem adds a row.
+//
+//sp:method DrawItem
+func (p Panel) DrawItem(text Text) {
+	if menus.PanelDrawItem == nil {
+		missing("Panel.DrawItem")
+	}
+	menus.PanelDrawItem(p, text)
+}
+
+// Send shows it, and says whether the player was there to see it.
+//
+//sp:method Send
+//nolint:revive // unused-parameter: the handler is a name the emitter writes
+func (p Panel) Send(client int32, handler func(menu Menu, action MenuChoice, param1 int32, param2 int32) int32, duration int32) bool {
+	if menus.PanelSend == nil {
+		missing("Panel.Send")
+	}
+	return menus.PanelSend(p, client, duration)
+}
+
+// Close deletes it.
+//
+//sp:delete Close
+func (p Panel) Close() {
+	if menus.PanelClose == nil {
+		missing("delete Panel")
+	}
+	menus.PanelClose(p)
+}
+
+// FormatPercent writes a class name and its share into a row.
+//
+//sp:native Format fills
+func FormatPercent(format string, name string, percent float32) (out Text) {
+	if menus.FormatPercent == nil {
+		missing("Format")
+	}
+	return menus.FormatPercent(format, name, percent)
 }

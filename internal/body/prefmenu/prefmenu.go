@@ -164,25 +164,6 @@ func MenuHandlerBotPreferenceMain(menu engine.Menu, action engine.MenuChoice, pa
 	return 0
 }
 
-// MenuHandlerShowBotChances hears nothing: the panel it belongs to is a
-// readout, and there is nothing to press.
-//
-//sp:name MenuHandler_ShowBotChances
-//nolint:revive // unused-parameter: SourceMod calls this with the full set and the panel answers none of it
-func MenuHandlerShowBotChances(menu engine.Menu, action engine.MenuChoice, param1 int32, param2 int32) int32 {
-	// Do nothing.
-	return 0
-}
-
-// MenuHandlerShowBotTeamComposition is the same for the lineup readout.
-//
-//sp:name MenuHandler_ShowBotTeamComposition
-//nolint:revive // unused-parameter: SourceMod calls this with the full set and the panel answers none of it
-func MenuHandlerShowBotTeamComposition(menu engine.Menu, action engine.MenuChoice, param1 int32, param2 int32) int32 {
-	// Do nothing.
-	return 0
-}
-
 // The class a player is picking a loadout for, so every menu below the class
 // list knows which one it is talking about.
 //

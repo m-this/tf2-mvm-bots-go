@@ -166,6 +166,7 @@ var reshaped = map[string]string{
 	"NestSpotFromList":                 "the candidate and the answer cannot be the same variable; see the aliasing refusal in internal/spbody",
 	"ResetNextBot":                     "the flat list of every per-client field became one reset per package that owns some. Checked by hand against the shipped body at the pin: 26 fields, all 26 cleared, every one to the same value. A behaviour now brings its own reset or has none to bring, rather than depending on somebody remembering this list",
 	"ShowWeaponPreferenceItemListMenu": "twenty seven blocks, one per class and slot, each the same four lines around a different pool, became one loop over the pool the loadouts chain already knows how to reach. Checked by hand: WeaponPoolCount and WeaponPoolAt are generated from the same pool list GetRandomWeaponForClass uses, the spy's slots keep the shipped one-along filing, and an item the schema cannot name is still skipped",
+	"CreateDisplayPanelBotPercentages": "nine blocks of the same four lines, one per class, became one loop: the class names are a table and the shares were already indexed by class. Checked by hand: the same nine names in the same order, the same skip of a class with no share",
 }
 
 /*

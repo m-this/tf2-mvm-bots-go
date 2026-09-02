@@ -163,16 +163,6 @@ stock int MenuHandler_BotPreferenceMain(Menu menu, MenuAction action, int param1
 	return 0;
 }
 
-stock int MenuHandler_ShowBotChances(Menu menu, MenuAction action, int param1, int param2)
-{
-	return 0;
-}
-
-stock int MenuHandler_ShowBotTeamComposition(Menu menu, MenuAction action, int param1, int param2)
-{
-	return 0;
-}
-
 stock void CreateBotPreferenceMenu()
 {
 	g_hBotPreferenceMenu.Close();
