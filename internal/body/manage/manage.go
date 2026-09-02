@@ -160,3 +160,87 @@ func AddRandomDefenderBots(amount int32) {
 		AddDefenderTFBot(1, engine.RawPlayerClassName(engine.Class(engine.RandomInt(1, 9))), "red", "expert", false, true)
 	}
 }
+
+/*
+	MakePlayerDance is the send-off on the final wave
+
+The taunt itself is not written yet, so this is the shape and the aliveness test
+and nothing else. It stays as the shipped file has it: mvm-z83.41 says a port
+does not carry a fix, and filling this in is a fix.
+
+*/
+//
+//sp:name MakePlayerDance
+func MakePlayerDance(client int32) {
+	if engine.IsPlayerAlive(client) {
+		_ = client
+	}
+}
+
+/*
+	MakeRoomForHumanPlayer frees a defender seat for somebody who just connected
+
+The bots are not kicked between waves any more, because a kicked bot is a bot
+that paid for its upgrades and left them behind. That leaves nothing to open a
+seat: the game caps the defending team, the bots fill it, and a player who joins
+the server after the mission started is told the team is full for the rest of it.
+
+Only when RED is already full: below the size there is a seat going spare and
+nobody has to leave. A dead bot goes first, since kicking one costs the team
+nothing it still had.
+
+*/
+//
+//sp:name MakeRoomForHumanPlayer
+func MakeRoomForHumanPlayer(client int32) {
+	if engine.HumanAndDefenderBotCount(engine.TeamRed()) < engine.DefenderTeamSize().Int() {
+		return
+	}
+
+	victim := int32(-1)
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if i == client || !engine.IsClientInGame(i) || !engine.DefenderBotFlag(i) {
+			continue
+		}
+
+		if engine.ClientTeam(i) != engine.TeamRed() {
+			continue
+		}
+
+		if !engine.IsPlayerAlive(i) {
+			victim = i
+			break
+		}
+
+		if victim == -1 {
+			victim = i
+		}
+	}
+
+	if victim == -1 {
+		return
+	}
+
+	engine.KickClient(victim, "BotManager3: Making room for a player")
+}
+
+// RemoveAllDefenderBots empties RED of ours.
+//
+//sp:name RemoveAllDefenderBots
+//sp:writable reason
+//sp:default reason ""
+//sp:default bDanceInstead false
+func RemoveAllDefenderBots(reason engine.Text, bDanceInstead bool) {
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if engine.IsClientInGame(i) && engine.DefenderBotFlag(i) {
+			// The final wave dances instead of leaving.
+			if bDanceInstead {
+				engine.MakePlayerDance(i)
+				continue
+			}
+
+			engine.KickClientText(i, reason)
+		}
+	}
+}

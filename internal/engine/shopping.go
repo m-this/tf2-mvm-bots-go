@@ -251,10 +251,10 @@ func ShowCurrentBotClassChances(client int32) {
 	shopping.ShowCurrentBotClassChances(client)
 }
 
-// RemoveAllDefenderBotsFor kicks the team, saying why. Still in
-// tf2_defenderbots.sp.
+// RemoveAllDefenderBotsFor kicks the team, saying why. Ported,
+// manage.
 //
-//sp:plugin RemoveAllDefenderBots
+//sp:body RemoveAllDefenderBots
 func RemoveAllDefenderBotsFor(reason string) {
 	if shopping.RemoveAllDefenderBotsFor == nil {
 		missing("RemoveAllDefenderBots")

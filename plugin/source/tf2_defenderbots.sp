@@ -1853,14 +1853,6 @@ void FindGameConsoleVariables()
 	tf_bot_health_search_far_range = FindConVar("tf_bot_health_search_far_range");
 	tf_bot_health_search_near_range = FindConVar("tf_bot_health_search_near_range");
 }
-void MakePlayerDance(int client)
-{
-	if (IsPlayerAlive(client))
-	{
-		//TODO: tauntem
-	}
-}
-
 /* What a bot is actually carrying, by name, printed wherever the command came from
 
 Every line of this used PrintToChat, which needs a client, and rcon has not got one: run from the
@@ -1938,62 +1930,6 @@ static Action Timer_RefillDefenderTeam(Handle timer)
 	return Plugin_Stop;
 }
 
-/* Free a defender slot for somebody who just connected
-
-The bots are not kicked between waves any more, because a kicked bot is a bot that paid for its
-upgrades and left them behind. That leaves nothing to open a slot: the game caps the defending
-team, the bots fill it, and a player who joins the server after the mission started is told the
-team is full for the rest of it.
-
-A dead bot goes first, since kicking one costs the team nothing it still had */
-void MakeRoomForHumanPlayer(int client)
-{
-	if (GetHumanAndDefenderBotCount(TFTeam_Red) < redbots_manager_defender_team_size.IntValue)
-		return;
-	
-	int victim = -1;
-	
-	for (int i = 1; i <= MaxClients; i++)
-	{
-		if (i == client || !IsClientInGame(i) || !g_bIsDefenderBot[i])
-			continue;
-		
-		if (TF2_GetClientTeam(i) != TFTeam_Red)
-			continue;
-		
-		if (!IsPlayerAlive(i))
-		{
-			victim = i;
-			break;
-		}
-		
-		if (victim == -1)
-			victim = i;
-	}
-	
-	if (victim == -1)
-		return;
-	
-	KickClient(victim, "BotManager3: Making room for a player");
-}
-
-void RemoveAllDefenderBots(char[] reason = "", bool bDanceInstead = false)
-{
-	for (int i = 1; i <= MaxClients; i++)
-	{
-		if (IsClientInGame(i) && g_bIsDefenderBot[i])
-		{
-			//We dance on the final wave instead
-			if (bDanceInstead)
-			{
-				MakePlayerDance(i);
-				continue;
-			}
-			
-			KickClient(i, reason);
-		}
-	}
-}
 /* The seats sm_redbots_manager_team_composition still wants filled, in its order, at most count of
 them. Zero when the convar is empty, and the caller falls back to the lineup mode
 

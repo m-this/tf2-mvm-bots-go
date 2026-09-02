@@ -424,9 +424,9 @@ func SetNextReadyTime(when float32) {
 	registrations.SetNextReadyTime(when)
 }
 
-// RemoveAllDefenderBots clears the team out, saying why.
+// RemoveAllDefenderBots clears the team out, saying why. Ported, manage.
 //
-//sp:plugin RemoveAllDefenderBots
+//sp:body RemoveAllDefenderBots
 func RemoveAllDefenderBots(reason string) {
 	if registrations.RemoveAllDefenderBots == nil {
 		missing("RemoveAllDefenderBots")

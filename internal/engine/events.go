@@ -283,9 +283,9 @@ func HookDefenderBot(client int32) {
 func BotProjectileShield() int32 { return 0 }
 
 // RemoveAllDefenderBotsWhen kicks the team, or leaves it dancing on the final
-// wave. Still in tf2_defenderbots.sp.
+// wave. Ported, manage.
 //
-//sp:plugin RemoveAllDefenderBots
+//sp:body RemoveAllDefenderBots
 func RemoveAllDefenderBotsWhen(reason string, danceInstead bool) {
 	if events.RemoveAllDefenderBotsWhen == nil {
 		missing("RemoveAllDefenderBots")

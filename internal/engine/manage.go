@@ -18,6 +18,8 @@ type ManageCalls struct {
 	PickAllowedBotClass              func(wanted Text, buffer Text, maxlen int32)
 	HumanAndDefenderBotCount         func(team Team) int32
 	ExtendUpgradeTimeForNewBots      func()
+	KickClientText                   func(client int32, reason Text)
+	MakePlayerDance                  func(client int32)
 }
 
 var manages ManageCalls
@@ -195,4 +197,26 @@ func ExtendUpgradeTimeForNewBots() {
 		missing("ExtendUpgradeTimeForNewBots")
 	}
 	manages.ExtendUpgradeTimeForNewBots()
+}
+
+// KickClientText is KickClient handed a buffer: RemoveAllDefenderBots takes
+// the reason as a parameter and passes it straight through.
+//
+//sp:native KickClient
+func KickClientText(client int32, reason Text) {
+	if manages.KickClientText == nil {
+		missing("KickClient")
+	}
+	manages.KickClientText(client, reason)
+}
+
+// MakePlayerDance is the final wave's send-off, in place of a kick. Ported,
+// manage.
+//
+//sp:body MakePlayerDance
+func MakePlayerDance(client int32) {
+	if manages.MakePlayerDance == nil {
+		missing("MakePlayerDance")
+	}
+	manages.MakePlayerDance(client)
 }
