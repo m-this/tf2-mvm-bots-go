@@ -372,7 +372,7 @@ func GrantOrRemoveAllUpgrades(client int32, remove bool, refund bool) {
 
 // UpdateChosenBotTeamComposition works out the lineup the next wave gets.
 //
-//sp:plugin UpdateChosenBotTeamComposition
+//sp:body UpdateChosenBotTeamComposition
 func UpdateChosenBotTeamComposition() {
 	if registrations.UpdateChosenBotTeamComposition == nil {
 		missing("UpdateChosenBotTeamComposition")

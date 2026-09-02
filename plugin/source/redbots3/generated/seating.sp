@@ -95,3 +95,101 @@ stock void FindGameConsoleVariables()
 	tf_bot_health_search_near_range = FindConVar("tf_bot_health_search_near_range");
 }
 
+stock Action Timer_RefillDefenderTeam(Handle timer)
+{
+	if (!g_bBotsEnabled)
+	{
+		return Plugin_Stop;
+	}
+	if (GetRealPlayerCount() < 1)
+	{
+		return Plugin_Stop;
+	}
+	int missing = redbots_manager_defender_team_size.IntValue - GetHumanAndDefenderBotCount(TFTeam_Red);
+	if (missing > 0)
+	{
+		AddBotsBasedOnLineupMode(missing, true);
+	}
+	return Plugin_Stop;
+}
+
+stock void UpdateChosenBotTeamComposition(int caller = -1)
+{
+	if (g_bBotClassesLocked)
+	{
+		if (caller != -1)
+		{
+			PrintToChat(caller, "%s Bot team lineup is locked for the next game.");
+		}
+		return;
+	}
+	if (GetCountOfPlayersChoosingBotClasses() > 0)
+	{
+		if (caller != -1)
+		{
+			PrintToChat(caller, "%s Someone is currently choosing the bot team lineup.");
+		}
+		return;
+	}
+	g_adtChosenBotClasses.Clear();
+	g_adtChosenBotSeats.Clear();
+	int newBotsToAdd = redbots_manager_defender_team_size.IntValue - GetHumanAndDefenderBotCount(TFTeam_Red);
+	if (newBotsToAdd < 1)
+	{
+		return;
+	}
+	newBotsToAdd -= CollectMissingTeamComposition(g_adtChosenBotClasses, g_adtChosenBotSeats, newBotsToAdd);
+	if (newBotsToAdd > 0)
+	{
+		ChooseBotClassesFromLineupMode(newBotsToAdd);
+	}
+	if (caller != -1)
+	{
+		PrintToChatAll("%s %N changed the bot team lineup", PLUGIN_PREFIX, caller);
+	}
+	else
+	{
+		PrintToChatAll("%s Bot lineup changed", PLUGIN_PREFIX);
+	}
+}
+
+stock void ChooseBotClassesFromLineupMode(int count)
+{
+	switch (redbots_manager_bot_lineup_mode.IntValue)
+	{
+		case BOT_LINEUP_MODE_RANDOM:
+		{
+			for (int i = 1; i <= count; i++)
+			{
+				g_adtChosenBotClasses.PushString(g_sRawPlayerClassNames[GetRandomInt(TFClass_Scout, TFClass_Engineer)]);
+			}
+		}
+		case BOT_LINEUP_MODE_PREFERENCE, BOT_LINEUP_MODE_PREFERENCE_CHOOSE:
+		{
+			ArrayList adtClassPref = new ArrayList(TF2_CLASS_MAX_NAME_LENGTH);
+			CollectPlayerBotClassPreferences(adtClassPref);
+			if (adtClassPref.Length > 0)
+			{
+				for (int i = 1; i <= count; i++)
+				{
+					char class[512];
+					adtClassPref.GetString(GetRandomInt(0, adtClassPref.Length - 1), class, 512);
+					g_adtChosenBotClasses.PushString(class);
+				}
+			}
+			else
+			{
+				for (int i = 1; i <= count; i++)
+				{
+					g_adtChosenBotClasses.PushString(g_sRawPlayerClassNames[GetRandomInt(TFClass_Scout, TFClass_Engineer)]);
+				}
+			}
+			adtClassPref.Close();
+		}
+		default:
+		{
+			ThrowError("Unknown lineup mode %d", redbots_manager_bot_lineup_mode.IntValue);
+		}
+	}
+}
+

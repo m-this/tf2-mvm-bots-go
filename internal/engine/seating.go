@@ -10,19 +10,24 @@ the change is held as a flag and the break is what spends it.
 
 // SeatingCalls are the answers.
 type SeatingCalls struct {
-	ReseatPending          func() bool
-	SetReseatPending       func(pending bool)
-	RecyclePending         func() bool
-	SetRecyclePending      func(pending bool)
-	RecycleDefenderBots    func() int32
-	ReseatDefenderBots     func() int32
-	DispatchKeyValueVec    func(entity int32, key string, value [3]float32)
-	DispatchKeyValue       func(entity int32, key string, value string)
-	TeamClientCount        func(team Team) int32
-	PlayersChoosingClasses func() int32
-	ChosenBotSeats         func() List
-	BotClassesLocked       func() bool
-	SetGameConVar          func(name string, c ConVar)
+	ReseatPending                    func() bool
+	SetReseatPending                 func(pending bool)
+	RecyclePending                   func() bool
+	SetRecyclePending                func(pending bool)
+	RecycleDefenderBots              func() int32
+	ReseatDefenderBots               func() int32
+	DispatchKeyValueVec              func(entity int32, key string, value [3]float32)
+	DispatchKeyValue                 func(entity int32, key string, value string)
+	TeamClientCount                  func(team Team) int32
+	PlayersChoosingClasses           func() int32
+	ChosenBotSeats                   func() List
+	BotClassesLocked                 func() bool
+	SetGameConVar                    func(name string, c ConVar)
+	NewListSized                     func(blocksize int32) List
+	CollectPlayerBotClassPreferences func(out List)
+	CollectMissingTeamComposition    func(classes List, seats List, count int32) int32
+	ChooseBotClassesFromLineupMode   func(count int32)
+	RandomClassBetween               func(low Class, high Class) Class
 }
 
 var seatings SeatingCalls
@@ -206,4 +211,65 @@ func (s SeatingCalls) set(name string, c ConVar) {
 		missing(name)
 	}
 	s.SetGameConVar(name, c)
+}
+
+// ClassNameMax is TF2_CLASS_MAX_NAME_LENGTH, the block size of every list that
+// holds class names.
+//
+//sp:global TF2_CLASS_MAX_NAME_LENGTH
+func ClassNameMax() int32 { return 16 }
+
+// NewListSized makes an ArrayList whose entries are that many cells, which is
+// what a list of strings needs.
+//
+//sp:new ArrayList
+func NewListSized(blocksize int32) List {
+	if seatings.NewListSized == nil {
+		missing("new ArrayList")
+	}
+	return seatings.NewListSized(blocksize)
+}
+
+// CollectPlayerBotClassPreferences fills a list with the classes the people on
+// RED asked for. Ported, playerpref.
+//
+//sp:body CollectPlayerBotClassPreferences
+func CollectPlayerBotClassPreferences(out List) {
+	if seatings.CollectPlayerBotClassPreferences == nil {
+		missing("CollectPlayerBotClassPreferences")
+	}
+	seatings.CollectPlayerBotClassPreferences(out)
+}
+
+// CollectMissingTeamComposition names the seats the convar still wants filled
+// and says how many. Still in tf2_defenderbots.sp.
+//
+//sp:plugin CollectMissingTeamComposition
+func CollectMissingTeamComposition(classes List, seats List, count int32) int32 {
+	if seatings.CollectMissingTeamComposition == nil {
+		missing("CollectMissingTeamComposition")
+	}
+	return seatings.CollectMissingTeamComposition(classes, seats, count)
+}
+
+// ChooseBotClassesFromLineupMode fills the rest of the lineup from the mode.
+// Ported, seating.
+//
+//sp:body ChooseBotClassesFromLineupMode
+func ChooseBotClassesFromLineupMode(count int32) {
+	if seatings.ChooseBotClassesFromLineupMode == nil {
+		missing("ChooseBotClassesFromLineupMode")
+	}
+	seatings.ChooseBotClassesFromLineupMode(count)
+}
+
+// RandomClassBetween is GetRandomInt over two class values, which is how a
+// random lineup picks one.
+//
+//sp:native GetRandomInt
+func RandomClassBetween(low Class, high Class) Class {
+	if seatings.RandomClassBetween == nil {
+		missing("GetRandomInt")
+	}
+	return seatings.RandomClassBetween(low, high)
 }

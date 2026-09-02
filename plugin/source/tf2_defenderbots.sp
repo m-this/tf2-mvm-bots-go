@@ -290,8 +290,6 @@ char g_sBotTeamCompositions[][][] =
 #include "redbots3/generated/roster_counts.sp"
 #include "redbots3/generated/humans.sp"
 #include "redbots3/generated/mapconfig.sp"
-#include "redbots3/generated/seating.sp"
-#include "redbots3/generated/upgradereport.sp"
 #include "redbots3/generated/botnames.sp"
 #include "redbots3/generated/manage.sp"
 #include "redbots3/generated/lineoffire.sp"
@@ -321,6 +319,8 @@ char g_sBotTeamCompositions[][][] =
 #include "redbots3/generated/gameevents.sp"
 #include "redbots3/generated/behaviourreset.sp"
 #include "redbots3/generated/playerpref.sp"
+#include "redbots3/generated/seating.sp"
+#include "redbots3/generated/upgradereport.sp"
 #include "redbots3/generated/teammenu.sp"
 #include "redbots3/generated/prefmenu.sp"
 #include "redbots3/generated/addmenu.sp"
@@ -1845,28 +1845,6 @@ public void DefenderBot_TouchPost(int entity, int other)
 	}
 }
 
-/* Put a bot back in the slot a player just left
-
-Runs a tick after the disconnect, because the leaving player is still in the game at the point the
-forward fires and would otherwise still be counted. Nobody is left to play with if the last player
-leaves, so an empty defending team is left empty rather than filled with six bots holding a hatch
-for no one */
-static Action Timer_RefillDefenderTeam(Handle timer)
-{
-	if (!g_bBotsEnabled)
-		return Plugin_Stop;
-	
-	if (GetRealPlayerCount() < 1)
-		return Plugin_Stop;
-	
-	int missing = redbots_manager_defender_team_size.IntValue - GetHumanAndDefenderBotCount(TFTeam_Red);
-	
-	if (missing > 0)
-		AddBotsBasedOnLineupMode(missing);
-	
-	return Plugin_Stop;
-}
-
 /* The seats sm_redbots_manager_team_composition still wants filled, in its order, at most count of
 them. Zero when the convar is empty, and the caller falls back to the lineup mode
 
@@ -2347,91 +2325,6 @@ void AddBotsWithPresetTeamComp(int count = 6, int teamType = 0)
 		
 		AddDefenderTFBot(1, g_sBotTeamCompositions[teamType][i], "red", "expert");
 		total++;
-	}
-}
-
-void UpdateChosenBotTeamComposition(int caller = -1)
-{
-	//A player has already chosen their team, don't let it change
-	if (g_bBotClassesLocked)
-	{
-		if (caller != -1)
-			PrintToChat(caller, "%s Bot team lineup is locked for the next game.");
-		
-		return;
-	}
-	
-	//If someone is selecting the team, don't change it
-	if (GetCountOfPlayersChoosingBotClasses() > 0)
-	{
-		if (caller != -1)
-			PrintToChat(caller, "%s Someone is currently choosing the bot team lineup.");
-		
-		return;
-	}
-	
-	g_adtChosenBotClasses.Clear();
-	g_adtChosenBotSeats.Clear();
-	
-	int newBotsToAdd = redbots_manager_defender_team_size.IntValue - GetHumanAndDefenderBotCount(TFTeam_Red);
-	
-	if (newBotsToAdd < 1)
-		return;
-	
-	/* The named team is decided here, where every lineup is decided, and not where the bots are added
-	The wave begins by adding this list and nothing else, so a team named in the convar that only the
-	top-up timer ever read was a team that never played */
-	newBotsToAdd -= CollectMissingTeamComposition(g_adtChosenBotClasses, g_adtChosenBotSeats, newBotsToAdd);
-	
-	//Whatever seats the named team left over are the lineup mode's to fill
-	if (newBotsToAdd > 0)
-		ChooseBotClassesFromLineupMode(newBotsToAdd);
-	
-	if (caller != -1)
-		PrintToChatAll("%s %N changed the bot team lineup", PLUGIN_PREFIX, caller);
-	else
-		PrintToChatAll("%s Bot lineup changed", PLUGIN_PREFIX);
-}
-
-/* Name count more classes for the chosen lineup, the way the lineup mode says to */
-void ChooseBotClassesFromLineupMode(int count)
-{
-	switch (redbots_manager_bot_lineup_mode.IntValue)
-	{
-		case BOT_LINEUP_MODE_RANDOM:
-		{
-			for (int i = 1; i <= count; i++)
-				g_adtChosenBotClasses.PushString(g_sRawPlayerClassNames[GetRandomInt(TFClass_Scout, TFClass_Engineer)]);
-		}
-		case BOT_LINEUP_MODE_PREFERENCE, BOT_LINEUP_MODE_PREFERENCE_CHOOSE:
-		{
-			ArrayList adtClassPref = new ArrayList(TF2_CLASS_MAX_NAME_LENGTH);
-			
-			CollectPlayerBotClassPreferences(adtClassPref);
-			
-			if (adtClassPref.Length > 0)
-			{
-				//Choose the class lineup based on players' preferences
-				for (int i = 1; i <= count; i++)
-				{
-					char class[TF2_CLASS_MAX_NAME_LENGTH]; adtClassPref.GetString(GetRandomInt(0, adtClassPref.Length - 1), class, sizeof(class));
-					
-					g_adtChosenBotClasses.PushString(class);
-				}
-			}
-			else
-			{
-				//No prefernces, the lineup is random
-				for (int i = 1; i <= count; i++)
-					g_adtChosenBotClasses.PushString(g_sRawPlayerClassNames[GetRandomInt(TFClass_Scout, TFClass_Engineer)]);
-			}
-			
-			delete adtClassPref;
-		}
-		default:
-		{
-			ThrowError("Unknown lineup mode %d", redbots_manager_bot_lineup_mode.IntValue);
-		}
 	}
 }
 

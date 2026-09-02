@@ -160,3 +160,116 @@ func FindGameConsoleVariables() {
 	engine.SetHealthSearchFarRange(engine.FindConVar("tf_bot_health_search_far_range"))
 	engine.SetHealthSearchNearRange(engine.FindConVar("tf_bot_health_search_near_range"))
 }
+
+/*
+	TimerRefillDefenderTeam puts a bot back in the seat a player just left
+
+Runs a tick after the disconnect, because the leaving player is still in the
+game at the point the forward fires and would otherwise still be counted.
+Nobody is left to play with if the last player leaves, so an empty defending
+team is left empty rather than filled with six bots holding a hatch for no one.
+*/
+//
+//sp:name Timer_RefillDefenderTeam
+//nolint:revive // unused-parameter: the handle is the timer's own, and nothing here needs it
+func TimerRefillDefenderTeam(timer engine.Timer) engine.Outcome {
+	if !engine.BotsEnabled() {
+		return engine.PluginStop()
+	}
+
+	if engine.RealPlayerCount() < 1 {
+		return engine.PluginStop()
+	}
+
+	missing := engine.DefenderTeamSize().Int() - engine.HumanAndDefenderBotCount(engine.TeamRed())
+
+	if missing > 0 {
+		engine.AddBotsBasedOnLineupModeNow(missing, true)
+	}
+
+	return engine.PluginStop()
+}
+
+/*
+	UpdateChosenBotTeamComposition decides the lineup the next fill will use
+
+The named team is decided here, where every lineup is decided, and not where the
+bots are added. The wave begins by adding this list and nothing else, so a team
+named in the convar that only the top-up timer ever read was a team that never
+played.
+*/
+//
+//sp:name UpdateChosenBotTeamComposition
+//sp:default caller -1
+func UpdateChosenBotTeamComposition(caller int32) {
+	if engine.BotClassesLocked() {
+		if caller != -1 {
+			engine.PrintToChat(caller, "%s Bot team lineup is locked for the next game.")
+		}
+
+		return
+	}
+
+	if engine.PlayersChoosingClasses() > 0 {
+		if caller != -1 {
+			engine.PrintToChat(caller, "%s Someone is currently choosing the bot team lineup.")
+		}
+
+		return
+	}
+
+	engine.ChosenBotClasses().Clear()
+	engine.ChosenBotSeats().Clear()
+
+	newBotsToAdd := engine.DefenderTeamSize().Int() - engine.HumanAndDefenderBotCount(engine.TeamRed())
+
+	if newBotsToAdd < 1 {
+		return
+	}
+
+	newBotsToAdd -= engine.CollectMissingTeamComposition(engine.ChosenBotClasses(), engine.ChosenBotSeats(), newBotsToAdd)
+
+	// Whatever seats the named team left over are the lineup mode's to fill.
+	if newBotsToAdd > 0 {
+		engine.ChooseBotClassesFromLineupMode(newBotsToAdd)
+	}
+
+	if caller != -1 {
+		engine.PrintToChatAll("%s %N changed the bot team lineup", engine.PluginPrefix(), caller)
+	} else {
+		engine.PrintToChatAll("%s Bot lineup changed", engine.PluginPrefix())
+	}
+}
+
+// ChooseBotClassesFromLineupMode names count more classes for the chosen
+// lineup, the way the lineup mode says to.
+//
+//sp:name ChooseBotClassesFromLineupMode
+func ChooseBotClassesFromLineupMode(count int32) {
+	switch engine.BotLineupMode().Int() {
+	case engine.LineupModeRandom():
+		for i := int32(1); i <= count; i++ {
+			engine.ChosenBotClasses().PushStringText(engine.RawPlayerClassName(engine.RandomClassBetween(engine.ClassScout(), engine.ClassEngineer())))
+		}
+	case engine.LineupModePreference(), engine.LineupModePreferenceChoose():
+		adtClassPref := engine.NewListSized(engine.ClassNameMax())
+
+		engine.CollectPlayerBotClassPreferences(adtClassPref)
+
+		if adtClassPref.Length() > 0 {
+			for i := int32(1); i <= count; i++ {
+				class := adtClassPref.GetString(engine.RandomInt(0, adtClassPref.Length()-1))
+
+				engine.ChosenBotClasses().PushStringText(class)
+			}
+		} else {
+			for i := int32(1); i <= count; i++ {
+				engine.ChosenBotClasses().PushStringText(engine.RawPlayerClassName(engine.RandomClassBetween(engine.ClassScout(), engine.ClassEngineer())))
+			}
+		}
+
+		adtClassPref.Close()
+	default:
+		engine.ThrowError("Unknown lineup mode %d", engine.BotLineupMode().Int())
+	}
+}
