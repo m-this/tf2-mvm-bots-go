@@ -34,21 +34,31 @@ func (e *emitter) defaultsOf(d *ast.FuncDecl) map[string]string {
 		return nil
 	}
 	out := make(map[string]string)
+	/* Line by line, because a block comment is one entry
+
+	A block doc comment arrives as a single ast.Comment whose text is the
+	whole block, so testing the entry for the prefix found nothing and the
+	directive was dropped without a word: RemoveAllDefenderBots lost both its
+	defaults, and only the shipped comparison noticed. Every other directive
+	reader already walks the lines. */
 	for _, c := range d.Doc.List {
-		if !strings.HasPrefix(c.Text, defaultDirective) {
-			continue
+		for line := range strings.Lines(c.Text) {
+			line = strings.TrimSpace(line)
+			if !strings.HasPrefix(line, defaultDirective) {
+				continue
+			}
+			rest := strings.TrimSpace(strings.TrimPrefix(line, defaultDirective))
+			name, value, ok := strings.Cut(rest, " ")
+			if !ok || strings.TrimSpace(value) == "" {
+				e.fail(d.Pos(), "the directive %q needs a parameter name and a value", line)
+				continue
+			}
+			if _, dup := out[name]; dup {
+				e.fail(d.Pos(), "%s is given a default twice", name)
+				continue
+			}
+			out[name] = strings.TrimSpace(value)
 		}
-		rest := strings.TrimSpace(strings.TrimPrefix(c.Text, defaultDirective))
-		name, value, ok := strings.Cut(rest, " ")
-		if !ok || strings.TrimSpace(value) == "" {
-			e.fail(d.Pos(), "the directive %q needs a parameter name and a value", c.Text)
-			continue
-		}
-		if _, dup := out[name]; dup {
-			e.fail(d.Pos(), "%s is given a default twice", name)
-			continue
-		}
-		out[name] = strings.TrimSpace(value)
 	}
 	return out
 }
