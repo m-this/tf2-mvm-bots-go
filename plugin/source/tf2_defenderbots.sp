@@ -323,6 +323,7 @@ char g_sBotTeamCompositions[][][] =
 #include "redbots3/generated/upgradereport.sp"
 #include "redbots3/generated/teamchange.sp"
 #include "redbots3/generated/composition.sp"
+#include "redbots3/generated/settings.sp"
 #include "redbots3/generated/teammenu.sp"
 #include "redbots3/generated/prefmenu.sp"
 #include "redbots3/generated/addmenu.sp"
@@ -1568,32 +1569,6 @@ public void ConVarChanged_ManagerMode(ConVar convar, const char[] oldValue, cons
 	//Catch all cases of everything!
 }
 
-public void ConVarChanged_BotLineupMode(ConVar convar, const char[] oldValue, const char[] newValue)
-{
-	int mode = StringToInt(newValue);
-	
-	switch (mode)
-	{
-		case BOT_LINEUP_MODE_RANDOM:
-		{
-			UpdateChosenBotTeamComposition();
-		}
-		case BOT_LINEUP_MODE_PREFERENCE:
-		{
-			UpdateChosenBotTeamComposition();
-		}
-		case BOT_LINEUP_MODE_CHOOSE:
-		{
-			FreeChosenBotTeam(true);
-		}
-		case BOT_LINEUP_MODE_PREFERENCE_CHOOSE:
-		{
-			FreeChosenBotTeam(true);
-			UpdateChosenBotTeamComposition();
-		}
-	}
-}
-
 public Action Listener_TournamentPlayerReadystate(int client, const char[] command, int argc)
 {
 	//Always let bots pass
@@ -1890,61 +1865,6 @@ public Action Command_ReseatBots(int client, int args)
 	return Plugin_Handled;
 }
 
-public void ConVarChanged_TeamComposition(ConVar convar, const char[] before, const char[] after)
-{
-	if (StrEqual(before, after))
-		return;
-
-	if (GameRules_GetRoundState() == RoundState_RoundRunning)
-	{
-		m_bReseatPending = true;
-		LogMessage("Reseat: the lineup changed mid-wave, holding it until the break");
-		PrintToChatAll("%s The new lineup takes effect when this wave ends.", PLUGIN_PREFIX);
-		return;
-	}
-
-	ReseatDefenderBots();
-}
-
-/* Ask the game for the seats first, and settle for what it gives.
-
-Reported as "i tried changing the number to 12 but then it stops adding bots", which left a player
-with fewer bots at twelve than at six. Nothing here ever touched tf_mvm_defenders_team_size, so the
-game kept refusing RED past its own number while this asked for twelve, and the bots went nowhere.
-
-Mann vs Machine is built around six: the upgrade station, the ready panel and the scoreboard all
-assume it. Whether the game accepts more is the game's answer and not ours, so this asks and then
-reads back rather than assuming either way. What it reads back is the ceiling, and this convar is
-clamped to it so every place that reads the number gets one the game will honour.
-
-Failing loudly at seven beats spawning nothing at twelve. */
-public void ConVarChanged_DefenderTeamSize(ConVar convar, const char[] before, const char[] after)
-{
-	int wanted = convar.IntValue;
-
-	ConVar gameSize = FindConVar("tf_mvm_defenders_team_size");
-
-	if (gameSize == null)
-	{
-		LogMessage("Team size: the game has no tf_mvm_defenders_team_size, so %d is taken as given", wanted);
-		return;
-	}
-
-	if (gameSize.IntValue != wanted)
-		gameSize.SetInt(wanted);
-
-	int allowed = gameSize.IntValue;
-
-	if (allowed == wanted)
-		return;
-
-	LogMessage("Team size: asked the game for %d, it allows %d. Clamping, or no bot would be added at all",
-		wanted, allowed);
-	PrintToChatAll("%s RED holds %d, not %d: the game refused the rest.", PLUGIN_PREFIX, allowed, wanted);
-
-	//The hook fires again on this write, and the second pass returns at the equality above
-	convar.SetInt(allowed);
-}
 void AddBotsWithPresetTeamComp(int count = 6, int teamType = 0)
 {
 	int total = 0;
