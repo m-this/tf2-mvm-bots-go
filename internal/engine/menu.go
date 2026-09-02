@@ -12,6 +12,8 @@ Close is only ever called from the handler.
 
 // MenuCalls are the answers.
 type MenuCalls struct {
+	AddDefenderTFBotNamed  func(count int32, class string, team string, difficulty string)
+	LogAction              func(client int32, target int32, format string, args []any)
 	SetMenuTitleFor        func(m Menu, format string, class string)
 	CopyShort              func(from string) [16]byte
 	AddMenuItemFrom        func(m Menu, info string, display Text)
@@ -406,4 +408,15 @@ func ShowWeaponPreferenceItemListMenu(client int32, class [16]byte, slot string)
 		missing("ShowWeaponPreferenceItemListMenu")
 	}
 	menus.ShowWeaponItemList(client, class, slot)
+}
+
+// AddDefenderTFBotNamed is AddDefenderTFBot called the way the menus call it:
+// one bot, a class written out, and the two defaults left off. Ported, manage.
+//
+//sp:body AddDefenderTFBot
+func AddDefenderTFBotNamed(count int32, class string, team string, difficulty string) {
+	if menus.AddDefenderTFBotNamed == nil {
+		missing("AddDefenderTFBot")
+	}
+	menus.AddDefenderTFBotNamed(count, class, team, difficulty)
 }

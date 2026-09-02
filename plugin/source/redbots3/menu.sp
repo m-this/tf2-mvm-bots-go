@@ -414,26 +414,6 @@ char[] GetWeaponPrefMenuItemText(int client, char[] class, int slot)
 	
 	return menuText;
 }
-
-void CreateDisplayMenuAddDefenderBots(int client, int itemPosition = 0)
-{
-	if (IsFakeClient(client))
-		return;
-	
-	Menu hMenu = new Menu(MenuHandler_AddDefenderBots);
-	hMenu.SetTitle("Manually add bots");
-	hMenu.AddItem("0", "Scout");
-	hMenu.AddItem("1", "Soldier");
-	hMenu.AddItem("2", "Pyro");
-	hMenu.AddItem("3", "Demoman");
-	hMenu.AddItem("4", "Heavy");
-	hMenu.AddItem("5", "Engineer");
-	hMenu.AddItem("6", "Medic");
-	hMenu.AddItem("7", "Sniper");
-	hMenu.AddItem("8", "Spy");
-	hMenu.DisplayAt(client, itemPosition, MENU_TIME_FOREVER);
-}
-
 void CreateDisplayPanelBotPercentages(int client, float classPercents[TFClass_Engineer], const int duration = 30)
 {
 	if (IsFakeClient(client))
@@ -550,39 +530,6 @@ static int MenuHandler_WeaponPreferenceItemList(Menu menu, MenuAction action, in
 		{
 			if (param2 == MenuCancel_ExitBack)
 				DisplayWeaponPreferenceMenu(param1, m_sSelectedClass[param1]);
-		}
-	}
-	
-	return 0;
-}
-
-static int MenuHandler_AddDefenderBots(Menu menu, MenuAction action, int param1, int param2)
-{
-	switch (action)
-	{
-		case MenuAction_Select:
-		{
-			switch (param2)
-			{
-				case 0:	AddDefenderTFBot(1, "scout", "red", "expert");
-				case 1:	AddDefenderTFBot(1, "soldier", "red", "expert");
-				case 2:	AddDefenderTFBot(1, "pyro", "red", "expert");
-				case 3:	AddDefenderTFBot(1, "demoman", "red", "expert");
-				case 4:	AddDefenderTFBot(1, "heavyweapons", "red", "expert");
-				case 5:	AddDefenderTFBot(1, "engineer", "red", "expert");
-				case 6:	AddDefenderTFBot(1, "medic", "red", "expert");
-				case 7:	AddDefenderTFBot(1, "sniper", "red", "expert");
-				case 8:	AddDefenderTFBot(1, "spy", "red", "expert");
-			}
-			
-			CreateDisplayMenuAddDefenderBots(param1, GetMenuSelectionPosition());
-			LogAction(param1, -1, "MenuHandler_AddDefenderBots: %L, select %d", param1, param2);
-			return 0;
-		}
-		case MenuAction_End:
-		{
-			delete menu;
-			return 0;
 		}
 	}
 	
