@@ -568,3 +568,48 @@ func TimerGiveBotCosmetics(timer engine.Timer, userid int32) engine.Outcome {
 
 	return engine.PluginStop()
 }
+
+/*
+CommandDumpHats says what every defender bot is actually wearing, entity by
+entity.
+
+A hat that does not show up is one of four things and they look the same from
+outside: never drawn, drawn and refused a model, worn by an entity the game
+threw away, or worn by an entity with no model index on it. This says which.
+*/
+//
+//sp:name Command_DumpHats
+//sp:public
+//
+//nolint:revive // unused-parameter: the argument count is the console's, and this command takes none
+func CommandDumpHats(client int32, args int32) engine.Outcome {
+	for playerClass := int32(1); playerClass < Classes; playerClass++ {
+		pool := HatPoolForClass(engine.Class(playerClass))
+
+		engine.ReplyToCommand(client, "class %d: %d hats in the pool", playerClass, engine.ChooseInt(pool == engine.NoList(), -1, pool.Length()))
+	}
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if !engine.IsClientInGame(i) || !engine.DefenderBotFlag(i) {
+			continue
+		}
+
+		hat := engine.EntRefToEntIndex(botHat[i])
+
+		if hat == engine.InvalidEntReference() {
+			engine.ReplyToCommand(client, "%N: class %d, drew item %d, effect %d, wearing nothing",
+				i, wardrobe[i].PlayerClass, wardrobe[i].HatItem, wardrobe[i].HatEffect)
+
+			continue
+		}
+
+		model := engine.EntPropString(hat, engine.PropData(), "m_ModelName")
+
+		engine.ReplyToCommand(client, "%N: class %d, item %d, effect %d, entity %d, owner %d, modelindex %d, model %s",
+			i, wardrobe[i].PlayerClass, wardrobe[i].HatItem, wardrobe[i].HatEffect, hat,
+			engine.EntPropEnt(hat, engine.PropSend(), "m_hOwnerEntity"),
+			engine.EntProp(hat, engine.PropSend(), "m_nModelIndex"), model)
+	}
+
+	return engine.PluginHandled()
+}

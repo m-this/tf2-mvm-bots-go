@@ -342,3 +342,29 @@ public Action Timer_GiveBotCosmetics(Handle timer, int userid)
 	return Plugin_Stop;
 }
 
+public Action Command_DumpHats(int client, int args)
+{
+	for (int playerClass = 1; playerClass < Go_Classes; playerClass++)
+	{
+		ArrayList pool = HatPoolForClass(view_as<TFClassType>(playerClass));
+		ReplyToCommand(client, "class %d: %d hats in the pool", playerClass, (pool == null ? -1 : pool.Length));
+	}
+	for (int i = 1; i <= MaxClients; i++)
+	{
+		if (!IsClientInGame(i) || !g_bIsDefenderBot[i])
+		{
+			continue;
+		}
+		int hat = EntRefToEntIndex(g_iBotHat[i]);
+		if (hat == INVALID_ENT_REFERENCE)
+		{
+			ReplyToCommand(client, "%N: class %d, drew item %d, effect %d, wearing nothing", i, g_wardrobe[i].PlayerClass, g_wardrobe[i].HatItem, g_wardrobe[i].HatEffect);
+			continue;
+		}
+		char model[512];
+		GetEntPropString(hat, Prop_Data, "m_ModelName", model, 512);
+		ReplyToCommand(client, "%N: class %d, item %d, effect %d, entity %d, owner %d, modelindex %d, model %s", i, g_wardrobe[i].PlayerClass, g_wardrobe[i].HatItem, g_wardrobe[i].HatEffect, hat, GetEntPropEnt(hat, Prop_Send, "m_hOwnerEntity"), GetEntProp(hat, Prop_Send, "m_nModelIndex"), model);
+	}
+	return Plugin_Handled;
+}
+

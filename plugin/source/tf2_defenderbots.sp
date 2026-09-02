@@ -293,7 +293,6 @@ Address g_pMannVsMachineUpgrades;
 #include "redbots3/generated/loadouts.sp"
 #include "redbots3/loadouts.sp"
 #include "redbots3/generated/cosmetics.sp"
-#include "redbots3/cosmetics.sp"
 #include "redbots3/dhooks.sp"
 #include "redbots3/generated/gameevents.sp"
 #include "redbots3/generated/behaviourreset.sp"
