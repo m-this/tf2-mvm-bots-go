@@ -337,3 +337,13 @@ func WeaponSyringegunMedic() Weapon { return 20 }
 //
 //sp:global TF_WEAPON_WRENCH
 func WeaponWrench() Weapon { return 10 }
+
+// WeaponSentryBullet is TF_WEAPON_SENTRY_BULLET, what a sentry shoots.
+//
+//sp:global TF_WEAPON_SENTRY_BULLET
+func WeaponSentryBullet() Weapon { return 54 }
+
+// WeaponSentryRocket is TF_WEAPON_SENTRY_ROCKET, what a level three adds.
+//
+//sp:global TF_WEAPON_SENTRY_ROCKET
+func WeaponSentryRocket() Weapon { return 55 }

@@ -743,25 +743,6 @@ static bool IsValidTarget(int entity)
 {
 	return IsValidEntity(entity) && CBaseEntity(entity).IsCombatCharacter();
 }
-
-bool IsHitScanWeapon(int weapon)
-{
-	if (IsValidEntity(weapon))
-	{
-		switch (TF2Util_GetWeaponID(weapon))
-		{
-			case TF_WEAPON_SHOTGUN_PRIMARY, TF_WEAPON_SHOTGUN_SOLDIER, TF_WEAPON_SHOTGUN_HWG, TF_WEAPON_SHOTGUN_PYRO, TF_WEAPON_SCATTERGUN, TF_WEAPON_SNIPERRIFLE, TF_WEAPON_MINIGUN,
-			TF_WEAPON_SMG, TF_WEAPON_CHARGED_SMG, TF_WEAPON_PISTOL, TF_WEAPON_PISTOL_SCOUT, TF_WEAPON_REVOLVER, TF_WEAPON_SENTRY_BULLET, TF_WEAPON_SENTRY_ROCKET, TF_WEAPON_SENTRY_REVENGE,
-			TF_WEAPON_HANDGUN_SCOUT_PRIMARY, TF_WEAPON_HANDGUN_SCOUT_SEC, TF_WEAPON_SODA_POPPER, TF_WEAPON_SNIPERRIFLE_DECAP, TF_WEAPON_PEP_BRAWLER_BLASTER, TF_WEAPON_SNIPERRIFLE_CLASSIC:
-			{
-				return true;
-			}
-		}
-	}
-	
-	return false;
-}
-
 float GetMaxAttackRange(int client)
 {
 	int myWeapon = BaseCombatCharacter_GetActiveWeapon(client);
@@ -803,68 +784,7 @@ float GetMaxAttackRange(int client)
 	
 	return FLT_MAX;
 }
-
-bool IsContinuousFireWeapon(int client, int weapon)
-{
-	if (!IsCombatWeapon(client, weapon))
-		return false;
-	
-	if (IsValidEntity(weapon))
-	{
-		switch (TF2Util_GetWeaponID(weapon))
-		{
-			case TF_WEAPON_ROCKETLAUNCHER, TF_WEAPON_DIRECTHIT, TF_WEAPON_GRENADELAUNCHER, TF_WEAPON_PIPEBOMBLAUNCHER, TF_WEAPON_PISTOL, TF_WEAPON_PISTOL_SCOUT, TF_WEAPON_FLAREGUN,
-			TF_WEAPON_JAR, TF_WEAPON_COMPOUND_BOW:
-			{
-				return false;
-			}
-		}
-	}
-	
-	return true;
-}
-
-bool IsExplosiveProjectileWeapon(int weapon)
-{
-	if (IsValidEntity(weapon))
-	{
-		switch (TF2Util_GetWeaponID(weapon))
-		{
-			//The cannon belongs here as much as any of them: without it the bot skips the
-			//proximity check below and fires a grenade into the robot it is standing against
-			case TF_WEAPON_ROCKETLAUNCHER, TF_WEAPON_DIRECTHIT, TF_WEAPON_GRENADELAUNCHER, TF_WEAPON_PIPEBOMBLAUNCHER, TF_WEAPON_JAR,
-			TF_WEAPON_CANNON:
-			{
-				return true;
-			}
-		}
-	}
-	
-	return false;
-}
 #endif
-
-/* Whether a rocket is worth putting on the ground under a robot rather than into it
-
-The ground is where splash comes from, and splash is worth having when there is a crowd standing
-in it: three commons walking a choke all take the hit, and none of them had to be hit.
-
-It is worth nothing against one target. A rocket into the body does its full damage where the same
-rocket at the feet does the falloff, and a giant is a wide slow target the bot hits without any
-help from the ground. The Direct Hit never wants the ground at all: its splash is a third the size
-and its reward for connecting is triple damage */
-//The two launchers whose shots arc and burst wide enough to be worth throwing on the move
-stock bool IsPipeLauncher(int weaponID)
-{
-	switch (weaponID)
-	{
-		case TF_WEAPON_GRENADELAUNCHER, TF_WEAPON_PIPEBOMBLAUNCHER, TF_WEAPON_CANNON:
-			return true;
-	}
-
-	return false;
-}
-
 bool ShouldAimRocketsAtFeet(int client, int target, int weaponID)
 {
 	if (weaponID == TF_WEAPON_DIRECTHIT)

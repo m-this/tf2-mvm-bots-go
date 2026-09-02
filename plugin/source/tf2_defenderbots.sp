@@ -310,6 +310,7 @@ Address g_pMannVsMachineUpgrades;
 #include "redbots3/generated/debug_faults.sp"
 #include "redbots3/generated/threat_priority.sp"
 #include "redbots3/nextbot_behavior.sp"
+#include "redbots3/generated/aimweapons.sp"
 #include "redbots3/botaim.sp"
 
 public Plugin myinfo =

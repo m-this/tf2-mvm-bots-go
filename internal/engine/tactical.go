@@ -32,6 +32,7 @@ type TacticalCalls struct {
 	ShouldUseTeleporterNow   func(client int32) bool
 	ShouldLeaveToBePatchedUp func(client int32, healthRatio float32) bool
 	IsAmmoLowNow             func(client int32) bool
+	IsCombatWeapon           func(client int32, weapon int32) bool
 	FindOnlyOneVisibleEntity func(client int32, first int32, second int32) int32
 	HealerOrThreat           func(bot Bot, threat Known) Known
 	SelectCloserThreat       func(bot Bot, threat1 Known, threat2 Known) Known
@@ -465,3 +466,14 @@ func FlameThrowerAimForTank(tank int32) (aimPos [3]float32) {
 //
 //sp:global FLOAT_PI
 func Pi() float32 { return 3.14159265358979323846 }
+
+// IsCombatWeapon says the thing in the bot's hands is one it fights with, as
+// opposed to a toolbox or a disguise kit. Ported, botqueries.
+//
+//sp:body IsCombatWeapon
+func IsCombatWeapon(client int32, weapon int32) bool {
+	if tacticals.IsCombatWeapon == nil {
+		missing("IsCombatWeapon")
+	}
+	return tacticals.IsCombatWeapon(client, weapon)
+}
