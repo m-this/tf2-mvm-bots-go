@@ -61,3 +61,67 @@ stock bool IsPipeLauncher(int weaponID)
 	return false;
 }
 
+stock bool IsValidTarget(int entity)
+{
+	return IsValidEntity(entity) && CBaseEntity(entity).IsCombatCharacter();
+}
+
+stock float GetMaxAttackRange(int client)
+{
+	int myWeapon = BaseCombatCharacter_GetActiveWeapon(client);
+	if (myWeapon == -1)
+	{
+		return 0.0;
+	}
+	if (IsMeleeWeapon(myWeapon))
+	{
+		return 100.0;
+	}
+	float tunedDesired;
+	float tunedMax;
+	bool tuned = GetTunedWeaponRanges(myWeapon, tunedDesired, tunedMax);
+	if (tuned && (tunedMax > RANGE_TUNING_NONE))
+	{
+		return tunedMax;
+	}
+	int myWeaponID = TF2Util_GetWeaponID(myWeapon);
+	if (myWeaponID == TF_WEAPON_FLAMETHROWER)
+	{
+		if (TF2_IsMannVsMachineMode())
+		{
+			return 350.0;
+		}
+		return 250.0;
+	}
+	if (WeaponID_IsSniperRifle(myWeaponID))
+	{
+		return FLT_MAX;
+	}
+	if (myWeaponID == TF_WEAPON_ROCKETLAUNCHER)
+	{
+		return 3000.0;
+	}
+	if (myWeaponID == TF_WEAPON_GRENADELAUNCHER)
+	{
+		return DemoPipeMaxRange();
+	}
+	return FLT_MAX;
+}
+
+stock bool ShouldAimRocketsAtFeet(int client, int target, int weaponID)
+{
+	if (weaponID == TF_WEAPON_DIRECTHIT)
+	{
+		return false;
+	}
+	if (BaseEntity_IsPlayer(target) && IsClientInGame(target) && (TF2_GetPlayerClass(target) == TFClass_Pyro))
+	{
+		return true;
+	}
+	if (TF2_IsMiniBoss(target))
+	{
+		return false;
+	}
+	return CountEnemiesNearPosition(client, GetAbsOrigin(target), 146.0) > 1;
+}
+

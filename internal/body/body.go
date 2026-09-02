@@ -525,6 +525,7 @@ var generatedElsewhere = []string{
 	"GetTunedWeaponRanges",
 	"AttributeID",
 	"ThreatPriorityOf",
+	"DemoPipeMaxRange",
 }
 
 const (

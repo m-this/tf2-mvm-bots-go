@@ -89,3 +89,98 @@ func IsPipeLauncher(weaponID engine.Weapon) bool {
 
 	return false
 }
+
+// IsValidTarget says the entity is still there and is something that fights.
+//
+//sp:name IsValidTarget
+func IsValidTarget(entity int32) bool {
+	return engine.IsValidEntity(entity) && engine.EntityOf(entity).IsCombatCharacter()
+}
+
+/*
+GetMaxAttackRange is how far this weapon is worth firing.
+
+Only where firing further is genuinely wasted; most loadouts say nothing here
+and get no limit at all.
+
+The stock launcher gets the same answer the Iron Bomber does. It is absent from
+the tuning table, so it fell through to no limit and threw pipes across the map
+at anything it could see.
+*/
+//
+//sp:name GetMaxAttackRange
+func GetMaxAttackRange(client int32) float32 {
+	myWeapon := engine.ActiveWeapon(client)
+
+	if myWeapon == -1 {
+		return 0.0
+	}
+
+	if engine.IsMeleeWeapon(myWeapon) {
+		return 100.0
+	}
+
+	tuned, tunedDesired, tunedMax := engine.TunedWeaponRanges(myWeapon)
+	_ = tunedDesired
+
+	if tuned && tunedMax > engine.RangeTuningNone() {
+		return tunedMax
+	}
+
+	myWeaponID := engine.WeaponID(myWeapon)
+
+	if myWeaponID == engine.WeaponFlamethrower() {
+		if engine.IsMannVsMachineMode() {
+			return 350.0
+		}
+
+		return 250.0
+	}
+
+	if engine.WeaponIDIsSniperRifle(myWeaponID) {
+		return engine.FloatMax()
+	}
+
+	if myWeaponID == engine.WeaponRocketLauncher() {
+		return 3000.0
+	}
+
+	if myWeaponID == engine.WeaponGrenadeLauncher() {
+		return engine.DemoPipeMaxRange()
+	}
+
+	return engine.FloatMax()
+}
+
+/*
+ShouldAimRocketsAtFeet says the splash is worth more than the direct hit.
+
+Aiming at the body up close was tried and cost more than the splash did. The
+reasoning was sound: a quarter of the Soldier's damage goes into his own feet.
+Measured over six waves on Decoy, aiming at the chest inside 350 units took his
+hit rate from 60 per cent to 40 and his damage from 16890 to 10886, and the self
+damage went up rather than down. The ground does not move and a robot does.
+
+A rocket fired into a Pyro's face comes back, and a reflected rocket is the
+Soldier's own damage aimed at his team. The wiki says to shoot the ground
+instead, which is a shot an airblast cannot catch: worth doing even for one of
+them, and even for a giant, which is why that test sits above both below it.
+*/
+//
+//sp:name ShouldAimRocketsAtFeet
+func ShouldAimRocketsAtFeet(client int32, target int32, weaponID engine.Weapon) bool {
+	if weaponID == engine.WeaponDirecthit() {
+		return false
+	}
+
+	if engine.IsPlayer(target) && engine.IsClientInGame(target) && engine.PlayerClass(target) == engine.ClassPyro() {
+		return true
+	}
+
+	if engine.IsMiniBoss(target) {
+		return false
+	}
+
+	// The rocket splash radius, which is the ground this shot would cover.
+	return engine.CountEnemiesNearPosition(client, engine.AbsOriginOf(target), 146.0) > 1
+}

@@ -33,6 +33,8 @@ type TacticalCalls struct {
 	ShouldLeaveToBePatchedUp func(client int32, healthRatio float32) bool
 	IsAmmoLowNow             func(client int32) bool
 	IsCombatWeapon           func(client int32, weapon int32) bool
+	DemoPipeMaxRange         func() float32
+	IsMannVsMachineMode      func() bool
 	FindOnlyOneVisibleEntity func(client int32, first int32, second int32) int32
 	HealerOrThreat           func(bot Bot, threat Known) Known
 	SelectCloserThreat       func(bot Bot, threat1 Known, threat2 Known) Known
@@ -433,7 +435,7 @@ func BonePosition(entity int32, bone int32) (position [3]float32, angles [3]floa
 // ShouldAimRocketsAtFeet says there is a crowd worth splashing. Ported nowhere
 // yet: botaim.sp still owns it.
 //
-//sp:plugin ShouldAimRocketsAtFeet
+//sp:body ShouldAimRocketsAtFeet
 func ShouldAimRocketsAtFeet(client int32, target int32, weaponID Weapon) bool {
 	if tacticals.ShouldAimRocketsAtFeet == nil {
 		missing("ShouldAimRocketsAtFeet")
@@ -476,4 +478,32 @@ func IsCombatWeapon(client int32, weapon int32) bool {
 		missing("IsCombatWeapon")
 	}
 	return tacticals.IsCombatWeapon(client, weapon)
+}
+
+// RangeTuningNone is RANGE_TUNING_NONE, the tuning table saying it has no
+// opinion about this weapon's range.
+//
+//sp:global RANGE_TUNING_NONE
+func RangeTuningNone() float32 { return 0.0 }
+
+// DemoPipeMaxRange is how far a pipe is worth throwing. Emitted by
+// internal/tables with the rest of the tuning.
+//
+//sp:body DemoPipeMaxRange
+func DemoPipeMaxRange() float32 {
+	if tacticals.DemoPipeMaxRange == nil {
+		missing("DemoPipeMaxRange")
+	}
+	return tacticals.DemoPipeMaxRange()
+}
+
+// IsMannVsMachineMode says the server is running MvM, where the flamethrower
+// reaches further than it does elsewhere.
+//
+//sp:native TF2_IsMannVsMachineMode
+func IsMannVsMachineMode() bool {
+	if tacticals.IsMannVsMachineMode == nil {
+		missing("TF2_IsMannVsMachineMode")
+	}
+	return tacticals.IsMannVsMachineMode()
 }
