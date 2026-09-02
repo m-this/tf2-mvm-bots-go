@@ -1,13 +1,13 @@
 /*
-Package shopping is the parts of source/redbots3/behavior/upgrade.sp that do
-not touch the candidate list: what is left to build, what a bot may still spend
-on one attribute, how fast it presses the button, and what it says when it
-stops.
+Package upgrade is source/redbots3/behavior/upgrade.sp: the shopping trip.
 
-The candidate list itself is mvm-z83.64, and needs a shape the JSONObject per
-row does not have.
+Twenty sixth behaviour across, and the last one. The candidate list is what took
+the longest: it was a JSONObject per row and is five cells of an ArrayList, which
+is mvm-z83.64.
+
+//sp:action DefenderUpgrade CTFBotUpgrade
 */
-package shopping
+package upgrade
 
 import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
 
@@ -90,8 +90,7 @@ resistance at nothing.
 */
 //
 //sp:name LogUpgradeSessionEnd
-//sp:const why
-func LogUpgradeSessionEnd(actor int32, why engine.Text) {
+func LogUpgradeSessionEnd(actor int32, why string) {
 	engine.LogMessage("Shopping: %N stopped, %s, %d credits left, wave deals blast=%d bullet=%d fire=%d",
 		actor, why, engine.Currency(actor),
 		engine.WaveHasExplosiveRobots(), engine.WaveHasBulletRobots(), engine.WaveHasFireRobots())
@@ -620,7 +619,7 @@ func KVUpgradesDone(client int32) {
 }
 
 /*
-UpgradeMidRoundPostActivity gives a bot that joined mid-round what it would have
+MidRoundPostActivity gives a bot that joined mid-round what it would have
 had if it had shopped with everybody else.
 
 Only the medic, and only the two things a wave in progress has already given the
@@ -631,7 +630,7 @@ arrive when the wave begins rather than before it.
 //sp:name UpgradeMidRoundPostActivity
 //
 //nolint:gocritic // singleCaseSwitch: the shipped file is a switch, and the other classes may join it
-func UpgradeMidRoundPostActivity(client int32) {
+func MidRoundPostActivity(client int32) {
 	switch engine.PlayerClass(client) {
 	case engine.ClassMedic():
 		secondary := engine.PlayerWeaponSlot(client, engine.WeaponSlotSecondary())
@@ -645,7 +644,7 @@ func UpgradeMidRoundPostActivity(client int32) {
 }
 
 /*
-UpgradeOnEnd closes the shopping trip.
+OnEnd closes the shopping trip.
 
 What is left over stays in the wallet. This spent it on canteens, every session,
 on the reasoning that money not spent is money wasted. It is the other way round
@@ -663,11 +662,7 @@ so does everything when the nest has moved, because then it is in the wrong
 place however good it is.
 */
 //
-//sp:name CTFBotUpgrade_OnEnd
-//sp:public
-//
-//nolint:revive // unused-parameter: the action, the prior action and the result are the game's
-func UpgradeOnEnd(action engine.Behaviour, actor int32, priorAction engine.Behaviour, result engine.ActionResult) {
+func OnEnd(actor int32) {
 	KVUpgradesDone(actor)
 
 	if engine.PlayerClass(actor) == engine.ClassEngineer() && engine.RoundState() == engine.RoundStateBetweenRounds() {
@@ -694,7 +689,7 @@ func UpgradeOnEnd(action engine.Behaviour, actor int32, priorAction engine.Behav
 		// The first session after joining gives everything as if the bot had
 		// prepared beforehand, which is what the auto mode needs.
 		if engine.RoundState() == engine.RoundStateRunning() && !engine.HasUpgraded(actor) {
-			UpgradeMidRoundPostActivity(actor)
+			MidRoundPostActivity(actor)
 		}
 
 		engine.SetHasUpgraded(actor, true)
@@ -704,4 +699,141 @@ func UpgradeOnEnd(action engine.Behaviour, actor int32, priorAction engine.Behav
 		engine.SetInUpgradeZone(actor, false)
 		engine.RecoverDefenderFromDisconnectedSpawn(actor)
 	}
+}
+
+// BuyUpgradesFastMaxTime is how long a trip gets during a round, where a bot
+// shopping is a bot not fighting.
+//
+//sp:name BUY_UPGRADES_FAST_MAX_TIME
+const BuyUpgradesFastMaxTime = 3.0
+
+/*
+OnStart opens the shopping trip.
+
+The wallet is measured once, here, and every attribute's share is taken against
+that rather than against whatever is left: a play-test bundle came back with a
+medic who bought ubercharge rate twenty five times across a mission, ten of them
+inside thirty seconds, and nothing else all run.
+
+The refusals are cleared too. A refusal used to end the whole trip, on the
+reasoning that the ranking would pick the same line again and be refused until
+the window ran out. It would, and the answer is to remember the refusal rather
+than to stop shopping: ten of forty five trips measured on Bavarian Botbash
+ended that way, with money still in the wallet and a list still worth walking.
+*/
+func OnStart(actor int32) engine.Outcome {
+	engine.PathOf(actor).SetMinLookAheadDistance(engine.DesiredPathLookAheadRange(actor))
+
+	// The wallet this trip is measured against, and nothing spent out of it
+	// yet.
+	sessionWallet[actor] = engine.Currency(actor)
+
+	for i := int32(0); i < engine.MaxUpgrades(); i++ {
+		refusedUpgrade[actor][i] = false
+	}
+
+	for index := int32(0); index < engine.MaxUpgrades(); index++ {
+		spentOnUpgrade[actor][index] = 0
+	}
+
+	if !engine.IsInUpgradeZone(actor) {
+		return engine.ChangeTo(engine.GotoUpgrade(), "Not standing at an upgrade station!")
+	}
+
+	CollectUpgrades(actor)
+
+	KVUpgradesBegin(actor)
+
+	nextUpgrade[actor] = engine.GameTime() + GetUpgradeInterval()
+
+	isRoundActive := engine.RoundState() == engine.RoundStateRunning()
+
+	// How long should it take us to buy upgrades?
+	if !engine.HasUpgraded(actor) && isRoundActive {
+		// We probably just joined during an active game.
+		upgradingTime[actor] = engine.GameTime() + 15.0
+	} else {
+		// Spend less time upgrading during the round, normal otherwise.
+		upgradingTime[actor] = engine.GameTime() + engine.ChooseFloat(isRoundActive, BuyUpgradesFastMaxTime, engine.BuyUpgradesMaxTime())
+	}
+
+	return engine.Continue()
+}
+
+/*
+Update buys one thing per interval, and heals while it waits.
+
+The medic keeps his beam on somebody through the whole trip: a charge builds into
+whoever he is beaming, so the break is worth an uber if he spends it next to
+anybody at all.
+*/
+//nolint:revive // unused-parameter: the interval is the game's, and this action paces itself
+func Update(actor int32, interval float32) engine.Outcome {
+	if !engine.IsInUpgradeZone(actor) {
+		return engine.ChangeTo(engine.GotoUpgrade(), "Not standing at an upgrade station!")
+	}
+
+	if upgradingTime[actor] <= engine.GameTime() {
+		// It should not take this long to upgrade.
+		engine.SetPlayerReady(actor, true)
+
+		LogUpgradeSessionEnd(actor, "the window ran out")
+
+		return engine.UpgradePostAction(actor)
+	}
+
+	flNextTime := nextUpgrade[actor] - engine.GameTime()
+
+	if flNextTime <= 0.0 {
+		nextUpgrade[actor] = engine.GameTime() + GetUpgradeInterval()
+
+		row := ChooseUpgrade(actor)
+
+		if row != -1 {
+			purchased := PurchaseUpgrade(actor, row)
+
+			if engine.DebugActions().Bool() {
+				engine.PrintToChatAll("Currenct left for %N: %d", actor, engine.Currency(actor))
+			}
+
+			/* The game refused what we asked for
+
+			Nothing about the next interval would differ, so the same upgrade
+			would be picked and refused until the window runs out, with the
+			wave waiting on a bot that cannot spend. Remembered rather than
+			given up on: the next interval picks the next thing down. */
+			if !purchased {
+				refused := RowIndexOf(actor, row)
+
+				if refused >= 0 && refused < engine.MaxUpgrades() {
+					SetRefusedUpgrade(actor, refused)
+				}
+
+				LogUpgradeSessionEnd(actor, "the game refused one, trying the next")
+			}
+		} else {
+			engine.SetPlayerReady(actor, true)
+
+			LogUpgradeSessionEnd(actor, "nothing left worth buying")
+
+			return engine.UpgradePostAction(actor)
+		}
+	}
+
+	if engine.PlayerClass(actor) == engine.ClassMedic() {
+		secondary := engine.PlayerWeaponSlot(actor, engine.WeaponSlotSecondary())
+
+		if secondary != -1 && engine.WeaponID(secondary) == engine.WeaponMedigun() {
+			teammate := engine.NearestTeammate(actor, engine.WeaponMedigunRange())
+
+			if teammate != -1 {
+				// Heal a nearby teammate so we build up uber.
+				engine.SetPlayerActiveWeapon(actor, secondary)
+				engine.SnapViewToPosition(actor, engine.WorldSpaceCenter(teammate))
+				engine.PressFireButton(actor)
+			}
+		}
+	}
+
+	return engine.Continue()
 }

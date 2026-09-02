@@ -189,7 +189,7 @@ func IsUpgradeStationEnabled(station int32) bool {
 
 // Upgrade is CTFBotUpgrade, the behaviour that spends the money.
 //
-//sp:plugin CTFBotUpgrade
+//sp:body CTFBotUpgrade
 func Upgrade() Behaviour {
 	if stations.Upgrade == nil {
 		missing("CTFBotUpgrade")

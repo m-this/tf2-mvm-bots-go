@@ -122,6 +122,10 @@ var Actions = []Body{
 		Shipped: "source/redbots3/behavior/gotoupgrade.sp",
 	},
 	{
+		Dir: "internal/action/upgrade", Out: "sourcepawn/upgrade.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/behavior/upgrade.sp", Rev: campaignRev,
+	},
+	{
 		Dir: "internal/action/collectmoney", Out: "sourcepawn/collectmoney.sp", Prefix: "Go_",
 		Shipped: "source/redbots3/behavior/collectmoney.sp",
 	},
@@ -190,10 +194,6 @@ var All = []Body{
 	{
 		Dir: "internal/body/statnatives", Out: "sourcepawn/statnatives.sp", Prefix: "Go_",
 		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
-	},
-	{
-		Dir: "internal/body/shopping", Out: "sourcepawn/shopping.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/upgrade.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/aimweapons", Out: "sourcepawn/aimweapons.sp", Prefix: "Go_",

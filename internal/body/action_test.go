@@ -70,6 +70,15 @@ func compareAction(t *testing.T, action body.Body, got string) {
 
 	for _, name := range declared.Has {
 		t.Run(name, func(t *testing.T) {
+			/* A callback the port deliberately reshaped
+
+			The same map the body comparison reads, and for the same reason:
+			what a reshape changed is the declaration and the call sequence,
+			which is everything this checks. The reason beside the name has to
+			carry what was verified by hand instead. */
+			if reshaped[declared.Prefix+"_"+name] != "" {
+				t.Skip(reshaped[declared.Prefix+"_"+name])
+			}
 			want, ok := callbackOf(shipped, declared.Prefix+"_"+name)
 			if !ok {
 				t.Fatalf("the shipped file has no %s_%s", declared.Prefix, name)

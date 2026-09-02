@@ -10,6 +10,8 @@ internal/upgrade.
 
 // UpgradeCalls are the answers.
 type UpgradeCalls struct {
+	UpgradePostAction         func(client int32) Outcome
+	NearestTeammate           func(client int32, maxDistance float32) int32
 	SetHasUpgraded            func(client int32, done bool)
 	SetShoppedThisBreak       func(client int32, shopped bool)
 	SetBuyUpgradesNumber      func(client int32, count int32)
@@ -332,4 +334,25 @@ func BoughtUpgradesCommand(client int32, args int32) Outcome {
 		missing("Command_BoughtUpgrades")
 	}
 	return upgrades.BoughtUpgradesCommand(client, args)
+}
+
+// UpgradePostAction is what a bot does once the trip is over. Ported, dispatch.
+//
+//sp:body GetUpgradePostAction after action
+func UpgradePostAction(client int32) Outcome {
+	if upgrades.UpgradePostAction == nil {
+		missing("GetUpgradePostAction")
+	}
+	return upgrades.UpgradePostAction(client)
+}
+
+// NearestTeammate is the closest friendly player within that range. Ported,
+// finders.
+//
+//sp:body GerNearestTeammate
+func NearestTeammate(client int32, maxDistance float32) int32 {
+	if upgrades.NearestTeammate == nil {
+		missing("GerNearestTeammate")
+	}
+	return upgrades.NearestTeammate(client, maxDistance)
 }
