@@ -181,6 +181,10 @@ var All = []Body{
 	{Dir: "internal/body/scan", Out: "sourcepawn/scan.sp", Prefix: "Go_"},
 	{Dir: "internal/body/medic", Out: "sourcepawn/medic.sp", Prefix: "Go_"},
 	{
+		Dir: "internal/body/statnatives", Out: "sourcepawn/statnatives.sp", Prefix: "Go_",
+		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
+	},
+	{
 		Dir: "internal/body/shopping", Out: "sourcepawn/shopping.sp", Prefix: "Go_",
 		Shipped: "source/redbots3/behavior/upgrade.sp", Rev: campaignRev,
 	},

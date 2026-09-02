@@ -306,6 +306,7 @@ Address g_pMannVsMachineUpgrades;
 #include "redbots3/generated/debug_faults.sp"
 #include "redbots3/generated/threat_priority.sp"
 #include "redbots3/nextbot_behavior.sp"
+#include "redbots3/generated/statnatives.sp"
 #include "redbots3/generated/aimweapons.sp"
 
 public Plugin myinfo =
@@ -525,81 +526,6 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	
 	return APLRes_Success;
 }
-
-static any Native_GetPathLength(Handle plugin, int numParams)
-{
-	int client = GetNativeCell(1);
-	
-	if (client < 1 || client > MaxClients || !IsClientInGame(client) || !g_bIsDefenderBot[client])
-		return -1.0;
-	
-	//Unguarded, as everywhere else that reads it: the path is made with the bot and outlives it
-	return m_pPath[client].GetLength();
-}
-
-/* Whether the last computation came back with nothing, which the length cannot tell anybody
- *
- * A refused computation leaves the path object holding whatever it held before, so GetLength keeps
- * returning the old answer and a failing bot reads as a bot with a perfectly good path. Measured on
- * Decoy: the medic reported a path 10400 units long, constant to within fifty units over eighty
- * seconds, while the nearest teammate stood four hundred units away. Every one of those samples was
- * a failure wearing the length of the last success. */
-static any Native_PathFailed(Handle plugin, int numParams)
-{
-	int client = GetNativeCell(1);
-	
-	if (client < 1 || client > MaxClients || !IsClientInGame(client) || !g_bIsDefenderBot[client])
-		return false;
-	
-	return PathFailedFor(client);
-}
-
-static any Native_PathFailures(Handle plugin, int numParams)
-{
-	int client = GetNativeCell(1);
-	
-	if (client < 1 || client > MaxClients || !IsClientInGame(client) || !g_bIsDefenderBot[client])
-		return -1;
-	
-	return PathFailuresOf(client);
-}
-
-/* Bolts fired at a sentry that gained nothing for three seconds, counted rather than sampled
- *
- * The state this happens in is rare enough that a five second sampler saw it zero times in a
- * hundred and thirty seven engineer samples. A counter does not care how rare it is. */
-static any Native_RangeRepairStalls(Handle plugin, int numParams)
-{
-	int client = GetNativeCell(1);
-	
-	if (client < 1 || client > MaxClients || !IsClientInGame(client) || !g_bIsDefenderBot[client])
-		return -1;
-	
-	return RangeRepairStallsOf(client);
-}
-
-/* Who this bot decided to shoot, which is the decision rather than where the crosshair happens to
-be pointing. A wave that wipes the team is usually one robot nobody chose. */
-static any Native_GetAttackTarget(Handle plugin, int numParams)
-{
-	int client = GetNativeCell(1);
-	
-	if (client < 1 || client > MaxClients || !IsClientInGame(client) || !g_bIsDefenderBot[client])
-		return -1;
-	
-	return m_iAttackTarget[client];
-}
-
-static any Native_IsPathing(Handle plugin, int numParams)
-{
-	int client = GetNativeCell(1);
-	
-	if (client < 1 || client > MaxClients || !IsClientInGame(client) || !g_bIsDefenderBot[client])
-		return false;
-	
-	return g_arrPluginBot[client].bPathing;
-}
-
 /* The features that are on, published once the server's own configs have run
 
 They were published only when a wave began, and the statistics plugin reads the list in its own

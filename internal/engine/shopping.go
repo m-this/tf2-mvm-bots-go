@@ -7,6 +7,8 @@ how fast it presses the buy button.
 
 // ShoppingCalls are the answers.
 type ShoppingCalls struct {
+	NativeCell                 func(position int32) int32
+	RangeRepairStallsOf        func(client int32) int32
 	GiveItemToPlayerNamed      func(client int32, classname Text, itemDefIndex int32, level int32, quality int32) int32
 	RemoveWeaponSlot           func(client int32, slot int32)
 	TranslateWeaponEntForClass func(classname Text, maxlen int32, playerClass Class)
@@ -179,4 +181,33 @@ func GiveItemToPlayerNamed(client int32, classname Text, itemDefIndex int32, lev
 		missing("GiveItemToPlayer")
 	}
 	return shopping.GiveItemToPlayerNamed(client, classname, itemDefIndex, level, quality)
+}
+
+/*
+The stats plugin's side of the boundary.
+
+Each of the six natives the mod exports reads one thing about one bot and hands
+it over. GetNativeCell is how a native's argument arrives.
+*/
+
+// NativeCell is the argument at that position, which is how SourceMod passes
+// one into a native.
+//
+//sp:native GetNativeCell
+func NativeCell(position int32) int32 {
+	if shopping.NativeCell == nil {
+		missing("GetNativeCell")
+	}
+	return shopping.NativeCell(position)
+}
+
+// RangeRepairStallsOf is how often this engineer fired bolts at a sentry that
+// gained nothing. Ported, engineeridle.
+//
+//sp:body RangeRepairStallsOf
+func RangeRepairStallsOf(client int32) int32 {
+	if shopping.RangeRepairStallsOf == nil {
+		missing("RangeRepairStallsOf")
+	}
+	return shopping.RangeRepairStallsOf(client)
 }

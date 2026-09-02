@@ -859,3 +859,22 @@ func ApplyNextFrameCell(callback func(data Cell), data int32) {
 	}
 	queries.ApplyNextFrameCell(data)
 }
+
+// CellOfBool is a bool where SourcePawn wants a cell, which a native's return
+// is. It emits nothing: the two are the same value.
+//
+//sp:same CellOfBool
+func CellOfBool(value bool) Cell {
+	if value {
+		return 1
+	}
+	return 0
+}
+
+// CellOfFloat is a float where SourcePawn wants a cell. A cell holds either,
+// so this emits nothing.
+//
+//sp:same CellOfFloat
+func CellOfFloat(value float32) Cell {
+	return Cell(value)
+}
