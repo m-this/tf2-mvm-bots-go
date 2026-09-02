@@ -10,6 +10,10 @@
 #define Go_prefSniper (128)
 #define Go_prefSpy (256)
 
+char m_sSelectedClass[65][16];
+Menu g_hBotPreferenceMenu;
+Menu m_hWeaponPrefClassMenu;
+
 stock void DisplayClassPreferenceMenu(int client, int item = 0)
 {
 	int flags = GetClassPreferencesFlags(client);
@@ -165,6 +169,141 @@ stock int MenuHandler_ShowBotChances(Menu menu, MenuAction action, int param1, i
 
 stock int MenuHandler_ShowBotTeamComposition(Menu menu, MenuAction action, int param1, int param2)
 {
+	return 0;
+}
+
+stock void CreateBotPreferenceMenu()
+{
+	g_hBotPreferenceMenu.Close();
+	g_hBotPreferenceMenu = CreateMenu(MenuHandler_BotPreferenceMain);
+	SetMenuTitle(g_hBotPreferenceMenu, "Teammate Bot Preferences");
+	AddMenuItem(g_hBotPreferenceMenu, "0", "Class");
+	AddMenuItem(g_hBotPreferenceMenu, "1", "Weapons");
+	m_hWeaponPrefClassMenu.Close();
+	m_hWeaponPrefClassMenu = CreateMenu(MenuHandler_WeaponPreferenceClassList);
+	SetMenuExitBackButton(m_hWeaponPrefClassMenu, true);
+	AddMenuItem(m_hWeaponPrefClassMenu, "0", "Scout");
+	AddMenuItem(m_hWeaponPrefClassMenu, "1", "Soldier");
+	AddMenuItem(m_hWeaponPrefClassMenu, "2", "Pyro");
+	AddMenuItem(m_hWeaponPrefClassMenu, "3", "Demoman");
+	AddMenuItem(m_hWeaponPrefClassMenu, "4", "Heavy");
+	AddMenuItem(m_hWeaponPrefClassMenu, "5", "Engineer");
+	AddMenuItem(m_hWeaponPrefClassMenu, "6", "Medic");
+	AddMenuItem(m_hWeaponPrefClassMenu, "7", "Sniper");
+	AddMenuItem(m_hWeaponPrefClassMenu, "8", "Spy");
+}
+
+stock void DisplayWeaponPreferenceMenu(int client, char[] class, int item = 0)
+{
+	strcopy(m_sSelectedClass[client], 16, class);
+	Menu hWeaponPrefMenu = CreateMenu(MenuHandler_WeaponPreference);
+	SetMenuTitle(hWeaponPrefMenu, "Bot Weapon Preferences: %s", class);
+	SetMenuExitBackButton(hWeaponPrefMenu, true);
+	AddMenuItem(hWeaponPrefMenu, "0", GetWeaponPrefMenuItemText(client, class, TFWeaponSlot_Primary));
+	AddMenuItem(hWeaponPrefMenu, "1", GetWeaponPrefMenuItemText(client, class, TFWeaponSlot_Secondary));
+	AddMenuItem(hWeaponPrefMenu, "2", GetWeaponPrefMenuItemText(client, class, TFWeaponSlot_Melee));
+	if (StrEqual(class, "spy", false))
+	{
+		AddMenuItem(hWeaponPrefMenu, "3", GetWeaponPrefMenuItemText(client, class, TFWeaponSlot_Item1));
+	}
+	DisplayMenuAtItem(hWeaponPrefMenu, client, item, MENU_TIME_FOREVER);
+}
+
+stock int MenuHandler_WeaponPreferenceClassList(Menu menu, MenuAction action, int param1, int param2)
+{
+	switch (action)
+	{
+		case MenuAction_Select:
+		{
+			switch (param2)
+			{
+				case 0:
+				{
+					DisplayWeaponPreferenceMenu(param1, "scout", 0);
+				}
+				case 1:
+				{
+					DisplayWeaponPreferenceMenu(param1, "soldier", 0);
+				}
+				case 2:
+				{
+					DisplayWeaponPreferenceMenu(param1, "pyro", 0);
+				}
+				case 3:
+				{
+					DisplayWeaponPreferenceMenu(param1, "demoman", 0);
+				}
+				case 4:
+				{
+					DisplayWeaponPreferenceMenu(param1, "heavyweapons", 0);
+				}
+				case 5:
+				{
+					DisplayWeaponPreferenceMenu(param1, "engineer", 0);
+				}
+				case 6:
+				{
+					DisplayWeaponPreferenceMenu(param1, "medic", 0);
+				}
+				case 7:
+				{
+					DisplayWeaponPreferenceMenu(param1, "sniper", 0);
+				}
+				case 8:
+				{
+					DisplayWeaponPreferenceMenu(param1, "spy", 0);
+				}
+			}
+		}
+		case MenuAction_Cancel:
+		{
+			if (param2 == MenuCancel_ExitBack)
+			{
+				DisplayMenu(g_hBotPreferenceMenu, param1, MENU_TIME_FOREVER);
+			}
+		}
+	}
+	return 0;
+}
+
+stock int MenuHandler_WeaponPreference(Menu menu, MenuAction action, int param1, int param2)
+{
+	switch (action)
+	{
+		case MenuAction_Select:
+		{
+			switch (param2)
+			{
+				case 0:
+				{
+					ShowWeaponPreferenceItemListMenu(param1, m_sSelectedClass[param1], "primary");
+				}
+				case 1:
+				{
+					ShowWeaponPreferenceItemListMenu(param1, m_sSelectedClass[param1], "secondary");
+				}
+				case 2:
+				{
+					ShowWeaponPreferenceItemListMenu(param1, m_sSelectedClass[param1], "melee");
+				}
+				case 3:
+				{
+					ShowWeaponPreferenceItemListMenu(param1, m_sSelectedClass[param1], "pda2");
+				}
+			}
+		}
+		case MenuAction_End:
+		{
+			menu.Close();
+		}
+		case MenuAction_Cancel:
+		{
+			if (param2 == MenuCancel_ExitBack)
+			{
+				DisplayMenu(m_hWeaponPrefClassMenu, param1, MENU_TIME_FOREVER);
+			}
+		}
+	}
 	return 0;
 }
 

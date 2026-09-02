@@ -1,9 +1,5 @@
 
-Menu g_hBotPreferenceMenu;
-//no longer static: generated/prefmenu.sp shows it, and a file-static is invisible from an included file
-Menu m_hWeaponPrefClassMenu;
 
-static char m_sSelectedClass[MAXPLAYERS + 1][16];
 static char m_sSelectedWeaponSlot[MAXPLAYERS + 1][10];
 
 bool StartBotVote(int voteCaller)
@@ -32,47 +28,6 @@ bool StartBotVote(int voteCaller)
 	
 	return false;
 }
-void CreateBotPreferenceMenu()
-{
-	delete g_hBotPreferenceMenu;
-	
-	g_hBotPreferenceMenu = CreateMenu(MenuHandler_BotPreferenceMain);
-	SetMenuTitle(g_hBotPreferenceMenu, "Teammate Bot Preferences");
-	AddMenuItem(g_hBotPreferenceMenu, "0", "Class");
-	AddMenuItem(g_hBotPreferenceMenu, "1", "Weapons");
-	
-	delete m_hWeaponPrefClassMenu;
-	
-	m_hWeaponPrefClassMenu = CreateMenu(MenuHandler_WeaponPreferenceClassList);
-	SetMenuExitBackButton(m_hWeaponPrefClassMenu, true);
-	AddMenuItem(m_hWeaponPrefClassMenu, "0", "Scout");
-	AddMenuItem(m_hWeaponPrefClassMenu, "1", "Soldier");
-	AddMenuItem(m_hWeaponPrefClassMenu, "2", "Pyro");
-	AddMenuItem(m_hWeaponPrefClassMenu, "3", "Demoman");
-	AddMenuItem(m_hWeaponPrefClassMenu, "4", "Heavy");
-	AddMenuItem(m_hWeaponPrefClassMenu, "5", "Engineer");
-	AddMenuItem(m_hWeaponPrefClassMenu, "6", "Medic");
-	AddMenuItem(m_hWeaponPrefClassMenu, "7", "Sniper");
-	AddMenuItem(m_hWeaponPrefClassMenu, "8", "Spy");
-}
-void DisplayWeaponPreferenceMenu(int client, char[] class, int item = 0)
-{
-	//Tell us the class we just chose so everything else will get the correct data for this class
-	strcopy(m_sSelectedClass[client], sizeof(m_sSelectedClass[]), class);
-	
-	Menu hWeaponPrefMenu = CreateMenu(MenuHandler_WeaponPreference);
-	SetMenuTitle(hWeaponPrefMenu, "Bot Weapon Preferences: %s", class);
-	SetMenuExitBackButton(hWeaponPrefMenu, true);
-	AddMenuItem(hWeaponPrefMenu, "0", GetWeaponPrefMenuItemText(client, class, TFWeaponSlot_Primary));
-	AddMenuItem(hWeaponPrefMenu, "1", GetWeaponPrefMenuItemText(client, class, TFWeaponSlot_Secondary));
-	AddMenuItem(hWeaponPrefMenu, "2", GetWeaponPrefMenuItemText(client, class, TFWeaponSlot_Melee));
-	
-	if (StrEqual(class, "spy", false))
-		AddMenuItem(hWeaponPrefMenu, "3", GetWeaponPrefMenuItemText(client, class, TFWeaponSlot_Item1));
-	
-	DisplayMenuAtItem(hWeaponPrefMenu, client, item, MENU_TIME_FOREVER);
-}
-
 void ShowWeaponPreferenceItemListMenu(int client, const char[] class, const char[] slot)
 {
 	//Tell us the weapon slot that we now want to edit
@@ -570,63 +525,6 @@ bool CreateDisplayPanelBotTeamComposition(int client, const int duration = 30)
 	
 	return bSuccess;
 }
-static int MenuHandler_WeaponPreferenceClassList(Menu menu, MenuAction action, int param1, int param2)
-{
-	switch (action)
-	{
-		case MenuAction_Select:
-		{
-			switch (param2)
-			{
-				case 0:	DisplayWeaponPreferenceMenu(param1, "scout");
-				case 1:	DisplayWeaponPreferenceMenu(param1, "soldier");
-				case 2:	DisplayWeaponPreferenceMenu(param1, "pyro");
-				case 3:	DisplayWeaponPreferenceMenu(param1, "demoman");
-				case 4:	DisplayWeaponPreferenceMenu(param1, "heavyweapons");
-				case 5:	DisplayWeaponPreferenceMenu(param1, "engineer");
-				case 6:	DisplayWeaponPreferenceMenu(param1, "medic");
-				case 7:	DisplayWeaponPreferenceMenu(param1, "sniper");
-				case 8:	DisplayWeaponPreferenceMenu(param1, "spy");
-			}
-		}
-		case MenuAction_Cancel:
-		{
-			if (param2 == MenuCancel_ExitBack)
-				DisplayMenu(g_hBotPreferenceMenu, param1, MENU_TIME_FOREVER);
-		}
-	}
-	
-	return 0;
-}
-
-static int MenuHandler_WeaponPreference(Menu menu, MenuAction action, int param1, int param2)
-{
-	switch (action)
-	{
-		case MenuAction_Select:
-		{
-			switch (param2)
-			{
-				case 0:	ShowWeaponPreferenceItemListMenu(param1, m_sSelectedClass[param1], "primary");
-				case 1:	ShowWeaponPreferenceItemListMenu(param1, m_sSelectedClass[param1], "secondary");
-				case 2:	ShowWeaponPreferenceItemListMenu(param1, m_sSelectedClass[param1], "melee");
-				case 3:	ShowWeaponPreferenceItemListMenu(param1, m_sSelectedClass[param1], "pda2");
-			}
-		}
-		case MenuAction_End:
-		{
-			delete menu;
-		}
-		case MenuAction_Cancel:
-		{
-			if (param2 == MenuCancel_ExitBack)
-				DisplayMenu(m_hWeaponPrefClassMenu, param1, MENU_TIME_FOREVER);
-		}
-	}
-	
-	return 0;
-}
-
 static int MenuHandler_WeaponPreferenceItemList(Menu menu, MenuAction action, int param1, int param2)
 {
 	switch (action)

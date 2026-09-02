@@ -84,7 +84,7 @@ func MenuHandlerClassPreference(menu engine.Menu, action engine.MenuChoice, para
 		menu.Close()
 	case engine.MenuCancel():
 		if param2 == engine.MenuCancelExitBack() {
-			engine.DisplayMenu(engine.BotPreferenceMenu(), param1, engine.MenuTimeForever())
+			engine.DisplayMenu(botPreferenceMenu, param1, engine.MenuTimeForever())
 		}
 	}
 
@@ -157,7 +157,7 @@ func MenuHandlerBotPreferenceMain(menu engine.Menu, action engine.MenuChoice, pa
 				return 0
 			}
 
-			engine.DisplayMenu(engine.WeaponPrefClassMenu(), param1, engine.MenuTimeForever())
+			engine.DisplayMenu(weaponPrefClassMenu, param1, engine.MenuTimeForever())
 		}
 	}
 
@@ -180,5 +180,152 @@ func MenuHandlerShowBotChances(menu engine.Menu, action engine.MenuChoice, param
 //nolint:revive // unused-parameter: SourceMod calls this with the full set and the panel answers none of it
 func MenuHandlerShowBotTeamComposition(menu engine.Menu, action engine.MenuChoice, param1 int32, param2 int32) int32 {
 	// Do nothing.
+	return 0
+}
+
+// The class a player is picking a loadout for, so every menu below the class
+// list knows which one it is talking about.
+//
+//sp:name m_sSelectedClass
+var selectedClass [65][16]byte
+
+/*
+The two menus that are kept rather than shown and forgotten.
+
+Every submenu below them backs out to one of the two, so they have to outlive
+the call that built them: that is what makes them globals and why
+CreateBotPreferenceMenu deletes the previous pair before making a new one.
+*/
+
+//sp:name g_hBotPreferenceMenu
+var botPreferenceMenu engine.Menu
+
+//sp:name m_hWeaponPrefClassMenu
+var weaponPrefClassMenu engine.Menu
+
+// CreateBotPreferenceMenu builds the two kept menus, replacing whatever pair
+// was there.
+//
+//sp:name CreateBotPreferenceMenu
+func CreateBotPreferenceMenu() {
+	botPreferenceMenu.Close()
+
+	botPreferenceMenu = engine.CreateMenu(MenuHandlerBotPreferenceMain)
+	engine.SetMenuTitle(botPreferenceMenu, "Teammate Bot Preferences")
+	engine.AddMenuItem(botPreferenceMenu, "0", "Class")
+	engine.AddMenuItem(botPreferenceMenu, "1", "Weapons")
+
+	weaponPrefClassMenu.Close()
+
+	weaponPrefClassMenu = engine.CreateMenu(MenuHandlerWeaponPreferenceClassList)
+	engine.SetMenuExitBackButton(weaponPrefClassMenu, true)
+	engine.AddMenuItem(weaponPrefClassMenu, "0", "Scout")
+	engine.AddMenuItem(weaponPrefClassMenu, "1", "Soldier")
+	engine.AddMenuItem(weaponPrefClassMenu, "2", "Pyro")
+	engine.AddMenuItem(weaponPrefClassMenu, "3", "Demoman")
+	engine.AddMenuItem(weaponPrefClassMenu, "4", "Heavy")
+	engine.AddMenuItem(weaponPrefClassMenu, "5", "Engineer")
+	engine.AddMenuItem(weaponPrefClassMenu, "6", "Medic")
+	engine.AddMenuItem(weaponPrefClassMenu, "7", "Sniper")
+	engine.AddMenuItem(weaponPrefClassMenu, "8", "Spy")
+}
+
+/*
+DisplayWeaponPreferenceMenu shows the slots of one class, each row saying what
+is picked for it.
+
+The spy gets a fourth row: his watch is a loadout slot the other classes have
+nothing in.
+*/
+//
+//sp:name DisplayWeaponPreferenceMenu
+//sp:writable class
+//sp:default item 0
+func DisplayWeaponPreferenceMenu(client int32, class string, item int32) {
+	// Tell us the class we just chose so everything else will get the correct
+	// data for this class.
+	selectedClass[client] = engine.CopyShort(class)
+
+	hWeaponPrefMenu := engine.CreateMenu(MenuHandlerWeaponPreference)
+	engine.SetMenuTitleFor(hWeaponPrefMenu, "Bot Weapon Preferences: %s", class)
+	engine.SetMenuExitBackButton(hWeaponPrefMenu, true)
+	engine.AddMenuItemFrom(hWeaponPrefMenu, "0", engine.WeaponPrefMenuItemText(client, class, engine.WeaponSlotPrimary()))
+	engine.AddMenuItemFrom(hWeaponPrefMenu, "1", engine.WeaponPrefMenuItemText(client, class, engine.WeaponSlotSecondary()))
+	engine.AddMenuItemFrom(hWeaponPrefMenu, "2", engine.WeaponPrefMenuItemText(client, class, engine.WeaponSlotMelee()))
+
+	if engine.StrEqualLiteral(class, "spy", false) {
+		engine.AddMenuItemFrom(hWeaponPrefMenu, "3", engine.WeaponPrefMenuItemText(client, class, engine.WeaponSlotItem1()))
+	}
+
+	engine.DisplayMenuAtItem(hWeaponPrefMenu, client, item, engine.MenuTimeForever())
+}
+
+// MenuHandlerWeaponPreferenceClassList picks which class the loadout menus are
+// about.
+//
+//sp:name MenuHandler_WeaponPreferenceClassList
+//nolint:revive // unused-parameter: the menu is SourceMod's
+func MenuHandlerWeaponPreferenceClassList(menu engine.Menu, action engine.MenuChoice, param1 int32, param2 int32) int32 {
+	switch action {
+	case engine.MenuSelect():
+		switch param2 {
+		case 0:
+			DisplayWeaponPreferenceMenu(param1, "scout", 0)
+		case 1:
+			DisplayWeaponPreferenceMenu(param1, "soldier", 0)
+		case 2:
+			DisplayWeaponPreferenceMenu(param1, "pyro", 0)
+		case 3:
+			DisplayWeaponPreferenceMenu(param1, "demoman", 0)
+		case 4:
+			DisplayWeaponPreferenceMenu(param1, "heavyweapons", 0)
+		case 5:
+			DisplayWeaponPreferenceMenu(param1, "engineer", 0)
+		case 6:
+			DisplayWeaponPreferenceMenu(param1, "medic", 0)
+		case 7:
+			DisplayWeaponPreferenceMenu(param1, "sniper", 0)
+		case 8:
+			DisplayWeaponPreferenceMenu(param1, "spy", 0)
+		}
+	case engine.MenuCancel():
+		if param2 == engine.MenuCancelExitBack() {
+			engine.DisplayMenu(botPreferenceMenu, param1, engine.MenuTimeForever())
+		}
+	}
+
+	return 0
+}
+
+/*
+MenuHandlerWeaponPreference picks which slot of the chosen class to list items
+for.
+
+Row three is only ever pressed by a spy: the builder does not add it for anyone
+else, so the branch cannot be reached from another class's menu.
+*/
+//
+//sp:name MenuHandler_WeaponPreference
+func MenuHandlerWeaponPreference(menu engine.Menu, action engine.MenuChoice, param1 int32, param2 int32) int32 {
+	switch action {
+	case engine.MenuSelect():
+		switch param2 {
+		case 0:
+			engine.ShowWeaponPreferenceItemListMenu(param1, selectedClass[param1], "primary")
+		case 1:
+			engine.ShowWeaponPreferenceItemListMenu(param1, selectedClass[param1], "secondary")
+		case 2:
+			engine.ShowWeaponPreferenceItemListMenu(param1, selectedClass[param1], "melee")
+		case 3:
+			engine.ShowWeaponPreferenceItemListMenu(param1, selectedClass[param1], "pda2")
+		}
+	case engine.MenuEnd():
+		menu.Close()
+	case engine.MenuCancel():
+		if param2 == engine.MenuCancelExitBack() {
+			engine.DisplayMenu(weaponPrefClassMenu, param1, engine.MenuTimeForever())
+		}
+	}
+
 	return 0
 }

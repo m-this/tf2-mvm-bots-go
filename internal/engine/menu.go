@@ -12,30 +12,35 @@ Close is only ever called from the handler.
 
 // MenuCalls are the answers.
 type MenuCalls struct {
-	NewMenu               func(handler string) Menu
-	SetTitle              func(m Menu, format string, args []any)
-	AddItem               func(m Menu, info string, display string)
-	Display               func(m Menu, client int32, time int32)
-	DisplayAt             func(m Menu, client int32, position int32, time int32)
-	DeleteMenu            func(m Menu)
-	SelectionPos          func() int32
-	SetChoosing           func(client int32, choosing bool)
-	PrintToChat           func(client int32, format string, args []any)
-	ChosenClasses         func() List
-	ShowConfirmation      func(client int32)
-	SetupCancelled        func()
-	SetBotClassesLocked   func(locked bool)
-	CreateMenu            func(handler string) Menu
-	SetMenuTitle          func(m Menu, title string)
-	AddMenuItem           func(m Menu, info string, display string)
-	AddMenuItemText       func(m Menu, info string, display string)
-	SetMenuExitBackButton func(m Menu, on bool)
-	DisplayMenu           func(m Menu, client int32, time int32)
-	DisplayMenuAtItem     func(m Menu, client int32, item int32, time int32)
-	ClassPreferencesFlags func(client int32) int32
-	SetClassPreferences   func(client int32, class string, value int32)
-	SetBotSummoner        func(userid int32)
-	ManageDefenderBots    func(manage bool)
+	SetMenuTitleFor        func(m Menu, format string, class string)
+	CopyShort              func(from string) [16]byte
+	AddMenuItemFrom        func(m Menu, info string, display Text)
+	ShowWeaponItemList     func(client int32, class [16]byte, slot string)
+	NewMenu                func(handler string) Menu
+	SetTitle               func(m Menu, format string, args []any)
+	AddItem                func(m Menu, info string, display string)
+	Display                func(m Menu, client int32, time int32)
+	DisplayAt              func(m Menu, client int32, position int32, time int32)
+	DeleteMenu             func(m Menu)
+	SelectionPos           func() int32
+	SetChoosing            func(client int32, choosing bool)
+	PrintToChat            func(client int32, format string, args []any)
+	ChosenClasses          func() List
+	ShowConfirmation       func(client int32)
+	SetupCancelled         func()
+	SetBotClassesLocked    func(locked bool)
+	CreateMenu             func(handler string) Menu
+	SetMenuTitle           func(m Menu, title string)
+	AddMenuItem            func(m Menu, info string, display string)
+	AddMenuItemText        func(m Menu, info string, display string)
+	SetMenuExitBackButton  func(m Menu, on bool)
+	DisplayMenu            func(m Menu, client int32, time int32)
+	DisplayMenuAtItem      func(m Menu, client int32, item int32, time int32)
+	ClassPreferencesFlags  func(client int32) int32
+	SetClassPreferences    func(client int32, class string, value int32)
+	SetBotSummoner         func(userid int32)
+	WeaponPrefMenuItemText func(client int32, class string, slot int32) Text
+	ManageDefenderBots     func(manage bool)
 }
 
 var menus MenuCalls
@@ -290,12 +295,6 @@ func MenuTimeForever() int32 { return 0 }
 //sp:global MenuCancel_ExitBack
 func MenuCancelExitBack() int32 { return -6 }
 
-// BotPreferenceMenu is g_hBotPreferenceMenu, the root of the preference
-// menus, kept because every submenu backs out to it.
-//
-//sp:global g_hBotPreferenceMenu
-func BotPreferenceMenu() Menu { return 0 }
-
 // ClassPreferencesFlags is what classes this player will accept as bots.
 // Ported, playerpref.
 //
@@ -349,8 +348,62 @@ func ManageDefenderBotsOn(manage bool) {
 	menus.ManageDefenderBots(manage)
 }
 
-// WeaponPrefClassMenu is m_hWeaponPrefClassMenu, the class list a player picks
-// a loadout for. Kept because every weapon submenu backs out to it.
+// WeaponPrefMenuItemText is one row of the weapon menu: the slot's name and
+// what this player has picked for it. Still in menu.sp.
 //
-//sp:global m_hWeaponPrefClassMenu
-func WeaponPrefClassMenu() Menu { return 0 }
+//sp:plugin GetWeaponPrefMenuItemText returns
+func WeaponPrefMenuItemText(client int32, class string, slot int32) Text {
+	if menus.WeaponPrefMenuItemText == nil {
+		missing("GetWeaponPrefMenuItemText")
+	}
+	return menus.WeaponPrefMenuItemText(client, class, slot)
+}
+
+// WeaponSlotItem1 is TFWeaponSlot_Item1, where the spy keeps his watch.
+//
+//sp:global TFWeaponSlot_Item1
+func WeaponSlotItem1() int32 { return 4 }
+
+// SetMenuTitleFor writes the title from a format and one substitution, which is
+// what a menu naming the class it is about needs.
+//
+//sp:native SetMenuTitle
+func SetMenuTitleFor(m Menu, format string, class string) {
+	if menus.SetMenuTitleFor == nil {
+		missing("SetMenuTitle")
+	}
+	menus.SetMenuTitleFor(m, format, class)
+}
+
+// CopyShort is strcopy into a buffer shorter than a Text, which is what a
+// per-client class name is.
+//
+//sp:native strcopy fills
+func CopyShort(from string) (out [16]byte) {
+	if menus.CopyShort == nil {
+		missing("strcopy")
+	}
+	return menus.CopyShort(from)
+}
+
+// AddMenuItemFrom is AddMenuItem where the label came out of a buffer rather
+// than being written out.
+//
+//sp:native AddMenuItem
+func AddMenuItemFrom(m Menu, info string, display Text) {
+	if menus.AddMenuItemFrom == nil {
+		missing("AddMenuItem")
+	}
+	menus.AddMenuItemFrom(m, info, display)
+}
+
+// ShowWeaponPreferenceItemListMenu lists the items for one slot of one class.
+// Still in menu.sp.
+//
+//sp:plugin ShowWeaponPreferenceItemListMenu
+func ShowWeaponPreferenceItemListMenu(client int32, class [16]byte, slot string) {
+	if menus.ShowWeaponItemList == nil {
+		missing("ShowWeaponPreferenceItemListMenu")
+	}
+	menus.ShowWeaponItemList(client, class, slot)
+}
