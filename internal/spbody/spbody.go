@@ -54,6 +54,16 @@ type Extern struct {
 	// call can only be an argument to something else: spcomp will not assign
 	// one to a sized array, so this package will not emit that either.
 	ReturnsArray bool
+	/*
+		Borrowed says the handle this returns belongs to somebody else.
+
+		SourceMod's menus are the case: new Menu(handler) hands the menu
+		to SourceMod, which keeps it alive until the player is done and
+		then fires MenuAction_End, where the handler deletes it. So the
+		function that built it must not close it, and the ownership rule
+		has to be told rather than guess.
+	*/
+	Borrowed bool
 	// Global says this is not a call at all: SourceMod's MaxClients is a
 	// variable, and the Go declaration is a function only because the
 	// subset has no other way to name something it does not own.

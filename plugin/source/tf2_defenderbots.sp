@@ -302,6 +302,7 @@ Address g_pMannVsMachineUpgrades;
 #include "redbots3/events.sp"
 #include "redbots3/generated/playerpref.sp"
 #include "redbots3/player_pref.sp"
+#include "redbots3/generated/teammenu.sp"
 #include "redbots3/menu.sp"
 #include "redbots3/tf_upgrades.sp"
 #include "redbots3/generated/debug_faults.sp"

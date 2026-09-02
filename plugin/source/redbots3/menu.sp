@@ -1,9 +1,7 @@
-#define CHOOSE_BOT_CLASSES_TIME	30
 #define CHOOSE_BOT_CLASSES_TIME_SHORT	15
 
 Menu g_hBotPreferenceMenu;
 static Menu m_hWeaponPrefClassMenu;
-static int m_iBotsLeftToChoose;
 
 static char m_sSelectedClass[MAXPLAYERS + 1][16];
 static char m_sSelectedWeaponSlot[MAXPLAYERS + 1][10];
@@ -34,32 +32,6 @@ bool StartBotVote(int voteCaller)
 	
 	return false;
 }
-
-void ShowDefenderBotTeamSetupMenu(int client, int itemPosition = 0, bool bInitialize = false, int numBotsToAdd = 0)
-{
-	if (bInitialize)
-	{
-		g_adtChosenBotClasses.Clear();
-		m_iBotsLeftToChoose = numBotsToAdd;
-	}
-	
-	Menu hMenu = new Menu(MenuHandler_DefenderBotTeamSetup);
-	hMenu.SetTitle("Create Your Team (%d)", m_iBotsLeftToChoose);
-	hMenu.AddItem("0", "Scout");
-	hMenu.AddItem("1", "Soldier");
-	hMenu.AddItem("2", "Pyro");
-	hMenu.AddItem("3", "Demoman");
-	hMenu.AddItem("4", "Heavy");
-	hMenu.AddItem("5", "Engineer");
-	hMenu.AddItem("6", "Medic");
-	hMenu.AddItem("7", "Sniper");
-	hMenu.AddItem("8", "Spy");
-	hMenu.DisplayAt(client, itemPosition, CHOOSE_BOT_CLASSES_TIME);
-	
-	if (bInitialize)
-		g_bChoosingBotClasses[client] = true;
-}
-
 void ShowDefenderBotTeamConfirmationMenu(int client)
 {
 	Menu hMenu = new Menu(MenuHandler_DefenderBotTeamConfirmation);
@@ -676,87 +648,6 @@ static int MenuHandler_BotVote(Menu menu, MenuAction action, int param1, int par
 	
 	return 0;
 }
-
-static int MenuHandler_DefenderBotTeamSetup(Menu menu, MenuAction action, int param1, int param2)
-{
-	switch (action)
-	{
-		case MenuAction_Select:
-		{
-			switch (param2)
-			{
-				case 0:
-				{
-					g_adtChosenBotClasses.PushString("scout");
-					PrintToChat(param1, "You have chosen Scout");
-				}
-				case 1:
-				{
-					g_adtChosenBotClasses.PushString("soldier");
-					PrintToChat(param1, "You have chosen Soldier");
-				}
-				case 2:
-				{
-					g_adtChosenBotClasses.PushString("pyro");
-					PrintToChat(param1, "You have chosen Pyro");
-				}
-				case 3:
-				{
-					g_adtChosenBotClasses.PushString("demoman");
-					PrintToChat(param1, "You have chosen Demoman");
-				}
-				case 4:
-				{
-					g_adtChosenBotClasses.PushString("heavyweapons");
-					PrintToChat(param1, "You have chosen Heavy");
-				}
-				case 5:
-				{
-					g_adtChosenBotClasses.PushString("engineer");
-					PrintToChat(param1, "You have chosen Engineer");
-				}
-				case 6:
-				{
-					g_adtChosenBotClasses.PushString("medic");
-					PrintToChat(param1, "You have chosen Medic");
-				}
-				case 7:
-				{
-					g_adtChosenBotClasses.PushString("sniper");
-					PrintToChat(param1, "You have chosen Sniper");
-				}
-				case 8:
-				{
-					g_adtChosenBotClasses.PushString("spy");
-					PrintToChat(param1, "You have chosen Spy");
-				}
-			}
-			
-			m_iBotsLeftToChoose--;
-			
-			if (m_iBotsLeftToChoose <= 0)
-			{
-				ShowDefenderBotTeamConfirmationMenu(param1);
-				return 0;
-			}
-			
-			ShowDefenderBotTeamSetupMenu(param1, GetMenuSelectionPosition());
-		}
-		case MenuAction_Cancel:
-		{
-			g_bChoosingBotClasses[param1] = false;
-			DefenderBotTeamSetupCancelled();
-			PrintToChatAll("%s %N is no longer selecting the bot team.", PLUGIN_PREFIX, param1);
-		}
-		case MenuAction_End:
-		{
-			delete menu;
-		}
-	}
-	
-	return 0;
-}
-
 static int MenuHandler_DefenderBotTeamConfirmation(Menu menu, MenuAction action, int param1, int param2)
 {
 	switch (action)
@@ -989,7 +880,8 @@ static int MenuHandler_ShowBotTeamComposition(Menu menu, MenuAction action, int 
 	return 0;
 }
 
-static void DefenderBotTeamSetupCancelled()
+//no longer static: generated/teammenu.sp calls it, and a file-static is invisible from an included file
+void DefenderBotTeamSetupCancelled()
 {
 	switch (redbots_manager_bot_lineup_mode.IntValue)
 	{

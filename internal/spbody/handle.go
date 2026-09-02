@@ -115,7 +115,7 @@ func (e *emitter) opens(d *ast.FuncDecl) map[string]bool {
 		// SourcePawn variable's handle outlives every function that
 		// looks at one. Neither is opened here, so neither is owed a
 		// close.
-		if x, isExtern := e.externOfCall(call); isExtern && (x.Global || x.Cast) {
+		if x, isExtern := e.externOfCall(call); isExtern && (x.Global || x.Cast || x.Borrowed) {
 			return
 		}
 		// A function that hands back a handle it keeps, which is not one
