@@ -321,6 +321,7 @@ char g_sBotTeamCompositions[][][] =
 #include "redbots3/generated/playerpref.sp"
 #include "redbots3/generated/seating.sp"
 #include "redbots3/generated/upgradereport.sp"
+#include "redbots3/generated/teamchange.sp"
 #include "redbots3/generated/teammenu.sp"
 #include "redbots3/generated/prefmenu.sp"
 #include "redbots3/generated/addmenu.sp"
@@ -1813,14 +1814,6 @@ public Action Timer_ForgetDetonatingPlayer(Handle timer, any data)
 	return Plugin_Stop;
 }
 
-public void Timer_ReadyPlayer(Handle timer, int data)
-{
-	if (!IsClientInGame(data))
-		return;
-	
-	SetPlayerReady(data, true);
-}
-
 public void Timer_RealizeSpy(Handle timer, DataPack pack)
 {
 	int client = GetClientOfUserId(pack.ReadCell());
@@ -2077,92 +2070,6 @@ int AddBotsFromTeamComposition(int count)
 	return added;
 }
 
-/* Decide what to do when a player decides to change their team
-This is to prevent abuse of the system by leaving RED players with unfavorable teams */
-void HandleTeamPlayerCountChanged(TFTeam team, int iWhoChanging = -1)
-{
-	if (GameRules_GetRoundState() != RoundState_BetweenRounds)
-		return;
-	
-	if (redbots_manager_mode.IntValue == MANAGER_MODE_MANUAL_BOTS)
-	{
-		if (iWhoChanging > 0 && iWhoChanging == GetClientOfUserId(g_iUIDBotSummoner) && IsVoteInProgress())
-		{
-			//He started the bot vote then changed teams, cancel it
-			CancelVote();
-		}
-	}
-	switch (redbots_manager_bot_lineup_mode.IntValue)
-	{
-		case BOT_LINEUP_MODE_CHOOSE, BOT_LINEUP_MODE_PREFERENCE_CHOOSE:
-		{
-			//Allow the classes to be picked again, but don't clear current list
-			g_bBotClassesLocked = false;
-			PrintToChatTeam(team, "%s You can repick your bot team lineup.", PLUGIN_PREFIX);
-		}
-	}
-	
-	if (!g_bBotsEnabled)
-		return;
-	
-	if (iWhoChanging > 0 && GetClientOfUserId(g_iUIDBotSummoner) == iWhoChanging)
-	{
-		//The summoner changed teams, allow RED team to repick their bots
-		g_bAllowBotTeamRedo = true;
-		PrintToChatTeam(team, "%s Use command !redobots to repick your bot team lineup.", PLUGIN_PREFIX);
-	}
-	
-	int iWhoToUnready = -1;
-	int iReadyCount = 0;
-	int iMemberCount = 0;
-	
-	for (int i = 1; i <= MaxClients; i++)
-	{
-		//Whoever is changing teams won't count to the team count
-		if (i == iWhoChanging)
-			continue;
-		
-		if (!IsClientInGame(i))
-			continue;
-		
-		if (TF2_GetClientTeam(i) != team)
-			continue;
-		
-		if (IsPlayerReady(i))
-		{
-			if (iWhoToUnready != -1)
-			{
-				if (g_bIsDefenderBot[iWhoToUnready])
-				{
-					//Always prefer to unready human players first
-					if (!g_bIsDefenderBot[i])
-						iWhoToUnready = i;
-				}
-			}
-			else
-			{
-				iWhoToUnready = i;
-			}
-			
-			iReadyCount++;
-		}
-		
-		iMemberCount++;
-	}
-	
-	//Are all remaining members of the team ready?
-	if (iReadyCount == iMemberCount)
-	{
-		//Unready one member to prevent starting the game and allow another bot to enter
-		SetPlayerReady(iWhoToUnready, false);
-		
-		if (g_bIsDefenderBot[iWhoToUnready])
-		{
-			//Ready up the bot again after some time
-			CreateTimer(0.2, Timer_ReadyPlayer, iWhoToUnready, TIMER_FLAG_NO_MAPCHANGE);
-		}
-	}
-}
 //A blacklisted class becomes a random class that is not, so every path that adds a bot obeys the list
 void PickAllowedBotClass(const char[] wanted, char[] buffer, int maxlen)
 {

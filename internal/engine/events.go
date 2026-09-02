@@ -160,7 +160,7 @@ func ClearSniperStall(client int32) {
 // HandleTeamPlayerCountChanged reseats the team when a person joins or leaves.
 // Still in tf2_defenderbots.sp.
 //
-//sp:plugin HandleTeamPlayerCountChanged
+//sp:body HandleTeamPlayerCountChanged
 func HandleTeamPlayerCountChanged(team Team, whoChanging int32) {
 	if events.HandleTeamPlayerCountChanged == nil {
 		missing("HandleTeamPlayerCountChanged")
