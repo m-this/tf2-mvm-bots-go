@@ -9,10 +9,12 @@ writes. `plugin/` is the SourcePawn tree, generated files and all: it moved here
 from `../tf2-mvm-bots`, which is being archived.
 
 That is wider than this repository was opened with, and it is most of the way
-there. `plugin/source` holds 7568 lines of hand-written SourcePawn, down from
-27005: `nextbot_behavior.sp` has no functions left in it at all, and what
-remains is `tf2_defenderbots.sp`, the menus, the aiming, the shopping trip and
-the gamedata seam.
+there. `plugin/source` holds 3853 lines of hand-written SourcePawn, down from
+27005. The menus, the aiming, the shopping trip and the preferences are all
+generated now; `nextbot_behavior.sp` and `player_pref.sp` are gone from the
+tree entirely. What remains is `tf2_defenderbots.sp` and the gamedata seam:
+`dhooks.sp`, `sdkcalls.sp`, `tf_upgrades.sp`, `offsets.sp` and the one native
+declaration in `archipelago.sp`.
 
 The proofs no longer read the old repository. Every shipped file a comparison
 needs is snapshotted under `internal/upstream/shipped` at the revision that

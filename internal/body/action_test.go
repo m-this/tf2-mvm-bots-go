@@ -116,11 +116,19 @@ func callbackOf(src, name string) (string, bool) {
 	if start := strings.LastIndexByte(src[:i], '\n'); start >= 0 {
 		i = start + 1
 	}
-	j := strings.Index(src[i:], "\n}\n")
+	/* A file need not end in a newline
+
+	The last function in a shipped file closes with "\n}" and then the end of
+	the file, so looking for "\n}\n" found nothing and the caller could not
+	tell that apart from the function being absent: it was skipped in
+	silence. Searching a copy that ends in a newline terminates both alike. */
+	tail := src[i:] + "\n"
+
+	j := strings.Index(tail, "\n}\n")
 	if j < 0 {
 		return "", false
 	}
-	body := src[i : i+j+3]
+	body := tail[:j+3]
 	body = reBlock.ReplaceAllString(body, "")
 	body = reLine.ReplaceAllString(body, "")
 	return strings.TrimSpace(reRun.ReplaceAllString(body, " ")), true

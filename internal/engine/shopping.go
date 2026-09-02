@@ -243,7 +243,7 @@ func ShowActivity2(client int32, tag string, format string, args ...any) {
 // ShowCurrentBotClassChances puts the class-share panel up. Still in
 // player_pref.sp.
 //
-//sp:plugin ShowCurrentBotClassChances
+//sp:body ShowCurrentBotClassChances
 func ShowCurrentBotClassChances(client int32) {
 	if shopping.ShowCurrentBotClassChances == nil {
 		missing("ShowCurrentBotClassChances")

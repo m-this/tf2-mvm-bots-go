@@ -9,6 +9,13 @@ declarations here are how one generated file calls into another.
 
 // EventCalls are the answers.
 type EventCalls struct {
+	PrefFlagOf                   func(index int32) int32
+	FileExists                   func(path Text) bool
+	ImportFromFile               func(kv KeyValues, path Text) bool
+	ExportToFile                 func(kv KeyValues, path Text) bool
+	PrintHintText                func(client int32, format string, args []any)
+	PrintHintTextToAll           func(format string, args []any)
+	DisplayPanelBotPercentages   func(client int32, classPercents [9]float32)
 	CheckCommandAccess           func(client int32, command string, flags int32) bool
 	EnableBotsCooldown           func(client int32) float32
 	SetEnableBotsCooldown        func(client int32, when float32)
@@ -364,4 +371,76 @@ func SetEnableBotsCooldown(client int32, when float32) {
 		missing("g_flEnableBotsCooldown")
 	}
 	events.SetEnableBotsCooldown(client, when)
+}
+
+// FileExists says the path is there, which a config the server has not written
+// is not.
+//
+//sp:native FileExists
+func FileExists(path Text) bool {
+	if events.FileExists == nil {
+		missing("FileExists")
+	}
+	return events.FileExists(path)
+}
+
+// ImportFromFile reads a KeyValues off disk, and says whether it parsed.
+//
+//sp:method ImportFromFile
+func (kv KeyValues) ImportFromFile(path Text) bool {
+	if events.ImportFromFile == nil {
+		missing("KeyValues.ImportFromFile")
+	}
+	return events.ImportFromFile(kv, path)
+}
+
+// ExportToFile writes one back.
+//
+//sp:method ExportToFile
+func (kv KeyValues) ExportToFile(path Text) bool {
+	if events.ExportToFile == nil {
+		missing("KeyValues.ExportToFile")
+	}
+	return events.ExportToFile(kv, path)
+}
+
+// PrintHintText puts a line in the middle of one player's screen.
+//
+//sp:native PrintHintText
+func PrintHintText(client int32, format string, args ...any) {
+	if events.PrintHintText == nil {
+		missing("PrintHintText")
+	}
+	events.PrintHintText(client, format, args)
+}
+
+// PrintHintTextToAll does it for everybody.
+//
+//sp:native PrintHintTextToAll
+func PrintHintTextToAll(format string, args ...any) {
+	if events.PrintHintTextToAll == nil {
+		missing("PrintHintTextToAll")
+	}
+	events.PrintHintTextToAll(format, args)
+}
+
+// DisplayPanelBotPercentages shows each class's share of the draw. Ported,
+// panels.
+//
+//sp:body CreateDisplayPanelBotPercentages
+func DisplayPanelBotPercentages(client int32, classPercents [9]float32) {
+	if events.DisplayPanelBotPercentages == nil {
+		missing("CreateDisplayPanelBotPercentages")
+	}
+	events.DisplayPanelBotPercentages(client, classPercents)
+}
+
+// TextOfPath reads a path buffer where a Text is expected. SourcePawn has one
+// char[]; this says the two are the same value and emits nothing.
+//
+//sp:same TextOfPath
+func TextOfPath(from [256]byte) Text {
+	var out Text
+	copy(out[:], from[:])
+	return out
 }

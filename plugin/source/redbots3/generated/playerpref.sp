@@ -24,6 +24,7 @@ ArrayList m_adtPendingBotSeats;
 KeyValues m_kvServerLoadout;
 KeyValues m_kvPlayerPrefData;
 int g_iPlayerForcedPref = -1;
+char g_sPlayerPrefPath[256];
 
 stock bool IsValidLoadoutSeat(int seat)
 {
@@ -325,5 +326,107 @@ stock void AddBotsBasedOnPreferences(int amount)
 		AddRandomDefenderBots(amount);
 	}
 	classPref.Close();
+}
+
+stock void Config_LoadServerLoadout()
+{
+	m_kvServerLoadout.Close();
+	m_adtPendingBotSeats.Close();
+	char filePath[512];
+	BuildPath(Path_SM, filePath, 512, "configs/defenderbots/loadout.cfg");
+	if (!FileExists(filePath))
+	{
+		return;
+	}
+	m_kvServerLoadout = new KeyValues("loadout");
+	if (!m_kvServerLoadout.ImportFromFile(filePath))
+	{
+		LogError("Config_LoadServerLoadout: Could not read %s!", filePath);
+		m_kvServerLoadout.Close();
+		return;
+	}
+	WarnAboutInvalidLoadoutSeats();
+}
+
+public Action Timer_SavePrefData(Handle timer)
+{
+	if (!m_kvPlayerPrefData.ExportToFile(g_sPlayerPrefPath))
+	{
+		LogError("Timer_SavePrefData: Failed to save player preference data!");
+		PrintToChatAll("%s ERROR: Player preference data failed to save!", PLUGIN_PREFIX);
+		return Plugin_Continue;
+	}
+	if (redbots_manager_debug.BoolValue)
+	{
+		PrintToServer("%s Saved player preference data.", PLUGIN_PREFIX);
+	}
+	return Plugin_Continue;
+}
+
+stock void LoadPreferencesData()
+{
+	m_kvPlayerPrefData = new KeyValues("PlayerBotPreferences");
+	m_kvPlayerPrefData.ImportFromFile(g_sPlayerPrefPath);
+	CreateTimer(20.0, Timer_SavePrefData, _, TIMER_REPEAT);
+}
+
+stock void ShowCurrentBotClassChances(int client = -1)
+{
+	float classChoiceCount[9];
+	for (int i = 1; i <= MaxClients; i++)
+	{
+		if (IsClientInGame(i) && IsValidForBotPreferences(i))
+		{
+			int classFlags = GetClassPreferencesFlags(i);
+			for (int c = 0; c < 9; c++)
+			{
+				if ((classFlags & Go_PrefFlagOf(c)) != 0)
+				{
+					classChoiceCount[c]++;
+				}
+			}
+		}
+	}
+	float totalChoices;
+	for (int i = 0; i < 9; i++)
+	{
+		totalChoices += classChoiceCount[i];
+	}
+	if (totalChoices == 0.0)
+	{
+		if (client > 0)
+		{
+			PrintHintText(client, "Nobody has any preferences!");
+		}
+		else
+		{
+			PrintHintTextToAll("Nobody has any preferences!");
+		}
+		return;
+	}
+	float classPercents[9];
+	for (int i = 0; i < 9; i++)
+	{
+		classPercents[i] = (classChoiceCount[i] / totalChoices) * 100.0;
+	}
+	if (client > 0)
+	{
+		CreateDisplayPanelBotPercentages(client, classPercents);
+	}
+	else
+	{
+		for (int i = 1; i <= MaxClients; i++)
+		{
+			if (IsClientInGame(i))
+			{
+				CreateDisplayPanelBotPercentages(i, classPercents);
+			}
+		}
+	}
+}
+
+stock int Go_PrefFlagOf(int index)
+{
+	return 1 << index;
 }
 

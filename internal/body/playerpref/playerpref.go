@@ -478,3 +478,139 @@ func AddBotsBasedOnPreferences(amount int32) {
 
 	classPref.Close()
 }
+
+// Where the players' preferences are kept between maps.
+//
+//sp:name g_sPlayerPrefPath
+var playerPrefPath [256]byte
+
+/*
+ConfigLoadServerLoadout reads the server's own loadout file, if it wrote one.
+
+The pending seats go with it: a map change means the seats the last map asked
+for belong to bots that will never enter.
+*/
+//
+//sp:name Config_LoadServerLoadout
+func ConfigLoadServerLoadout() {
+	serverLoadout.Close()
+
+	pendingBotSeats.Close()
+
+	filePath := engine.BuildPath("configs/defenderbots/loadout.cfg")
+
+	if !engine.FileExists(filePath) {
+		return
+	}
+
+	serverLoadout = engine.NewKeyValues("loadout")
+
+	if !serverLoadout.ImportFromFile(filePath) {
+		engine.LogError("Config_LoadServerLoadout: Could not read %s!", filePath)
+		serverLoadout.Close()
+		return
+	}
+
+	WarnAboutInvalidLoadoutSeats()
+}
+
+// TimerSavePrefData writes the preferences to disk every twenty seconds, so a
+// crash costs at most that.
+//
+//sp:name Timer_SavePrefData
+//sp:public
+//nolint:revive // unused-parameter: the timer handle is SourceMod's
+func TimerSavePrefData(timer engine.Timer) engine.Outcome {
+	if !playerPrefData.ExportToFile(engine.TextOfPath(playerPrefPath)) {
+		engine.LogError("Timer_SavePrefData: Failed to save player preference data!")
+		engine.PrintToChatAll("%s ERROR: Player preference data failed to save!", engine.PluginPrefix())
+		return engine.PluginContinue()
+	}
+
+	if engine.ManagerDebug().Bool() {
+		engine.PrintToServer("%s Saved player preference data.", engine.PluginPrefix())
+	}
+
+	return engine.PluginContinue()
+}
+
+// LoadPreferencesData reads them back at load and starts the save timer.
+//
+//sp:name LoadPreferencesData
+func LoadPreferencesData() {
+	playerPrefData = engine.NewKeyValues("PlayerBotPreferences")
+	playerPrefData.ImportFromFile(engine.TextOfPath(playerPrefPath))
+
+	engine.CreateTimer(20.0, TimerSavePrefData, engine.Default(), engine.TimerRepeat())
+}
+
+/*
+ShowCurrentBotClassChances is each class's share of the draw, as a panel.
+
+A share rather than a count, because what a player wants to know is how likely
+a class is, and that depends on what everybody else asked for as much as on
+what they did.
+*/
+//
+//sp:name ShowCurrentBotClassChances
+//sp:default client -1
+func ShowCurrentBotClassChances(client int32) {
+	// Each index is a class, 0 = scout, 1 = soldier, and so on. Float because
+	// the percentage below divides by the total.
+	var classChoiceCount [9]float32
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if engine.IsClientInGame(i) && IsValidForBotPreferences(i) {
+			classFlags := GetClassPreferencesFlags(i)
+
+			for c := int32(0); c < 9; c++ {
+				if classFlags&PrefFlagOf(c) != 0 {
+					classChoiceCount[c]++
+				}
+			}
+		}
+	}
+
+	var totalChoices float32
+
+	for i := int32(0); i < 9; i++ {
+		totalChoices += classChoiceCount[i]
+	}
+
+	if totalChoices == 0.0 {
+		if client > 0 {
+			engine.PrintHintText(client, "Nobody has any preferences!")
+		} else {
+			engine.PrintHintTextToAll("Nobody has any preferences!")
+		}
+
+		return
+	}
+
+	// Like before, each index is a class. The share is the times that class
+	// was chosen over the total of every choice.
+	var classPercents [9]float32
+
+	for i := int32(0); i < 9; i++ {
+		classPercents[i] = (classChoiceCount[i] / totalChoices) * 100
+	}
+
+	if client > 0 {
+		engine.DisplayPanelBotPercentages(client, classPercents)
+	} else {
+		for i := int32(1); i <= engine.MaxClients(); i++ {
+			if engine.IsClientInGame(i) {
+				engine.DisplayPanelBotPercentages(i, classPercents)
+			}
+		}
+	}
+}
+
+// PrefFlagOf is the preference bit for one class, indexed the way the panel
+// counts them: 0 is the scout. The shipped file wrote nine ifs; the bits are
+// consecutive powers of two, so one shift is the same nine answers.
+//
+//sp:name Go_PrefFlagOf
+func PrefFlagOf(index int32) int32 {
+	return 1 << index
+}
