@@ -62,6 +62,12 @@ enum eMissionDifficulty
 	MISSION_MAX_COUNT = 6
 };
 
+#define ACTION_HEAL_PATIENT_OFFSET (18512)
+
+#define FLAMETHROWER_REACH_RANGE (350.0)
+
+#define FLAMEBALL_REACH_RANGE (526.0)
+
 enum struct BombInfo_t
 {
 	float vPosition[3];
@@ -96,4 +102,7 @@ char g_sRawPlayerClassNames[][] =
 };
 CNavArea m_aNestArea[65] = {NULL_AREA, ...};
 CNavArea m_aNestAreaRelocate[65] = {NULL_AREA, ...};
+PathFollower m_pPath[65];
+ChasePath m_pChasePath[65];
+float m_flRepathTime[65];
 

@@ -328,7 +328,103 @@ char g_sBotTeamCompositions[][][] =
 #include "redbots3/tf_upgrades.sp"
 #include "redbots3/generated/debug_faults.sp"
 #include "redbots3/generated/threat_priority.sp"
-#include "redbots3/nextbot_behavior.sp"
+
+/* Replicate the behaviour of PathFollower's PluginBot
+
+An enum struct with methods on it, which the generator has no form for: it emits
+a record's fields and nothing else. It sits here rather than in the generated
+preamble for that reason alone, and it is what mvm-z83.74 would have to grow to
+take. */
+enum struct esPluginBot
+{
+	bool bPathing;
+	float vecPathGoal[3];
+	int iPathGoalEntity;
+	
+	void Reset()
+	{
+		this.bPathing = false;
+		this.vecPathGoal = NULL_VECTOR;
+		this.iPathGoalEntity = -1;
+	}
+	
+	bool HasPathGoalVector()
+	{
+		return !Vector_IsZero(this.vecPathGoal);
+	}
+	
+	bool HasPathGoalEntity()
+	{
+		return this.iPathGoalEntity != -1;
+	}
+	
+	void SetPathGoalVector(const float vec[3])
+	{
+		//You can only set one or the other, not both
+		this.iPathGoalEntity = -1;
+		this.vecPathGoal = vec;
+	}
+	
+	void SetPathGoalEntity(int entity)
+	{
+		this.vecPathGoal = NULL_VECTOR;
+		this.iPathGoalEntity = entity;
+	}
+}
+
+esPluginBot g_arrPluginBot[MAXPLAYERS + 1];
+
+/* What nextbot_behavior.sp used to include
+
+The file held nothing but this list and six declarations by the end, and the
+declarations moved to the generated preamble. The order still matters: a
+behaviour that declares a constant has to come before the file that reads it,
+and behavior/engineeridle.sp declares a static with the same name as the
+game-facing override in hooks. */
+#include "redbots3/generated/attack.sp"
+#include "redbots3/generated/markgiant.sp"
+#include "redbots3/generated/collectmoney.sp"
+#include "redbots3/generated/gotoupgrade.sp"
+#include "redbots3/generated/attributes.sp"
+#include "redbots3/generated/upgrade_rank.sp"
+#include "redbots3/generated/upgrade_rules.sp"
+#include "redbots3/generated/shopping.sp"
+#include "redbots3/behavior/upgrade.sp"
+#include "redbots3/generated/getammo.sp"
+#include "redbots3/generated/movetofront.sp"
+#include "redbots3/generated/gethealth.sp"
+#include "redbots3/generated/engineeridle.sp"
+#include "redbots3/generated/engineerbuildsentrygun.sp"
+#include "redbots3/generated/engineerbuilddispenser.sp"
+#include "redbots3/generated/engineerbuildteleporter.sp"
+#include "redbots3/generated/engineerbuilddisposable.sp"
+#include "redbots3/generated/spycheck.sp"
+#include "redbots3/generated/stickytrap.sp"
+#include "redbots3/generated/spylurk.sp"
+#include "redbots3/generated/spysap.sp"
+#include "redbots3/generated/spysapplayer.sp"
+#include "redbots3/generated/medicrevive.sp"
+#include "redbots3/generated/medic.sp"
+#include "redbots3/generated/attackforuber.sp"
+#include "redbots3/generated/evadebuster.sp"
+#include "redbots3/generated/campbomb.sp"
+#include "redbots3/generated/attacktank.sp"
+#include "redbots3/generated/destroyteleporter.sp"
+#include "redbots3/generated/guardpoint.sp"
+#include "redbots3/generated/collectnearmoney.sp"
+#include "redbots3/generated/botqueries.sp"
+#include "redbots3/generated/readiness.sp"
+#include "redbots3/generated/pathing.sp"
+#include "redbots3/generated/stuckwatch.sp"
+#include "redbots3/generated/mediccall.sp"
+#include "redbots3/generated/spawnexit.sp"
+#include "redbots3/generated/scoutjump.sp"
+#include "redbots3/generated/bottle.sp"
+#include "redbots3/generated/medicnudge.sp"
+#include "redbots3/generated/threataudit.sp"
+#include "redbots3/generated/dispatch.sp"
+#include "redbots3/generated/botreset.sp"
+#include "redbots3/generated/hooks.sp"
 #include "redbots3/generated/statnatives.sp"
 #include "redbots3/generated/botcommands.sp"
 #include "redbots3/generated/aimweapons.sp"

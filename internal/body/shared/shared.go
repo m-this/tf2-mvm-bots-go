@@ -246,3 +246,39 @@ var nestArea = [65]engine.Area{engine.NullArea(), engine.NullArea(), engine.Null
 //sp:name m_aNestAreaRelocate
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
 var nestAreaRelocate = [65]engine.Area{engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea(), engine.NullArea()}
+
+// ActionHealPatientOffset is where CTFBotMedicHeal keeps its patient handle.
+// The offset is a number the game decides, so it lives in one place.
+//
+//sp:name ACTION_HEAL_PATIENT_OFFSET
+const ActionHealPatientOffset = 0x4850
+
+// FlamethrowerReachRange is how far a flame carries, and FlameballReachRange
+// the Dragon's Fury's longer reach.
+//
+//sp:name FLAMETHROWER_REACH_RANGE
+const FlamethrowerReachRange = 350.0
+
+// FlameballReachRange is the Dragon's Fury's longer reach.
+//
+//sp:name FLAMEBALL_REACH_RANGE
+const FlameballReachRange = 526.0
+
+/*
+The two route objects each bot walks with, and when it may ask for a new one.
+
+Made once per client slot at load and kept: a PathFollower is the game's own
+object and building one per repath was measured as most of the pathing cost.
+*/
+
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+//sp:name m_pPath
+var path [65]engine.Path
+
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+//sp:name m_pChasePath
+var chasePath [65]engine.Chase
+
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+//sp:name m_flRepathTime
+var repathTime [65]float32

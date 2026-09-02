@@ -178,3 +178,10 @@ func EntityOf(index int32) Entity { return Entity(index) }
 //
 //sp:global RoundState_BetweenRounds
 func RoundStateBetweenRounds() int32 { return 10 }
+
+// Chase is SourcePawn's ChasePath, a route that leads its subject rather than
+// following where it was. A distinct type from Path because the declaration
+// says which of the two a slot holds.
+//
+//sp:tag ChasePath
+type Chase int32
