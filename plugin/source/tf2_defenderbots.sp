@@ -290,6 +290,7 @@ char g_sBotTeamCompositions[][][] =
 #include "redbots3/generated/roster_counts.sp"
 #include "redbots3/generated/humans.sp"
 #include "redbots3/generated/mapconfig.sp"
+#include "redbots3/generated/seating.sp"
 #include "redbots3/generated/botnames.sp"
 #include "redbots3/generated/manage.sp"
 #include "redbots3/generated/lineoffire.sp"
@@ -1982,16 +1983,6 @@ int CollectMissingTeamComposition(ArrayList classes, ArrayList seats, int count)
 	return collected;
 }
 
-/* A reseat waiting for the break, because the composition was retyped mid-wave
-
-Kicking a bot in the middle of a wave loses whatever it was doing and drops its buildings, and the
-replacement walks in from spawn with the bomb halfway home. The break is where a lineup change is
-free */
-static bool m_bReseatPending;
-
-//A whole-team recycle waiting for the same break, asked for by sm_redbots_reseat
-static bool m_bRecyclePending;
-
 /* What every bot on RED is holding, so a lineup change can be checked for losing it
 
 A bot that changes class leaves and comes back, and the join path is what decides its balance. This
@@ -2142,31 +2133,6 @@ public void ConVarChanged_TeamComposition(ConVar convar, const char[] before, co
 	}
 
 	ReseatDefenderBots();
-}
-
-//The break has opened, so a lineup change that arrived mid-wave can happen now
-void Reseat_OnBreak()
-{
-	if (m_bRecyclePending)
-	{
-		m_bRecyclePending = false;
-		m_bReseatPending = false;
-		LogMessage("Reseat: recycled %d bot(s) held from mid-wave", RecycleDefenderBots());
-		return;
-	}
-
-	if (!m_bReseatPending)
-		return;
-
-	m_bReseatPending = false;
-	ReseatDefenderBots();
-}
-
-//The round the pending reseat was waiting on ended with the map, and the bots it meant are gone
-static void Reseat_OnMapStart()
-{
-	m_bReseatPending = false;
-	m_bRecyclePending = false;
 }
 
 /* Fill the empty seats from the named team, and say how many it filled
@@ -2446,61 +2412,6 @@ void AddBotsWithPresetTeamComp(int count = 6, int teamType = 0)
 		AddDefenderTFBot(1, g_sBotTeamCompositions[teamType][i], "red", "expert");
 		total++;
 	}
-}
-
-void SetupSniperSpotHints()
-{
-	if (g_arrMapConfig.adtSniperSpot.Length > 0)
-	{
-		for (int i = 0; i < g_arrMapConfig.adtSniperSpot.Length; i++)
-		{
-			float vec[3]; g_arrMapConfig.adtSniperSpot.GetArray(i, vec);
-			int ent = CreateEntityByName("func_tfbot_hint");
-			
-			if (ent != -1)
-			{
-				DispatchKeyValueVector(ent, "origin", vec);
-				DispatchKeyValue(ent, "team", "2");
-				DispatchKeyValue(ent, "hint", "0");
-				DispatchSpawn(ent);
-			}
-		}
-	}
-	else
-	{
-		//No custom hints specified, so we'll just override any existing ones
-		int ent = -1;
-		
-		while ((ent = FindEntityByClassname(ent, "func_tfbot_hint")) != -1)
-			DispatchKeyValue(ent, "team", "0");
-		
-		LogError("SetupSniperSpotHints: No hints specified by configuration, overriding other hint entities!");
-	}
-}
-
-bool HavePlayersChosenBotTeam()
-{
-	//If someone is choosing the lineup right now, we're not ready yet
-	if (GetCountOfPlayersChoosingBotClasses() > 0)
-		return false;
-	
-	//Always ready if our team is full
-	if (GetTeamClientCount(TFTeam_Red) >= redbots_manager_defender_team_size.IntValue)
-		return true;
-	
-	/* If strictly requiring a chosen lineup, the list will only ever be made up of classes picked by a player
-	If it is empty, no one chose anything yet */
-	return g_adtChosenBotClasses.Length > 0;
-}
-
-void FreeChosenBotTeam(bool bAnnounce = false)
-{
-	g_adtChosenBotClasses.Clear();
-	g_adtChosenBotSeats.Clear();
-	g_bBotClassesLocked = false;
-	
-	if (bAnnounce)
-		PrintToChatAll("%s Bot team lineup can now be changed.", PLUGIN_PREFIX);
 }
 
 void UpdateChosenBotTeamComposition(int caller = -1)

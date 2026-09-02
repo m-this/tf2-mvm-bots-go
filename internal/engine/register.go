@@ -163,7 +163,7 @@ func ResetSpyIntel() {
 
 // SetupSniperSpotHints reads the map's sniping spots again.
 //
-//sp:plugin SetupSniperSpotHints
+//sp:body SetupSniperSpotHints
 func SetupSniperSpotHints() {
 	if registrations.SetupSniperSpotHints == nil {
 		missing("SetupSniperSpotHints")
@@ -293,7 +293,7 @@ func ManageDefenderBots(force bool) {
 // FreeChosenBotTeam drops the lineup the players picked, which the bots on the
 // field have already been built from.
 //
-//sp:plugin FreeChosenBotTeam
+//sp:body FreeChosenBotTeam
 func FreeChosenBotTeam() {
 	if registrations.FreeChosenBotTeam == nil {
 		missing("FreeChosenBotTeam")
@@ -383,7 +383,7 @@ func UpdateChosenBotTeamComposition() {
 // ReseatOnBreak applies a lineup that was retyped mid-wave, which is held until
 // the break.
 //
-//sp:plugin Reseat_OnBreak
+//sp:body Reseat_OnBreak
 func ReseatOnBreak() {
 	if registrations.ReseatOnBreak == nil {
 		missing("Reseat_OnBreak")
