@@ -19,6 +19,7 @@ func CommandRerollNewBotTeamComposition(client int32, args int32) engine.Outcome
 		return engine.PluginHandled()
 	}
 
+	//nolint:gocritic // singleCaseSwitch: the shipped function is a switch, and an if cannot be compared against it
 	switch engine.BotLineupMode().Int() {
 	case engine.LineupModeChoose():
 		engine.ReplyToCommand(client, "%s This cannot be used with the current lineup mode.", engine.PluginPrefix())
