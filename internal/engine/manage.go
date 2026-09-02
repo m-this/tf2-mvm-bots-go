@@ -137,7 +137,7 @@ char array, which the subset has no shape for yet.
 
 // AddBotsFromChosenTeamComposition seats the lineup the vote chose.
 //
-//sp:plugin AddBotsFromChosenTeamComposition
+//sp:body AddBotsFromChosenTeamComposition
 func AddBotsFromChosenTeamComposition() {
 	if manages.AddBotsFromChosenTeamComposition == nil {
 		missing("AddBotsFromChosenTeamComposition")

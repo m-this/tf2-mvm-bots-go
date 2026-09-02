@@ -28,6 +28,8 @@ type SeatingCalls struct {
 	CollectMissingTeamComposition    func(classes List, seats List, count int32) int32
 	ChooseBotClassesFromLineupMode   func(count int32)
 	RandomClassBetween               func(low Class, high Class) Class
+	NoteBotSeatPending               func(seat int32)
+	ClassIndexFromString             func(name Text) Class
 }
 
 var seatings SeatingCalls
@@ -272,4 +274,26 @@ func RandomClassBetween(low Class, high Class) Class {
 		missing("GetRandomInt")
 	}
 	return seatings.RandomClassBetween(low, high)
+}
+
+// NoteBotSeatPending remembers a seat asked for, waiting for the bot the server
+// has not created yet. Ported, playerpref.
+//
+//sp:body NoteBotSeatPending
+func NoteBotSeatPending(seat int32) {
+	if seatings.NoteBotSeatPending == nil {
+		missing("NoteBotSeatPending")
+	}
+	seatings.NoteBotSeatPending(seat)
+}
+
+// ClassIndexFromString is the class a name means, and TFClass_Unknown for one
+// that means none.
+//
+//sp:native TF2_GetClassIndexFromString
+func ClassIndexFromString(name Text) Class {
+	if seatings.ClassIndexFromString == nil {
+		missing("TF2_GetClassIndexFromString")
+	}
+	return seatings.ClassIndexFromString(name)
 }

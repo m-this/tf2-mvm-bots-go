@@ -273,3 +273,62 @@ func ChooseBotClassesFromLineupMode(count int32) {
 		engine.ThrowError("Unknown lineup mode %d", engine.BotLineupMode().Int())
 	}
 }
+
+// Classes is one past TFClass_Engineer, the size of the per-class count.
+const Classes = 10
+
+/*
+	AddBotsFromChosenTeamComposition seats the lineup that was chosen
+
+The bots already on RED are counted against the list first, so a top-up in the
+middle of a wave converges on the same team as the first fill. A bot that is on
+the team but has not spawned yet has no class, and only the seat count sees it.
+*/
+//
+//sp:name AddBotsFromChosenTeamComposition
+func AddBotsFromChosenTeamComposition() {
+	// Once we add them it is not locked any more.
+	engine.SetBotClassesLocked(false)
+
+	seats := engine.DefenderTeamSize().Int() - engine.HumanAndDefenderBotCount(engine.TeamRed())
+
+	if seats < 1 {
+		if engine.ManagerDebug().Bool() {
+			engine.PrintToServer("AddBotsFromChosenTeamComposition: RED is already full, added nobody")
+		}
+
+		return
+	}
+
+	var held [Classes]int32
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if engine.IsClientInGame(i) && engine.IsDefenderBot(i) && engine.ClientTeam(i) == engine.TeamRed() {
+			held[engine.PlayerClass(i)]++
+		}
+	}
+
+	added := int32(0)
+
+	for i := int32(0); i < engine.ChosenBotClasses().Length() && added < seats; i++ {
+		class := engine.ChosenBotClasses().GetString(i)
+
+		classType := engine.ClassIndexFromString(class)
+
+		if classType != engine.ClassUnknown() && held[classType] > 0 {
+			held[classType]--
+			continue
+		}
+
+		// The seat belongs to the entry, so an entry that was skipped does
+		// not spend one.
+		engine.NoteBotSeatPending(engine.ChooseInt(i < engine.ChosenBotSeats().Length(), engine.ChosenBotSeats().Get(i), 0))
+
+		engine.AddDefenderTFBotOf(1, class, "red", "expert")
+		added++
+	}
+
+	if added > 0 {
+		engine.PrintToChatAll("%s Added %d bot(s).", engine.PluginPrefix(), added)
+	}
+}
