@@ -646,3 +646,60 @@ func (e *emitter) enumStructMethod(d *ast.FuncDecl) {
 	e.returnsValue = false
 	e.receiver = ""
 }
+
+/*
+	methodmapMethod emits one method inside its methodmap's braces
+
+SourcePawn writes public in front of a methodmap's method, where an enum
+struct's has no keyword. Everything else is the ordinary body emitter.
+*/
+func (e *emitter) methodmapMethod(d *ast.FuncDecl) {
+	obj, ok := e.info.Defs[d.Name].(*types.Func)
+	if !ok {
+		e.fail(d.Pos(), "the method %s has no definition", d.Name.Name)
+		return
+	}
+	e.lengths = lengthsOf(d)
+	e.consts = constsOf(d)
+	e.mutates = mutatesOf(d)
+	e.byrefs = byrefsOf(d)
+	e.writable = writablesOf(d)
+
+	sig := obj.Type().(*types.Signature)
+	e.receiver = sig.Recv().Name()
+
+	e.returnsValue = returnsArray(d)
+	ret, params, err := e.signature(d, sig)
+	if err != nil {
+		e.fail(d.Pos(), "%v", err)
+		return
+	}
+	e.byRef = byRefParams(sig)
+
+	e.line("public %s %s(%s)", ret, e.emittedName(d), strings.Join(params, ", "))
+	e.line("{")
+	e.indent++
+	if e.resultName != "" && usesResult(d.Body, e.resultName) {
+		e.line("%s;", e.resultDecl)
+	} else if e.resultName != "" {
+		e.resultName = ""
+	}
+	for _, out := range e.outParams {
+		e.zero(out)
+	}
+	e.pending = nil
+	e.checkClosed(d)
+	for _, s := range d.Body.List {
+		e.stmt(s)
+	}
+	if !endsInReturn(d.Body) {
+		e.discharge(d.Body.End(), nil)
+	}
+	e.pending = nil
+	e.indent--
+	e.line("}")
+	e.outParams, e.byRef = nil, nil
+	e.resultName, e.resultDecl = "", ""
+	e.returnsValue = false
+	e.receiver = ""
+}

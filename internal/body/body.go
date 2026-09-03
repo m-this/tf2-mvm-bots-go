@@ -271,13 +271,18 @@ var All = []Body{
 		Dir: "internal/body/pluginstart", Out: "sourcepawn/pluginstart.sp", Prefix: "Go_",
 		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
-	/* No Shipped: this package declares and holds no function
+	/* Shipped, for the three records rather than for any function
 
-	The comparison walks a package's functions against the shipped ones and
-	refuses a package that has none, because it would pass without proving
-	anything. internal/body/shared is the same. */
+	This package holds no function at all, but the enum structs it carries
+	have methods, and compareMembers walks those against the shipped ones.
+	Without the path they would generate and prove nothing. */
 	{
 		Dir: "internal/body/declarations", Out: "sourcepawn/declarations.sp", Prefix: "Go_",
+		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
+	},
+	{
+		Dir: "internal/body/pluginbot", Out: "sourcepawn/pluginbot.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/offsets", Out: "sourcepawn/offsets.sp", Prefix: "Go_",

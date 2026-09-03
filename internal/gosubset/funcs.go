@@ -11,8 +11,8 @@ func (c *checker) checkFuncDecl(d *ast.FuncDecl) {
 	off, so a method on a struct this package declares is exactly what an
 	enum struct method is. A method on anything else has no form: the
 	methodmap belongs to the actions generator, not to this one. */
-	if d.Recv != nil && !c.isLocalStructMethod(d) {
-		c.refuse(d.Recv.Pos(), "a method receiver on something that is not a struct this package declares",
+	if d.Recv != nil && !c.isLocalTypeMethod(d) {
+		c.refuse(d.Recv.Pos(), "a method receiver on something that is not a type this package declares",
 			"write a plain function taking the receiver as its first parameter; the methodmap belongs to the actions generator, not the body generator")
 	}
 	if d.Name.Name == "init" && d.Recv == nil {
@@ -99,9 +99,15 @@ func (c *checker) checkParams(t *ast.FuncType) {
 	}
 }
 
-// isLocalStructMethod says the receiver is a struct type this package declares,
-// which is what an enum struct method hangs off.
-func (c *checker) isLocalStructMethod(d *ast.FuncDecl) bool {
+/*
+	isLocalTypeMethod says the receiver is a type this package declares
+
+Two shapes hang methods off a type in SourcePawn: an enum struct, whose methods
+are written inside its braces, and a methodmap over a tag. Both are types this
+package declares, and //sp:methodmap is what tells the emitter which. A method
+on anything else has no form: the actions generator owns that one.
+*/
+func (c *checker) isLocalTypeMethod(d *ast.FuncDecl) bool {
 	if d.Recv == nil || len(d.Recv.List) != 1 {
 		return false
 	}
@@ -110,5 +116,5 @@ func (c *checker) isLocalStructMethod(d *ast.FuncDecl) bool {
 		t = star.X
 	}
 	id, ok := t.(*ast.Ident)
-	return ok && c.structs[id.Name]
+	return ok && c.types[id.Name]
 }

@@ -494,65 +494,6 @@ func (b *ButtonInputRecord) ReleaseButtons(buttons int32, duration float32) {
 	b.ReleaseTime = engine.ChooseFloat(duration > 0.0, engine.GameTime()+duration, 0.0)
 }
 
-/*
-PluginBotRecord is esPluginBot: where a plugin-driven bot is walking to.
-
-A goal is either a place or an entity and never both, which is what the two
-setters enforce between them.
-*/
-//
-//sp:name esPluginBot
-type PluginBotRecord struct {
-	Pathing        bool       `sp:"bPathing"`
-	PathGoal       [3]float32 `sp:"vecPathGoal"`
-	PathGoalEntity int32      `sp:"iPathGoalEntity"`
-}
-
-// Reset forgets where it was going.
-//
-//sp:name Reset
-func (p *PluginBotRecord) Reset() {
-	p.Pathing = false
-	p.PathGoal = engine.NullVector()
-	p.PathGoalEntity = -1
-}
-
-// HasPathGoalVector says the goal is a place.
-//
-//sp:name HasPathGoalVector
-func (p *PluginBotRecord) HasPathGoalVector() bool {
-	return !engine.VectorIsZero(p.PathGoal)
-}
-
-// HasPathGoalEntity says the goal is an entity.
-//
-//sp:name HasPathGoalEntity
-func (p *PluginBotRecord) HasPathGoalEntity() bool {
-	return p.PathGoalEntity != -1
-}
-
-// SetPathGoalVector aims it at a place.
-//
-//sp:name SetPathGoalVector
-//sp:const vec
-func (p *PluginBotRecord) SetPathGoalVector(vec [3]float32) {
-	// You can only set one or the other, not both.
-	p.PathGoalEntity = -1
-	p.PathGoal = vec
-}
-
-// SetPathGoalEntity aims it at an entity.
-//
-//sp:name SetPathGoalEntity
-func (p *PluginBotRecord) SetPathGoalEntity(entity int32) {
-	p.PathGoal = engine.NullVector()
-	p.PathGoalEntity = entity
-}
-
-//sp:name g_arrPluginBot
-//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var pluginBot [Slots]PluginBotRecord
-
 // PluginPrefix is what the mod puts in front of every line it says in chat.
 //
 //sp:name PLUGIN_PREFIX

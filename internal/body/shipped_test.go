@@ -246,7 +246,7 @@ func withoutCloses(calls []string) []string {
 func compareBody(t *testing.T, got, shipped string) {
 	t.Helper()
 
-	compared := 0
+	compared := compareMembers(t, got, shipped)
 
 	for _, m := range emittedNames.FindAllStringSubmatch(got, -1) {
 		name := m[1]

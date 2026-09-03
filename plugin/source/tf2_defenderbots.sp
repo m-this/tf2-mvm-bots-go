@@ -46,6 +46,7 @@ Author: ★ Officer Spy ★
 
 
 #include "redbots3/generated/declarations.sp"
+#include "redbots3/generated/pluginbot.sp"
 #include "redbots3/archipelago.sp"
 #include "redbots3/generated/archipelago.sp"
 #include "redbots3/generated/features.sp"

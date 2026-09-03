@@ -92,42 +92,6 @@ enum struct esButtonInput
 	}
 }
 
-enum struct esPluginBot
-{
-	bool bPathing;
-	float vecPathGoal[3];
-	int iPathGoalEntity;
-
-	void Reset()
-	{
-		this.bPathing = false;
-		this.vecPathGoal = NULL_VECTOR;
-		this.iPathGoalEntity = -1;
-	}
-
-	bool HasPathGoalVector()
-	{
-		return !Vector_IsZero(this.vecPathGoal);
-	}
-
-	bool HasPathGoalEntity()
-	{
-		return this.iPathGoalEntity != -1;
-	}
-
-	void SetPathGoalVector(const float vec[3])
-	{
-		this.iPathGoalEntity = -1;
-		this.vecPathGoal = vec;
-	}
-
-	void SetPathGoalEntity(int entity)
-	{
-		this.vecPathGoal = NULL_VECTOR;
-		this.iPathGoalEntity = entity;
-	}
-}
-
 bool g_bLateLoad;
 bool g_bBotsEnabled;
 float g_flAddingBotTime;
@@ -202,7 +166,6 @@ char g_sBotTeamCompositions[][][] =
 	{"scout", "heavyweapons", "heavyweapons", "heavyweapons", "engineer", "sniper"},
 	{"scout", "heavyweapons", "heavyweapons", "pyro", "engineer", "demoman"},
 };
-esPluginBot g_arrPluginBot[65];
 Handle m_hPostInventoryApplication;
 Handle m_hSetMission;
 Handle m_hLookupBone;

@@ -16,7 +16,6 @@ type checker struct {
 	packageNames map[string]bool
 	imports      map[string]string // local name -> import path
 	types        map[string]bool   // package-level type names
-	structs      map[string]bool   // the ones whose underlying type is a struct
 	funcs        map[string]bool   // package-level function names
 	diags        []Diagnostic
 }
@@ -29,7 +28,6 @@ func newChecker(fset *token.FileSet, cfg Config) *checker {
 		packageNames: make(map[string]bool, len(cfg.Packages)),
 		imports:      make(map[string]string),
 		types:        make(map[string]bool),
-		structs:      make(map[string]bool),
 		funcs:        make(map[string]bool),
 	}
 	for _, n := range cfg.Natives {
@@ -80,9 +78,6 @@ func (c *checker) collect(f *ast.File) {
 			for _, spec := range d.Specs {
 				if ts, ok := spec.(*ast.TypeSpec); ok {
 					c.types[ts.Name.Name] = true
-					if _, isStruct := ts.Type.(*ast.StructType); isStruct {
-						c.structs[ts.Name.Name] = true
-					}
 				}
 			}
 		}

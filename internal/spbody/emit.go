@@ -306,6 +306,19 @@ func (e *emitter) typeSpec(d *ast.GenDecl, spec *ast.TypeSpec) {
 	}
 	st, isStruct := named.Underlying().(*types.Struct)
 	if !isStruct {
+		/* A methodmap, when the type carries methods
+
+		SourcePawn's other way of hanging behaviour off a value: a tag
+		over an integer with methods written inside its braces, which is
+		what the game's own addresses are reached through. An enum with
+		no methods is emitted with its constants and not here. */
+		if base, given := methodmapBase(spec, d); given {
+			e.methodmap(spec, d, base)
+			return
+		}
+		if len(e.methods[spec.Name.Name]) > 0 {
+			e.fail(spec.Pos(), "%s carries methods and is not a struct; say //sp:methodmap <base> to emit it as a methodmap", spec.Name.Name)
+		}
 		return // an enum, emitted with its constants
 	}
 	/* A record keeps the plugin's names, type and fields alike
@@ -541,4 +554,51 @@ func literalOf(v constant.Value, tag string) (string, error) {
 		}
 		return fmt.Sprintf("%d", i), nil
 	}
+}
+
+// methodmapDirective names the tag a methodmap is written over.
+const methodmapDirective = "//sp:methodmap"
+
+// methodmapBase reads //sp:methodmap <base> off a type declaration.
+func methodmapBase(spec *ast.TypeSpec, d *ast.GenDecl) (string, bool) {
+	for _, doc := range []*ast.CommentGroup{spec.Doc, d.Doc} {
+		if doc == nil {
+			continue
+		}
+		for _, c := range doc.List {
+			for line := range strings.Lines(c.Text) {
+				fields := strings.Fields(line)
+				if len(fields) == 2 && fields[0] == methodmapDirective {
+					return fields[1], true
+				}
+			}
+		}
+	}
+	return "", false
+}
+
+/*
+	methodmap emits a tag over an integer with its methods inside it
+
+The name is the plugin's, the base is what //sp:methodmap says, and the methods
+are the ordinary body emitter with the receiver spelled this, exactly as an
+enum struct's are.
+*/
+func (e *emitter) methodmap(spec *ast.TypeSpec, d *ast.GenDecl, base string) {
+	name := e.cfg.Prefix + spec.Name.Name
+	if claimed, ok := typeName(spec, d); ok {
+		name = e.ident(spec.Pos(), claimed)
+	}
+	e.line("methodmap %s < %s", name, base)
+	e.line("{")
+	e.indent++
+	for i, m := range e.methods[spec.Name.Name] {
+		if i > 0 {
+			e.blank()
+		}
+		e.methodmapMethod(m)
+	}
+	e.indent--
+	e.line("}")
+	e.blank()
 }

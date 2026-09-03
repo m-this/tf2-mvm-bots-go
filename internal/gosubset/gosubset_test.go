@@ -59,11 +59,12 @@ func TestRefused(t *testing.T) {
 		{"recover", wrap("\t_ = recover()"), "recover"},
 		{"type assertion", "package decisions\n\nfunc f(x any) {\n\t_ = x.(int32)\n}\n", "type assertion"},
 		{"type switch", "package decisions\n\nfunc f(x any) {\n\tswitch x.(type) {\n\t}\n}\n", "type switch"},
-		/* A method on a struct is an enum struct's, and is allowed
+		/* A method on a type this package declares is an enum struct's or a
+		methodmap's, and is allowed
 
-		SourcePawn writes one inside the braces of the enum struct it hangs
-		off, so what is refused is a method on anything else. */
-		{"method on a named integer", "package decisions\n\ntype T int32\n\nconst A T = 1\n\nfunc (t T) M() int32 { return 1 }\n", "method receiver"},
+		SourcePawn writes both inside the braces of the type they hang off,
+		so what is refused is a method on anything else. */
+		{"method on a type from elsewhere", "package decisions\n\nimport \"time\"\n\nfunc (t time.Month) M() int32 { return 1 }\n", "import of \"time\""},
 
 		{"generic function", "package decisions\n\nfunc f[T any](x T) T { return x }\n", "generic function"},
 		{"computed package variable", "package decisions\n\nfunc n() int32 { return 1 }\n\nvar counter = n()\n", "package-level initialiser"},
@@ -118,6 +119,9 @@ func TestAccepted(t *testing.T) {
 		// braces. The receiver is spelled this and the emitter is the
 		// second gate on what the body does.
 		{"method on a struct this package declares", "package decisions\n\ntype T struct{ A int32 }\n\nfunc (t *T) Reset() { t.A = 0 }\n"},
+		// A methodmap's method, which SourcePawn writes inside its braces
+		// the same way. //sp:methodmap is what says which of the two it is.
+		{"method on a named integer this package declares", "package decisions\n\ntype T int32\n\nconst A T = 1\n\nfunc (t T) M() int32 { return 1 }\n"},
 		// Text a function is given is const char[] in SourcePawn, which
 		// the plugin's own helpers take: a reason to log, a name to
 		// compare. Only as a parameter, and the emitter is the second
