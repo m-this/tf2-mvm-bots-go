@@ -9,20 +9,20 @@ writes. `plugin/` is the SourcePawn tree, generated files and all: it moved here
 from `../tf2-mvm-bots`, which is being archived.
 
 That is wider than this repository was opened with, and it is most of the way
-there. `plugin/source` holds 2155 lines of hand-written SourcePawn, down from
+there. `plugin/source` holds 1774 lines of hand-written SourcePawn, down from
 27005. The menus, the aiming, the shopping trip and the preferences are all
 generated now; `nextbot_behavior.sp` and `player_pref.sp` are gone from the
 tree entirely. What remains is `tf2_defenderbots.sp` and the gamedata seam:
 `dhooks.sp`, `sdkcalls.sp`, `tf_upgrades.sp`, `offsets.sp` and the one native
 declaration in `archipelago.sp`.
 
-`tf2_defenderbots.sp` is 1146 lines, twelve functions and the declarations.
-Every ordinary function in it is ported, along with its forwards, the
-tournament readiness listener and eleven of its fifteen console commands. What
-is left needs extern or emitter surface that does not exist yet: `OnPlayerRunCmd`
-wants three new shapes (`mvm-z83.81`), `OnPluginStart` and `AskPluginLoad2`
-name callbacks that now live in other packages, and the rest want a `DataPack`,
-a trace filter and the upgrade methodmaps. `mvm-z83.66` says which for each.
+`tf2_defenderbots.sp` is 766 lines, six functions and the declarations. Every
+ordinary function in it is generated, along with every SourceMod forward,
+`OnPlayerRunCmd` included, the tournament readiness listener, the sound hook
+and thirteen of its fifteen console commands. What is left is the registration
+table, two debug commands that want shapes the emitter has not got, and two
+dead functions kept on purpose. `mvm-z83.66` says which for each, and the file
+will not reach zero: it is the plugin's entry point.
 
 The proofs no longer read the old repository. Every shipped file a comparison
 needs is snapshotted under `internal/upstream/shipped` at the revision that
