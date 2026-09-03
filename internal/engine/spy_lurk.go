@@ -171,7 +171,7 @@ func VectorCrossProduct(a [3]float32, b [3]float32) (cross [3]float32) {
 
 // AimHeadTowards points the bot's head, over the game's own aiming.
 //
-//sp:plugin AimHeadTowards
+//sp:body AimHeadTowards
 func AimHeadTowards(body Body, lookAt [3]float32, priority int32, duration float32, replyWhenAimed int32, reason string) {
 	if lurks.AimHeadTowards == nil {
 		missing("AimHeadTowards")

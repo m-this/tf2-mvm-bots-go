@@ -284,6 +284,10 @@ var All = []Body{
 		Shipped: "source/redbots3/offsets.sp", Rev: campaignRev,
 	},
 	{
+		Dir: "internal/body/sdkcalls", Out: "sourcepawn/sdkcalls.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/sdkcalls.sp", Rev: campaignRev,
+	},
+	{
 		Dir: "internal/body/humans", Out: "sourcepawn/humans.sp", Prefix: "Go_",
 		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},

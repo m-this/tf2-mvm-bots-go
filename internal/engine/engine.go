@@ -531,7 +531,7 @@ func FlagOnGround() int32 { return 1 }
 // HasAmmo is sdkcalls.sp's wrapper round m_hHasAmmo, which is what the plugin
 // actually calls.
 //
-//sp:plugin HasAmmo
+//sp:body HasAmmo
 func HasAmmo(weapon int32) bool {
 	if installed.HasAmmo == nil {
 		missing("HasAmmo")

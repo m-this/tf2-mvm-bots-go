@@ -203,4 +203,19 @@ char g_sBotTeamCompositions[][][] =
 	{"scout", "heavyweapons", "heavyweapons", "pyro", "engineer", "demoman"},
 };
 esPluginBot g_arrPluginBot[65];
+Handle m_hPostInventoryApplication;
+Handle m_hSetMission;
+Handle m_hLookupBone;
+Handle m_hGetBonePosition;
+Handle m_hHasAmmo;
+Handle m_hClip1;
+Handle m_hGetProjectileSpeed;
+Handle m_hAimHeadTowards;
+Handle m_hGEconItemSchema;
+Handle m_hGetAttributeDefinitionByName;
+Handle m_hCanUpgradeWithAttrib;
+Handle m_hGetCostForUpgrade;
+Handle m_hGetUpgradeTier;
+Handle m_hIsUpgradeTierEnabled;
+Handle m_hShouldCollide;
 

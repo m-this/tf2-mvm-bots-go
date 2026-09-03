@@ -37,7 +37,7 @@ func PreferredWeaponForClass(class string, slot string, client int32) int32 {
 // SetMission tells the game what this bot is for, which is what makes a sniper
 // lurk rather than stand where he shopped.
 //
-//sp:plugin SetMission
+//sp:body SetMission
 func SetMission(client int32, mission int32) {
 	if loadouts.SetMission == nil {
 		missing("SetMission")

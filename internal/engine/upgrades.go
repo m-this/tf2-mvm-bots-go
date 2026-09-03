@@ -129,7 +129,7 @@ func AttributeDefinitionIndex(attr Address) int32 {
 
 // CanUpgradeWithAttrib says the game would let this bot buy it for that slot.
 //
-//sp:plugin CanUpgradeWithAttrib
+//sp:body CanUpgradeWithAttrib
 func CanUpgradeWithAttrib(client int32, slot int32, index int32, upgrade Address) bool {
 	if upgrades.CanUpgradeWithAttrib == nil {
 		missing("CanUpgradeWithAttrib")
@@ -139,7 +139,7 @@ func CanUpgradeWithAttrib(client int32, slot int32, index int32, upgrade Address
 
 // CostForUpgrade is what the next step costs.
 //
-//sp:plugin GetCostForUpgrade
+//sp:body GetCostForUpgrade
 func CostForUpgrade(upgrade Address, slot int32, playerClass int32, client int32) int32 {
 	if upgrades.CostForUpgrade == nil {
 		missing("GetCostForUpgrade")
@@ -276,7 +276,7 @@ func UpgradeTiersMax() int32 { return 4 }
 // UpgradeTier is which tier the station files an upgrade under. Still in
 // sdkcalls.sp.
 //
-//sp:plugin GetUpgradeTier
+//sp:body GetUpgradeTier
 func UpgradeTier(upgrade int32) int32 {
 	if upgrades.UpgradeTier == nil {
 		missing("GetUpgradeTier")
@@ -287,7 +287,7 @@ func UpgradeTier(upgrade int32) int32 {
 // IsUpgradeTierEnabled says the mission lets this tier be bought yet. Still in
 // sdkcalls.sp.
 //
-//sp:plugin IsUpgradeTierEnabled
+//sp:body IsUpgradeTierEnabled
 func IsUpgradeTierEnabled(client int32, slot int32, tier int32) bool {
 	if upgrades.IsUpgradeTierEnabled == nil {
 		missing("IsUpgradeTierEnabled")

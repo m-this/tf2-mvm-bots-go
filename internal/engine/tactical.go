@@ -404,7 +404,7 @@ hitting.
 // ProjectileSpeed is how fast this weapon's projectile travels, which the
 // ballistic lead is computed from.
 //
-//sp:plugin GetProjectileSpeed
+//sp:body GetProjectileSpeed
 func ProjectileSpeed(weapon int32) float32 {
 	if tacticals.ProjectileSpeed == nil {
 		missing("GetProjectileSpeed")
@@ -414,7 +414,7 @@ func ProjectileSpeed(weapon int32) float32 {
 
 // LookupBone is the bone's index on that entity, or -1.
 //
-//sp:plugin LookupBone
+//sp:body LookupBone
 func LookupBone(entity int32, name string) int32 {
 	if tacticals.LookupBone == nil {
 		missing("LookupBone")
@@ -424,7 +424,7 @@ func LookupBone(entity int32, name string) int32 {
 
 // BonePosition is where the bone is, and which way it faces.
 //
-//sp:plugin GetBonePosition
+//sp:body GetBonePosition
 func BonePosition(entity int32, bone int32) (position [3]float32, angles [3]float32) {
 	if tacticals.BonePosition == nil {
 		missing("GetBonePosition")

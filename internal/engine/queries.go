@@ -654,7 +654,7 @@ func MedicHasPatient(client int32, medigun int32) bool {
 // Clip1Of is the rounds left in the weapon's clip, through the plugin's
 // SDKCall wrapper.
 //
-//sp:plugin Clip1
+//sp:body Clip1
 func Clip1Of(weapon int32) int32 {
 	if queries.Clip1Of == nil {
 		missing("Clip1")

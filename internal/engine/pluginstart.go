@@ -195,7 +195,7 @@ func InitMvMUpgrades(g GameData) {
 // InitSDKCalls prepares every SDKCall, and says whether it could. Still in
 // sdkcalls.sp.
 //
-//sp:plugin InitSDKCalls
+//sp:body InitSDKCalls
 func InitSDKCalls(g GameData) bool {
 	if pluginStarts.InitSDKCalls == nil {
 		missing("InitSDKCalls")

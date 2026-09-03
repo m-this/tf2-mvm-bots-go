@@ -564,3 +564,71 @@ const PluginPrefix = "[BotManager]"
 //
 //sp:name TFBOT_IDENTITY_NAME
 const BotIdentityName = "TFBOT_SEX_HAVER"
+
+/*
+The prepared SDKCall handles, one per function the game has and SourceMod does
+not offer.
+
+They were file-static in sdkcalls.sp and the setter beside each is what fills
+them, because a generated file cannot see a file-static in another one.
+*/
+
+//sp:name m_hPostInventoryApplication
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var postInventoryApplication engine.Call
+
+//sp:name m_hSetMission
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var setMission engine.Call
+
+//sp:name m_hLookupBone
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var lookupBone engine.Call
+
+//sp:name m_hGetBonePosition
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var getBonePosition engine.Call
+
+//sp:name m_hHasAmmo
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var hasAmmo engine.Call
+
+//sp:name m_hClip1
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var clip1 engine.Call
+
+//sp:name m_hGetProjectileSpeed
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var getProjectileSpeed engine.Call
+
+//sp:name m_hAimHeadTowards
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var aimHeadTowards engine.Call
+
+//sp:name m_hGEconItemSchema
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var gEconItemSchema engine.Call
+
+//sp:name m_hGetAttributeDefinitionByName
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var getAttributeDefinitionByName engine.Call
+
+//sp:name m_hCanUpgradeWithAttrib
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var canUpgradeWithAttrib engine.Call
+
+//sp:name m_hGetCostForUpgrade
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var getCostForUpgrade engine.Call
+
+//sp:name m_hGetUpgradeTier
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var getUpgradeTier engine.Call
+
+//sp:name m_hIsUpgradeTierEnabled
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var isUpgradeTierEnabled engine.Call
+
+//sp:name m_hShouldCollide
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var shouldCollide engine.Call
