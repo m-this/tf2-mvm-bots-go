@@ -148,3 +148,241 @@ public void OnClientPutInServer(int client)
 	ResetSpawnExitWatch(client);
 }
 
+public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
+{
+	if (!g_bIsDefenderBot[client])
+	{
+		return Plugin_Continue;
+	}
+	if (IsPlayerAlive(client))
+	{
+		WatchDefenderSpawnExit(client);
+		if (g_arrExtraButtons[client].iPress != 0)
+		{
+			if ((g_arrExtraButtons[client].iPress & IN_BACK) != 0)
+			{
+				vel[0] -= PLAYER_SIDESPEED;
+			}
+			if ((g_arrExtraButtons[client].iPress & IN_FORWARD) != 0)
+			{
+				vel[0] += PLAYER_SIDESPEED;
+			}
+			if ((g_arrExtraButtons[client].iPress & IN_MOVELEFT) != 0)
+			{
+				vel[1] -= PLAYER_SIDESPEED;
+			}
+			if ((g_arrExtraButtons[client].iPress & IN_MOVERIGHT) != 0)
+			{
+				vel[1] += PLAYER_SIDESPEED;
+			}
+			if ((g_arrExtraButtons[client].iPress & IN_LEFT) != 0)
+			{
+				angles[1] -= g_arrExtraButtons[client].flKeySpeed;
+			}
+			if ((g_arrExtraButtons[client].iPress & IN_RIGHT) != 0)
+			{
+				angles[1] += g_arrExtraButtons[client].flKeySpeed;
+			}
+			buttons |= g_arrExtraButtons[client].iPress;
+			if (g_arrExtraButtons[client].flPressTime <= GetGameTime())
+			{
+				g_arrExtraButtons[client].iPress = 0;
+			}
+		}
+		if (g_arrExtraButtons[client].iRelease != 0)
+		{
+			buttons &= ~g_arrExtraButtons[client].iRelease;
+			if (g_arrExtraButtons[client].flReleaseTime <= GetGameTime())
+			{
+				g_arrExtraButtons[client].iRelease = 0;
+			}
+		}
+		PluginBot_SimulateFrame(client);
+		if (GameRules_GetRoundState() != RoundState_BetweenRounds)
+		{
+			int myWeapon = BaseCombatCharacter_GetActiveWeapon(client);
+			int weaponID = (myWeapon != -1 ? TF2Util_GetWeaponID(myWeapon) : -1);
+			if ((buttons & IN_ATTACK) != 0)
+			{
+				switch (weaponID)
+				{
+					case TF_WEAPON_MINIGUN:
+					{
+						if (!HasAmmo(myWeapon))
+						{
+							buttons &= ~IN_ATTACK;
+						}
+					}
+					case TF_WEAPON_SNIPERRIFLE_CLASSIC:
+					{
+						if (GetEntPropFloat(myWeapon, Prop_Send, "m_flChargedDamage") >= 150.0)
+						{
+							buttons &= ~IN_ATTACK;
+						}
+					}
+					case TF_WEAPON_BUFF_ITEM:
+					{
+						if (IsPlayingHorn(myWeapon))
+						{
+							buttons &= ~IN_ATTACK;
+						}
+					}
+					case TF_WEAPON_REVOLVER:
+					{
+						if (CanRevolverHeadshot(myWeapon))
+						{
+							if (!((GetGameTime() - GetLastAccuracyCheck(myWeapon)) > 1.0))
+							{
+								buttons &= ~IN_ATTACK;
+							}
+						}
+					}
+				}
+			}
+			INextBot myBot = CBaseNPC_GetNextBotOfEntity(client);
+			IVision myVision = myBot.GetVisionInterface();
+			MonitorKnownEntities(client, myVision);
+			CKnownEntity threat = myVision.GetPrimaryKnownThreat(false);
+			OpportunisticallyUseWeaponAbilities(client, myWeapon, myBot, threat);
+			OpportunisticallyUsePowerupBottle(client, myWeapon, myBot, threat);
+			if (((weaponID == TF_WEAPON_FLAMETHROWER) || (weaponID == TF_WEAPON_FLAME_BALL)) && CanWeaponAirblast(myWeapon))
+			{
+				UtilizeCompressionBlast(client, myBot, threat, 1);
+			}
+			if (WeaponID_IsSniperRifle(weaponID))
+			{
+				if (TF2_IsPlayerInCondition(client, TFCond_Zoomed))
+				{
+					if (redbots_manager_bot_aim_skill.IntValue >= 1)
+					{
+						if ((threat != NULL_KNOWN_ENTITY) && IsLineOfFireClearEntity(client, GetEyePosition(client), threat.GetEntity()))
+						{
+							float aimPos[3];
+							myBot.GetIntentionInterface().SelectTargetPoint(threat.GetEntity(), aimPos);
+							SnapViewToPosition(client, aimPos);
+							if (m_flNextSnipeFireTime[client] <= GetGameTime())
+							{
+								VS_PressFireButton(client);
+							}
+						}
+						else
+						{
+							m_flNextSnipeFireTime[client] = GetGameTime() + SNIPER_REACTION_TIME;
+						}
+					}
+					else
+					{
+						if ((threat != NULL_KNOWN_ENTITY) && threat.IsVisibleInFOVNow() && myBot.GetBodyInterface().IsHeadAimingOnTarget())
+						{
+							if (m_flNextSnipeFireTime[client] <= GetGameTime())
+							{
+								VS_PressFireButton(client);
+							}
+						}
+						else
+						{
+							m_flNextSnipeFireTime[client] = GetGameTime() + SNIPER_REACTION_TIME;
+						}
+					}
+				}
+				else
+				{
+					m_flNextSnipeFireTime[client] = GetGameTime() + SNIPER_REACTION_TIME;
+				}
+			}
+			else
+			{
+				if (threat != NULL_KNOWN_ENTITY)
+				{
+					if (IsCombatWeapon(client, myWeapon) && (weaponID != TF_WEAPON_KNIFE) && (TF2_GetPlayerClass(client) != TFClass_Engineer) && (weaponID != TF_WEAPON_BONESAW))
+					{
+						int iThreat = threat.GetEntity();
+						if (redbots_manager_bot_aim_skill.IntValue >= 2)
+						{
+							if ((weaponID == TF_WEAPON_FLAMETHROWER) && IsBaseBoss(iThreat) && myBot.IsRangeLessThan(iThreat, FLAMETHROWER_REACH_RANGE))
+							{
+								float aimPos[3];
+								GetFlameThrowerAimForTank(iThreat, aimPos);
+								SnapViewToPosition(client, aimPos);
+								buttons |= IN_ATTACK;
+							}
+							else
+								if (!threat.IsVisibleInFOVNow() && IsLineOfFireClearEntity(client, GetEyePosition(client), iThreat))
+								{
+									float aimPos[3];
+									myBot.GetIntentionInterface().SelectTargetPoint(iThreat, aimPos);
+									SnapViewToPosition(client, aimPos);
+								}
+						}
+						else
+							if (redbots_manager_bot_aim_skill.IntValue == 1)
+							{
+								if ((weaponID == TF_WEAPON_FLAMETHROWER) && IsBaseBoss(iThreat) && myBot.IsRangeLessThan(iThreat, FLAMETHROWER_REACH_RANGE))
+								{
+									float aimPos[3];
+									GetFlameThrowerAimForTank(iThreat, aimPos);
+									SnapViewToPosition(client, aimPos);
+									buttons |= IN_ATTACK;
+								}
+								else
+									if (!threat.IsVisibleRecently() && IsLineOfFireClearEntity(client, GetEyePosition(client), iThreat))
+									{
+										float aimPos[3];
+										myBot.GetIntentionInterface().SelectTargetPoint(iThreat, aimPos);
+										SnapViewToPosition(client, aimPos);
+									}
+							}
+							else
+							{
+								if ((weaponID == TF_WEAPON_FLAMETHROWER) && IsBaseBoss(iThreat) && myBot.IsRangeLessThan(iThreat, FLAMETHROWER_REACH_RANGE))
+								{
+									float aimPos[3];
+									GetFlameThrowerAimForTank(iThreat, aimPos);
+									SnapViewToPosition(client, aimPos);
+									buttons |= IN_ATTACK;
+								}
+							}
+					}
+				}
+			}
+			if (redbots_manager_bot_rtd_variance.FloatValue >= COMMAND_MAX_RATE)
+			{
+				if ((threat != NULL_KNOWN_ENTITY) && threat.IsVisibleInFOVNow() && (m_flNextRollTime[client] <= GetGameTime()))
+				{
+					m_flNextRollTime[client] = GetGameTime() + GetRandomFloat(COMMAND_MAX_RATE, redbots_manager_bot_rtd_variance.FloatValue);
+					FakeClientCommand(client, "sm_rtd");
+				}
+			}
+		}
+		if (TF2_IsInUpgradeZone(client) && (ActionsManager.LookupEntityActionByName(client, "DefenderUpgrade") != INVALID_ACTION))
+		{
+			vel = NULL_VECTOR;
+		}
+	}
+	else
+	{
+		if (m_flDeadRethinkTime[client] <= GetGameTime())
+		{
+			m_flDeadRethinkTime[client] = GetGameTime() + 1.0;
+			int iObsMode = BasePlayer_GetObserverMode(client);
+			if ((iObsMode == OBS_MODE_FREEZECAM) || (iObsMode == OBS_MODE_DEATHCAM))
+			{
+				g_iBuybackNumber[client] = 0;
+			}
+			else
+			{
+				g_iBuybackNumber[client] = GetRandomInt(1, 100);
+			}
+			if (ShouldBuybackIntoGame(client))
+			{
+				PlayerBuyback(client);
+			}
+			if (redbots_manager_debug.BoolValue)
+			{
+				PrintToChatAll("[OnPlayerRunCmd] g_iBuybackNumber[%d] = %d", client, g_iBuybackNumber[client]);
+			}
+		}
+	}
+	return Plugin_Continue;
+}
+

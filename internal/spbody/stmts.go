@@ -127,6 +127,15 @@ func (e *emitter) assignOne(n *ast.AssignStmt, lhs, rhs ast.Expr) {
 		return
 	}
 	e.checkWritable(lhs)
+	if n.Tok == token.AND_NOT_ASSIGN {
+		/* SourcePawn has no AND NOT, and the plugin writes the pair out
+
+		buttons &= ~IN_ATTACK is what the shipped file says, and letting
+		&^= through emitted it verbatim: spcomp read &^ as & and then
+		refused the ^. Only the whole-plugin compile caught it. */
+		e.fail(n.TokPos, "the &^= operator; SourcePawn has no AND NOT, write x &= ^y")
+		return
+	}
 	e.line("%s %s %s;", e.expr(lhs), n.Tok, e.expr(rhs))
 }
 

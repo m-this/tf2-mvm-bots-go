@@ -27,6 +27,13 @@ type PutInServerCalls struct {
 	ShouldProcessCommand   func(client int32) bool
 	LastReadyInputTime     func(client int32) float32
 	MissionDifficultyNow   func() MissionDifficulty
+	Press                  func(b int32) int32
+	SetPress               func(b int32, buttons int32)
+	PressTime              func(b int32) float32
+	Release                func(b int32) int32
+	SetRelease             func(b int32, buttons int32)
+	ReleaseTime            func(b int32) float32
+	KeySpeed               func(b int32) float32
 }
 
 var putInServers PutInServerCalls
@@ -208,4 +215,74 @@ func MissionDifficultyNow() MissionDifficulty {
 		missing("GetMissionDifficulty")
 	}
 	return putInServers.MissionDifficultyNow()
+}
+
+// Press is the buttons being held down for this client.
+//
+//sp:property iPress
+func (b ButtonInput) Press() int32 {
+	if putInServers.Press == nil {
+		missing("esButtonInput.iPress")
+	}
+	return putInServers.Press(int32(b))
+}
+
+// SetPress writes them.
+//
+//sp:propertyset iPress
+func (b ButtonInput) SetPress(buttons int32) {
+	if putInServers.SetPress == nil {
+		missing("esButtonInput.iPress")
+	}
+	putInServers.SetPress(int32(b), buttons)
+}
+
+// PressTime is when the held buttons may be let go of.
+//
+//sp:property flPressTime
+func (b ButtonInput) PressTime() float32 {
+	if putInServers.PressTime == nil {
+		missing("esButtonInput.flPressTime")
+	}
+	return putInServers.PressTime(int32(b))
+}
+
+// Release is the buttons being held off for this client.
+//
+//sp:property iRelease
+func (b ButtonInput) Release() int32 {
+	if putInServers.Release == nil {
+		missing("esButtonInput.iRelease")
+	}
+	return putInServers.Release(int32(b))
+}
+
+// SetRelease writes them.
+//
+//sp:propertyset iRelease
+func (b ButtonInput) SetRelease(buttons int32) {
+	if putInServers.SetRelease == nil {
+		missing("esButtonInput.iRelease")
+	}
+	putInServers.SetRelease(int32(b), buttons)
+}
+
+// ReleaseTime is when the held-off buttons may be pressed again.
+//
+//sp:property flReleaseTime
+func (b ButtonInput) ReleaseTime() float32 {
+	if putInServers.ReleaseTime == nil {
+		missing("esButtonInput.flReleaseTime")
+	}
+	return putInServers.ReleaseTime(int32(b))
+}
+
+// KeySpeed is how fast a held turn key moves the view.
+//
+//sp:property flKeySpeed
+func (b ButtonInput) KeySpeed() float32 {
+	if putInServers.KeySpeed == nil {
+		missing("esButtonInput.flKeySpeed")
+	}
+	return putInServers.KeySpeed(int32(b))
 }
