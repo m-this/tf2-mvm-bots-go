@@ -2,6 +2,8 @@
 
 #define DUMP_UPGRADES_MAX (1024)
 
+#define Go_Targets (101)
+
 public Action Command_RerollNewBotTeamComposition(int client, int args)
 {
 	if (TF2_GetClientTeam(client) != TFTeam_Red)
@@ -371,6 +373,38 @@ public Action Command_DumpUpgrades(int client, int args)
 		}
 		ReplyToCommand(client, "%d %s", i, (attribute[0] == 0 ? "(none)" : attribute));
 		LogMessage("%d %s", i, (attribute[0] == 0 ? "(none)" : attribute));
+	}
+	return Plugin_Handled;
+}
+
+public Action Command_ViewBotUpgrades(int client, int args)
+{
+	if (args < 1)
+	{
+		ReplyToCommand(client, "[SM] Usage: sm_view_bot_upgrades <#userid|name> <slot>");
+		return Plugin_Handled;
+	}
+	char arg[512];
+	GetCmdArg(1, arg, 512);
+	char targetName[512];
+	int targetList[101];
+	bool tnIsML;
+	int targetCount = ProcessTargetString(arg, client, targetList, MAXPLAYERS, COMMAND_FILTER_ALIVE, targetName, 512, tnIsML);
+	if (targetCount <= 0)
+	{
+		ReplyToTargetError(client, targetCount);
+		return Plugin_Handled;
+	}
+	int slot = -1;
+	if (args >= 2)
+	{
+		char arg2[512];
+		GetCmdArg(2, arg2, 512);
+		slot = StringToInt(arg2);
+	}
+	for (int i = 0; i < targetCount; i++)
+	{
+		ShowPlayerUpgrades(client, targetList[i], slot);
 	}
 	return Plugin_Handled;
 }

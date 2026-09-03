@@ -655,49 +655,6 @@ traces the crosshair to the world and writes down what it hit, so a whole map ca
 above without landing on every spot. It refuses a trace that hits nothing, since a spot in the
 skybox is worse than no spot */
 
-public Action Command_ViewBotUpgrades(int client, int args)
-{
-	if (args < 1)
-	{
-		ReplyToCommand(client, "[SM] Usage: sm_view_bot_upgrades <#userid|name> <slot>");
-		return Plugin_Handled;
-	}
-	
-	char arg[65]; GetCmdArg(1, arg, sizeof(arg));
-	
-	char target_name[MAX_TARGET_LENGTH];
-	int target_list[MAXPLAYERS], target_count;
-	bool tn_is_ml;
-	
-	if ((target_count = ProcessTargetString(
-			arg,
-			client,
-			target_list,
-			MAXPLAYERS,
-			COMMAND_FILTER_ALIVE,
-			target_name,
-			sizeof(target_name),
-			tn_is_ml)) <= 0)
-	{
-		ReplyToTargetError(client, target_count);
-		return Plugin_Handled;
-	}
-	
-	int slot = -1;
-	
-	if (args >= 2)
-	{
-		char arg2[3]; GetCmdArg(2, arg2, sizeof(arg2));
-		
-		slot = StringToInt(arg2);
-	}
-	
-	for (int i = 0; i < target_count; i++)
-		ShowPlayerUpgrades(client, target_list[i], slot);
-	
-	return Plugin_Handled;
-}
-
 public void ConVarChanged_ManagerMode(ConVar convar, const char[] oldValue, const char[] newValue)
 {
 	int mode = StringToInt(newValue);

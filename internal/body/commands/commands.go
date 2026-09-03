@@ -471,3 +471,49 @@ func CommandDumpUpgrades(client int32, args int32) engine.Outcome {
 
 	return engine.PluginHandled()
 }
+
+// Targets is MAXPLAYERS, the width of the list a pattern resolves into.
+const Targets = 101
+
+/*
+	CommandViewBotUpgrades prints what one or more players are carrying
+
+The pattern is SourceMod's, so @all and #userid work, and the answer is filtered
+to the living: an upgrade on a corpse is not what anybody is asking about.
+*/
+//
+//sp:name Command_ViewBotUpgrades
+//sp:public
+func CommandViewBotUpgrades(client int32, args int32) engine.Outcome {
+	if args < 1 {
+		engine.ReplyToCommand(client, "[SM] Usage: sm_view_bot_upgrades <#userid|name> <slot>")
+		return engine.PluginHandled()
+	}
+
+	_, arg := engine.CmdArg(1)
+
+	var targetName engine.Text
+	var targetList [Targets]int32
+	var tnIsML bool
+
+	targetCount := engine.ProcessTargetString(arg, client, targetList, engine.MaxTargets(), engine.CommandFilterAlive(), targetName, engine.TextSize(), tnIsML)
+
+	if targetCount <= 0 {
+		engine.ReplyToTargetError(client, targetCount)
+		return engine.PluginHandled()
+	}
+
+	slot := int32(-1)
+
+	if args >= 2 {
+		_, arg2 := engine.CmdArg(2)
+
+		slot = engine.StringToInt(arg2)
+	}
+
+	for i := int32(0); i < targetCount; i++ {
+		engine.ShowPlayerUpgrades(client, targetList[i], slot)
+	}
+
+	return engine.PluginHandled()
+}
