@@ -9,7 +9,7 @@ writes. `plugin/` is the SourcePawn tree, generated files and all: it moved here
 from `../tf2-mvm-bots`, which is being archived.
 
 That is wider than this repository was opened with, and it is most of the way
-there. `plugin/source` holds 1243 lines of hand-written SourcePawn, down from
+there. `plugin/source` holds 474 lines of hand-written SourcePawn, down from
 27005. The menus, the aiming, the shopping trip and the preferences are all
 generated now; `nextbot_behavior.sp` and `player_pref.sp` are gone from the
 tree entirely. What remains is `tf2_defenderbots.sp` and the gamedata seam:
@@ -22,11 +22,15 @@ build order, ten compile-time defines and `public Plugin myinfo`. Five of those
 defines are read nowhere now that every guard around them is ported, which is
 `mvm-z83.84`.
 
-What still holds functions is the gamedata seam, and only that: `dhooks.sp`,
-`sdkcalls.sp`, `tf_upgrades.sp` and `offsets.sp`, 1004 lines of DHook
-definitions, SDKCall prototypes, offset reads and methodmaps over the game's
-own memory. They are declarations against the binary rather than decisions, so
-porting them buys nothing.
+One file still holds functions: `tf_upgrades.sp`, three methodmaps over an
+`Address` built on gamedata offsets, and the thin wrappers that exist so
+generated code can reach them. A methodmap is the one shape the emitter has no
+form for, which is why the wrappers were written in the first place.
+`archipelago.sp` is a single `native` declaration of another plugin's export.
+
+`offsets.sp`, `sdkcalls.sp` and `dhooks.sp` are gone. Calling the whole
+gamedata seam unportable was too quick: an offset read, an SDKCall preparation
+and a DHook callback are all ordinary code, and only the methodmaps are not.
 
 The proofs no longer read the old repository. Every shipped file a comparison
 needs is snapshotted under `internal/upstream/shipped` at the revision that
