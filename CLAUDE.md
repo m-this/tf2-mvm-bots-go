@@ -9,20 +9,24 @@ writes. `plugin/` is the SourcePawn tree, generated files and all: it moved here
 from `../tf2-mvm-bots`, which is being archived.
 
 That is wider than this repository was opened with, and it is most of the way
-there. `plugin/source` holds 1774 lines of hand-written SourcePawn, down from
+there. `plugin/source` holds 1502 lines of hand-written SourcePawn, down from
 27005. The menus, the aiming, the shopping trip and the preferences are all
 generated now; `nextbot_behavior.sp` and `player_pref.sp` are gone from the
 tree entirely. What remains is `tf2_defenderbots.sp` and the gamedata seam:
 `dhooks.sp`, `sdkcalls.sp`, `tf_upgrades.sp`, `offsets.sp` and the one native
 declaration in `archipelago.sp`.
 
-`tf2_defenderbots.sp` is 766 lines, six functions and the declarations. Every
-ordinary function in it is generated, along with every SourceMod forward,
-`OnPlayerRunCmd` included, the tournament readiness listener, the sound hook
-and thirteen of its fifteen console commands. What is left is the registration
-table, two debug commands that want shapes the emitter has not got, and two
-dead functions kept on purpose. `mvm-z83.66` says which for each, and the file
-will not reach zero: it is the plugin's entry point.
+`tf2_defenderbots.sp` holds no function at all, the way `util.sp` and
+`nextbot_behavior.sp` do. Its 477 lines are the plugin's declaration surface:
+130 includes, 41 convar handles, thirty globals, two enums, three enum structs
+with methods on them and `public Plugin myinfo`. `mvm-z83.66.3` weighs moving
+what is left of that, and argues it may not be worth doing.
+
+What still holds functions is the gamedata seam, and only that: `dhooks.sp`,
+`sdkcalls.sp`, `tf_upgrades.sp` and `offsets.sp`, 1004 lines of DHook
+definitions, SDKCall prototypes, offset reads and methodmaps over the game's
+own memory. They are declarations against the binary rather than decisions, so
+porting them buys nothing.
 
 The proofs no longer read the old repository. Every shipped file a comparison
 needs is snapshotted under `internal/upstream/shipped` at the revision that
