@@ -11,8 +11,8 @@ from `../tf2-mvm-bots`, which is being archived.
 That is wider than this repository was opened with, and the port is done.
 `plugin/source` holds 240 lines of hand-written SourcePawn, down from 27005,
 and no hand-written SourcePawn holds a function any more. What is left is two
-files of declarations: `tf2_defenderbots.sp`, which is the include list, ten defines
-and `public Plugin myinfo`, and `archipelago.sp`, which is one `native`
+files of declarations: `tf2_defenderbots.sp`, which is the include list, ten
+defines and `public Plugin myinfo`, and `archipelago.sp`, which is one `native`
 declaration of another plugin's export and the paragraph saying why it is
 optional. Six of the ten defines are read nowhere: `mvm-z83.82`.
 
@@ -20,6 +20,10 @@ The whole gamedata seam went too. Calling it unportable was twice too quick: an
 offset read, an SDKCall preparation, a DHook callback and a methodmap over an
 `Address` are all things the emitter can write, the last of them once it was
 taught how.
+
+The mod is what tf2-archipelago deploys, as a Go module and nothing else: its
+go.mod requirement is the only pin, and `go get` is how it moves. There is no
+tag in its versions.env any more.
 
 The proofs no longer read the old repository. Every shipped file a comparison
 needs is snapshotted under `internal/upstream/shipped` at the revision that
