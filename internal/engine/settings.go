@@ -38,6 +38,12 @@ type SettingsCalls struct {
 	AllowBotRedo                      func() bool
 	ShowDefenderBotTeamSetupMenu      func(client int32, itemPosition int32, initialize bool, numBotsToAdd int32)
 	TeamHumanClientCount              func(team Team) int32
+	StartBotVote                      func(client int32) bool
+	HavePlayersChosenBotTeam          func() bool
+	AddingBotTime                     func() float32
+	CompareTextCased                  func(a Text, b string, caseSensitive bool) int32
+	AddDefenderTFBotClass             func(count int32, class Text)
+	AddBotsBasedOnLineupModeCount     func(count int32)
 }
 
 var settings SettingsCalls
@@ -359,4 +365,79 @@ func TeamHumanClientCount(team Team) int32 {
 		missing("GetTeamHumanClientCount")
 	}
 	return settings.TeamHumanClientCount(team)
+}
+
+// StartBotVote puts the bot vote up. Ported, prefmenu.
+//
+//sp:body StartBotVote
+func StartBotVote(client int32) bool {
+	if settings.StartBotVote == nil {
+		missing("StartBotVote")
+	}
+	return settings.StartBotVote(client)
+}
+
+// ExtraBots is redbots_manager_extra_bots, how many over the team size a
+// player may ask for.
+//
+//sp:global redbots_manager_extra_bots
+func ExtraBots() ConVar { return 0 }
+
+// PluginBadLoad is Plugin_BadLoad, which a command returns to say it refused
+// for a reason the caller has to fix first.
+//
+//sp:global Plugin_BadLoad
+func PluginBadLoad() Outcome { return 2 }
+
+// CompareTextCased is strcmp with the case flag written out.
+//
+//sp:native strcmp
+func CompareTextCased(a Text, b string, caseSensitive bool) int32 {
+	if settings.CompareTextCased == nil {
+		missing("strcmp")
+	}
+	return settings.CompareTextCased(a, b, caseSensitive)
+}
+
+// AddDefenderTFBotClass is AddDefenderTFBot with only the count and the class,
+// which is how the extra-bot command calls it. Ported, manage.
+//
+//sp:body AddDefenderTFBot
+func AddDefenderTFBotClass(count int32, class Text) {
+	if settings.AddDefenderTFBotClass == nil {
+		missing("AddDefenderTFBot")
+	}
+	settings.AddDefenderTFBotClass(count, class)
+}
+
+// AddBotsBasedOnLineupModeCount is AddBotsBasedOnLineupMode with the time
+// adjustment left at its default. Ported, manage.
+//
+//sp:body AddBotsBasedOnLineupMode
+func AddBotsBasedOnLineupModeCount(count int32) {
+	if settings.AddBotsBasedOnLineupModeCount == nil {
+		missing("AddBotsBasedOnLineupMode")
+	}
+	settings.AddBotsBasedOnLineupModeCount(count)
+}
+
+// HavePlayersChosenBotTeam says the lineup is settled enough to seat bots on.
+// Ported, seating.
+//
+//sp:body HavePlayersChosenBotTeam
+func HavePlayersChosenBotTeam() bool {
+	if settings.HavePlayersChosenBotTeam == nil {
+		missing("HavePlayersChosenBotTeam")
+	}
+	return settings.HavePlayersChosenBotTeam()
+}
+
+// AddingBotTime reads g_flAddingBotTime.
+//
+//sp:global g_flAddingBotTime
+func AddingBotTime() float32 {
+	if settings.AddingBotTime == nil {
+		missing("g_flAddingBotTime")
+	}
+	return settings.AddingBotTime()
 }

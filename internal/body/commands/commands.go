@@ -269,3 +269,151 @@ func CommandRedoBotTeamLineup(client int32, args int32) engine.Outcome {
 
 	return engine.PluginHandled()
 }
+
+/*
+	CommandVotebots asks the server to vote the bots in
+
+Manual mode only, and only from RED between waves. The lineup has to be settled
+first when the mode says a player picks it, because a vote that passes on an
+empty lineup would seat nobody.
+*/
+//
+//sp:name Command_Votebots
+//sp:public
+//nolint:revive // unused-parameter: the argument count is the console's, and this command takes none
+func CommandVotebots(client int32, args int32) engine.Outcome {
+	if engine.BotsEnabled() {
+		engine.ReplyToCommand(client, "%s Bots are already enabled for this round.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.ManagerMode().Int() != engine.ManagerModeManualBots() {
+		engine.ReplyToCommand(client, "%s This is only allowed in MANAGER_MODE_MANUAL_BOTS.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.NextReadyTime() > engine.GameTime() {
+		engine.ReplyToCommand(client, "%s You're going too fast!", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.IsServerFull() {
+		engine.ReplyToCommand(client, "%s Server is at max capacity.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.RoundState() != engine.RoundStateBetweenRounds() {
+		engine.ReplyToCommand(client, "%s This cannot be used at this time.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.VoteInProgress() {
+		engine.ReplyToCommand(client, "%s A vote is already in progress.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.BotLineupMode().Int() == engine.LineupModeChoose() {
+		if !engine.HavePlayersChosenBotTeam() {
+			if engine.ChoosingBotClasses(client) {
+				engine.ReplyToCommand(client, "%s You are already choosing the next team lineup.", engine.PluginPrefix())
+				return engine.PluginHandled()
+			}
+
+			if engine.PlayersChoosingClasses() > 0 {
+				engine.ReplyToCommand(client, "%s Someone is currently choosing the next team lineup.", engine.PluginPrefix())
+				return engine.PluginHandled()
+			}
+
+			engine.ReplyToCommand(client, "%s Choose your bot team lineup first! Use command !choosebotteam or !cbt", engine.PluginPrefix())
+			return engine.PluginBadLoad()
+		}
+	}
+
+	switch engine.ClientTeam(client) {
+	case engine.TeamRed():
+		botBanTime := engine.EnableBotsCooldown(client) - engine.GameTime()
+
+		if botBanTime > 0.0 {
+			engine.ReplyToCommand(client, "%s You cannot start the bots at this time.", engine.PluginPrefix())
+			engine.LogAction(client, -1, "MANAGER_MODE_MANUAL_BOTS: %L tried to start the bots on cooldown. (%f seconds)", client, botBanTime)
+
+			return engine.PluginHandled()
+		}
+
+		if engine.HumanAndDefenderBotCount(engine.TeamRed()) < engine.DefenderTeamSize().Int() {
+			engine.StartBotVote(client)
+			return engine.PluginHandled()
+		}
+
+		engine.ReplyToCommand(client, "%s RED team is full.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	default:
+		engine.ReplyToCommand(client, "%s You cannot use this command on this team.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+}
+
+/*
+	CommandRequestExtraBot adds one bot over the team size
+
+The named class is checked before anything is added, so a typo says so rather
+than quietly seating a random one.
+*/
+//
+//sp:name Command_RequestExtraBot
+//sp:public
+func CommandRequestExtraBot(client int32, args int32) engine.Outcome {
+	if !engine.BotsEnabled() {
+		engine.ReplyToCommand(client, "%s Bots aren't enabled.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.AddingBotTime() > engine.GameTime() {
+		return engine.PluginHandled()
+	}
+
+	if engine.ClientTeam(client) != engine.TeamRed() {
+		engine.ReplyToCommand(client, "%s Your team is not allowed to use this.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	if engine.IsServerFull() {
+		engine.ReplyToCommand(client, "%s It is currently not possible to add any more.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	defenderLimit := engine.DefenderTeamSize().Int() + engine.ExtraBots().Int()
+
+	if engine.HumanAndDefenderBotCount(engine.TeamRed()) >= defenderLimit {
+		engine.ReplyToCommand(client, "%s You already have an additional bot.", engine.PluginPrefix())
+		return engine.PluginHandled()
+	}
+
+	engine.SetAddingBotTime(engine.GameTime() + 0.1)
+
+	if args > 0 {
+		_, arg1 := engine.CmdArg(1)
+
+		if engine.CompareTextCased(arg1, "random", false) == 0 {
+			engine.AddRandomDefenderBots(1)
+			return engine.PluginHandled()
+		}
+
+		class := engine.ClassIndexFromString(arg1)
+
+		if class == engine.ClassUnknown() {
+			engine.ReplyToCommand(client, "%s Invalid class specified: %s.", engine.PluginPrefix(), arg1)
+			return engine.PluginHandled()
+		}
+
+		engine.AddDefenderTFBotClass(1, arg1)
+		engine.PrintToChatAll("%s %N requested an additional \"%s\" bot.", engine.PluginPrefix(), client, arg1)
+
+		return engine.PluginHandled()
+	}
+
+	engine.AddBotsBasedOnLineupModeCount(1)
+	engine.PrintToChatAll("%s %N requested an additional bot.", engine.PluginPrefix(), client)
+
+	return engine.PluginHandled()
+}
