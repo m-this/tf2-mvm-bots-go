@@ -322,3 +322,33 @@ func ReseatDefenderBots() int32 {
 
 	return kicked
 }
+
+/*
+	AddBotsWithPresetTeamComp seats one of the three preset lineups
+
+Dead: nothing calls it and nothing else reads the table it draws from. Ported
+rather than deleted, because mvm-z83.41 says a port does not delete what it does
+not understand, and mvm-z83.80 is where that question belongs.
+*/
+//
+//sp:name AddBotsWithPresetTeamComp
+//sp:default count 6
+//sp:default teamType 0
+func AddBotsWithPresetTeamComp(count int32, teamType int32) {
+	total := int32(0)
+
+	for i := int32(0); i < count; i++ {
+		// We are done here.
+		if total >= count {
+			break
+		}
+
+		// More was asked for than the lineup holds, so cycle back to its start.
+		if i >= engine.PresetLineupSeats() {
+			i = 0
+		}
+
+		engine.AddDefenderTFBotOf(1, engine.BotTeamComposition(teamType, i), "red", "expert")
+		total++
+	}
+}

@@ -18,6 +18,7 @@ type CompositionCalls struct {
 	GetWantedTeamComposition func(out Text, maxlen int32)
 	IsBotClassBlacklisted    func(class Text) bool
 	IsClassInTeamComposition func(class Text, typedTeamOnly bool) bool
+	BotTeamComposition       func(team int32, seat int32) Text
 }
 
 var compositions CompositionCalls
@@ -114,3 +115,26 @@ func IsClassInTeamComposition(class Text, typedTeamOnly bool) bool {
 //
 //sp:global 512
 func TextSize() int32 { return 512 }
+
+/*
+The preset lineups, which nothing reaches.
+
+g_sBotTeamCompositions and AddBotsWithPresetTeamComp are dead: mvm-z83.80 has
+the finding. They are ported rather than deleted, because mvm-z83.41 says a port
+does not delete what it does not understand.
+*/
+
+// BotTeamComposition is one seat of one preset lineup.
+//
+//sp:slot2 g_sBotTeamCompositions
+func BotTeamComposition(team int32, seat int32) Text {
+	if compositions.BotTeamComposition == nil {
+		missing("g_sBotTeamCompositions")
+	}
+	return compositions.BotTeamComposition(team, seat)
+}
+
+// PresetLineupSeats is how many seats one preset lineup names.
+//
+//sp:global sizeof(g_sBotTeamCompositions[])
+func PresetLineupSeats() int32 { return 6 }

@@ -64,3 +64,8 @@ stock void ConVarChanged_DefenderTeamSize(ConVar convar, const char[] before, co
 	convar.SetInt(allowed);
 }
 
+stock void ConVarChanged_ManagerMode(ConVar convar, const char[] oldValue, const char[] newValue)
+{
+	int mode = StringToInt(newValue);
+}
+

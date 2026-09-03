@@ -97,3 +97,19 @@ func ConVarChangedDefenderTeamSize(convar engine.ConVar, before engine.Text, aft
 	// equality above.
 	convar.SetInt(allowed)
 }
+
+/*
+	ConVarChangedManagerMode reacts to the manager mode being changed
+
+It reads the new value and does nothing with it. Left that way on purpose:
+mvm-z83.41 says a port does not carry a fix, and mvm-z83.79 is where the
+question of what it was meant to catch belongs.
+*/
+//
+//sp:name ConVarChanged_ManagerMode
+//nolint:revive // unused-parameter: a convar hook is handed all three
+func ConVarChangedManagerMode(convar engine.ConVar, oldValue engine.Text, newValue engine.Text) {
+	mode := engine.StringToInt(newValue)
+
+	_ = mode
+}

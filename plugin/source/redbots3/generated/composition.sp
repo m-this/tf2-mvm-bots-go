@@ -227,3 +227,21 @@ stock int ReseatDefenderBots()
 	return kicked;
 }
 
+stock void AddBotsWithPresetTeamComp(int count = 6, int teamType = 0)
+{
+	int total = 0;
+	for (int i = 0; i < count; i++)
+	{
+		if (total >= count)
+		{
+			break;
+		}
+		if (i >= sizeof(g_sBotTeamCompositions[]))
+		{
+			i = 0;
+		}
+		AddDefenderTFBot(1, g_sBotTeamCompositions[teamType][i], "red", "expert");
+		total++;
+	}
+}
+

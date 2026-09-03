@@ -475,30 +475,3 @@ traces the crosshair to the world and writes down what it hit, so a whole map ca
 above without landing on every spot. It refuses a trace that hits nothing, since a spot in the
 skybox is worse than no spot */
 
-public void ConVarChanged_ManagerMode(ConVar convar, const char[] oldValue, const char[] newValue)
-{
-	int mode = StringToInt(newValue);
-	
-	//TODO: really only here for legacy reasons
-	//Catch all cases of everything!
-}
-
-void AddBotsWithPresetTeamComp(int count = 6, int teamType = 0)
-{
-	int total = 0;
-	
-	for (int i = 0; i < count; i++)
-	{
-		//We're done here
-		if (total >= count)
-			break;
-		
-		//We asked for more than the array size, cycle back from the beginning
-		if (i >= sizeof(g_sBotTeamCompositions[]))
-			i = 0;
-		
-		AddDefenderTFBot(1, g_sBotTeamCompositions[teamType][i], "red", "expert");
-		total++;
-	}
-}
-
