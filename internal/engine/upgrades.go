@@ -25,6 +25,8 @@ type UpgradeCalls struct {
 	PurchasedUpgrades         func(client int32) int32
 	SetPurchasedUpgrades      func(client int32, count int32)
 	UpgradeCount              func() int32
+	IsUpgradeManagerUp        func() bool
+	UpgradeCountRaw           func() int32
 	UpgradeByIndex            func(index int32) Address
 	UpgradeUIGroup            func(upgrade Address) int32
 	UpgradeAttribute          func(upgrade Address) Text
@@ -356,3 +358,31 @@ func NearestTeammate(client int32, maxDistance float32) int32 {
 	}
 	return upgrades.NearestTeammate(client, maxDistance)
 }
+
+// IsUpgradeManagerUp says the game has an upgrade manager, which it has not
+// until an MvM map has loaded. Still in tf_upgrades.sp.
+//
+//sp:plugin IsUpgradeManagerUp
+func IsUpgradeManagerUp() bool {
+	if upgrades.IsUpgradeManagerUp == nil {
+		missing("IsUpgradeManagerUp")
+	}
+	return upgrades.IsUpgradeManagerUp()
+}
+
+// UpgradeCountRaw is the count the manager gives, unclamped: UpgradeCount
+// hides an unbelievable one and sm_dump_upgrades exists to report it. Still in
+// tf_upgrades.sp.
+//
+//sp:plugin UpgradeCountRaw
+func UpgradeCountRaw() int32 {
+	if upgrades.UpgradeCountRaw == nil {
+		missing("UpgradeCountRaw")
+	}
+	return upgrades.UpgradeCountRaw()
+}
+
+// AttributeDescriptionMax is MAX_ATTRIBUTE_DESCRIPTION_LENGTH.
+//
+//sp:global MAX_ATTRIBUTE_DESCRIPTION_LENGTH
+func AttributeDescriptionMax() int32 { return 128 }

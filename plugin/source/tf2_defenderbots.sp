@@ -641,44 +641,6 @@ purchase that mod reports is named after the wrong upgrade, and the fix is there
 An upgrade with no attribute is printed as well rather than skipped: a gap in the numbering is
 exactly the thing that would break counting lines, so hiding it would hide the answer. */
 //A list far longer than this is the manager not being what we think it is, not a big mission
-#define DUMP_UPGRADES_MAX	1024
-
-public Action Command_DumpUpgrades(int client, int args)
-{
-	CMannVsMachineUpgradeManager manager = CMannVsMachineUpgradeManager();
-	
-	if (manager.Address == Address_Null)
-	{
-		ReplyToCommand(client, "[SM] The upgrade manager is not up yet. Load an MvM map first.");
-		return Plugin_Handled;
-	}
-	
-	int count = manager.Count();
-	
-	if (count < 1 || count > DUMP_UPGRADES_MAX)
-	{
-		ReplyToCommand(client, "[SM] The manager says it holds %d upgrades, which is not believable.", count);
-		return Plugin_Handled;
-	}
-	
-	ReplyToCommand(client, "[SM] %d upgrades, by the index the game uses:", count);
-	LogMessage("sm_dump_upgrades: %d upgrades", count);
-	
-	for (int i = 0; i < count; i++)
-	{
-		CMannVsMachineUpgrades upgrade = manager.GetUpgradeByIndex(i);
-		
-		char attribute[MAX_ATTRIBUTE_DESCRIPTION_LENGTH];
-		
-		if (upgrade.Address != Address_Null)
-			attribute = upgrade.m_szAttribute();
-		
-		ReplyToCommand(client, "%d %s", i, attribute[0] == '\0' ? "(none)" : attribute);
-		LogMessage("%d %s", i, attribute[0] == '\0' ? "(none)" : attribute);
-	}
-	
-	return Plugin_Handled;
-}
 
 /* Where you are standing, as a map configuration block
 

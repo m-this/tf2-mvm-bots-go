@@ -8,6 +8,17 @@ package commands
 
 import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
 
+/*
+UpgradesMax is the count past which the game's answer is not believable.
+
+Declared here rather than in the plugin: the generated file is included long
+before the line the define used to sit on, and a define has to precede its
+reader.
+*/
+//
+//sp:name DUMP_UPGRADES_MAX
+const UpgradesMax = 1024
+
 // CommandRerollNewBotTeamComposition picks the lineup again and shows it.
 //
 //sp:name Command_RerollNewBotTeamComposition
@@ -414,6 +425,49 @@ func CommandRequestExtraBot(client int32, args int32) engine.Outcome {
 
 	engine.AddBotsBasedOnLineupModeCount(1)
 	engine.PrintToChatAll("%s %N requested an additional bot.", engine.PluginPrefix(), client)
+
+	return engine.PluginHandled()
+}
+
+/*
+	CommandDumpUpgrades prints the game's own upgrade list, by the index it uses
+
+The count is the manager's raw one rather than UpgradeCount's: this command
+exists to say when the game gives an answer that is not believable, and
+UpgradeCount is the place that hides it.
+*/
+//
+//sp:name Command_DumpUpgrades
+//sp:public
+//nolint:revive // unused-parameter: the argument count is the console's, and this command takes none
+func CommandDumpUpgrades(client int32, args int32) engine.Outcome {
+	if !engine.IsUpgradeManagerUp() {
+		engine.ReplyToCommand(client, "[SM] The upgrade manager is not up yet. Load an MvM map first.")
+		return engine.PluginHandled()
+	}
+
+	count := engine.UpgradeCountRaw()
+
+	if count < 1 || count > UpgradesMax {
+		engine.ReplyToCommand(client, "[SM] The manager says it holds %d upgrades, which is not believable.", count)
+		return engine.PluginHandled()
+	}
+
+	engine.ReplyToCommand(client, "[SM] %d upgrades, by the index the game uses:", count)
+	engine.LogMessage("sm_dump_upgrades: %d upgrades", count)
+
+	for i := int32(0); i < count; i++ {
+		upgrade := engine.UpgradeByIndex(i)
+
+		var attribute engine.Text
+
+		if upgrade != engine.NoAddress() {
+			attribute = engine.UpgradeAttribute(upgrade)
+		}
+
+		engine.ReplyToCommand(client, "%d %s", i, engine.ChooseText(attribute[0] == 0, "(none)", attribute))
+		engine.LogMessage("%d %s", i, engine.ChooseText(attribute[0] == 0, "(none)", attribute))
+	}
 
 	return engine.PluginHandled()
 }

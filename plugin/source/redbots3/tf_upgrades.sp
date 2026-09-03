@@ -213,6 +213,22 @@ Address UpgradeAddressByIndex(int index)
 	return CMannVsMachineUpgradeManager().GetUpgradeByIndex(index).Address;
 }
 
+//Whether the manager exists at all, which it does not until an MvM map has loaded
+bool IsUpgradeManagerUp()
+{
+	return CMannVsMachineUpgradeManager().Address != Address_Null;
+}
+
+/* The count the manager itself gives, unclamped
+
+UpgradeCount above falls back to UPGRADE_COUNT_MEASURED when the answer is not
+believable, which is what the shopping code wants and what sm_dump_upgrades is
+for reporting. */
+int UpgradeCountRaw()
+{
+	return CMannVsMachineUpgradeManager().Count();
+}
+
 int AttributeDefinitionIndexOf(Address attr)
 {
 	return view_as<CEconItemAttributeDefinition>(attr).GetIndex();
