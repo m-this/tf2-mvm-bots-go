@@ -9,18 +9,18 @@ writes. `plugin/` is the SourcePawn tree, generated files and all: it moved here
 from `../tf2-mvm-bots`, which is being archived.
 
 That is wider than this repository was opened with, and it is most of the way
-there. `plugin/source` holds 1502 lines of hand-written SourcePawn, down from
+there. `plugin/source` holds 1243 lines of hand-written SourcePawn, down from
 27005. The menus, the aiming, the shopping trip and the preferences are all
 generated now; `nextbot_behavior.sp` and `player_pref.sp` are gone from the
 tree entirely. What remains is `tf2_defenderbots.sp` and the gamedata seam:
 `dhooks.sp`, `sdkcalls.sp`, `tf_upgrades.sp`, `offsets.sp` and the one native
 declaration in `archipelago.sp`.
 
-`tf2_defenderbots.sp` holds no function at all, the way `util.sp` and
-`nextbot_behavior.sp` do. Its 477 lines are the plugin's declaration surface:
-130 includes, 41 convar handles, thirty globals, two enums, three enum structs
-with methods on them and `public Plugin myinfo`. `mvm-z83.66.3` weighs moving
-what is left of that, and argues it may not be worth doing.
+`tf2_defenderbots.sp` is 218 lines and holds no function, no global, no convar
+handle and no record. What is left is the include list, which is the plugin's
+build order, ten compile-time defines and `public Plugin myinfo`. Five of those
+defines are read nowhere now that every guard around them is ported, which is
+`mvm-z83.84`.
 
 What still holds functions is the gamedata seam, and only that: `dhooks.sp`,
 `sdkcalls.sp`, `tf_upgrades.sp` and `offsets.sp`, 1004 lines of DHook

@@ -15,6 +15,10 @@
 
 #define Go_CompositionLength (128)
 
+#define PLUGIN_PREFIX ("[BotManager]")
+
+#define TFBOT_IDENTITY_NAME ("TFBOT_SEX_HAVER")
+
 enum struct esMapConfiguration
 {
 	ArrayList adtSniperSpot;

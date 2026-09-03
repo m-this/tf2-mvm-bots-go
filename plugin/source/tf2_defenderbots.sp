@@ -38,8 +38,6 @@ Author: ★ Officer Spy ★
 
 // #define IDLEBOT_AIMING
 
-#define PLUGIN_PREFIX	"[BotManager]"
-#define TFBOT_IDENTITY_NAME	"TFBOT_SEX_HAVER"
 
 
 

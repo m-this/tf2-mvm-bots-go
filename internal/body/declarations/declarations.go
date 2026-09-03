@@ -552,3 +552,15 @@ func (p *PluginBotRecord) SetPathGoalEntity(entity int32) {
 //sp:name g_arrPluginBot
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
 var pluginBot [Slots]PluginBotRecord
+
+// PluginPrefix is what the mod puts in front of every line it says in chat.
+//
+//sp:name PLUGIN_PREFIX
+const PluginPrefix = "[BotManager]"
+
+// BotIdentityName is the name a defender bot is created under, before it is
+// given a real one. Nothing a person could type, so a person cannot be mistaken
+// for one of ours.
+//
+//sp:name TFBOT_IDENTITY_NAME
+const BotIdentityName = "TFBOT_SEX_HAVER"
