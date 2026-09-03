@@ -11,6 +11,119 @@
 #define BOT_LINEUP_MODE_CHOOSE (2)
 #define BOT_LINEUP_MODE_PREFERENCE_CHOOSE (3)
 
+#define NEST_ZONE_LENGTH (24)
+
+#define Go_CompositionLength (128)
+
+enum struct esMapConfiguration
+{
+	ArrayList adtSniperSpot;
+	ArrayList adtEngineerNestLocation;
+	ArrayList adtEngineerNestZone;
+	ArrayList adtTeleporterEntranceLocation;
+	ArrayList adtTeleporterExitLocation;
+	ArrayList adtDispenserLocation;
+	ArrayList adtDispenserZone;
+	ArrayList adtNestTankOnlyLocation;
+	ArrayList adtNestNoTankLocation;
+	char strComposition[128];
+	bool bMovingNests;
+
+	void Initialize()
+	{
+		this.adtSniperSpot = new ArrayList(3);
+		this.adtEngineerNestLocation = new ArrayList(3);
+		this.adtEngineerNestZone = new ArrayList(ByteCountToCells(NEST_ZONE_LENGTH));
+		this.adtTeleporterEntranceLocation = new ArrayList(3);
+		this.adtTeleporterExitLocation = new ArrayList(3);
+		this.adtDispenserLocation = new ArrayList(3);
+		this.adtDispenserZone = new ArrayList(ByteCountToCells(NEST_ZONE_LENGTH));
+		this.adtNestTankOnlyLocation = new ArrayList(3);
+		this.adtNestNoTankLocation = new ArrayList(3);
+	}
+
+	void Reset()
+	{
+		this.adtSniperSpot.Clear();
+		this.adtEngineerNestLocation.Clear();
+		this.adtEngineerNestZone.Clear();
+		this.adtTeleporterEntranceLocation.Clear();
+		this.adtTeleporterExitLocation.Clear();
+		this.adtDispenserLocation.Clear();
+		this.adtDispenserZone.Clear();
+		this.adtNestTankOnlyLocation.Clear();
+		this.adtNestNoTankLocation.Clear();
+		this.strComposition[0] = 0;
+		this.bMovingNests = false;
+	}
+}
+
+enum struct esButtonInput
+{
+	int iPress;
+	float flPressTime;
+	int iRelease;
+	float flReleaseTime;
+	float flKeySpeed;
+
+	void Reset()
+	{
+		this.iPress = 0;
+		this.flPressTime = 0.0;
+		this.iRelease = 0;
+		this.flReleaseTime = 0.0;
+		this.flKeySpeed = 0.0;
+	}
+
+	void PressButtons(int buttons, float duration = -1.0)
+	{
+		this.iPress = buttons;
+		this.flPressTime = (duration > 0.0 ? GetGameTime() + duration : 0.0);
+	}
+
+	void ReleaseButtons(int buttons, float duration = -1.0)
+	{
+		this.iRelease = buttons;
+		this.flReleaseTime = (duration > 0.0 ? GetGameTime() + duration : 0.0);
+	}
+}
+
+enum struct esPluginBot
+{
+	bool bPathing;
+	float vecPathGoal[3];
+	int iPathGoalEntity;
+
+	void Reset()
+	{
+		this.bPathing = false;
+		this.vecPathGoal = NULL_VECTOR;
+		this.iPathGoalEntity = -1;
+	}
+
+	bool HasPathGoalVector()
+	{
+		return !Vector_IsZero(this.vecPathGoal);
+	}
+
+	bool HasPathGoalEntity()
+	{
+		return this.iPathGoalEntity != -1;
+	}
+
+	void SetPathGoalVector(const float vec[3])
+	{
+		this.iPathGoalEntity = -1;
+		this.vecPathGoal = vec;
+	}
+
+	void SetPathGoalEntity(int entity)
+	{
+		this.vecPathGoal = NULL_VECTOR;
+		this.iPathGoalEntity = entity;
+	}
+}
+
 bool g_bLateLoad;
 bool g_bBotsEnabled;
 float g_flAddingBotTime;
@@ -85,4 +198,5 @@ char g_sBotTeamCompositions[][][] =
 	{"scout", "heavyweapons", "heavyweapons", "heavyweapons", "engineer", "sniper"},
 	{"scout", "heavyweapons", "heavyweapons", "pyro", "engineer", "demoman"},
 };
+esPluginBot g_arrPluginBot[65];
 

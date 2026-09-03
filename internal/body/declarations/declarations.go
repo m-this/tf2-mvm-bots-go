@@ -368,3 +368,187 @@ var botTeamCompositions = [3][6]string{
 	{"scout", "heavyweapons", "heavyweapons", "heavyweapons", "engineer", "sniper"},
 	{"scout", "heavyweapons", "heavyweapons", "pyro", "engineer", "demoman"},
 }
+
+// NestZoneLength is how long a zone name may be.
+//
+//sp:name NEST_ZONE_LENGTH
+const NestZoneLength = 24
+
+// CompositionLength is how long the lineup a map names may be.
+//
+//sp:name Go_CompositionLength
+const CompositionLength = 128
+
+/*
+MapConfiguration is everything one map's config file says.
+
+It is one record shared by everything that reads it, which is why it keeps the
+plugin's own names for the type and for every field.
+*/
+//
+//sp:name esMapConfiguration
+type MapConfiguration struct {
+	SniperSpot       engine.List `sp:"adtSniperSpot"`
+	EngineerNestSpot engine.List `sp:"adtEngineerNestLocation"`
+	// One zone name per nest spot, same order. Empty when the map does not name one.
+	EngineerNestZone engine.List `sp:"adtEngineerNestZone"`
+	TeleporterIn     engine.List `sp:"adtTeleporterEntranceLocation"`
+	TeleporterOut    engine.List `sp:"adtTeleporterExitLocation"`
+	DispenserSpot    engine.List `sp:"adtDispenserLocation"`
+	// One zone name per dispenser spot, same order, so a nest in a zone takes
+	// the dispenser in it.
+	DispenserZone engine.List `sp:"adtDispenserZone"`
+	// Nests that only apply to a wave with a tank in it, and nests that only
+	// apply to one without.
+	NestTankOnly engine.List `sp:"adtNestTankOnlyLocation"`
+	NestNoTank   engine.List `sp:"adtNestNoTankLocation"`
+	// The lineup this map wants, comma separated, empty when it does not care.
+	Composition [CompositionLength]byte `sp:"strComposition"`
+	/* MovingNests is whether the engineers are expected to pick the nest up and
+	move it between waves.
+
+	Mannhattan's gates move the front, and Rottenburg wants a different nest for
+	a tank wave than for one without. On a map like that a disposable sentry
+	covers the ground while the real one is in a toolbox, and is worth buying. On
+	every other map it is a hundred and fifty credits for a second sentry nobody
+	moves, which is what the guides mean when they say never. */
+	MovingNests bool `sp:"bMovingNests"`
+}
+
+// Initialize makes every list the record holds.
+//
+//sp:name Initialize
+func (c *MapConfiguration) Initialize() {
+	c.SniperSpot = engine.NewListSized(3)
+	c.EngineerNestSpot = engine.NewListSized(3)
+	c.EngineerNestZone = engine.NewListSized(engine.ByteCountToCells(NestZoneLength))
+	c.TeleporterIn = engine.NewListSized(3)
+	c.TeleporterOut = engine.NewListSized(3)
+	c.DispenserSpot = engine.NewListSized(3)
+	c.DispenserZone = engine.NewListSized(engine.ByteCountToCells(NestZoneLength))
+	c.NestTankOnly = engine.NewListSized(3)
+	c.NestNoTank = engine.NewListSized(3)
+}
+
+// Reset empties them, and clears the two plain fields.
+//
+//sp:name Reset
+func (c *MapConfiguration) Reset() {
+	c.SniperSpot.Clear()
+	c.EngineerNestSpot.Clear()
+	c.EngineerNestZone.Clear()
+	c.TeleporterIn.Clear()
+	c.TeleporterOut.Clear()
+	c.DispenserSpot.Clear()
+	c.DispenserZone.Clear()
+	c.NestTankOnly.Clear()
+	c.NestNoTank.Clear()
+	c.Composition[0] = 0
+	c.MovingNests = false
+}
+
+/*
+ButtonInputRecord is esButtonInput: the buttons a behaviour asked to be held
+down or held off, and until when.
+
+The two times are what makes it a record rather than two ints. A behaviour that
+wants a key held for a moment says so once, and OnPlayerRunCmd holds it until
+the clock says otherwise.
+*/
+//
+//sp:name esButtonInput
+type ButtonInputRecord struct {
+	Press       int32   `sp:"iPress"`
+	PressTime   float32 `sp:"flPressTime"`
+	Release     int32   `sp:"iRelease"`
+	ReleaseTime float32 `sp:"flReleaseTime"`
+	KeySpeed    float32 `sp:"flKeySpeed"`
+}
+
+// Reset puts every field back to its starting value.
+//
+//sp:name Reset
+func (b *ButtonInputRecord) Reset() {
+	b.Press = 0
+	b.PressTime = 0.0
+	b.Release = 0
+	b.ReleaseTime = 0.0
+	b.KeySpeed = 0.0
+}
+
+// PressButtons holds those buttons down, for a time or until told otherwise.
+//
+//sp:name PressButtons
+//sp:default duration -1.0
+func (b *ButtonInputRecord) PressButtons(buttons int32, duration float32) {
+	b.Press = buttons
+	b.PressTime = engine.ChooseFloat(duration > 0.0, engine.GameTime()+duration, 0.0)
+}
+
+// ReleaseButtons holds those buttons off the same way.
+//
+//sp:name ReleaseButtons
+//sp:default duration -1.0
+func (b *ButtonInputRecord) ReleaseButtons(buttons int32, duration float32) {
+	b.Release = buttons
+	b.ReleaseTime = engine.ChooseFloat(duration > 0.0, engine.GameTime()+duration, 0.0)
+}
+
+/*
+PluginBotRecord is esPluginBot: where a plugin-driven bot is walking to.
+
+A goal is either a place or an entity and never both, which is what the two
+setters enforce between them.
+*/
+//
+//sp:name esPluginBot
+type PluginBotRecord struct {
+	Pathing        bool       `sp:"bPathing"`
+	PathGoal       [3]float32 `sp:"vecPathGoal"`
+	PathGoalEntity int32      `sp:"iPathGoalEntity"`
+}
+
+// Reset forgets where it was going.
+//
+//sp:name Reset
+func (p *PluginBotRecord) Reset() {
+	p.Pathing = false
+	p.PathGoal = engine.NullVector()
+	p.PathGoalEntity = -1
+}
+
+// HasPathGoalVector says the goal is a place.
+//
+//sp:name HasPathGoalVector
+func (p *PluginBotRecord) HasPathGoalVector() bool {
+	return !engine.VectorIsZero(p.PathGoal)
+}
+
+// HasPathGoalEntity says the goal is an entity.
+//
+//sp:name HasPathGoalEntity
+func (p *PluginBotRecord) HasPathGoalEntity() bool {
+	return p.PathGoalEntity != -1
+}
+
+// SetPathGoalVector aims it at a place.
+//
+//sp:name SetPathGoalVector
+//sp:const vec
+func (p *PluginBotRecord) SetPathGoalVector(vec [3]float32) {
+	// You can only set one or the other, not both.
+	p.PathGoalEntity = -1
+	p.PathGoal = vec
+}
+
+// SetPathGoalEntity aims it at an entity.
+//
+//sp:name SetPathGoalEntity
+func (p *PluginBotRecord) SetPathGoalEntity(entity int32) {
+	p.PathGoal = engine.NullVector()
+	p.PathGoalEntity = entity
+}
+
+//sp:name g_arrPluginBot
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var pluginBot [Slots]PluginBotRecord

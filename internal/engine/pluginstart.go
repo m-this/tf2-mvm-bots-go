@@ -39,6 +39,8 @@ type PluginStartCalls struct {
 	BuildPathInto            func(out Text, maxlen int32, format string)
 	UpgradesAddress          func() Address
 	FindGameConsoleVariables func()
+	ByteCountToCells         func(bytes int32) int32
+	VectorIsZero             func(v [3]float32) bool
 	SetLateLoad              func(late bool)
 	CreateNative             func(name string)
 	MarkNativeAsOptional     func(name string)
@@ -505,3 +507,25 @@ func NativeGetAttackTarget(plugin int32, params int32) int32 { return 0 }
 //
 //sp:tag esMapConfiguration
 type MapConfigRecord int32
+
+// ByteCountToCells is how many cells a buffer of that many bytes takes, which
+// is what an ArrayList of strings is sized in.
+//
+//sp:native ByteCountToCells
+func ByteCountToCells(bytes int32) int32 {
+	if pluginStarts.ByteCountToCells == nil {
+		missing("ByteCountToCells")
+	}
+	return pluginStarts.ByteCountToCells(bytes)
+}
+
+// VectorIsZero says every component is zero, which is what an unset path goal
+// looks like.
+//
+//sp:plugin Vector_IsZero
+func VectorIsZero(v [3]float32) bool {
+	if pluginStarts.VectorIsZero == nil {
+		missing("Vector_IsZero")
+	}
+	return pluginStarts.VectorIsZero(v)
+}

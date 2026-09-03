@@ -94,6 +94,10 @@ func (e *emitter) identExpr(id *ast.Ident) string {
 	if id.Name == "true" || id.Name == "false" {
 		return id.Name
 	}
+	if e.receiver != "" && id.Name == e.receiver {
+		// Inside an enum struct method, the receiver is spelled this.
+		return "this"
+	}
 	obj := e.info.Uses[id]
 	if obj == nil {
 		obj = e.info.Defs[id]
@@ -246,7 +250,16 @@ struct tags are for.
 */
 func (e *emitter) fieldName(n *ast.SelectorExpr, sel *types.Selection) string {
 	if len(sel.Index()) == 1 {
-		if st, ok := sel.Recv().Underlying().(*types.Struct); ok {
+		/* Through the pointer, because an enum struct method takes one
+
+		SourcePawn's this is a reference, so a method that writes a field
+		is written in Go with a pointer receiver. The tag is on the struct
+		either way. */
+		recv := sel.Recv().Underlying()
+		if p, isPointer := recv.(*types.Pointer); isPointer {
+			recv = p.Elem().Underlying()
+		}
+		if st, ok := recv.(*types.Struct); ok {
 			i := sel.Index()[0]
 			if name, ok := reflect.StructTag(st.Tag(i)).Lookup("sp"); ok {
 				return name

@@ -5,8 +5,14 @@ import (
 )
 
 func (c *checker) checkFuncDecl(d *ast.FuncDecl) {
-	if d.Recv != nil {
-		c.refuse(d.Recv.Pos(), "a method receiver",
+	/* A method is an enum struct's, and nothing else
+
+	SourcePawn writes a method inside the braces of the enum struct it hangs
+	off, so a method on a struct this package declares is exactly what an
+	enum struct method is. A method on anything else has no form: the
+	methodmap belongs to the actions generator, not to this one. */
+	if d.Recv != nil && !c.isLocalStructMethod(d) {
+		c.refuse(d.Recv.Pos(), "a method receiver on something that is not a struct this package declares",
 			"write a plain function taking the receiver as its first parameter; the methodmap belongs to the actions generator, not the body generator")
 	}
 	if d.Name.Name == "init" && d.Recv == nil {
@@ -91,4 +97,18 @@ func (c *checker) checkParams(t *ast.FuncType) {
 		// returned pointer is not.
 		c.checkType(f.Type)
 	}
+}
+
+// isLocalStructMethod says the receiver is a struct type this package declares,
+// which is what an enum struct method hangs off.
+func (c *checker) isLocalStructMethod(d *ast.FuncDecl) bool {
+	if d.Recv == nil || len(d.Recv.List) != 1 {
+		return false
+	}
+	t := d.Recv.List[0].Type
+	if star, isPointer := t.(*ast.StarExpr); isPointer {
+		t = star.X
+	}
+	id, ok := t.(*ast.Ident)
+	return ok && c.structs[id.Name]
 }

@@ -44,89 +44,8 @@ Author: ★ Officer Spy ★
 
 
 //A zone name is a short label like "inside": long enough to read, short enough to keep in a config
-#define NEST_ZONE_LENGTH	24
 
-enum struct esMapConfiguration
-{
-	ArrayList adtSniperSpot;
-	ArrayList adtEngineerNestLocation;
-	//One zone name per nest spot, same order. Empty when the map does not name one
-	ArrayList adtEngineerNestZone;
-	ArrayList adtTeleporterEntranceLocation;
-	ArrayList adtTeleporterExitLocation;
-	ArrayList adtDispenserLocation;
-	//One zone name per dispenser spot, same order, so a nest in a zone takes the dispenser in it
-	ArrayList adtDispenserZone;
-	//Nests that only apply to a wave with a tank in it, and nests that only apply to one without
-	ArrayList adtNestTankOnlyLocation;
-	ArrayList adtNestNoTankLocation;
-	//The lineup this map wants, comma separated, empty when it does not care
-	char strComposition[128];
-	/* Whether the engineers are expected to pick the nest up and move it between waves
 
-	Mannhattan's gates move the front, and Rottenburg wants a different nest for a tank wave than
-	for one without. On a map like that a disposable sentry covers the ground while the real one is
-	in a toolbox, and is worth buying. On every other map it is a hundred and fifty credits for a
-	second sentry nobody moves, which is what the guides mean when they say never. */
-	bool bMovingNests;
-	
-	void Initialize()
-	{
-		this.adtSniperSpot = new ArrayList(3);
-		this.adtEngineerNestLocation = new ArrayList(3);
-		this.adtEngineerNestZone = new ArrayList(ByteCountToCells(NEST_ZONE_LENGTH));
-		this.adtTeleporterEntranceLocation = new ArrayList(3);
-		this.adtTeleporterExitLocation = new ArrayList(3);
-		this.adtDispenserLocation = new ArrayList(3);
-		this.adtDispenserZone = new ArrayList(ByteCountToCells(NEST_ZONE_LENGTH));
-		this.adtNestTankOnlyLocation = new ArrayList(3);
-		this.adtNestNoTankLocation = new ArrayList(3);
-	}
-	void Reset()
-	{
-		this.adtSniperSpot.Clear();
-		this.adtEngineerNestLocation.Clear();
-		this.adtEngineerNestZone.Clear();
-		this.adtTeleporterEntranceLocation.Clear();
-		this.adtTeleporterExitLocation.Clear();
-		this.adtDispenserLocation.Clear();
-		this.adtDispenserZone.Clear();
-		this.adtNestTankOnlyLocation.Clear();
-		this.adtNestNoTankLocation.Clear();
-		this.strComposition[0] = '\0';
-		this.bMovingNests = false;
-	}
-}
-
-enum struct esButtonInput
-{
-	int iPress;
-	float flPressTime;
-	int iRelease;
-	float flReleaseTime;
-	float flKeySpeed;
-	
-	void Reset()
-	{
-		this.iPress = 0;
-		this.flPressTime = 0.0;
-		this.iRelease = 0;
-		this.flReleaseTime = 0.0;
-		this.flKeySpeed = 0.0;
-	}
-	
-	void PressButtons(int buttons, float duration = -1.0)
-	{
-		this.iPress = buttons;
-		this.flPressTime = duration > 0.0 ? GetGameTime() + duration : 0.0;
-	}
-	
-	void ReleaseButtons(int buttons, float duration = -1.0)
-	{
-		this.iRelease = buttons;
-		this.flReleaseTime = duration > 0.0 ? GetGameTime() + duration : 0.0;
-	}
-}
 
 #include "redbots3/generated/declarations.sp"
 #include "redbots3/archipelago.sp"
@@ -205,50 +124,7 @@ enum struct esButtonInput
 #include "redbots3/generated/debug_faults.sp"
 #include "redbots3/generated/threat_priority.sp"
 
-/* Replicate the behaviour of PathFollower's PluginBot
 
-An enum struct with methods on it, which the generator has no form for: it emits
-a record's fields and nothing else. It sits here rather than in the generated
-preamble for that reason alone, and it is what mvm-z83.74 would have to grow to
-take. */
-enum struct esPluginBot
-{
-	bool bPathing;
-	float vecPathGoal[3];
-	int iPathGoalEntity;
-	
-	void Reset()
-	{
-		this.bPathing = false;
-		this.vecPathGoal = NULL_VECTOR;
-		this.iPathGoalEntity = -1;
-	}
-	
-	bool HasPathGoalVector()
-	{
-		return !Vector_IsZero(this.vecPathGoal);
-	}
-	
-	bool HasPathGoalEntity()
-	{
-		return this.iPathGoalEntity != -1;
-	}
-	
-	void SetPathGoalVector(const float vec[3])
-	{
-		//You can only set one or the other, not both
-		this.iPathGoalEntity = -1;
-		this.vecPathGoal = vec;
-	}
-	
-	void SetPathGoalEntity(int entity)
-	{
-		this.vecPathGoal = NULL_VECTOR;
-		this.iPathGoalEntity = entity;
-	}
-}
-
-esPluginBot g_arrPluginBot[MAXPLAYERS + 1];
 
 /* What nextbot_behavior.sp used to include
 

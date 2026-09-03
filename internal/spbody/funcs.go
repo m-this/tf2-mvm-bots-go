@@ -587,3 +587,62 @@ func byRefParams(sig *types.Signature) map[string]bool {
 	}
 	return out
 }
+
+/*
+	enumStructMethod emits one method inside its enum struct's braces
+
+SourcePawn writes a method the way it writes a function, with no keyword in
+front of it and with the receiver spelled this. Everything else is the ordinary
+body emitter, so a method is checked and written exactly as a plain function is.
+*/
+func (e *emitter) enumStructMethod(d *ast.FuncDecl) {
+	obj, ok := e.info.Defs[d.Name].(*types.Func)
+	if !ok {
+		e.fail(d.Pos(), "the method %s has no definition", d.Name.Name)
+		return
+	}
+	e.lengths = lengthsOf(d)
+	e.consts = constsOf(d)
+	e.mutates = mutatesOf(d)
+	e.byrefs = byrefsOf(d)
+	e.writable = writablesOf(d)
+
+	sig := obj.Type().(*types.Signature)
+	e.receiver = sig.Recv().Name()
+
+	e.returnsValue = returnsArray(d)
+	ret, params, err := e.signature(d, sig)
+	if err != nil {
+		e.fail(d.Pos(), "%v", err)
+		return
+	}
+	e.byRef = byRefParams(sig)
+
+	name := e.emittedName(d)
+	e.line("%s %s(%s)", ret, name, strings.Join(params, ", "))
+	e.line("{")
+	e.indent++
+	if e.resultName != "" && usesResult(d.Body, e.resultName) {
+		e.line("%s;", e.resultDecl)
+	} else if e.resultName != "" {
+		e.resultName = ""
+	}
+	for _, out := range e.outParams {
+		e.zero(out)
+	}
+	e.pending = nil
+	e.checkClosed(d)
+	for _, s := range d.Body.List {
+		e.stmt(s)
+	}
+	if !endsInReturn(d.Body) {
+		e.discharge(d.Body.End(), nil)
+	}
+	e.pending = nil
+	e.indent--
+	e.line("}")
+	e.outParams, e.byRef = nil, nil
+	e.resultName, e.resultDecl = "", ""
+	e.returnsValue = false
+	e.receiver = ""
+}

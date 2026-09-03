@@ -101,6 +101,14 @@ type emitter struct {
 	// source says: arrays and enum structs. Assigning to one changes the
 	// caller's value in SourcePawn and not in Go, so it is refused.
 	byRef map[string]bool
+
+	// methods are the enum struct methods, by the type they hang off. They
+	// are emitted inside its braces and nowhere else.
+	methods map[string][]*ast.FuncDecl
+
+	// receiver is the name the method being emitted binds its receiver to,
+	// which SourcePawn spells this.
+	receiver string
 }
 
 func (e *emitter) fail(pos token.Pos, format string, args ...any) {
@@ -205,13 +213,14 @@ func (e *emitter) run(files []*ast.File) {
 	// the declarations come out in dependency order rather than source
 	// order: the defines an array length may use, then the enums and enum
 	// structs, then the globals, then the bodies.
+	e.collectMethods(files)
 	e.eachDecl(files, func(d ast.Decl) bool { g, ok := d.(*ast.GenDecl); return ok && g.Tok == token.CONST })
 	e.eachDecl(files, func(d ast.Decl) bool { g, ok := d.(*ast.GenDecl); return ok && g.Tok == token.TYPE })
 	e.eachDecl(files, func(d ast.Decl) bool { g, ok := d.(*ast.GenDecl); return ok && g.Tok == token.VAR })
 	if len(e.state) > 0 {
 		e.blank()
 	}
-	e.eachDecl(files, func(d ast.Decl) bool { _, ok := d.(*ast.FuncDecl); return ok })
+	e.eachDecl(files, func(d ast.Decl) bool { f, ok := d.(*ast.FuncDecl); return ok && f.Recv == nil })
 	// Anything left is a declaration no pass claimed, and decl refuses it by
 	// name rather than dropping it.
 	e.eachDecl(files, func(d ast.Decl) bool {
@@ -325,9 +334,53 @@ func (e *emitter) typeSpec(d *ast.GenDecl, spec *ast.TypeSpec) {
 		}
 		e.line("%s;", declare(tag, field, dims))
 	}
+	for _, m := range e.methods[spec.Name.Name] {
+		e.blank()
+		e.enumStructMethod(m)
+	}
 	e.indent--
 	e.line("}")
 	e.blank()
+}
+
+/*
+	collectMethods files each method under the type it hangs off
+
+An enum struct's methods are written inside its braces, so they cannot be
+emitted where they were declared. Go keeps them beside the type; SourcePawn
+keeps them in it.
+*/
+func (e *emitter) collectMethods(files []*ast.File) {
+	e.methods = map[string][]*ast.FuncDecl{}
+	for _, f := range files {
+		if isGenerated(f) {
+			continue
+		}
+		for _, decl := range f.Decls {
+			fn, ok := decl.(*ast.FuncDecl)
+			if !ok || fn.Recv == nil || len(fn.Recv.List) != 1 {
+				continue
+			}
+			name, ok := receiverTypeName(fn.Recv.List[0].Type)
+			if !ok {
+				e.fail(fn.Pos(), "a method on something that is not a named type")
+				continue
+			}
+			e.methods[name] = append(e.methods[name], fn)
+		}
+	}
+}
+
+// receiverTypeName is the type a method hangs off, pointer or not.
+func receiverTypeName(t ast.Expr) (string, bool) {
+	if star, isPointer := t.(*ast.StarExpr); isPointer {
+		t = star.X
+	}
+	id, ok := t.(*ast.Ident)
+	if !ok {
+		return "", false
+	}
+	return id.Name, true
 }
 
 // typeName reads //sp:name off a type declaration, from its own doc.

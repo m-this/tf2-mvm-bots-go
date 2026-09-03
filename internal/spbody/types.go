@@ -69,6 +69,14 @@ func (e *emitter) namedTag(t *types.Named) (string, []int64, error) {
 	}
 	switch u := t.Underlying().(type) {
 	case *types.Struct:
+		/* The name the port claimed, if it claimed one
+
+		A record other files declare variables of keeps the plugin's name,
+		and typeSpec already writes it out that way. A variable of that
+		type has to agree, or it names a type nothing declares. */
+		if claimed, ok := e.typeNames[name]; ok {
+			return claimed, nil, nil
+		}
 		return e.cfg.Prefix + name, nil, nil
 	case *types.Basic:
 		if u.Info()&types.IsInteger == 0 {
