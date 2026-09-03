@@ -41,20 +41,7 @@ Author: ★ Officer Spy ★
 #define PLUGIN_PREFIX	"[BotManager]"
 #define TFBOT_IDENTITY_NAME	"TFBOT_SEX_HAVER"
 
-enum
-{
-	MANAGER_MODE_MANUAL_BOTS = 0,
-	MANAGER_MODE_READY_BOTS,
-	MANAGER_MODE_AUTO_BOTS
-}
 
-enum
-{
-	BOT_LINEUP_MODE_RANDOM,
-	BOT_LINEUP_MODE_PREFERENCE,
-	BOT_LINEUP_MODE_CHOOSE,
-	BOT_LINEUP_MODE_PREFERENCE_CHOOSE
-}
 
 //A zone name is a short label like "inside": long enough to read, short enough to keep in a config
 #define NEST_ZONE_LENGTH	24
@@ -141,115 +128,7 @@ enum struct esButtonInput
 	}
 }
 
-//Globals
-bool g_bLateLoad;
-bool g_bBotsEnabled;
-float g_flAddingBotTime;
-float g_flNextReadyTime;
-int g_iDetonatingPlayer = -1;
-ArrayList g_adtChosenBotClasses;
-
-/* The seat of the team composition each of those classes was named in, index for index
-Only the composition names seats, and the lineup mode's classes are appended after its own, so this
-list is the shorter of the two and an index past its end is a bot sitting in no seat */
-ArrayList g_adtChosenBotSeats;
-bool g_bBotClassesLocked;
-int g_iUIDBotSummoner = 0;
-bool g_bAllowBotTeamRedo;
-
-//For defender bots
-bool g_bIsDefenderBot[MAXPLAYERS + 1];
-bool g_bIsBeingRevived[MAXPLAYERS + 1];
-bool g_bHasUpgraded[MAXPLAYERS + 1];
-
-/* Whether this bot has done its shopping since the last wave started
-
-Readiness used to stand in for this, and it stopped being able to: with a person on RED every bot
-is held ready from the first frame of the break so the person alone decides when the wave starts.
-Every "has he finished preparing" test that read the ready flag then answered yes before he had
-bought anything, which skipped the shopping trip and, from the second wave on, skipped it for the
-rest of the mission. */
-bool g_bShoppedThisBreak[MAXPLAYERS + 1];
-esButtonInput g_arrExtraButtons[MAXPLAYERS + 1];
-float m_flDeadRethinkTime[MAXPLAYERS + 1]; //no longer static: generated/lifecycle.sp clears it, and a file-static is invisible from an included file
-int g_iBuybackNumber[MAXPLAYERS + 1];
-int g_iBuyUpgradesNumber[MAXPLAYERS + 1];
-
-float m_flNextSnipeFireTime[MAXPLAYERS + 1]; //no longer static: generated/lifecycle.sp reads and writes it, and a file-static is invisible from an included file
-
-#if defined MOD_ROLL_THE_DICE_REVAMPED
-float m_flNextRollTime[MAXPLAYERS + 1]; //no longer static: generated/lifecycle.sp clears it, and a file-static is invisible from an included file
-#endif
-
-//For other players
-bool g_bChoosingBotClasses[MAXPLAYERS + 1];
-
-#if defined CHANGETEAM_RESTRICTIONS
-float g_flEnableBotsCooldown[MAXPLAYERS + 1];
-#endif
-
-float m_flLastReadyInputTime[MAXPLAYERS + 1]; //no longer static: generated/lifecycle.sp clears it, and a file-static is invisible from an included file
-
-//Config
-esMapConfiguration g_arrMapConfig;
-ArrayList m_adtBotNames; //no longer static: generated/mapconfig.sp fills it, and a file-static is invisible from an included file
-
-//Global entities
-int g_iPopulationManager = -1;
-
-ConVar redbots_manager_debug;
-ConVar redbots_manager_debug_actions;
-ConVar redbots_manager_mode;
-ConVar redbots_manager_bot_lineup_mode;
-ConVar redbots_manager_use_custom_loadouts;
-ConVar redbots_manager_class_blacklist;
-ConVar redbots_manager_team_composition;
-ConVar redbots_manager_kick_bots;
-ConVar redbots_manager_min_players;
-ConVar redbots_manager_defender_team_size;
-ConVar redbots_manager_ready_cooldown;
-ConVar redbots_manager_keep_bot_upgrades;
-ConVar redbots_manager_bot_upgrade_interval;
-ConVar redbots_manager_engineer_nest_depth;
-ConVar redbots_manager_engineer_nest_relocate;
-ConVar redbots_manager_engineer_nest_relocate_score_gain_min;
-ConVar redbots_manager_bot_use_upgrades;
-ConVar redbots_manager_spawn_nav_recovery;
-ConVar redbots_manager_spawn_nav_recovery_radius;
-ConVar redbots_manager_spawn_nav_recovery_time;
-ConVar redbots_manager_bot_hats;
-ConVar redbots_manager_bot_hat_effects;
-ConVar redbots_manager_bot_buyback_chance;
-ConVar redbots_manager_bot_buy_upgrades_chance;
-ConVar redbots_manager_bot_max_tank_attackers;
-ConVar redbots_manager_bot_aim_skill;
-ConVar redbots_manager_bot_reflect_skill;
-ConVar redbots_manager_bot_reflect_chance;
-ConVar redbots_manager_bot_backstab_skill;
-ConVar redbots_manager_bot_hear_spy_range;
-ConVar redbots_manager_bot_notice_spy_time;
-ConVar redbots_manager_extra_bots;
-
-#if defined MOD_REQUEST_CREDITS
-ConVar redbots_manager_bot_request_credits;
-#endif
-
-#if defined MOD_ROLL_THE_DICE_REVAMPED
-ConVar redbots_manager_bot_rtd_variance;
-#endif
-
-ConVar nb_blind;
-ConVar tf_bot_path_lookahead_range;
-ConVar tf_bot_health_critical_ratio;
-ConVar tf_bot_health_ok_ratio;
-ConVar tf_bot_ammo_search_range;
-ConVar tf_bot_health_search_far_range;
-ConVar tf_bot_health_search_near_range;
-
-#if defined METHOD_MVM_UPGRADES
-Address g_pMannVsMachineUpgrades;
-#endif
-
+#include "redbots3/generated/declarations.sp"
 #include "redbots3/archipelago.sp"
 #include "redbots3/generated/archipelago.sp"
 #include "redbots3/generated/features.sp"
@@ -275,18 +154,6 @@ Address g_pMannVsMachineUpgrades;
 #include <stocklib_officerspy/mathlib/vector>
 #include "redbots3/generated/shared.sp"
 
-/* The three preset lineups AddBotsWithPresetTeamComp draws from
-
-Both are dead: nothing calls that function, which is mvm-z83.71. They stayed
-behind when the rest of util.sp was ported because a two dimensional table of
-names is a shape the generator has no form for, and porting a dead table to add
-one would be work for something that is going to be deleted. */
-char g_sBotTeamCompositions[][][] =
-{
-	{"scout", "soldier", "demoman", "heavyweapons", "engineer", "medic"},
-	{"scout", "heavyweapons", "heavyweapons", "heavyweapons", "engineer", "sniper"},
-	{"scout", "heavyweapons", "heavyweapons", "pyro", "engineer", "demoman"}
-};
 #include "redbots3/generated/roster_counts.sp"
 #include "redbots3/generated/humans.sp"
 #include "redbots3/generated/mapconfig.sp"

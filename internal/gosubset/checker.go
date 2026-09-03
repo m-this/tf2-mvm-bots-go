@@ -214,11 +214,24 @@ func specIsNameTable(spec *ast.ValueSpec) bool {
 	return false
 }
 
-// isStringArray is the [N]string a table of names is written as.
+/*
+	isStringArray is the [N]string a table of names is written as
+
+One more dimension is allowed, because the plugin has a table of lineups as well
+as tables of names: g_sBotTeamCompositions is three sets of six class names, and
+SourcePawn spells it char[][][]. Everything past the rank is the same rule, and
+the leaf is still a name.
+*/
 func isStringArray(t ast.Expr) bool {
 	arr, ok := t.(*ast.ArrayType)
 	if !ok || arr.Len == nil {
 		return false
+	}
+	if inner, nested := arr.Elt.(*ast.ArrayType); nested {
+		if inner.Len == nil {
+			return false
+		}
+		arr = inner
 	}
 	elem, ok := arr.Elt.(*ast.Ident)
 	return ok && elem.Name == "string"
@@ -234,6 +247,11 @@ func (c *checker) checkNameTable(v ast.Expr) {
 		return
 	}
 	for _, elt := range lit.Elts {
+		if row, nested := elt.(*ast.CompositeLit); nested {
+			// A table of lineups: every leaf is still a name.
+			c.checkNameTable(row)
+			continue
+		}
 		text, ok := elt.(*ast.BasicLit)
 		if !ok || text.Kind != token.STRING {
 			c.refuse(elt.Pos(), "an entry of a name table that is not a name",

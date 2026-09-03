@@ -498,3 +498,10 @@ func NativeRangeRepairStalls(plugin int32, params int32) int32 { return 0 }
 //sp:callback Native_GetAttackTarget
 //nolint:revive // unused-parameter: a name handed to CreateNative, never called
 func NativeGetAttackTarget(plugin int32, params int32) int32 { return 0 }
+
+// MapConfigRecord is esMapConfiguration, the per-map record. An enum struct
+// with methods on it, which the generator has no form for, so the plugin keeps
+// the type and this names it.
+//
+//sp:tag esMapConfiguration
+type MapConfigRecord int32

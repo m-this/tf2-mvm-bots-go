@@ -91,7 +91,17 @@ func (e *emitter) stringTable(name *ast.Ident, value ast.Expr, claimed string, t
 	if !ok {
 		return false
 	}
-	basic, ok := types.Unalias(arr.Elem()).(*types.Basic)
+	/* One more dimension, for a table of lineups rather than of names
+
+	g_sBotTeamCompositions is char[][][]: three lineups of six class names.
+	The rank is what changes; every leaf is still a name and still read-only. */
+	rows := int64(0)
+	elem := types.Unalias(arr.Elem())
+	if inner, nested := elem.(*types.Array); nested {
+		rows = inner.Len()
+		elem = types.Unalias(inner.Elem())
+	}
+	basic, ok := elem.(*types.Basic)
 	if !ok || basic.Kind() != types.String {
 		return false
 	}
@@ -110,6 +120,24 @@ func (e *emitter) stringTable(name *ast.Ident, value ast.Expr, claimed string, t
 	}
 	names := make([]string, 0, len(lit.Elts))
 	for _, el := range lit.Elts {
+		if rows > 0 {
+			row, isRow := el.(*ast.CompositeLit)
+			if !isRow {
+				e.fail(el.Pos(), "%s holds a lineup that is not a literal", name.Name)
+				return true
+			}
+			inner := make([]string, 0, len(row.Elts))
+			for _, cell := range row.Elts {
+				text, isText := cell.(*ast.BasicLit)
+				if !isText || text.Kind != token.STRING {
+					e.fail(cell.Pos(), "%s holds something that is not a name", name.Name)
+					return true
+				}
+				inner = append(inner, text.Value)
+			}
+			names = append(names, "{"+strings.Join(inner, ", ")+"}")
+			continue
+		}
 		text, ok := el.(*ast.BasicLit)
 		if !ok || text.Kind != token.STRING {
 			e.fail(el.Pos(), "%s holds something that is not a name", name.Name)
@@ -117,7 +145,11 @@ func (e *emitter) stringTable(name *ast.Ident, value ast.Expr, claimed string, t
 		}
 		names = append(names, text.Value)
 	}
-	e.state = append(e.state, stateVar{name: emitted, tag: "char", dims: []int64{arr.Len(), 0}})
+	dims := []int64{arr.Len(), 0}
+	if rows > 0 {
+		dims = []int64{arr.Len(), rows, 0}
+	}
+	e.state = append(e.state, stateVar{name: emitted, tag: "char", dims: dims})
 	/* static only when the port chose the name
 
 	A table nobody outside the file reads is file-static, which is what the
@@ -128,7 +160,11 @@ func (e *emitter) stringTable(name *ast.Ident, value ast.Expr, claimed string, t
 	if claimed != "" {
 		keyword = "char"
 	}
-	e.line("%s %s[][] =", keyword, emitted)
+	brackets := "[][]"
+	if rows > 0 {
+		brackets = "[][][]"
+	}
+	e.line("%s %s%s =", keyword, emitted, brackets)
 	e.line("{")
 	for _, n := range names {
 		e.line("\t%s,", n)
