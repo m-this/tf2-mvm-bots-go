@@ -144,6 +144,14 @@ type Extern struct {
 	declaration already does. Fills always writes a length after the
 	buffer, which this native has no parameter for. */
 	Into bool
+
+	/* Callback says the extern is a name and never a call
+
+	The registration table hands RegConsoleCmd and its like the name of a
+	function that now lives in another body package. The emitter can write
+	a name it has in the same package, and this is how it writes one it
+	does not: the extern exists to be passed. */
+	Callback bool
 	// Body says the opposite of Plugin: this names SourcePawn the port
 	// already generates, in another package. The emitted SourcePawn is one
 	// flat namespace, so calling it is calling it by name; what this buys is

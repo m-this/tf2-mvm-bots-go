@@ -216,6 +216,10 @@ func (e *emitter) unary(n *ast.UnaryExpr) string {
 // selector is either a struct field, which SourcePawn spells the same way, or
 // a name from the extern package, which is a call and is handled at the call.
 func (e *emitter) selector(n *ast.SelectorExpr) string {
+	if x, isExtern := e.externOf(n); isExtern && x.Callback {
+		// A name, not a call: what a registration is handed.
+		return x.Func
+	}
 	if _, isExtern := e.externOf(n); isExtern {
 		e.fail(n.Pos(), "%s used as a value; an extern is called, not passed", e.qualified(n))
 		return ""

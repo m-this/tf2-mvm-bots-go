@@ -201,6 +201,9 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 			return Extern{Func: name, Same: true}, true, nil
 		case "choice":
 			return Extern{Func: name, Choice: true}, true, nil
+		case "callback":
+			// A name handed to a registration, never called: see Callback.
+			return Extern{Func: name, Callback: true}, true, nil
 		case "delete":
 			return Extern{Func: name, Delete: true}, true, nil
 		case "new":
