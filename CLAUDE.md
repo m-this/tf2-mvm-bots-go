@@ -8,29 +8,18 @@ the tooling around them. SourcePawn is a build artifact and not a place anybody
 writes. `plugin/` is the SourcePawn tree, generated files and all: it moved here
 from `../tf2-mvm-bots`, which is being archived.
 
-That is wider than this repository was opened with, and it is most of the way
-there. `plugin/source` holds 474 lines of hand-written SourcePawn, down from
-27005. The menus, the aiming, the shopping trip and the preferences are all
-generated now; `nextbot_behavior.sp` and `player_pref.sp` are gone from the
-tree entirely. What remains is `tf2_defenderbots.sp` and the gamedata seam:
-`dhooks.sp`, `sdkcalls.sp`, `tf_upgrades.sp`, `offsets.sp` and the one native
-declaration in `archipelago.sp`.
+That is wider than this repository was opened with, and the port is done.
+`plugin/source` holds 240 lines of hand-written SourcePawn, down from 27005,
+and no hand-written SourcePawn holds a function any more. What is left is two
+files of declarations: `tf2_defenderbots.sp`, which is the include list, ten defines
+and `public Plugin myinfo`, and `archipelago.sp`, which is one `native`
+declaration of another plugin's export and the paragraph saying why it is
+optional. Six of the ten defines are read nowhere: `mvm-z83.82`.
 
-`tf2_defenderbots.sp` is 218 lines and holds no function, no global, no convar
-handle and no record. What is left is the include list, which is the plugin's
-build order, ten compile-time defines and `public Plugin myinfo`. Five of those
-defines are read nowhere now that every guard around them is ported, which is
-`mvm-z83.84`.
-
-One file still holds functions: `tf_upgrades.sp`, three methodmaps over an
-`Address` built on gamedata offsets, and the thin wrappers that exist so
-generated code can reach them. A methodmap is the one shape the emitter has no
-form for, which is why the wrappers were written in the first place.
-`archipelago.sp` is a single `native` declaration of another plugin's export.
-
-`offsets.sp`, `sdkcalls.sp` and `dhooks.sp` are gone. Calling the whole
-gamedata seam unportable was too quick: an offset read, an SDKCall preparation
-and a DHook callback are all ordinary code, and only the methodmaps are not.
+The whole gamedata seam went too. Calling it unportable was twice too quick: an
+offset read, an SDKCall preparation, a DHook callback and a methodmap over an
+`Address` are all things the emitter can write, the last of them once it was
+taught how.
 
 The proofs no longer read the old repository. Every shipped file a comparison
 needs is snapshotted under `internal/upstream/shipped` at the revision that
