@@ -181,7 +181,7 @@ func BombHatchRangeCritical() float32 { return 1000.0 }
 
 // SetLookingAroundForEnemies turns the game's own scanning on or off.
 //
-//sp:plugin SetLookingAroundForEnemies
+//sp:body SetLookingAroundForEnemies
 func SetLookingAroundForEnemies(client int32, allow bool) {
 	if queries.SetLookingAroundForEnemies == nil {
 		missing("SetLookingAroundForEnemies")
@@ -763,7 +763,7 @@ func (a Behaviour) SetHandleEntity(offset int32, entity int32) {
 // LastDamageType is what last hurt the player, through the plugin's offset
 // read.
 //
-//sp:plugin GetLastDamageType
+//sp:body GetLastDamageType
 func LastDamageType(client int32) int32 {
 	if queries.LastDamageType == nil {
 		missing("GetLastDamageType")

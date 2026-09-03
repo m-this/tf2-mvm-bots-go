@@ -280,6 +280,10 @@ var All = []Body{
 		Dir: "internal/body/declarations", Out: "sourcepawn/declarations.sp", Prefix: "Go_",
 	},
 	{
+		Dir: "internal/body/offsets", Out: "sourcepawn/offsets.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/offsets.sp", Rev: campaignRev,
+	},
+	{
 		Dir: "internal/body/humans", Out: "sourcepawn/humans.sp", Prefix: "Go_",
 		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},

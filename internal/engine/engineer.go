@@ -299,7 +299,7 @@ func IsRescueRangerEquipped(client int32) bool {
 // TurretAngles is where the sentry is pointing, which is what the engineer
 // stands behind.
 //
-//sp:plugin GetTurretAngles
+//sp:body GetTurretAngles
 func TurretAngles(sentry int32) (angles [3]float32) {
 	if engineers.TurretAngles == nil {
 		missing("GetTurretAngles")

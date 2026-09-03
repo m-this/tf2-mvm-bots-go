@@ -114,7 +114,7 @@ func FindTeleporterOffset() int32 { return 0x70 }
 // OpportunisticTimer is the address of the game's own opportunistic timer for
 // that bot.
 //
-//sp:plugin GetOpportunisticTimer
+//sp:body GetOpportunisticTimer
 func OpportunisticTimer(client int32) Address {
 	if tacticals.OpportunisticTimer == nil {
 		missing("GetOpportunisticTimer")

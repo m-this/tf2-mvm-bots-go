@@ -71,7 +71,7 @@ func ClassSpy() Class { return 8 }
 // TFBotMission is what the game told the robot to do, which for a sniper is
 // what makes him sit on a perch.
 //
-//sp:plugin GetTFBotMission
+//sp:body GetTFBotMission
 func TFBotMission(client int32) int32 {
 	if fights.TFBotMission == nil {
 		missing("GetTFBotMission")

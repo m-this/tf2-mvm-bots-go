@@ -76,7 +76,7 @@ func FakeClientCommandThrottled(client int32, command string) {
 
 // IsPlacementOK says the game would let the building go down there.
 //
-//sp:plugin IsPlacementOK
+//sp:body IsPlacementOK
 func IsPlacementOK(object int32) bool {
 	if builds.IsPlacementOK == nil {
 		missing("IsPlacementOK")

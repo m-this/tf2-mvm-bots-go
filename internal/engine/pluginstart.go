@@ -174,7 +174,7 @@ func GameConfAddress(g GameData, name string) Address {
 
 // InitOffsets reads every offset the mod needs. Still in offsets.sp.
 //
-//sp:plugin InitOffsets
+//sp:body InitOffsets
 func InitOffsets(g GameData) {
 	if pluginStarts.InitOffsets == nil {
 		missing("InitOffsets")

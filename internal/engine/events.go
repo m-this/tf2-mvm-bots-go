@@ -220,7 +220,7 @@ func SetCurrencyWithBundles(client int32, credits int32) {
 
 // StartingCurrency is what the mission starts everybody with.
 //
-//sp:plugin GetStartingCurrency
+//sp:body GetStartingCurrency
 func StartingCurrency(populationManager int32) int32 {
 	if events.StartingCurrency == nil {
 		missing("GetStartingCurrency")

@@ -95,7 +95,7 @@ Author: ★ Officer Spy ★
 #include "redbots3/generated/weapon_tuning.sp"
 #include "redbots3/generated/uber.sp"
 #include "redbots3/generated/demoman_stickies.sp"
-#include "redbots3/offsets.sp"
+#include "redbots3/generated/offsets.sp"
 #include "redbots3/sdkcalls.sp"
 #include "redbots3/generated/loadouts.sp"
 #include "redbots3/generated/cosmetics.sp"

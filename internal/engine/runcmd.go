@@ -78,7 +78,7 @@ func PluginBotSimulateFrame(client int32) {
 // IsPlayingHorn says the buff banner is mid-blow, which is when holding fire
 // stops meaning anything. Still in offsets.sp.
 //
-//sp:plugin IsPlayingHorn
+//sp:body IsPlayingHorn
 func IsPlayingHorn(weapon int32) bool {
 	if runCmds.IsPlayingHorn == nil {
 		missing("IsPlayingHorn")
@@ -89,7 +89,7 @@ func IsPlayingHorn(weapon int32) bool {
 // LastAccuracyCheck is when the revolver last decided its shot was accurate.
 // Still in offsets.sp.
 //
-//sp:plugin GetLastAccuracyCheck
+//sp:body GetLastAccuracyCheck
 func LastAccuracyCheck(weapon int32) float32 {
 	if runCmds.LastAccuracyCheck == nil {
 		missing("GetLastAccuracyCheck")

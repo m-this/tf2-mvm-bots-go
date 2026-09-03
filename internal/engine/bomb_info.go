@@ -64,7 +64,7 @@ func FeatureStickyStack() int32 { return 3 }
 // TravelDistanceToBombTarget is how far this ground is from where the bomb is
 // going, along the route rather than through the walls.
 //
-//sp:plugin GetTravelDistanceToBombTarget
+//sp:body GetTravelDistanceToBombTarget
 func TravelDistanceToBombTarget(area Area) float32 {
 	if bombInfos.TravelDistanceToBombTarget == nil {
 		missing("GetTravelDistanceToBombTarget")
