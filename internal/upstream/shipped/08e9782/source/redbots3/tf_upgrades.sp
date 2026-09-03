@@ -144,6 +144,12 @@ void InitMvMUpgrades(GameData hGamedata)
 	offset_nTier = hGamedata.GetOffset("CMannVsMachineUpgrades::nTier");
 	CMannVsMachineUpgrades_Size = offset_nTier + 4;
 	
+#if defined TESTING_ONLY
+	LogMessage("InitMvMUpgrades: CMannVsMachineUpgrades->flCap = %d", offset_flCap);
+	LogMessage("InitMvMUpgrades: CMannVsMachineUpgrades->nUIGroup = %d", offset_nUIGroup);
+	LogMessage("InitMvMUpgrades: CMannVsMachineUpgrades->nTier = %d", offset_nTier);
+	LogMessage("InitMvMUpgrades: Size of CMannVsMachineUpgrades = %d", CMannVsMachineUpgrades_Size);
+#endif
 }
 
 /* TECHNICAL DATA FOR REFERENCE
@@ -190,46 +196,3 @@ class CMannVsMachineUpgradeManager
 	CUtlMap< const char*, int > m_AttribMap;
 } */
 #endif
-/* Thin wrappers over the game's own upgrade objects
-
-The generated shopping code reaches these by name. Each is one methodmap call:
-the methodmap is this file's, built on the gamedata offsets, and a generated
-body has no form for a methodmap on an Address. */
-
-int UpgradeUIGroupOf(Address upgrade)
-{
-	return view_as<CMannVsMachineUpgrades>(upgrade).m_iUIGroup();
-}
-
-char[] UpgradeAttributeOf(Address upgrade)
-{
-	char attribute[MAX_ATTRIBUTE_DESCRIPTION_LENGTH];
-	attribute = view_as<CMannVsMachineUpgrades>(upgrade).m_szAttribute();
-	return attribute;
-}
-
-Address UpgradeAddressByIndex(int index)
-{
-	return CMannVsMachineUpgradeManager().GetUpgradeByIndex(index).Address;
-}
-
-//Whether the manager exists at all, which it does not until an MvM map has loaded
-bool IsUpgradeManagerUp()
-{
-	return CMannVsMachineUpgradeManager().Address != Address_Null;
-}
-
-/* The count the manager itself gives, unclamped
-
-UpgradeCount above falls back to UPGRADE_COUNT_MEASURED when the answer is not
-believable, which is what the shopping code wants and what sm_dump_upgrades is
-for reporting. */
-int UpgradeCountRaw()
-{
-	return CMannVsMachineUpgradeManager().Count();
-}
-
-int AttributeDefinitionIndexOf(Address attr)
-{
-	return view_as<CEconItemAttributeDefinition>(attr).GetIndex();
-}

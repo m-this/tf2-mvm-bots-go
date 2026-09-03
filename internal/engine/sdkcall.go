@@ -21,6 +21,7 @@ type SDKCallCalls struct {
 	GetCall                        func(name string) Call
 	NewGameDataText                func(name Text) GameData
 	PrepSetFromConfText            func(g GameData, source int32, name string) bool
+	DereferencePointer             func(addr Address) Address
 	DoPostInventoryApplication     func(client int32)
 	DoSetMission                   func(client int32, mission int32, resetBehaviorSystem bool)
 	DoLookupBone                   func(entity int32, name string) int32
@@ -573,3 +574,13 @@ func DoAimHeadTowards(body Body, lookAtPos [3]float32, priority LookAtPriority, 
 //
 //sp:tag LookAtPriorityType
 type LookAtPriority int32
+
+// DereferencePointer follows a pointer one step. Ported, sapper.
+//
+//sp:body DereferencePointer
+func DereferencePointer(addr Address) Address {
+	if sdkCalls.DereferencePointer == nil {
+		missing("DereferencePointer")
+	}
+	return sdkCalls.DereferencePointer(addr)
+}

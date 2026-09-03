@@ -10,39 +10,52 @@ internal/upgrade.
 
 // UpgradeCalls are the answers.
 type UpgradeCalls struct {
-	UpgradePostAction         func(client int32) Outcome
-	NearestTeammate           func(client int32, maxDistance float32) int32
-	SetHasUpgraded            func(client int32, done bool)
-	SetShoppedThisBreak       func(client int32, shopped bool)
-	SetBuyUpgradesNumber      func(client int32, count int32)
-	SetNestArea               func(actor int32, area Area)
-	SetNestRelocate           func(actor int32, area Area)
-	BoughtUpgradesCommand     func(client int32, args int32) Outcome
-	UpgradeTier               func(upgrade int32) int32
-	IsUpgradeTierEnabled      func(client int32, slot int32, tier int32) bool
-	UpgradeTierCap            func(attribute Text) int32
-	BuyUpgrade                func(client int32, count int32, slot int32, index int32)
-	PurchasedUpgrades         func(client int32) int32
-	SetPurchasedUpgrades      func(client int32, count int32)
-	UpgradeCount              func() int32
-	IsUpgradeManagerUp        func() bool
-	UpgradeCountRaw           func() int32
-	UpgradeByIndex            func(index int32) Address
-	UpgradeUIGroup            func(upgrade Address) int32
-	UpgradeAttribute          func(upgrade Address) Text
-	AttributeDefinitionByName func(name Text) Address
-	AttributeDefinitionIndex  func(attr Address) int32
-	CanUpgradeWithAttrib      func(client int32, slot int32, index int32, upgrade Address) bool
-	CostForUpgrade            func(upgrade Address, slot int32, playerClass int32, client int32) int32
-	IsUpgradeWasted           func(client int32, attribute Text) bool
-	AttributeID               func(name Text) int32
-	UpgradeRankGeneral        func(attribute int32) int32
-	UpgradeRankClass          func(playerClass Class, slot int32, attribute int32) int32
-	UpgradeRankLoadout        func(itemDefIndex int32, attribute int32) int32
-	UpgradeRankEngineerMetal  func(attribute int32) int32
-	UnrankedUpgradePriority   func() int32
-	PlayerUpgrades            func(client int32) List
-	SetPlayerUpgrades         func(client int32, list List)
+	UpgradePostAction            func(client int32) Outcome
+	NearestTeammate              func(client int32, maxDistance float32) int32
+	SetHasUpgraded               func(client int32, done bool)
+	SetShoppedThisBreak          func(client int32, shopped bool)
+	SetBuyUpgradesNumber         func(client int32, count int32)
+	SetNestArea                  func(actor int32, area Area)
+	SetNestRelocate              func(actor int32, area Area)
+	BoughtUpgradesCommand        func(client int32, args int32) Outcome
+	UpgradeTier                  func(upgrade int32) int32
+	IsUpgradeTierEnabled         func(client int32, slot int32, tier int32) bool
+	UpgradeTierCap               func(attribute Text) int32
+	BuyUpgrade                   func(client int32, count int32, slot int32, index int32)
+	PurchasedUpgrades            func(client int32) int32
+	SetPurchasedUpgrades         func(client int32, count int32)
+	UpgradeCount                 func() int32
+	IsUpgradeManagerUp           func() bool
+	UpgradeCountRaw              func() int32
+	MvMUpgradeManager            func() Address
+	GEconItemSchema              func() Address
+	GetAttributeDefinitionByName func(schema Address, name Text) Address
+	MvMUpgradeManagerCount       func() int32
+	GameDataOffset               func(g GameData, key string) int32
+	SetOffsetCap                 func(offset int32)
+	SetOffsetUIGroup             func(offset int32)
+	SetOffsetTier                func(offset int32)
+	OffsetTier                   func() int32
+	SetUpgradeSize               func(size int32)
+	OffsetCap                    func() int32
+	OffsetUIGroup                func() int32
+	UpgradeSize                  func() int32
+	UpgradeByIndex               func(index int32) Address
+	UpgradeUIGroup               func(upgrade Address) int32
+	UpgradeAttribute             func(upgrade Address) Text
+	AttributeDefinitionByName    func(name Text) Address
+	AttributeDefinitionIndex     func(attr Address) int32
+	CanUpgradeWithAttrib         func(client int32, slot int32, index int32, upgrade Address) bool
+	CostForUpgrade               func(upgrade Address, slot int32, playerClass int32, client int32) int32
+	IsUpgradeWasted              func(client int32, attribute Text) bool
+	AttributeID                  func(name Text) int32
+	UpgradeRankGeneral           func(attribute int32) int32
+	UpgradeRankClass             func(playerClass Class, slot int32, attribute int32) int32
+	UpgradeRankLoadout           func(itemDefIndex int32, attribute int32) int32
+	UpgradeRankEngineerMetal     func(attribute int32) int32
+	UnrankedUpgradePriority      func() int32
+	PlayerUpgrades               func(client int32) List
+	SetPlayerUpgrades            func(client int32, list List)
 }
 
 var upgrades UpgradeCalls
@@ -68,7 +81,7 @@ func UIGroupPowerupBottle() int32 { return 2 }
 // UpgradeCount is how many upgrades the station offers. Still in
 // tf_upgrades.sp.
 //
-//sp:plugin UpgradeCount
+//sp:body UpgradeCount
 func UpgradeCount() int32 {
 	if upgrades.UpgradeCount == nil {
 		missing("UpgradeCount")
@@ -78,7 +91,7 @@ func UpgradeCount() int32 {
 
 // UpgradeByIndex is the game's upgrade record at that index.
 //
-//sp:plugin UpgradeAddressByIndex
+//sp:body UpgradeAddressByIndex
 func UpgradeByIndex(index int32) Address {
 	if upgrades.UpgradeByIndex == nil {
 		missing("GetUpgradeByIndex")
@@ -89,7 +102,7 @@ func UpgradeByIndex(index int32) Address {
 // UpgradeUIGroup is which part of the station's UI it belongs to, which is how
 // a player upgrade is told from a weapon one.
 //
-//sp:plugin UpgradeUIGroupOf
+//sp:body UpgradeUIGroupOf
 func UpgradeUIGroup(upgrade Address) int32 {
 	if upgrades.UpgradeUIGroup == nil {
 		missing("UpgradeUIGroupOf")
@@ -99,7 +112,7 @@ func UpgradeUIGroup(upgrade Address) int32 {
 
 // UpgradeAttribute is the attribute name it grants.
 //
-//sp:plugin UpgradeAttributeOf returns
+//sp:body UpgradeAttributeOf returns
 func UpgradeAttribute(upgrade Address) Text {
 	if upgrades.UpgradeAttribute == nil {
 		missing("UpgradeAttributeOf")
@@ -109,7 +122,7 @@ func UpgradeAttribute(upgrade Address) Text {
 
 // AttributeDefinitionByName is the schema's record for that attribute.
 //
-//sp:plugin CEIAD_GetAttributeDefinitionByName
+//sp:body CEIAD_GetAttributeDefinitionByName
 func AttributeDefinitionByName(name Text) Address {
 	if upgrades.AttributeDefinitionByName == nil {
 		missing("CEIAD_GetAttributeDefinitionByName")
@@ -119,7 +132,7 @@ func AttributeDefinitionByName(name Text) Address {
 
 // AttributeDefinitionIndex is its index.
 //
-//sp:plugin AttributeDefinitionIndexOf
+//sp:body AttributeDefinitionIndexOf
 func AttributeDefinitionIndex(attr Address) int32 {
 	if upgrades.AttributeDefinitionIndex == nil {
 		missing("AttributeDefinitionIndexOf")
@@ -362,7 +375,7 @@ func NearestTeammate(client int32, maxDistance float32) int32 {
 // IsUpgradeManagerUp says the game has an upgrade manager, which it has not
 // until an MvM map has loaded. Still in tf_upgrades.sp.
 //
-//sp:plugin IsUpgradeManagerUp
+//sp:body IsUpgradeManagerUp
 func IsUpgradeManagerUp() bool {
 	if upgrades.IsUpgradeManagerUp == nil {
 		missing("IsUpgradeManagerUp")
@@ -374,7 +387,7 @@ func IsUpgradeManagerUp() bool {
 // hides an unbelievable one and sm_dump_upgrades exists to report it. Still in
 // tf_upgrades.sp.
 //
-//sp:plugin UpgradeCountRaw
+//sp:body UpgradeCountRaw
 func UpgradeCountRaw() int32 {
 	if upgrades.UpgradeCountRaw == nil {
 		missing("UpgradeCountRaw")
@@ -386,3 +399,137 @@ func UpgradeCountRaw() int32 {
 //
 //sp:global MAX_ATTRIBUTE_DESCRIPTION_LENGTH
 func AttributeDescriptionMax() int32 { return 128 }
+
+// MvMUpgradeManager is the manager, by the methodmap constructor's name.
+// Ported, tfupgrades.
+//
+//sp:native CMannVsMachineUpgradeManager
+func MvMUpgradeManager() Address {
+	if upgrades.MvMUpgradeManager == nil {
+		missing("CMannVsMachineUpgradeManager")
+	}
+	return upgrades.MvMUpgradeManager()
+}
+
+// GEconItemSchema is the item schema, or null when the game has not built one.
+// Ported, sdkcalls.
+//
+//sp:body GEconItemSchema
+func GEconItemSchema() Address {
+	if upgrades.GEconItemSchema == nil {
+		missing("GEconItemSchema")
+	}
+	return upgrades.GEconItemSchema()
+}
+
+// GetAttributeDefinitionByName is the schema's record for that attribute.
+// Ported, sdkcalls.
+//
+//sp:body GetAttributeDefinitionByName
+func GetAttributeDefinitionByName(schema Address, name Text) Address {
+	if upgrades.GetAttributeDefinitionByName == nil {
+		missing("GetAttributeDefinitionByName")
+	}
+	return upgrades.GetAttributeDefinitionByName(schema, name)
+}
+
+// MvMUpgradeManagerCount is the manager's own count, by the methodmap call the
+// shipped file writes. Ported, tfupgrades.
+//
+//sp:native CMannVsMachineUpgradeManager().Count
+func MvMUpgradeManagerCount() int32 {
+	if upgrades.MvMUpgradeManagerCount == nil {
+		missing("CMannVsMachineUpgradeManager().Count")
+	}
+	return upgrades.MvMUpgradeManagerCount()
+}
+
+// OffsetOf is the number the gamedata file gives for that key.
+//
+//sp:method GetOffset
+func (g GameData) OffsetOf(key string) int32 {
+	if upgrades.GameDataOffset == nil {
+		missing("GameData.GetOffset")
+	}
+	return upgrades.GameDataOffset(g, key)
+}
+
+// SetOffsetCap writes offset_flCap.
+//
+//sp:globalset offset_flCap
+func SetOffsetCap(offset int32) {
+	if upgrades.SetOffsetCap == nil {
+		missing("offset_flCap")
+	}
+	upgrades.SetOffsetCap(offset)
+}
+
+// SetOffsetUIGroup writes offset_nUIGroup.
+//
+//sp:globalset offset_nUIGroup
+func SetOffsetUIGroup(offset int32) {
+	if upgrades.SetOffsetUIGroup == nil {
+		missing("offset_nUIGroup")
+	}
+	upgrades.SetOffsetUIGroup(offset)
+}
+
+// SetOffsetTier writes offset_nTier.
+//
+//sp:globalset offset_nTier
+func SetOffsetTier(offset int32) {
+	if upgrades.SetOffsetTier == nil {
+		missing("offset_nTier")
+	}
+	upgrades.SetOffsetTier(offset)
+}
+
+// OffsetTier reads it.
+//
+//sp:global offset_nTier
+func OffsetTier() int32 {
+	if upgrades.OffsetTier == nil {
+		missing("offset_nTier")
+	}
+	return upgrades.OffsetTier()
+}
+
+// SetUpgradeSize writes CMannVsMachineUpgrades_Size, one row's width.
+//
+//sp:globalset CMannVsMachineUpgrades_Size
+func SetUpgradeSize(size int32) {
+	if upgrades.SetUpgradeSize == nil {
+		missing("CMannVsMachineUpgrades_Size")
+	}
+	upgrades.SetUpgradeSize(size)
+}
+
+// OffsetCap reads offset_flCap.
+//
+//sp:global offset_flCap
+func OffsetCap() int32 {
+	if upgrades.OffsetCap == nil {
+		missing("offset_flCap")
+	}
+	return upgrades.OffsetCap()
+}
+
+// OffsetUIGroup reads offset_nUIGroup.
+//
+//sp:global offset_nUIGroup
+func OffsetUIGroup() int32 {
+	if upgrades.OffsetUIGroup == nil {
+		missing("offset_nUIGroup")
+	}
+	return upgrades.OffsetUIGroup()
+}
+
+// UpgradeSize reads CMannVsMachineUpgrades_Size, one row's width.
+//
+//sp:global CMannVsMachineUpgrades_Size
+func UpgradeSize() int32 {
+	if upgrades.UpgradeSize == nil {
+		missing("CMannVsMachineUpgrades_Size")
+	}
+	return upgrades.UpgradeSize()
+}

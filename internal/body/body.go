@@ -285,6 +285,10 @@ var All = []Body{
 		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
+		Dir: "internal/body/tfupgrades", Out: "sourcepawn/tf_upgrades.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/tf_upgrades.sp", Rev: campaignRev,
+	},
+	{
 		Dir: "internal/body/offsets", Out: "sourcepawn/offsets.sp", Prefix: "Go_",
 		Shipped: "source/redbots3/offsets.sp", Rev: campaignRev,
 	},

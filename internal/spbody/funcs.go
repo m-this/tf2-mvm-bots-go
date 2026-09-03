@@ -676,7 +676,16 @@ func (e *emitter) methodmapMethod(d *ast.FuncDecl) {
 	}
 	e.byRef = byRefParams(sig)
 
-	e.line("public %s %s(%s)", ret, e.emittedName(d), strings.Join(params, ", "))
+	/* A constructor has no return type
+
+	SourcePawn writes public Name(...) inside a methodmap called Name, and
+	writing the type in front of it is a syntax error rather than a
+	redundancy. */
+	if name := e.emittedName(d); name == e.methodmapName {
+		e.line("public %s(%s)", name, strings.Join(params, ", "))
+	} else {
+		e.line("public %s %s(%s)", ret, name, strings.Join(params, ", "))
+	}
 	e.line("{")
 	e.indent++
 	if e.resultName != "" && usesResult(d.Body, e.resultName) {

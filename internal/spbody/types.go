@@ -79,6 +79,14 @@ func (e *emitter) namedTag(t *types.Named) (string, []int64, error) {
 		}
 		return e.cfg.Prefix + name, nil, nil
 	case *types.Basic:
+		if e.methodmaps[name] {
+			// A methodmap is a tag over an integer and carries no
+			// constants: the methods are what it is for.
+			if claimed, ok := e.typeNames[name]; ok {
+				return claimed, nil, nil
+			}
+			return e.cfg.Prefix + name, nil, nil
+		}
 		if u.Info()&types.IsInteger == 0 {
 			// A named float or bool has no tag of its own to
 			// declare, so it would emit as its underlying type and

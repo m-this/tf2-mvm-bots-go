@@ -621,3 +621,27 @@ var playerKilled bool
 //sp:name m_bEngineerKilled
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
 var engineerKilled bool
+
+/*
+The four offsets the upgrade table's layout is read by.
+
+Declared here rather than beside the methodmaps that read them: a methodmap body
+is emitted with the types, which come before the globals, so a global it reads
+has to be declared in a file included earlier.
+*/
+
+//sp:name offset_flCap
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var offsetCap int32
+
+//sp:name offset_nUIGroup
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var offsetUIGroup int32
+
+//sp:name offset_nTier
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var offsetTier int32
+
+//sp:name CMannVsMachineUpgrades_Size
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var upgradeSize int32

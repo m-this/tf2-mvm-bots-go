@@ -190,4 +190,8 @@ bool g_bSpyKilled;
 bool m_bTouchCredits;
 bool m_bPlayerKilled;
 bool m_bEngineerKilled;
+int offset_flCap;
+int offset_nUIGroup;
+int offset_nTier;
+int CMannVsMachineUpgrades_Size;
 

@@ -61,6 +61,11 @@ type emitter struct {
 	spNames map[string]string
 	// typeNames are the tags a //sp:name on a type declaration claimed.
 	typeNames map[string]string
+
+	// methodmaps are the type names //sp:methodmap claimed. A methodmap is a
+	// tag over an integer with no constants of its own, which is the one
+	// named integer that has no enum to emit.
+	methodmaps map[string]bool
 	// lengths maps a buffer parameter of the function being emitted onto
 	// the parameter that carries its length, from //sp:length.
 	lengths map[string]string
@@ -109,6 +114,10 @@ type emitter struct {
 	// receiver is the name the method being emitted binds its receiver to,
 	// which SourcePawn spells this.
 	receiver string
+
+	// methodmapName is the methodmap being emitted, so a method that shares
+	// its name is written as the constructor it is.
+	methodmapName string
 }
 
 func (e *emitter) fail(pos token.Pos, format string, args ...any) {
@@ -151,7 +160,7 @@ func (e *emitter) run(files []*ast.File) {
 	e.valueReturners = make(map[string]bool)
 	e.spNames = make(map[string]string)
 	e.typeNames = make(map[string]string)
-	e.typeNames = make(map[string]string)
+	e.methodmaps = make(map[string]bool)
 	e.borrowed = make(map[string]bool)
 	for _, f := range files {
 		if isGenerated(f) {
@@ -187,6 +196,9 @@ func (e *emitter) run(files []*ast.File) {
 				}
 				if name, claimed := typeName(ts, g); claimed {
 					e.typeNames[ts.Name.Name] = name
+				}
+				if _, isMethodmap := methodmapBase(ts, g); isMethodmap {
+					e.methodmaps[ts.Name.Name] = true
 				}
 			}
 		}
@@ -571,6 +583,11 @@ func methodmapBase(spec *ast.TypeSpec, d *ast.GenDecl) (string, bool) {
 				if len(fields) == 2 && fields[0] == methodmapDirective {
 					return fields[1], true
 				}
+				if len(fields) == 1 && fields[0] == methodmapDirective {
+					// No base: a methodmap over nothing, which is what
+					// the plugin writes for a tag it invented.
+					return "", true
+				}
 			}
 		}
 	}
@@ -589,7 +606,14 @@ func (e *emitter) methodmap(spec *ast.TypeSpec, d *ast.GenDecl, base string) {
 	if claimed, ok := typeName(spec, d); ok {
 		name = e.ident(spec.Pos(), claimed)
 	}
-	e.line("methodmap %s < %s", name, base)
+	e.methodmapName = name
+	defer func() { e.methodmapName = "" }()
+
+	if base == "" {
+		e.line("methodmap %s", name)
+	} else {
+		e.line("methodmap %s < %s", name, base)
+	}
 	e.line("{")
 	e.indent++
 	for i, m := range e.methods[spec.Name.Name] {

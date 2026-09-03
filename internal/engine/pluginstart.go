@@ -184,7 +184,7 @@ func InitOffsets(g GameData) {
 
 // InitMvMUpgrades reads the upgrade offsets. Still in tf_upgrades.sp.
 //
-//sp:plugin InitMvMUpgrades
+//sp:body InitMvMUpgrades
 func InitMvMUpgrades(g GameData) {
 	if pluginStarts.InitMvMUpgrades == nil {
 		missing("InitMvMUpgrades")

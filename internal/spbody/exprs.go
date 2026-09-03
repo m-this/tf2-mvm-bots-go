@@ -348,8 +348,15 @@ func (e *emitter) returnsArrayValue(call *ast.CallExpr) bool {
 		if x, isExtern := e.externOf(fun); isExtern {
 			return x.ReturnsArray
 		}
-		x, _, isMethod := e.externMethod(fun)
-		return isMethod && x.ReturnsArray
+		if x, _, isMethod := e.externMethod(fun); isMethod {
+			return x.ReturnsArray
+		}
+		// A method on a type this package declares says so the same way a
+		// plain function in it does, with //sp:returns.
+		if _, _, ok := e.localMethod(fun); ok {
+			return e.valueReturners[fun.Sel.Name]
+		}
+		return false
 	case *ast.Ident:
 		return e.valueReturners[fun.Name]
 	default:
@@ -576,6 +583,11 @@ func (e *emitter) callee(fun ast.Expr) (name string, lead []string, err error) {
 			// it to call instead.
 			return recv + "." + x.Func, x.Lead, nil
 		}
+		if name, recv, ok := e.localMethod(f); ok {
+			// A method on a type this package declares, which is
+			// written on its receiver the same way an extern's is.
+			return recv + "." + name, nil, nil
+		}
 		return "", nil, fmt.Errorf("%s is not an extern this emission was given; add it to internal/engine", e.qualified(f))
 	case *ast.Ident:
 		if builtin, ok := e.info.Uses[f].(*types.Builtin); ok {
@@ -661,4 +673,32 @@ func (e *emitter) compositeLit(n *ast.CompositeLit) string {
 		values = append(values, e.expr(elt))
 	}
 	return "{" + strings.Join(values, ", ") + "}"
+}
+
+/*
+	localMethod is a method on a type this package declares
+
+An enum struct's and a methodmap's are both written on the receiver, so a call
+to one is recv.Name(args) whatever the type turns out to be. The name is the
+emitted one, because a method keeps whatever //sp:name claimed for it.
+*/
+func (e *emitter) localMethod(n *ast.SelectorExpr) (string, string, bool) {
+	tv, ok := e.info.Types[n.X]
+	if !ok || tv.Type == nil {
+		return "", "", false
+	}
+	t := types.Unalias(tv.Type)
+	if p, isPointer := t.(*types.Pointer); isPointer {
+		t = types.Unalias(p.Elem())
+	}
+	named, ok := t.(*types.Named)
+	if !ok || named.Obj().Pkg() != e.pkg {
+		return "", "", false
+	}
+	for _, m := range e.methods[named.Obj().Name()] {
+		if m.Name.Name == n.Sel.Name {
+			return e.emittedName(m), e.expr(n.X), true
+		}
+	}
+	return "", "", false
 }

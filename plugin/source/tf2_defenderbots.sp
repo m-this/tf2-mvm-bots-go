@@ -119,7 +119,7 @@ Author: ★ Officer Spy ★
 #include "redbots3/generated/prefmenu.sp"
 #include "redbots3/generated/addmenu.sp"
 #include "redbots3/generated/panels.sp"
-#include "redbots3/tf_upgrades.sp"
+#include "redbots3/generated/tf_upgrades.sp"
 #include "redbots3/generated/debug_faults.sp"
 #include "redbots3/generated/threat_priority.sp"
 
