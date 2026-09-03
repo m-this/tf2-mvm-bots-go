@@ -117,7 +117,14 @@ DrawWardrobe is what this bot is going to wear for the rest of the mission.
 func DrawWardrobe(client int32) {
 	playerClass := engine.PlayerClass(client)
 
+	/* An item still written here is one the game refused, not one with no model
+
+	Both reasons end in DropHatFromPool and it logs the same line for each, so
+	the log could not tell a hat the schema has no model for from one the game
+	would not attach. Only the second throws, and only the second is mvm-6gi.
+	Named here because this is the one place that knows which it was. */
 	if equipping[client] != 0 {
+		engine.LogMessage("Item %d passed the schema and the game refused to attach it to class %d, which is mvm-6gi", equipping[client], wardrobe[client].PlayerClass)
 		DropHatFromPool(wardrobe[client].PlayerClass, equipping[client])
 		equipping[client] = 0
 		wardrobe[client].Drawn = false

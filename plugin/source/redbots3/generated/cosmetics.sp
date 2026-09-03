@@ -49,6 +49,7 @@ stock void DrawWardrobe(int client)
 	TFClassType playerClass = TF2_GetPlayerClass(client);
 	if (g_iEquipping[client] != 0)
 	{
+		LogMessage("Item %d passed the schema and the game refused to attach it to class %d, which is mvm-6gi", g_iEquipping[client], g_wardrobe[client].PlayerClass);
 		DropHatFromPool(g_wardrobe[client].PlayerClass, g_iEquipping[client]);
 		g_iEquipping[client] = 0;
 		g_wardrobe[client].Drawn = false;
