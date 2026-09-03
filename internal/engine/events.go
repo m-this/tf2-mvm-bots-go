@@ -268,7 +268,7 @@ func HookTouchPost(entity int32) {
 
 // HookDefenderBot puts the mod's detours on one bot. Still in dhooks.sp.
 //
-//sp:plugin DHooks_DefenderBot
+//sp:body DHooks_DefenderBot
 func HookDefenderBot(client int32) {
 	if events.HookDefenderBot == nil {
 		missing("DHooks_DefenderBot")

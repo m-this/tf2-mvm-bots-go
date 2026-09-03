@@ -632,3 +632,51 @@ var isUpgradeTierEnabled engine.Call
 //sp:name m_hShouldCollide
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
 var shouldCollide engine.Call
+
+/*
+The hooks and the flags they set, out of dhooks.sp.
+
+Each hook is armed per object rather than once, so the handle is kept and
+HookEntity or HookRaw is what points it at something.
+*/
+
+//sp:name m_hMyTouch
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var hookMyTouch engine.Hook
+
+//sp:name m_hIsBot
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var hookIsBot engine.Hook
+
+//sp:name m_hEventKilled
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var hookEventKilled engine.Hook
+
+//sp:name m_hIsVisibleEntityNoticed
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var hookIsVisibleEntityNoticed engine.Hook
+
+//sp:name m_hIsIgnored
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var hookIsIgnored engine.Hook
+
+/*
+spyKilled is read outside dhooks: a spy dying is what tells the rest of the mod
+to stop treating him as a threat.
+*/
+//
+//sp:name g_bSpyKilled
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var spyKilled bool
+
+//sp:name m_bTouchCredits
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var touchCredits bool
+
+//sp:name m_bPlayerKilled
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var playerKilled bool
+
+//sp:name m_bEngineerKilled
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var engineerKilled bool

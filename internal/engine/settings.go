@@ -118,7 +118,7 @@ func SetPopulationManager(entity int32) {
 // DHooksOnEntityCreated hooks whatever the entity needs hooking for. Still in
 // dhooks.sp.
 //
-//sp:plugin DHooks_OnEntityCreated
+//sp:body DHooks_OnEntityCreated
 func DHooksOnEntityCreated(entity int32, classname Text) {
 	if settings.DHooksOnEntityCreated == nil {
 		missing("DHooks_OnEntityCreated")

@@ -206,7 +206,7 @@ func InitSDKCalls(g GameData) bool {
 // InitDHooks prepares every detour, and says whether it could. Still in
 // dhooks.sp.
 //
-//sp:plugin InitDHooks
+//sp:body InitDHooks
 func InitDHooks(g GameData) bool {
 	if pluginStarts.InitDHooks == nil {
 		missing("InitDHooks")

@@ -288,6 +288,10 @@ var All = []Body{
 		Shipped: "source/redbots3/sdkcalls.sp", Rev: campaignRev,
 	},
 	{
+		Dir: "internal/body/dhooks", Out: "sourcepawn/dhooks.sp", Prefix: "Go_",
+		Shipped: "source/redbots3/dhooks.sp", Rev: campaignRev,
+	},
+	{
 		Dir: "internal/body/humans", Out: "sourcepawn/humans.sp", Prefix: "Go_",
 		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},

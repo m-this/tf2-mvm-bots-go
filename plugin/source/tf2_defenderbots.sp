@@ -99,7 +99,7 @@ Author: ★ Officer Spy ★
 #include "redbots3/generated/sdkcalls.sp"
 #include "redbots3/generated/loadouts.sp"
 #include "redbots3/generated/cosmetics.sp"
-#include "redbots3/dhooks.sp"
+#include "redbots3/generated/dhooks.sp"
 #include "redbots3/generated/gameevents.sp"
 #include "redbots3/generated/behaviourreset.sp"
 #include "redbots3/generated/playerpref.sp"

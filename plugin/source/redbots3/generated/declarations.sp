@@ -218,4 +218,13 @@ Handle m_hGetCostForUpgrade;
 Handle m_hGetUpgradeTier;
 Handle m_hIsUpgradeTierEnabled;
 Handle m_hShouldCollide;
+DynamicHook m_hMyTouch;
+DynamicHook m_hIsBot;
+DynamicHook m_hEventKilled;
+DynamicHook m_hIsVisibleEntityNoticed;
+DynamicHook m_hIsIgnored;
+bool g_bSpyKilled;
+bool m_bTouchCredits;
+bool m_bPlayerKilled;
+bool m_bEngineerKilled;
 
