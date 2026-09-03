@@ -194,6 +194,20 @@ func (e *emitter) arrayCall(define bool, lhs, rhs ast.Expr) bool {
 	if _, _, isProperty := e.propertyExtern(call); isProperty {
 		return false // a field read is a value too
 	}
+	if x, ok := e.externOfCall(call); ok && x.Same {
+		/* A same extern is the value itself, so this is an initialiser
+
+		spcomp will not take an assignment to a whole array, but it will
+		take one on the declaration: char block[64] = "EngineerNest" is
+		what the plugin writes and the only form it accepts. */
+		if define {
+			if decl, given := e.declaration(lhs); given {
+				e.line("%s = %s;", decl, e.expr(rhs))
+				return true
+			}
+		}
+		return false
+	}
 	if e.returnsArrayValue(call) {
 		// spcomp takes the float[] form as the right hand side of an
 		// assignment and not as an initialiser, so the declaration and
@@ -247,6 +261,12 @@ func (e *emitter) arrayCall(define bool, lhs, rhs ast.Expr) bool {
 			return true
 		}
 		e.line("%s;", e.callWith(call, nil, e.expr(lhs), fmt.Sprintf("%d", n)))
+		return true
+	}
+	if x, ok := e.externOfCall(call); ok && x.Into {
+		// The destination comes first and nothing follows it: the
+		// array's own declaration is the length.
+		e.line("%s;", e.callWith(call, nil, e.expr(lhs)))
 		return true
 	}
 	if x, ok := e.externOfCall(call); ok && x.Sized {

@@ -136,6 +136,14 @@ type Extern struct {
 	// Fills says the buffer and its length come first instead, which is how
 	// a call that writes text is declared: Format(buffer, maxlen, ...).
 	Fills bool
+
+	/* Into says the destination comes first and carries no length
+
+	TR_GetEndPosition(pos, trace) is the shape: a fixed-size array the
+	callee writes, with nothing to say how big it is because the
+	declaration already does. Fills always writes a length after the
+	buffer, which this native has no parameter for. */
+	Into bool
 	// Body says the opposite of Plugin: this names SourcePawn the port
 	// already generates, in another package. The emitted SourcePawn is one
 	// flat namespace, so calling it is calling it by name; what this buys is

@@ -327,6 +327,7 @@ char g_sBotTeamCompositions[][][] =
 #include "redbots3/generated/lifecycle.sp"
 #include "redbots3/generated/commands.sp"
 #include "redbots3/generated/readystate.sp"
+#include "redbots3/generated/dumpspot.sp"
 #include "redbots3/generated/teammenu.sp"
 #include "redbots3/generated/prefmenu.sp"
 #include "redbots3/generated/addmenu.sp"
@@ -946,76 +947,6 @@ Standing on the spot is the accurate way and stays the default. The aim mode is 
 traces the crosshair to the world and writes down what it hit, so a whole map can be marked from
 above without landing on every spot. It refuses a trace that hits nothing, since a spot in the
 skybox is worse than no spot */
-#define DUMP_SPOT_AIM_RANGE	8192.0
-
-public Action Command_DumpSpot(int client, int args)
-{
-	if (client < 1 || !IsClientInGame(client))
-	{
-		ReplyToCommand(client, "[SM] This command requires standing somewhere in the map.");
-		return Plugin_Handled;
-	}
-	
-	char block[64] = "EngineerNest";
-	
-	if (args >= 1)
-		GetCmdArg(1, block, sizeof(block));
-	
-	char mode[16];
-	
-	if (args >= 2)
-		GetCmdArg(2, mode, sizeof(mode));
-	
-	float origin[3];
-	
-	if (StrEqual(mode, "aim", false))
-	{
-		if (!TraceAimToWorld(client, origin))
-		{
-			ReplyToCommand(client, "[SM] Your crosshair is not on anything within %.0f units.", DUMP_SPOT_AIM_RANGE);
-			return Plugin_Handled;
-		}
-	}
-	else
-	{
-		GetClientAbsOrigin(client, origin);
-	}
-	
-	char mapName[PLATFORM_MAX_PATH]; GetCurrentMap(mapName, sizeof(mapName));
-	
-	ReplyToCommand(client, "[SM] %s on %s:", block, mapName);
-	ReplyToCommand(client, "\t\t\t\"origin\" \"%.0f %.0f %.0f\"", origin[0], origin[1], origin[2]);
-	
-	LogMessage("%s %s: \"origin\" \"%.0f %.0f %.0f\"", mapName, block, origin[0], origin[1], origin[2]);
-	
-	return Plugin_Handled;
-}
-
-//The world under the crosshair. Brushes and props only: a spot written down off a teammate's head is a spot nobody can build on
-static bool TraceAimToWorld(int client, float result[3])
-{
-	float eyes[3]; GetClientEyePosition(client, eyes);
-	float angles[3]; GetClientEyeAngles(client, angles);
-	
-	Handle trace = TR_TraceRayFilterEx(eyes, angles, MASK_SOLID, RayType_Infinite, TraceFilter_IgnorePlayers, client);
-	
-	bool hit = TR_DidHit(trace);
-	
-	if (hit)
-		TR_GetEndPosition(result, trace);
-	
-	delete trace;
-	
-	if (!hit || GetVectorDistance(eyes, result) > DUMP_SPOT_AIM_RANGE)
-		return false;
-	
-	return true;
-}
-
-static bool TraceFilter_IgnorePlayers(int entity, int mask, any data)
-{
-	return entity > MaxClients;
-}
 
 public Action Command_ViewBotUpgrades(int client, int args)
 {

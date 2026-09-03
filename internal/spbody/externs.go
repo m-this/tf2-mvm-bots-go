@@ -159,7 +159,7 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 			return Extern{}, false, fmt.Errorf("the directive %q needs a kind, one name and at most one flag", line)
 		}
 		kind, name := fields[0], fields[1]
-		returnsArray, sized, fills, inPlace, borrowed, frees := false, false, false, false, false, false
+		returnsArray, sized, fills, inPlace, borrowed, frees, into := false, false, false, false, false, false, false
 		if len(fields) == 3 {
 			switch fields[2] {
 			case "returns":
@@ -174,13 +174,15 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 				borrowed = true
 			case "frees":
 				frees = true
+			case "into":
+				into = true
 			default:
-				return Extern{}, false, fmt.Errorf("the directive flag %q is not returns, sized, fills, inplace, borrowed or frees", fields[2])
+				return Extern{}, false, fmt.Errorf("the directive flag %q is not returns, sized, fills, inplace, borrowed, frees or into", fields[2])
 			}
 		}
 		switch kind {
 		case "native":
-			return Extern{Func: name, Lead: lead, ReturnsArray: returnsArray, Sized: sized, Fills: fills, InPlace: inPlace, Borrowed: borrowed, Frees: frees, Trail: trail}, true, nil
+			return Extern{Func: name, Lead: lead, ReturnsArray: returnsArray, Sized: sized, Fills: fills, Into: into, InPlace: inPlace, Borrowed: borrowed, Frees: frees, Trail: trail}, true, nil
 		case "propertyset":
 			// The same read, written to: recv.Name = value, from a call
 			// taking the value.
