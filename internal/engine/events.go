@@ -50,6 +50,7 @@ var events EventCalls
 // InstallEvents puts a set of answers behind them.
 func InstallEvents(c EventCalls) func() {
 	previous := events
+	Fill(&c)
 	events = c
 	return func() { events = previous }
 }
@@ -63,44 +64,24 @@ func EventHookModePre() int32 { return 0 }
 // NoteMedicCall records that a player asked for a medic. Ported, mediccall.
 //
 //sp:body NoteMedicCall
-func NoteMedicCall(client int32) {
-	if events.NoteMedicCall == nil {
-		missing("NoteMedicCall")
-	}
-	events.NoteMedicCall(client)
-}
+func NoteMedicCall(client int32) { events.NoteMedicCall(client) }
 
 // BluAssistOnRobotSpawn bends a robot the assist is meant to help. Ported,
 // blu_assist.
 //
 //sp:body BluAssist_OnRobotSpawn
-func BluAssistOnRobotSpawn(client int32) {
-	if events.BluAssistOnRobotSpawn == nil {
-		missing("BluAssist_OnRobotSpawn")
-	}
-	events.BluAssistOnRobotSpawn(client)
-}
+func BluAssistOnRobotSpawn(client int32) { events.BluAssistOnRobotSpawn(client) }
 
 // GiveBotCosmeticsSoon dresses a bot half a second after it spawns. Ported,
 // cosmetics.
 //
 //sp:body GiveBotCosmeticsSoon
-func GiveBotCosmeticsSoon(client int32) {
-	if events.GiveBotCosmeticsSoon == nil {
-		missing("GiveBotCosmeticsSoon")
-	}
-	events.GiveBotCosmeticsSoon(client)
-}
+func GiveBotCosmeticsSoon(client int32) { events.GiveBotCosmeticsSoon(client) }
 
 // CanBuyUpgradesNow says the station is open to this bot. Ported, botqueries.
 //
 //sp:body CanBuyUpgradesNow
-func CanBuyUpgradesNow(client int32) bool {
-	if events.CanBuyUpgradesNow == nil {
-		missing("CanBuyUpgradesNow")
-	}
-	return events.CanBuyUpgradesNow(client)
-}
+func CanBuyUpgradesNow(client int32) bool { return events.CanBuyUpgradesNow(client) }
 
 // HookEventPre asks to be called before the game handles the event, which is
 // the only way to change one. The mission update is the only one the mod does
@@ -109,62 +90,36 @@ func CanBuyUpgradesNow(client int32) bool {
 //sp:native HookEvent after EventHookMode_Pre
 //nolint:revive // unused-parameter: the callback is a name the emitter writes
 func HookEventPre(name string, callback func(event Event, name string, dontBroadcast bool) Outcome) {
-	if events.HookEventPre == nil {
-		missing("HookEvent")
-	}
 	events.HookEventPre(name)
 }
 
 // NoteSpySighting records where a robot spy was last seen. Ported, spycheck.
 //
 //sp:body NoteSpySighting
-func NoteSpySighting(origin [3]float32) {
-	if events.NoteSpySighting == nil {
-		missing("NoteSpySighting")
-	}
-	events.NoteSpySighting(origin)
-}
+func NoteSpySighting(origin [3]float32) { events.NoteSpySighting(origin) }
 
 // IsFinalWave says this is the last one of the mission. Ported, mission.
 //
 //sp:body IsFinalWave
-func IsFinalWave() bool {
-	if events.IsFinalWave == nil {
-		missing("IsFinalWave")
-	}
-	return events.IsFinalWave()
-}
+func IsFinalWave() bool { return events.IsFinalWave() }
 
 // EngineerNestRelocationOnWaveComplete decides whether the nest should move
 // before the shopping trip tears it down. Ported, engineeridle.
 //
 //sp:body EngineerNestRelocation_OnWaveComplete
-func EngineerNestRelocationOnWaveComplete() {
-	if events.NestRelocationOnWaveComplete == nil {
-		missing("EngineerNestRelocation_OnWaveComplete")
-	}
-	events.NestRelocationOnWaveComplete()
-}
+func EngineerNestRelocationOnWaveComplete() { events.NestRelocationOnWaveComplete() }
 
 // ClearSniperStall forgets how long a sniper has been standing still. Ported,
 // stuckwatch.
 //
 //sp:body ClearSniperStall
-func ClearSniperStall(client int32) {
-	if events.ClearSniperStall == nil {
-		missing("ClearSniperStall")
-	}
-	events.ClearSniperStall(client)
-}
+func ClearSniperStall(client int32) { events.ClearSniperStall(client) }
 
 // HandleTeamPlayerCountChanged reseats the team when a person joins or leaves.
 // Still in tf2_defenderbots.sp.
 //
 //sp:body HandleTeamPlayerCountChanged
 func HandleTeamPlayerCountChanged(team Team, whoChanging int32) {
-	if events.HandleTeamPlayerCountChanged == nil {
-		missing("HandleTeamPlayerCountChanged")
-	}
 	events.HandleTeamPlayerCountChanged(team, whoChanging)
 }
 
@@ -180,41 +135,23 @@ it.
 // RespawnPlayer puts the bot back, which is the only way custom weapons take.
 //
 //sp:native TF2_RespawnPlayer
-func RespawnPlayer(client int32) {
-	if events.RespawnPlayer == nil {
-		missing("TF2_RespawnPlayer")
-	}
-	events.RespawnPlayer(client)
-}
+func RespawnPlayer(client int32) { events.RespawnPlayer(client) }
 
 // AddBotAttribute turns one of the game's own bot flags on.
 //
-//sp:plugin VS_AddBotAttribute
-func AddBotAttribute(client int32, attribute int32) {
-	if events.AddBotAttribute == nil {
-		missing("VS_AddBotAttribute")
-	}
-	events.AddBotAttribute(client, attribute)
-}
+//sp:library VS_AddBotAttribute
+func AddBotAttribute(client int32, attribute int32) { events.AddBotAttribute(client, attribute) }
 
 // MarkNeedsNamePurge tells the game the name is about to change.
 //
 //sp:native BaseEntity_MarkNeedsNamePurge
-func MarkNeedsNamePurge(client int32) {
-	if events.MarkNeedsNamePurge == nil {
-		missing("BaseEntity_MarkNeedsNamePurge")
-	}
-	events.MarkNeedsNamePurge(client)
-}
+func MarkNeedsNamePurge(client int32) { events.MarkNeedsNamePurge(client) }
 
 // SetCurrencyWithBundles writes a bot's credits, Archipelago's bundles
 // included. Ported, archipelago.
 //
 //sp:body SetCurrencyWithBundles
 func SetCurrencyWithBundles(client int32, credits int32) {
-	if events.SetCurrencyWithBundles == nil {
-		missing("SetCurrencyWithBundles")
-	}
 	events.SetCurrencyWithBundles(client, credits)
 }
 
@@ -222,9 +159,6 @@ func SetCurrencyWithBundles(client int32, credits int32) {
 //
 //sp:body GetStartingCurrency
 func StartingCurrency(populationManager int32) int32 {
-	if events.StartingCurrency == nil {
-		missing("GetStartingCurrency")
-	}
 	return events.StartingCurrency(populationManager)
 }
 
@@ -232,12 +166,7 @@ func StartingCurrency(populationManager int32) int32 {
 // up so far.
 //
 //sp:body GetAcquiredCreditsOfAllWaves
-func AcquiredCreditsOfAllWaves() int32 {
-	if events.AcquiredCreditsOfAllWaves == nil {
-		missing("GetAcquiredCreditsOfAllWaves")
-	}
-	return events.AcquiredCreditsOfAllWaves()
-}
+func AcquiredCreditsOfAllWaves() int32 { return events.AcquiredCreditsOfAllWaves() }
 
 // PopulationManager is g_iPopulationManager, the entity the mission is read
 // off.
@@ -250,31 +179,18 @@ func PopulationManager() int32 { return -1 }
 //
 //sp:native SetFakeClientConVar
 func SetFakeClientConVar(client int32, name string, value string) {
-	if events.SetFakeClientConVar == nil {
-		missing("SetFakeClientConVar")
-	}
 	events.SetFakeClientConVar(client, name, value)
 }
 
 // HookTouchPost hooks the touch the credit pickup is noticed by.
 //
 //sp:native SDKHook after SDKHook_TouchPost DefenderBot_TouchPost
-func HookTouchPost(entity int32) {
-	if events.HookTouchPost == nil {
-		missing("SDKHook")
-	}
-	events.HookTouchPost(entity)
-}
+func HookTouchPost(entity int32) { events.HookTouchPost(entity) }
 
 // HookDefenderBot puts the mod's detours on one bot. Still in dhooks.sp.
 //
 //sp:body DHooks_DefenderBot
-func HookDefenderBot(client int32) {
-	if events.HookDefenderBot == nil {
-		missing("DHooks_DefenderBot")
-	}
-	events.HookDefenderBot(client)
-}
+func HookDefenderBot(client int32) { events.HookDefenderBot(client) }
 
 // BotProjectileShield is CTFBot_PROJECTILE_SHIELD, which lets a medic bot use
 // the vaccinator's bubble.
@@ -287,9 +203,6 @@ func BotProjectileShield() int32 { return 0 }
 //
 //sp:body RemoveAllDefenderBots
 func RemoveAllDefenderBotsWhen(reason string, danceInstead bool) {
-	if events.RemoveAllDefenderBotsWhen == nil {
-		missing("RemoveAllDefenderBots")
-	}
 	events.RemoveAllDefenderBotsWhen(reason, danceInstead)
 }
 
@@ -297,22 +210,12 @@ func RemoveAllDefenderBotsWhen(reason string, danceInstead bool) {
 // question about it turns on.
 //
 //sp:slotset g_bIsDefenderBot
-func SetDefenderBotFlag(client int32, ours bool) {
-	if events.SetDefenderBotFlag == nil {
-		missing("g_bIsDefenderBot")
-	}
-	events.SetDefenderBotFlag(client, ours)
-}
+func SetDefenderBotFlag(client int32, ours bool) { events.SetDefenderBotFlag(client, ours) }
 
 // SetRandomNameOnBotFor gives it a name off the list. Ported, botnames.
 //
 //sp:body SetRandomNameOnBot
-func SetRandomNameOnBotFor(client int32) {
-	if events.SetRandomNameOnBot == nil {
-		missing("SetRandomNameOnBot")
-	}
-	events.SetRandomNameOnBot(client)
-}
+func SetRandomNameOnBotFor(client int32) { events.SetRandomNameOnBot(client) }
 
 // RequestCredits is redbots_manager_bot_request_credits, whether bots ask the
 // credits plugin for what they are owed.
@@ -324,20 +227,12 @@ func RequestCredits() ConVar { return 0 }
 // one may not be.
 //
 //sp:native TF2Attrib_IsValidAttributeName
-func IsValidAttributeName(name string) bool {
-	if events.IsValidAttributeName == nil {
-		missing("TF2Attrib_IsValidAttributeName")
-	}
-	return events.IsValidAttributeName(name)
-}
+func IsValidAttributeName(name string) bool { return events.IsValidAttributeName(name) }
 
 // CheckCommandAccess says the player holds that admin flag.
 //
 //sp:native CheckCommandAccess after true
 func CheckCommandAccess(client int32, command string, flags int32) bool {
-	if events.CheckCommandAccess == nil {
-		missing("CheckCommandAccess")
-	}
 	return events.CheckCommandAccess(client, command, flags)
 }
 
@@ -356,82 +251,46 @@ func NullString() string { return "" }
 // from BLUE is barred from starting the bots.
 //
 //sp:slot g_flEnableBotsCooldown
-func EnableBotsCooldown(client int32) float32 {
-	if events.EnableBotsCooldown == nil {
-		missing("g_flEnableBotsCooldown")
-	}
-	return events.EnableBotsCooldown(client)
-}
+func EnableBotsCooldown(client int32) float32 { return events.EnableBotsCooldown(client) }
 
 // SetEnableBotsCooldown writes it.
 //
 //sp:slotset g_flEnableBotsCooldown
-func SetEnableBotsCooldown(client int32, when float32) {
-	if events.SetEnableBotsCooldown == nil {
-		missing("g_flEnableBotsCooldown")
-	}
-	events.SetEnableBotsCooldown(client, when)
-}
+func SetEnableBotsCooldown(client int32, when float32) { events.SetEnableBotsCooldown(client, when) }
 
 // FileExists says the path is there, which a config the server has not written
 // is not.
 //
 //sp:native FileExists
-func FileExists(path Text) bool {
-	if events.FileExists == nil {
-		missing("FileExists")
-	}
-	return events.FileExists(path)
-}
+func FileExists(path Text) bool { return events.FileExists(path) }
 
 // ImportFromFile reads a KeyValues off disk, and says whether it parsed.
 //
 //sp:method ImportFromFile
-func (kv KeyValues) ImportFromFile(path Text) bool {
-	if events.ImportFromFile == nil {
-		missing("KeyValues.ImportFromFile")
-	}
-	return events.ImportFromFile(kv, path)
-}
+func (kv KeyValues) ImportFromFile(path Text) bool { return events.ImportFromFile(kv, path) }
 
 // ExportToFile writes one back.
 //
 //sp:method ExportToFile
-func (kv KeyValues) ExportToFile(path Text) bool {
-	if events.ExportToFile == nil {
-		missing("KeyValues.ExportToFile")
-	}
-	return events.ExportToFile(kv, path)
-}
+func (kv KeyValues) ExportToFile(path Text) bool { return events.ExportToFile(kv, path) }
 
 // PrintHintText puts a line in the middle of one player's screen.
 //
 //sp:native PrintHintText
 func PrintHintText(client int32, format string, args ...any) {
-	if events.PrintHintText == nil {
-		missing("PrintHintText")
-	}
 	events.PrintHintText(client, format, args)
 }
 
 // PrintHintTextToAll does it for everybody.
 //
 //sp:native PrintHintTextToAll
-func PrintHintTextToAll(format string, args ...any) {
-	if events.PrintHintTextToAll == nil {
-		missing("PrintHintTextToAll")
-	}
-	events.PrintHintTextToAll(format, args)
-}
+func PrintHintTextToAll(format string, args ...any) { events.PrintHintTextToAll(format, args) }
 
 // DisplayPanelBotPercentages shows each class's share of the draw. Ported,
 // panels.
 //
 //sp:body CreateDisplayPanelBotPercentages
 func DisplayPanelBotPercentages(client int32, classPercents [9]float32) {
-	if events.DisplayPanelBotPercentages == nil {
-		missing("CreateDisplayPanelBotPercentages")
-	}
 	events.DisplayPanelBotPercentages(client, classPercents)
 }
 

@@ -25,10 +25,10 @@ engineer being unable to walk there.
 */
 package engineerbuilddispenser
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 //sp:name DISPENSER_SPOT_TAKEN_RANGE
 const spotTakenRange = 150.0
@@ -112,21 +112,21 @@ const buildTime = 45.0
 
 var (
 	//sp:name m_ctDispenserReachDeadline
-	reachDeadline [Slots]float32
+	reachDeadline [slots.Count]float32
 	//sp:name m_ctDispenserGiveUpTime
-	giveUpTime [Slots]float32
+	giveUpTime [slots.Count]float32
 	//sp:name m_ctDispenserTryDeadline
-	tryDeadline [Slots]float32
+	tryDeadline [slots.Count]float32
 	// When the last build press is allowed to have landed, so the next frame is not another press
 	//
 	//sp:name m_ctDispenserPressed
-	pressed [Slots]float32
+	pressed [slots.Count]float32
 	//sp:name m_iDispenserTry
-	tryIndex [Slots]int32
+	tryIndex [slots.Count]int32
 	//sp:name m_vDispenserSpot
-	dispenserSpot [Slots][3]float32
+	dispenserSpot [slots.Count][3]float32
 	//sp:name m_vDispenserStand
-	dispenserStand [Slots][3]float32
+	dispenserStand [slots.Count][3]float32
 )
 
 // OnStart picks the spot once and prices the walk to it.
@@ -262,7 +262,7 @@ func Update(actor int32) engine.Outcome {
 		}
 
 		// It goes where he looks, so he looks at the spot. Turning on the spot only turns the problem
-		engine.AimHeadTowards(myBody, spot, engine.AimMandatory(), 0.1, engine.AddressNull(), "Placing dispenser")
+		engine.AimHeadTowards(myBody, spot, engine.AimMandatory(), 0.1, engine.NoAddress(), "Placing dispenser")
 
 		// NOTE: we do not look around for incoming enemies cause all we care about is placing this dispenser
 	}

@@ -66,6 +66,7 @@ var queries QueryCalls
 // InstallQueries puts a set of answers behind them.
 func InstallQueries(c QueryCalls) func() {
 	previous := queries
+	Fill(&c)
 	queries = c
 	return func() { queries = previous }
 }
@@ -73,12 +74,7 @@ func InstallQueries(c QueryCalls) func() {
 // PlayerMaxAmmo is how much of that ammo the player can carry.
 //
 //sp:native TF2Util_GetPlayerMaxAmmo
-func PlayerMaxAmmo(client int32, ammo int32) int32 {
-	if queries.PlayerMaxAmmo == nil {
-		missing("TF2Util_GetPlayerMaxAmmo")
-	}
-	return queries.PlayerMaxAmmo(client, ammo)
-}
+func PlayerMaxAmmo(client int32, ammo int32) int32 { return queries.PlayerMaxAmmo(client, ammo) }
 
 // AmmoPrimary is TF_AMMO_PRIMARY.
 //
@@ -98,12 +94,7 @@ func AmmoMetal() int32 { return 3 }
 // Currency is what the player holds right now.
 //
 //sp:native TF2_GetCurrency
-func Currency(client int32) int32 {
-	if queries.Currency == nil {
-		missing("TF2_GetCurrency")
-	}
-	return queries.Currency(client)
-}
+func Currency(client int32) int32 { return queries.Currency(client) }
 
 // BuybackCostPerSecond is MVM_BUYBACK_COST_PER_SEC, what a second of respawn
 // time costs to skip.
@@ -114,32 +105,17 @@ func BuybackCostPerSecond() int32 { return 5 }
 // BuybackNumber is the die this bot rolled for buying back, set on spawn.
 //
 //sp:slot g_iBuybackNumber
-func BuybackNumber(client int32) int32 {
-	if queries.BuybackNumber == nil {
-		missing("g_iBuybackNumber")
-	}
-	return queries.BuybackNumber(client)
-}
+func BuybackNumber(client int32) int32 { return queries.BuybackNumber(client) }
 
 // BuyUpgradesNumber is the die for shopping mid-round, set on spawn.
 //
 //sp:slot g_iBuyUpgradesNumber
-func BuyUpgradesNumber(client int32) int32 {
-	if queries.BuyUpgradesNumber == nil {
-		missing("g_iBuyUpgradesNumber")
-	}
-	return queries.BuyUpgradesNumber(client)
-}
+func BuyUpgradesNumber(client int32) int32 { return queries.BuyUpgradesNumber(client) }
 
 // BeingRevived says somebody has a revive marker up over this player.
 //
 //sp:slot g_bIsBeingRevived
-func BeingRevived(client int32) bool {
-	if queries.BeingRevived == nil {
-		missing("g_bIsBeingRevived")
-	}
-	return queries.BeingRevived(client)
-}
+func BeingRevived(client int32) bool { return queries.BeingRevived(client) }
 
 // BuybackChance is redbots_manager_bot_buyback_chance.
 //
@@ -160,12 +136,7 @@ func PathLookaheadRange() ConVar { return 0 }
 // ID is the nav area's own number, stable across a session.
 //
 //sp:method GetID
-func (n NavArea) ID() int32 {
-	if queries.AreaID == nil {
-		missing("CNavArea.GetID")
-	}
-	return queries.AreaID(n)
-}
+func (n NavArea) ID() int32 { return queries.AreaID(n) }
 
 // NoNavArea is what GetLastKnownArea answers for a bot that has never stood on
 // the mesh.
@@ -183,9 +154,6 @@ func BombHatchRangeCritical() float32 { return 1000.0 }
 //
 //sp:body SetLookingAroundForEnemies
 func SetLookingAroundForEnemies(client int32, allow bool) {
-	if queries.SetLookingAroundForEnemies == nil {
-		missing("SetLookingAroundForEnemies")
-	}
 	queries.SetLookingAroundForEnemies(client, allow)
 }
 
@@ -197,31 +165,18 @@ type Intention int32
 // Intention is the bot's.
 //
 //sp:method GetIntentionInterface
-func (b Bot) Intention() Intention {
-	if queries.Intention == nil {
-		missing("INextBot.GetIntentionInterface")
-	}
-	return queries.Intention(b)
-}
+func (b Bot) Intention() Intention { return queries.Intention(b) }
 
 // Reset throws the behaviour away so the next update rebuilds it.
 //
 //sp:method Reset
-func (i Intention) Reset() {
-	if queries.IntentionReset == nil {
-		missing("IIntention.Reset")
-	}
-	queries.IntentionReset(i)
-}
+func (i Intention) Reset() { queries.IntentionReset(i) }
 
 // TunedWeaponRanges is the range table the loadout tuning emits. Ported,
 // internal/tables.
 //
 //sp:body GetTunedWeaponRanges
 func TunedWeaponRanges(weapon int32) (found bool, desired float32, maxRange float32) {
-	if queries.TunedWeaponRanges == nil {
-		missing("GetTunedWeaponRanges")
-	}
 	return queries.TunedWeaponRanges(weapon)
 }
 
@@ -284,23 +239,13 @@ func WeaponPumpkinBomb() Weapon { return 63 }
 // VisibleInFOVNow says the bot can see it this frame, in its cone.
 //
 //sp:method IsVisibleInFOVNow
-func (k Known) VisibleInFOVNow() bool {
-	if queries.VisibleInFOVNow == nil {
-		missing("CKnownEntity.IsVisibleInFOVNow")
-	}
-	return queries.VisibleInFOVNow(k)
-}
+func (k Known) VisibleInFOVNow() bool { return queries.VisibleInFOVNow(k) }
 
 // RangeSquaredTo is the bot's distance to the entity, squared, which is the
 // form the game compares in.
 //
 //sp:method GetRangeSquaredTo
-func (b Bot) RangeSquaredTo(entity int32) float32 {
-	if queries.RangeSquaredTo == nil {
-		missing("INextBot.GetRangeSquaredTo")
-	}
-	return queries.RangeSquaredTo(b, entity)
-}
+func (b Bot) RangeSquaredTo(entity int32) float32 { return queries.RangeSquaredTo(b, entity) }
 
 // ConditionTaunting is TFCond_Taunting.
 //
@@ -310,12 +255,7 @@ func ConditionTaunting() Condition { return 7 }
 // RemoveCondition takes one off.
 //
 //sp:native TF2_RemoveCondition
-func RemoveCondition(client int32, condition Condition) {
-	if queries.RemoveCondition == nil {
-		missing("TF2_RemoveCondition")
-	}
-	queries.RemoveCondition(client, condition)
-}
+func RemoveCondition(client int32, condition Condition) { queries.RemoveCondition(client, condition) }
 
 // UseUpgrades is redbots_manager_bot_use_upgrades, whether the bots shop at
 // all.
@@ -332,52 +272,27 @@ func FeatureReadyWhenPrepared() int32 { return 5 }
 // wave rather than waiting where it shopped. Ported, dispatch.
 //
 //sp:body ShouldTakeUpPosition
-func ShouldTakeUpPosition(client int32) bool {
-	if queries.ShouldTakeUpPosition == nil {
-		missing("ShouldTakeUpPosition")
-	}
-	return queries.ShouldTakeUpPosition(client)
-}
+func ShouldTakeUpPosition(client int32) bool { return queries.ShouldTakeUpPosition(client) }
 
 // IsWaitingAtTheFront says he got there. Ported, movetofront.
 //
 //sp:body IsWaitingAtTheFront
-func IsWaitingAtTheFront(client int32) bool {
-	if queries.IsWaitingAtTheFront == nil {
-		missing("IsWaitingAtTheFront")
-	}
-	return queries.IsWaitingAtTheFront(client)
-}
+func IsWaitingAtTheFront(client int32) bool { return queries.IsWaitingAtTheFront(client) }
 
 // RealPlayerCount is how many humans are on the server.
 //
 //sp:body GetRealPlayerCount
-func RealPlayerCount() int32 {
-	if queries.RealPlayerCount == nil {
-		missing("GetRealPlayerCount")
-	}
-	return queries.RealPlayerCount()
-}
+func RealPlayerCount() int32 { return queries.RealPlayerCount() }
 
 // AnyHumanOnRed says the readiness is a person's call, not the bots'.
 //
 //sp:body AnyHumanOnRed
-func AnyHumanOnRed() bool {
-	if queries.AnyHumanOnRed == nil {
-		missing("AnyHumanOnRed")
-	}
-	return queries.AnyHumanOnRed()
-}
+func AnyHumanOnRed() bool { return queries.AnyHumanOnRed() }
 
 // AnyHumanReadyOnRed is what that person has said so far.
 //
 //sp:body AnyHumanReadyOnRed
-func AnyHumanReadyOnRed() bool {
-	if queries.AnyHumanReadyOnRed == nil {
-		missing("AnyHumanReadyOnRed")
-	}
-	return queries.AnyHumanReadyOnRed()
-}
+func AnyHumanReadyOnRed() bool { return queries.AnyHumanReadyOnRed() }
 
 // FeatureMedicAnswersCall is FEATURE_MEDIC_ANSWERS_CALL.
 //
@@ -387,12 +302,7 @@ func FeatureMedicAnswersCall() int32 { return 20 }
 // IsTFBotPlayer says the slot is one of the game's own bots. Ported, mission.
 //
 //sp:body IsTFBotPlayer
-func IsTFBotPlayer(client int32) bool {
-	if queries.IsTFBotPlayer == nil {
-		missing("IsTFBotPlayer")
-	}
-	return queries.IsTFBotPlayer(client)
-}
+func IsTFBotPlayer(client int32) bool { return queries.IsTFBotPlayer(client) }
 
 // ConditionSlowed is TFCond_Slowed.
 //
@@ -402,22 +312,12 @@ func ConditionSlowed() Condition { return 0 }
 // VisibleRecently says the bot saw it within the vision system's memory.
 //
 //sp:method IsVisibleRecently
-func (k Known) VisibleRecently() bool {
-	if queries.VisibleRecently == nil {
-		missing("CKnownEntity.IsVisibleRecently")
-	}
-	return queries.VisibleRecently(k)
-}
+func (k Known) VisibleRecently() bool { return queries.VisibleRecently(k) }
 
 // LastKnownPosition is where the bot last saw it.
 //
 //sp:method GetLastKnownPosition
-func (k Known) LastKnownPosition() (position [3]float32) {
-	if queries.LastKnownPosition == nil {
-		missing("CKnownEntity.GetLastKnownPosition")
-	}
-	return queries.LastKnownPosition(k)
-}
+func (k Known) LastKnownPosition() (position [3]float32) { return queries.LastKnownPosition(k) }
 
 // ConditionCritMmmph is TFCond_CritMmmph, the Phlogistinator's crit boost.
 //
@@ -439,51 +339,28 @@ func FlameballReachRange() float32 { return 526.0 }
 //
 //sp:method IsRangeGreaterThan
 func (b Bot) IsRangeGreaterThanEntity(entity int32, distance float32) bool {
-	if queries.IsRangeGreaterThanEntity == nil {
-		missing("INextBot.IsRangeGreaterThan")
-	}
 	return queries.IsRangeGreaterThanEntity(b, entity, distance)
 }
 
 // UseActionSlot drinks whatever is in the action slot. Ported, stocks.
 //
 //sp:body UseActionSlotItem
-func UseActionSlot(client int32) {
-	if queries.UseActionSlot == nil {
-		missing("UseActionSlotItem")
-	}
-	queries.UseActionSlot(client)
-}
+func UseActionSlot(client int32) { queries.UseActionSlot(client) }
 
 // PowerupBottleCharges is how many drinks are left. Ported, state.
 //
 //sp:body PowerupBottle_GetNumCharges
-func PowerupBottleCharges(bottle int32) int32 {
-	if queries.PowerupBottleCharges == nil {
-		missing("PowerupBottle_GetNumCharges")
-	}
-	return queries.PowerupBottleCharges(bottle)
-}
+func PowerupBottleCharges(bottle int32) int32 { return queries.PowerupBottleCharges(bottle) }
 
 // PowerupBottleKind is what the canteen does. Ported, state.
 //
 //sp:body PowerupBottle_GetType
-func PowerupBottleKind(bottle int32) int32 {
-	if queries.PowerupBottleKind == nil {
-		missing("PowerupBottle_GetType")
-	}
-	return queries.PowerupBottleKind(bottle)
-}
+func PowerupBottleKind(bottle int32) int32 { return queries.PowerupBottleKind(bottle) }
 
 // FindPowerupBottle walks the wearables for the canteen. Ported, state.
 //
 //sp:body GetPowerupBottle
-func FindPowerupBottle(client int32) int32 {
-	if queries.FindPowerupBottle == nil {
-		missing("GetPowerupBottle")
-	}
-	return queries.FindPowerupBottle(client)
-}
+func FindPowerupBottle(client int32) int32 { return queries.FindPowerupBottle(client) }
 
 // The canteen kinds, the schema's own order.
 const (
@@ -526,42 +403,24 @@ func BottleBuildingsInstantUpgrade() int32 { return bottleBuildingsInstantUpgrad
 //
 //sp:native TF2Util_IsPointInRespawnRoom after true
 func IsPointInRespawnRoomStrict(position [3]float32, client int32) bool {
-	if queries.IsPointInRespawnRoomStrict == nil {
-		missing("TF2Util_IsPointInRespawnRoom")
-	}
 	return queries.IsPointInRespawnRoomStrict(position, client)
 }
 
 // SetBuyUpgradesNumber writes the shopping die.
 //
 //sp:slotset g_iBuyUpgradesNumber
-func SetBuyUpgradesNumber(client int32, number int32) {
-	if queries.SetBuyUpgradesNumber == nil {
-		missing("g_iBuyUpgradesNumber")
-	}
-	queries.SetBuyUpgradesNumber(client, number)
-}
+func SetBuyUpgradesNumber(client int32, number int32) { queries.SetBuyUpgradesNumber(client, number) }
 
 // ShouldUpgradeMidRoundNow is the mid-round shopping question. Ported,
 // botqueries.
 //
 //sp:body ShouldUpgradeMidRound
-func ShouldUpgradeMidRoundNow(client int32) bool {
-	if queries.ShouldUpgradeMidRoundNow == nil {
-		missing("ShouldUpgradeMidRound")
-	}
-	return queries.ShouldUpgradeMidRoundNow(client)
-}
+func ShouldUpgradeMidRoundNow(client int32) bool { return queries.ShouldUpgradeMidRoundNow(client) }
 
 // IsSniperStalled is the watchdog's mark. Ported, stuckwatch.
 //
 //sp:body IsSniperStalled
-func IsSniperStalled(client int32) bool {
-	if queries.IsSniperStalled == nil {
-		missing("IsSniperStalled")
-	}
-	return queries.IsSniperStalled(client)
-}
+func IsSniperStalled(client int32) bool { return queries.IsSniperStalled(client) }
 
 // InReload is IN_RELOAD.
 //
@@ -572,12 +431,7 @@ func InReload() int32 { return 8192 }
 // hold.
 //
 //sp:method PressButtons
-func (b Buttons) PressButtonsNow(buttons int32) {
-	if queries.PressButtonsNow == nil {
-		missing("ExtraButtons.PressButtons")
-	}
-	queries.PressButtonsNow(b, buttons)
-}
+func (b Buttons) PressButtonsNow(buttons int32) { queries.PressButtonsNow(b, buttons) }
 
 // NbBlind is nb_blind, the game's own switch that turns bot vision off.
 //
@@ -587,42 +441,22 @@ func NbBlind() ConVar { return 0 }
 // MaxEntities is the entity table's size.
 //
 //sp:native GetMaxEntities
-func MaxEntities() int32 {
-	if queries.MaxEntities == nil {
-		missing("GetMaxEntities")
-	}
-	return queries.MaxEntities()
-}
+func MaxEntities() int32 { return queries.MaxEntities() }
 
 // UpdatePosition refreshes where the bot thinks the known entity is.
 //
 //sp:method UpdatePosition
-func (k Known) UpdatePosition() {
-	if queries.UpdatePosition == nil {
-		missing("CKnownEntity.UpdatePosition")
-	}
-	queries.UpdatePosition(k)
-}
+func (k Known) UpdatePosition() { queries.UpdatePosition(k) }
 
 // WasEverVisible says the bot has seen it at least once.
 //
 //sp:method WasEverVisible
-func (k Known) WasEverVisible() bool {
-	if queries.WasEverVisible == nil {
-		missing("CKnownEntity.WasEverVisible")
-	}
-	return queries.WasEverVisible(k)
-}
+func (k Known) WasEverVisible() bool { return queries.WasEverVisible(k) }
 
 // TimeSinceLastSeen is how long ago that was.
 //
 //sp:method GetTimeSinceLastSeen
-func (k Known) TimeSinceLastSeen() float32 {
-	if queries.TimeSinceLastSeen == nil {
-		missing("CKnownEntity.GetTimeSinceLastSeen")
-	}
-	return queries.TimeSinceLastSeen(k)
-}
+func (k Known) TimeSinceLastSeen() float32 { return queries.TimeSinceLastSeen(k) }
 
 // LoadoutSlotSecondary is TF_LOADOUT_SLOT_SECONDARY, which the charge meter is
 // indexed by.
@@ -635,9 +469,6 @@ func LoadoutSlotSecondary() int32 { return 1 }
 //
 //sp:body ShouldUseStickyLauncher
 func StickyLauncherWanted(client int32, launcher int32, threat int32, threatRange float32) bool {
-	if queries.StickyLauncherWanted == nil {
-		missing("ShouldUseStickyLauncher")
-	}
 	return queries.StickyLauncherWanted(client, launcher, threat, threatRange)
 }
 
@@ -645,9 +476,6 @@ func StickyLauncherWanted(client int32, launcher int32, threat int32, threatRang
 //
 //sp:body MedicHasPatient
 func MedicHasPatient(client int32, medigun int32) bool {
-	if queries.MedicHasPatient == nil {
-		missing("MedicHasPatient")
-	}
 	return queries.MedicHasPatient(client, medigun)
 }
 
@@ -655,12 +483,7 @@ func MedicHasPatient(client int32, medigun int32) bool {
 // SDKCall wrapper.
 //
 //sp:body Clip1
-func Clip1Of(weapon int32) int32 {
-	if queries.Clip1Of == nil {
-		missing("Clip1")
-	}
-	return queries.Clip1Of(weapon)
-}
+func Clip1Of(weapon int32) int32 { return queries.Clip1Of(weapon) }
 
 // ConditionCharging is TFCond_Charging, the demoman's shield run.
 //
@@ -676,12 +499,7 @@ func InAttack() int32 { return 1 }
 // has to do before it fires.
 //
 //sp:method ReleaseButtons
-func (b Buttons) ReleaseButtons(buttons int32) {
-	if queries.ReleaseButtons == nil {
-		missing("ExtraButtons.ReleaseButtons")
-	}
-	queries.ReleaseButtons(b, buttons)
-}
+func (b Buttons) ReleaseButtons(buttons int32) { queries.ReleaseButtons(b, buttons) }
 
 // ReflectSkill is redbots_manager_bot_reflect_skill: 0 off, 1 shoves, 2 also
 // reflects projectiles.
@@ -698,32 +516,19 @@ func ReflectChance() ConVar { return 0 }
 // reflect.
 //
 //sp:body CanBeReflected
-func CanBeReflected(entity int32) bool {
-	if queries.CanBeReflected == nil {
-		missing("CanBeReflected")
-	}
-	return queries.CanBeReflected(entity)
-}
+func CanBeReflected(entity int32) bool { return queries.CanBeReflected(entity) }
 
 // LocalOrigin is the entity's position in its parent's space, which for a
 // projectile is the world.
 //
 //sp:native BaseEntity_GetLocalOrigin
-func LocalOrigin(entity int32) (origin [3]float32) {
-	if queries.LocalOrigin == nil {
-		missing("BaseEntity_GetLocalOrigin")
-	}
-	return queries.LocalOrigin(entity)
-}
+func LocalOrigin(entity int32) (origin [3]float32) { return queries.LocalOrigin(entity) }
 
 // TransientlyConsistentRandom is the stable-for-a-period draw. Ported,
 // botqueries.
 //
 //sp:body TransientlyConsistentRandomValue after 1.0
 func TransientlyConsistentRandom(client int32) float32 {
-	if queries.TransientlyConsistentRandom == nil {
-		missing("TransientlyConsistentRandomValue")
-	}
 	return queries.TransientlyConsistentRandom(client)
 }
 
@@ -736,12 +541,7 @@ func ActionHealPatientOffset() int32 { return 0x4850 }
 // HandleEntity reads an entity handle out of the action at that offset.
 //
 //sp:method GetHandleEntity
-func (a Behaviour) HandleEntity(offset int32) int32 {
-	if queries.HandleEntity == nil {
-		missing("BehaviorAction.GetHandleEntity")
-	}
-	return queries.HandleEntity(a, offset)
-}
+func (a Behaviour) HandleEntity(offset int32) int32 { return queries.HandleEntity(a, offset) }
 
 /*
 SetHandleEntity writes one back.
@@ -754,9 +554,6 @@ else, and the value is a checked, living, same team, non medic client.
 //
 //sp:method SetHandleEntity
 func (a Behaviour) SetHandleEntity(offset int32, entity int32) {
-	if queries.SetHandleEntity == nil {
-		missing("BehaviorAction.SetHandleEntity")
-	}
 	queries.SetHandleEntity(a, offset, entity)
 }
 
@@ -764,12 +561,7 @@ func (a Behaviour) SetHandleEntity(offset int32, entity int32) {
 // read.
 //
 //sp:body GetLastDamageType
-func LastDamageType(client int32) int32 {
-	if queries.LastDamageType == nil {
-		missing("GetLastDamageType")
-	}
-	return queries.LastDamageType(client)
-}
+func LastDamageType(client int32) int32 { return queries.LastDamageType(client) }
 
 // DamageBullet is DMG_BULLET.
 //
@@ -805,42 +597,24 @@ func MedigunFireResist() int32 { return 2 }
 // Ported, uber.
 //
 //sp:body MedicProjectileShield
-func MedicProjectileShield(actor int32, patient int32) {
-	if queries.MedicProjectileShield == nil {
-		missing("MedicProjectileShield")
-	}
-	queries.MedicProjectileShield(actor, patient)
-}
+func MedicProjectileShield(actor int32, patient int32) { queries.MedicProjectileShield(actor, patient) }
 
 // ShouldDeployUber is the charge decision. Ported, uber.
 //
 //sp:body ShouldDeployUber
 func ShouldDeployUber(actor int32, medigun int32, patient int32) bool {
-	if queries.ShouldDeployUber == nil {
-		missing("ShouldDeployUber")
-	}
 	return queries.ShouldDeployUber(actor, medigun, patient)
 }
 
 // ResistType is which resistance the vaccinator is on. Ported, weapons.
 //
 //sp:body GetResistType
-func ResistType(medigun int32) int32 {
-	if queries.ResistType == nil {
-		missing("GetResistType")
-	}
-	return queries.ResistType(medigun)
-}
+func ResistType(medigun int32) int32 { return queries.ResistType(medigun) }
 
 // BiggestBodyFor is the medic's ranking. Ported, mediccall.
 //
 //sp:body BiggestBody
-func BiggestBodyFor(medic int32, current int32) int32 {
-	if queries.BiggestBodyFor == nil {
-		missing("BiggestBody")
-	}
-	return queries.BiggestBodyFor(medic, current)
-}
+func BiggestBodyFor(medic int32, current int32) int32 { return queries.BiggestBodyFor(medic, current) }
 
 // Cell is SourcePawn's any: one untyped cell, which is what RequestFrame
 // carries and what a frame callback is handed.
@@ -853,12 +627,7 @@ type Cell int32
 //
 //sp:native RequestFrame
 //nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
-func ApplyNextFrameCell(callback func(data Cell), data int32) {
-	if queries.ApplyNextFrameCell == nil {
-		missing("RequestFrame")
-	}
-	queries.ApplyNextFrameCell(data)
-}
+func ApplyNextFrameCell(callback func(data Cell), data int32) { queries.ApplyNextFrameCell(data) }
 
 // CellOfBool is a bool where SourcePawn wants a cell, which a native's return
 // is. It emits nothing: the two are the same value.

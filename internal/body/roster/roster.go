@@ -8,14 +8,14 @@ holds, which is mvm-z83.35.
 */
 package roster
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
-// Slots is the client array size, MAXPLAYERS + 1. Slot 0 is never a client and
-// is there so the array indexes the way SourcePawn's do.
-const Slots = 65
-
+// slots.Count is the client array size, MAXPLAYERS + 1. Slot 0 is never a client and
 // defenderBot is dhooks.sp's g_bIsDefenderBot: which clients are ours.
-var defenderBot [Slots]bool
+var defenderBot [slots.Count]bool
 
 // touchingCredits is dhooks.sp's m_bTouchCredits, true while a defender bot is
 // inside CTFPowerup::MyTouch and the game's money code must not see a bot.

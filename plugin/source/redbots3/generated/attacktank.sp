@@ -9,8 +9,6 @@ BehaviorAction CTFBotAttackTank()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define TANK_ATTACK_RANGE_MELEE (1.0)
 #define TANK_ATTACK_RANGE_SPLASH (400.0)
 #define TANK_ATTACK_RANGE_DEFAULT (100.0)

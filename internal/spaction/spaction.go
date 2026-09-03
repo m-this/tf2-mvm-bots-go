@@ -178,9 +178,9 @@ type Action struct {
 }
 
 // Generate emits the constructor and the callbacks of the action package in dir,
-// and the SourcePawn names it declares, so a caller can hold them against what
-// is still an extern.
-func Generate(dir string, cfg spbody.Config) (source string, emitted []string, err error) {
+// and what it declares, so a caller can hold that against what is still an
+// extern.
+func Generate(dir string, cfg spbody.Config) (source string, declares []spbody.Declaration, err error) {
 	action, err := Read(dir)
 	if err != nil {
 		return "", nil, err
@@ -206,13 +206,31 @@ func Generate(dir string, cfg spbody.Config) (source string, emitted []string, e
 	b.WriteString(constructor(action))
 	b.WriteString(afterBanner(generated.Source))
 
-	// The constructor is a name this file owns too, and the one another
-	// behaviour reaches for when it hands the engine this one.
-	emitted = append(append([]string{}, generated.Emitted...), action.Prefix)
+	/*
+		A callback is emitted under the name the constructor wires, not
+		under the one the body generator would have given it: cfg.Declare
+		replaced the whole declaration line, prefix included. Its
+		SourcePawn signature was replaced with it, so there is no Go
+		signature left to hold an extern against, and it carries none.
+
+		Nothing outside calls one anyway. A behaviour that wants this one
+		hands the engine its constructor.
+	*/
+	callback := make(map[string]bool, len(action.Has))
 	for _, name := range action.Has {
-		emitted = append(emitted, action.Prefix+"_"+name)
+		callback[name] = true
 	}
-	return b.String(), emitted, nil
+	for _, d := range generated.Declares {
+		if callback[d.Go] {
+			d.SP, d.Sig = action.Prefix+"_"+d.Go, nil
+		}
+		declares = append(declares, d)
+	}
+	// The constructor is a name this file owns too, and the one another
+	// behaviour reaches for when it hands the engine this one. It is written
+	// here rather than translated, so it has no Go signature either.
+	declares = append(declares, spbody.Declaration{SP: action.Prefix})
+	return b.String(), declares, nil
 }
 
 // constructor is the function the plugin calls to get one of these.

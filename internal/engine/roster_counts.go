@@ -29,6 +29,7 @@ var rosterCounts RosterCountCalls
 // InstallRosterCounts puts a set of answers behind them.
 func InstallRosterCounts(c RosterCountCalls) func() {
 	previous := rosterCounts
+	Fill(&c)
 	rosterCounts = c
 	return func() { rosterCounts = previous }
 }
@@ -47,42 +48,22 @@ func CommandMaxRate() float32 { return 0 }
 // KickClient removes a player, saying why.
 //
 //sp:native KickClient
-func KickClient(client int32, reason string) {
-	if rosterCounts.KickClient == nil {
-		missing("KickClient")
-	}
-	rosterCounts.KickClient(client, reason)
-}
+func KickClient(client int32, reason string) { rosterCounts.KickClient(client, reason) }
 
 // ChoosingBotClasses says this player has the lineup menu open.
 //
 //sp:slot g_bChoosingBotClasses
-func ChoosingBotClasses(client int32) bool {
-	if rosterCounts.ChoosingBotClasses == nil {
-		missing("g_bChoosingBotClasses")
-	}
-	return rosterCounts.ChoosingBotClasses(client)
-}
+func ChoosingBotClasses(client int32) bool { return rosterCounts.ChoosingBotClasses(client) }
 
 // GameRulesFloat reads a float off the game rules entity.
 //
 //sp:native GameRules_GetPropFloat
-func GameRulesFloat(prop string) float32 {
-	if rosterCounts.GameRulesFloat == nil {
-		missing("GameRules_GetPropFloat")
-	}
-	return rosterCounts.GameRulesFloat(prop)
-}
+func GameRulesFloat(prop string) float32 { return rosterCounts.GameRulesFloat(prop) }
 
 // SetGameRulesFloat writes one.
 //
 //sp:native GameRules_SetPropFloat
-func SetGameRulesFloat(prop string, value float32) {
-	if rosterCounts.SetGameRulesFloat == nil {
-		missing("GameRules_SetPropFloat")
-	}
-	rosterCounts.SetGameRulesFloat(prop, value)
-}
+func SetGameRulesFloat(prop string, value float32) { rosterCounts.SetGameRulesFloat(prop, value) }
 
 // BuyUpgradesMaxTime is BUY_UPGRADES_MAX_TIME, how long a shopping trip is
 // given.

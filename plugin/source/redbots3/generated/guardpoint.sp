@@ -11,8 +11,6 @@ BehaviorAction CTFBotGuardPoint()
 	return action;
 }
 
-#define Go_Slots (65)
-
 float m_vecPointDefendArea[65][3];
 
 public Action CTFBotGuardPoint_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)

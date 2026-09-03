@@ -9,8 +9,6 @@ BehaviorAction CTFBotMedicRevive()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define MEDIC_REVIVE_RANGE (600.0)
 
 #define MEDIC_REVIVE_ASK_INTERVAL (0.5)

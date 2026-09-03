@@ -70,6 +70,7 @@ var menus MenuCalls
 // InstallMenus puts a set of answers behind them.
 func InstallMenus(c MenuCalls) func() {
 	previous := menus
+	Fill(&c)
 	menus = c
 	return func() { menus = previous }
 }
@@ -104,124 +105,68 @@ func MenuEnd() MenuChoice { return 16 }
 //sp:new Menu borrowed
 //nolint:revive // unused-parameter: the handler is a name the emitter writes
 func NewMenu(handler func(menu Menu, action MenuChoice, param1 int32, param2 int32) int32) Menu {
-	if menus.NewMenu == nil {
-		missing("new Menu")
-	}
 	return menus.NewMenu("")
 }
 
 // SetTitle writes the line above the items.
 //
 //sp:method SetTitle
-func (m Menu) SetTitle(format string, args ...any) {
-	if menus.SetTitle == nil {
-		missing("Menu.SetTitle")
-	}
-	menus.SetTitle(m, format, args)
-}
+func (m Menu) SetTitle(format string, args ...any) { menus.SetTitle(m, format, args) }
 
 // AddItem adds one row: what comes back on select, and what is shown.
 //
 //sp:method AddItem
-func (m Menu) AddItem(info string, display string) {
-	if menus.AddItem == nil {
-		missing("Menu.AddItem")
-	}
-	menus.AddItem(m, info, display)
-}
+func (m Menu) AddItem(info string, display string) { menus.AddItem(m, info, display) }
 
 // Display shows it for that many seconds.
 //
 //sp:method Display
-func (m Menu) Display(client int32, time int32) {
-	if menus.Display == nil {
-		missing("Menu.Display")
-	}
-	menus.Display(m, client, time)
-}
+func (m Menu) Display(client int32, time int32) { menus.Display(m, client, time) }
 
 // DisplayAt shows it scrolled to an item, which is how a menu redrawn after a
 // selection keeps its place.
 //
 //sp:method DisplayAt
 func (m Menu) DisplayAt(client int32, position int32, time int32) {
-	if menus.DisplayAt == nil {
-		missing("Menu.DisplayAt")
-	}
 	menus.DisplayAt(m, client, position, time)
 }
 
 // Close deletes it, which only the End action should do.
 //
 //sp:delete Close
-func (m Menu) Close() {
-	if menus.DeleteMenu == nil {
-		missing("delete Menu")
-	}
-	menus.DeleteMenu(m)
-}
+func (m Menu) Close() { menus.DeleteMenu(m) }
 
 // MenuSelectionPosition is the row the player was scrolled to.
 //
 //sp:native GetMenuSelectionPosition
-func MenuSelectionPosition() int32 {
-	if menus.SelectionPos == nil {
-		missing("GetMenuSelectionPosition")
-	}
-	return menus.SelectionPos()
-}
+func MenuSelectionPosition() int32 { return menus.SelectionPos() }
 
 // SetChoosingBotClasses writes g_bChoosingBotClasses.
 //
 //sp:slotset g_bChoosingBotClasses
-func SetChoosingBotClasses(client int32, choosing bool) {
-	if menus.SetChoosing == nil {
-		missing("g_bChoosingBotClasses")
-	}
-	menus.SetChoosing(client, choosing)
-}
+func SetChoosingBotClasses(client int32, choosing bool) { menus.SetChoosing(client, choosing) }
 
 // PrintToChat says one line to one player.
 //
 //sp:native PrintToChat
-func PrintToChat(client int32, format string, args ...any) {
-	if menus.PrintToChat == nil {
-		missing("PrintToChat")
-	}
-	menus.PrintToChat(client, format, args)
-}
+func PrintToChat(client int32, format string, args ...any) { menus.PrintToChat(client, format, args) }
 
 // ChosenBotClasses is g_adtChosenBotClasses, the lineup a player is building.
 //
 //sp:global g_adtChosenBotClasses
-func ChosenBotClasses() List {
-	if menus.ChosenClasses == nil {
-		missing("g_adtChosenBotClasses")
-	}
-	return menus.ChosenClasses()
-}
+func ChosenBotClasses() List { return menus.ChosenClasses() }
 
 // DefenderBotTeamSetupCancelled puts things back when nobody finished picking.
 // Ported, prefmenu.
 //
 //sp:body DefenderBotTeamSetupCancelled
-func DefenderBotTeamSetupCancelled() {
-	if menus.SetupCancelled == nil {
-		missing("DefenderBotTeamSetupCancelled")
-	}
-	menus.SetupCancelled()
-}
+func DefenderBotTeamSetupCancelled() { menus.SetupCancelled() }
 
 // SetBotClassesLocked writes g_bBotClassesLocked: the lineup a player accepted
 // is held until the bots that use it are seated.
 //
 //sp:globalset g_bBotClassesLocked
-func SetBotClassesLocked(locked bool) {
-	if menus.SetBotClassesLocked == nil {
-		missing("g_bBotClassesLocked")
-	}
-	menus.SetBotClassesLocked(locked)
-}
+func SetBotClassesLocked(locked bool) { menus.SetBotClassesLocked(locked) }
 
 /*
 The function-style menu API.
@@ -237,72 +182,41 @@ wrote.
 //sp:native CreateMenu borrowed
 //nolint:revive // unused-parameter: the handler is a name the emitter writes
 func CreateMenu(handler func(menu Menu, action MenuChoice, param1 int32, param2 int32) int32) Menu {
-	if menus.CreateMenu == nil {
-		missing("CreateMenu")
-	}
 	return menus.CreateMenu("")
 }
 
 // SetMenuTitle writes the line above the items.
 //
 //sp:native SetMenuTitle
-func SetMenuTitle(m Menu, title string) {
-	if menus.SetMenuTitle == nil {
-		missing("SetMenuTitle")
-	}
-	menus.SetMenuTitle(m, title)
-}
+func SetMenuTitle(m Menu, title string) { menus.SetMenuTitle(m, title) }
 
 // AddMenuItem adds one row.
 //
 //sp:native AddMenuItem
-func AddMenuItem(m Menu, info string, display string) {
-	if menus.AddMenuItem == nil {
-		missing("AddMenuItem")
-	}
-	menus.AddMenuItem(m, info, display)
-}
+func AddMenuItem(m Menu, info string, display string) { menus.AddMenuItem(m, info, display) }
 
 // AddMenuItemText is the same row where the label was built rather than
 // written out, which a toggle needs.
 //
 //sp:native AddMenuItem
-func AddMenuItemText(m Menu, info string, display string) {
-	if menus.AddMenuItemText == nil {
-		missing("AddMenuItem")
-	}
-	menus.AddMenuItemText(m, info, display)
-}
+func AddMenuItemText(m Menu, info string, display string) { menus.AddMenuItemText(m, info, display) }
 
 // SetMenuExitBackButton puts a back button on it, which is what makes a
 // submenu a submenu.
 //
 //sp:native SetMenuExitBackButton
-func SetMenuExitBackButton(m Menu, on bool) {
-	if menus.SetMenuExitBackButton == nil {
-		missing("SetMenuExitBackButton")
-	}
-	menus.SetMenuExitBackButton(m, on)
-}
+func SetMenuExitBackButton(m Menu, on bool) { menus.SetMenuExitBackButton(m, on) }
 
 // DisplayMenu shows it.
 //
 //sp:native DisplayMenu
-func DisplayMenu(m Menu, client int32, time int32) {
-	if menus.DisplayMenu == nil {
-		missing("DisplayMenu")
-	}
-	menus.DisplayMenu(m, client, time)
-}
+func DisplayMenu(m Menu, client int32, time int32) { menus.DisplayMenu(m, client, time) }
 
 // DisplayMenuAtItem shows it scrolled to a row, so a menu redrawn after a
 // toggle keeps its place.
 //
 //sp:native DisplayMenuAtItem
 func DisplayMenuAtItem(m Menu, client int32, item int32, time int32) {
-	if menus.DisplayMenuAtItem == nil {
-		missing("DisplayMenuAtItem")
-	}
 	menus.DisplayMenuAtItem(m, client, item, time)
 }
 
@@ -321,20 +235,12 @@ func MenuCancelExitBack() int32 { return -6 }
 // Ported, playerpref.
 //
 //sp:body GetClassPreferencesFlags
-func ClassPreferencesFlags(client int32) int32 {
-	if menus.ClassPreferencesFlags == nil {
-		missing("GetClassPreferencesFlags")
-	}
-	return menus.ClassPreferencesFlags(client)
-}
+func ClassPreferencesFlags(client int32) int32 { return menus.ClassPreferencesFlags(client) }
 
 // SetClassPreferences writes one class's answer. Still in player_pref.sp.
 //
 //sp:body SetClassPreferences
 func SetClassPreferences(client int32, class string, value int32) {
-	if menus.SetClassPreferences == nil {
-		missing("SetClassPreferences")
-	}
 	menus.SetClassPreferences(client, class, value)
 }
 
@@ -353,22 +259,12 @@ func MenuVoteCancel() MenuChoice { return 2048 }
 // vote, kept so the bots can be taken away again by the same player.
 //
 //sp:globalset g_iUIDBotSummoner
-func SetBotSummoner(userid int32) {
-	if menus.SetBotSummoner == nil {
-		missing("g_iUIDBotSummoner")
-	}
-	menus.SetBotSummoner(userid)
-}
+func SetBotSummoner(userid int32) { menus.SetBotSummoner(userid) }
 
 // ManageDefenderBotsOn turns the manager on or off. Ported, manage.
 //
 //sp:body ManageDefenderBots
-func ManageDefenderBotsOn(manage bool) {
-	if menus.ManageDefenderBots == nil {
-		missing("ManageDefenderBots")
-	}
-	menus.ManageDefenderBots(manage)
-}
+func ManageDefenderBotsOn(manage bool) { menus.ManageDefenderBots(manage) }
 
 // WeaponSlotItem1 is TFWeaponSlot_Item1, where the spy keeps his watch.
 //
@@ -379,54 +275,31 @@ func WeaponSlotItem1() int32 { return 4 }
 // what a menu naming the class it is about needs.
 //
 //sp:native SetMenuTitle
-func SetMenuTitleFor(m Menu, format string, class string) {
-	if menus.SetMenuTitleFor == nil {
-		missing("SetMenuTitle")
-	}
-	menus.SetMenuTitleFor(m, format, class)
-}
+func SetMenuTitleFor(m Menu, format string, class string) { menus.SetMenuTitleFor(m, format, class) }
 
 // CopyShort is strcopy into a buffer shorter than a Text, which is what a
 // per-client class name is.
 //
 //sp:native strcopy fills
-func CopyShort(from string) (out [16]byte) {
-	if menus.CopyShort == nil {
-		missing("strcopy")
-	}
-	return menus.CopyShort(from)
-}
+func CopyShort(from string) (out [16]byte) { return menus.CopyShort(from) }
 
 // AddMenuItemFrom is AddMenuItem where the label came out of a buffer rather
 // than being written out.
 //
 //sp:native AddMenuItem
-func AddMenuItemFrom(m Menu, info string, display Text) {
-	if menus.AddMenuItemFrom == nil {
-		missing("AddMenuItem")
-	}
-	menus.AddMenuItemFrom(m, info, display)
-}
+func AddMenuItemFrom(m Menu, info string, display Text) { menus.AddMenuItemFrom(m, info, display) }
 
 // AddMenuItemBoth is AddMenuItem where the row and its label both came out of
 // buffers, which is what a list built from the item schema is.
 //
 //sp:native AddMenuItem
-func AddMenuItemBoth(m Menu, info Text, display Text) {
-	if menus.AddMenuItemBoth == nil {
-		missing("AddMenuItem")
-	}
-	menus.AddMenuItemBoth(m, info, display)
-}
+func AddMenuItemBoth(m Menu, info Text, display Text) { menus.AddMenuItemBoth(m, info, display) }
 
 // AddDefenderTFBotNamed is AddDefenderTFBot called the way the menus call it:
 // one bot, a class written out, and the two defaults left off. Ported, manage.
 //
 //sp:body AddDefenderTFBot
 func AddDefenderTFBotNamed(count int32, class string, team string, difficulty string) {
-	if menus.AddDefenderTFBotNamed == nil {
-		missing("AddDefenderTFBot")
-	}
 	menus.AddDefenderTFBotNamed(count, class, team, difficulty)
 }
 
@@ -436,9 +309,6 @@ func AddDefenderTFBotNamed(count int32, class string, team string, difficulty st
 //
 //sp:body DisplayWeaponPreferenceMenu
 func DisplayWeaponPreferenceMenuFor(client int32, class [16]byte) {
-	if menus.DisplayWeaponPreferenceMenuFor == nil {
-		missing("DisplayWeaponPreferenceMenu")
-	}
 	menus.DisplayWeaponPreferenceMenuFor(client, class)
 }
 
@@ -446,21 +316,13 @@ func DisplayWeaponPreferenceMenuFor(client int32, class [16]byte) {
 // the schema has none.
 //
 //sp:native TF2Econ_GetItemName sized
-func ItemName(itemDefinition int32) (ok bool, name Text) {
-	if menus.ItemName == nil {
-		missing("TF2Econ_GetItemName")
-	}
-	return menus.ItemName(itemDefinition)
-}
+func ItemName(itemDefinition int32) (ok bool, name Text) { return menus.ItemName(itemDefinition) }
 
 // SetWeaponPreference writes what this player wants a bot of that class to
 // carry in that slot. Still in player_pref.sp.
 //
 //sp:body SetWeaponPreference
 func SetWeaponPreference(client int32, class [16]byte, slot [10]byte, itemDefinition int32) {
-	if menus.SetWeaponPreference == nil {
-		missing("SetWeaponPreference")
-	}
 	menus.SetWeaponPreference(client, class, slot, itemDefinition)
 }
 
@@ -469,9 +331,6 @@ func SetWeaponPreference(client int32, class [16]byte, slot [10]byte, itemDefini
 //
 //sp:method GetItem sized
 func (m Menu) MenuItemInfo(position int32) (ok bool, info Text) {
-	if menus.MenuItemInfo == nil {
-		missing("Menu.GetItem")
-	}
 	return menus.MenuItemInfo(m, position)
 }
 
@@ -479,32 +338,19 @@ func (m Menu) MenuItemInfo(position int32) (ok bool, info Text) {
 // loadouts.
 //
 //sp:body WeaponPoolCount
-func WeaponPoolCount(class string, slot string) int32 {
-	if menus.WeaponPoolCount == nil {
-		missing("WeaponPoolCount")
-	}
-	return menus.WeaponPoolCount(class, slot)
-}
+func WeaponPoolCount(class string, slot string) int32 { return menus.WeaponPoolCount(class, slot) }
 
 // WeaponPoolAt is one of them. Ported, loadouts.
 //
 //sp:body WeaponPoolAt
 func WeaponPoolAt(class string, slot string, index int32) int32 {
-	if menus.WeaponPoolAt == nil {
-		missing("WeaponPoolAt")
-	}
 	return menus.WeaponPoolAt(class, slot, index)
 }
 
 // CopySlot is strcopy into the per-client slot-name buffer.
 //
 //sp:native strcopy fills
-func CopySlot(from string) (out [10]byte) {
-	if menus.CopySlot == nil {
-		missing("strcopy")
-	}
-	return menus.CopySlot(from)
-}
+func CopySlot(from string) (out [10]byte) { return menus.CopySlot(from) }
 
 /*
 TextOfSlot reads a fixed buffer where a written-out string is expected.
@@ -524,9 +370,6 @@ func TextOfSlot(from [16]byte) string {
 //
 //sp:body GetWeaponPreference
 func WeaponPreference(client int32, class string, slot string) int32 {
-	if menus.WeaponPreference == nil {
-		missing("GetWeaponPreference")
-	}
 	return menus.WeaponPreference(client, class, slot)
 }
 
@@ -534,12 +377,7 @@ func WeaponPreference(client int32, class string, slot string) int32 {
 // label.
 //
 //sp:native Format fills
-func FormatNamed(format string, name Text) (out Text) {
-	if menus.FormatNamed == nil {
-		missing("Format")
-	}
-	return menus.FormatNamed(format, name)
-}
+func FormatNamed(format string, name Text) (out Text) { return menus.FormatNamed(format, name) }
 
 /*
 Panel is SourceMod's Panel: a menu that shows and asks nothing.
@@ -554,61 +392,35 @@ type Panel int32
 // NewPanel makes one. The caller owns it.
 //
 //sp:new Panel
-func NewPanel() Panel {
-	if menus.NewPanel == nil {
-		missing("new Panel")
-	}
-	return menus.NewPanel()
-}
+func NewPanel() Panel { return menus.NewPanel() }
 
 // SetTitle writes the line above the rows.
 //
 //sp:method SetTitle
-func (p Panel) SetTitle(title string) {
-	if menus.PanelSetTitle == nil {
-		missing("Panel.SetTitle")
-	}
-	menus.PanelSetTitle(p, title)
-}
+func (p Panel) SetTitle(title string) { menus.PanelSetTitle(p, title) }
 
 // DrawItem adds a row.
 //
 //sp:method DrawItem
-func (p Panel) DrawItem(text Text) {
-	if menus.PanelDrawItem == nil {
-		missing("Panel.DrawItem")
-	}
-	menus.PanelDrawItem(p, text)
-}
+func (p Panel) DrawItem(text Text) { menus.PanelDrawItem(p, text) }
 
 // Send shows it, and says whether the player was there to see it.
 //
 //sp:method Send
 //nolint:revive // unused-parameter: the handler is a name the emitter writes
 func (p Panel) Send(client int32, handler func(menu Menu, action MenuChoice, param1 int32, param2 int32) int32, duration int32) bool {
-	if menus.PanelSend == nil {
-		missing("Panel.Send")
-	}
 	return menus.PanelSend(p, client, duration)
 }
 
 // Close deletes it.
 //
 //sp:delete Close
-func (p Panel) Close() {
-	if menus.PanelClose == nil {
-		missing("delete Panel")
-	}
-	menus.PanelClose(p)
-}
+func (p Panel) Close() { menus.PanelClose(p) }
 
 // FormatPercent writes a class name and its share into a row.
 //
 //sp:native Format fills
 func FormatPercent(format string, name string, percent float32) (out Text) {
-	if menus.FormatPercent == nil {
-		missing("Format")
-	}
 	return menus.FormatPercent(format, name, percent)
 }
 
@@ -616,9 +428,6 @@ func FormatPercent(format string, name string, percent float32) (out Text) {
 //
 //sp:native VoteMenu
 func VoteMenu(m Menu, clients [65]int32, numClients int32, time int32) bool {
-	if menus.VoteMenu == nil {
-		missing("VoteMenu")
-	}
 	return menus.VoteMenu(m, clients, numClients, time)
 }
 
@@ -626,22 +435,12 @@ func VoteMenu(m Menu, clients [65]int32, numClients int32, time int32) bool {
 // a vote refuses to be dismissed.
 //
 //sp:native SetMenuExitButton
-func SetMenuExitButton(m Menu, on bool) {
-	if menus.SetMenuExitButton == nil {
-		missing("SetMenuExitButton")
-	}
-	menus.SetMenuExitButton(m, on)
-}
+func SetMenuExitButton(m Menu, on bool) { menus.SetMenuExitButton(m, on) }
 
 // SetMenuTitleFrom writes a title naming a player.
 //
 //sp:native SetMenuTitle
-func SetMenuTitleFrom(m Menu, format string, client int32) {
-	if menus.SetMenuTitleFrom == nil {
-		missing("SetMenuTitle")
-	}
-	menus.SetMenuTitleFrom(m, format, client)
-}
+func SetMenuTitleFrom(m Menu, format string, client int32) { menus.SetMenuTitleFrom(m, format, client) }
 
 // MenuActionsAll is MENU_ACTIONS_ALL, which a vote needs so its handler hears
 // the end and the cancel as well as a selection.
@@ -655,9 +454,6 @@ func MenuActionsAll() int32 { return 0 }
 //sp:native CreateMenu borrowed after MENU_ACTIONS_ALL
 //nolint:revive // unused-parameter: the handler is a name the emitter writes
 func CreateVoteMenu(handler func(menu Menu, action MenuChoice, param1 int32, param2 int32) int32) Menu {
-	if menus.CreateVoteMenu == nil {
-		missing("CreateMenu")
-	}
 	return menus.CreateVoteMenu("")
 }
 

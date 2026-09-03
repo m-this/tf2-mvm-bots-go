@@ -29,6 +29,7 @@ var medics MedicCalls
 // InstallMedics puts a set of answers behind them.
 func InstallMedics(c MedicCalls) func() {
 	previous := medics
+	Fill(&c)
 	medics = c
 	return func() { medics = previous }
 }
@@ -51,20 +52,12 @@ func NullVector() [3]float32 { return [3]float32{} }
 // ClientHealth is what the player has left.
 //
 //sp:native GetClientHealth
-func ClientHealth(client int32) int32 {
-	if medics.ClientHealth == nil {
-		missing("GetClientHealth")
-	}
-	return medics.ClientHealth(client)
-}
+func ClientHealth(client int32) int32 { return medics.ClientHealth(client) }
 
 // EntPropFloatOf reads a float from one of the entity's property tables.
 //
 //sp:native GetEntPropFloat
 func EntPropFloatOf(entity int32, propType PropType, prop string) float32 {
-	if medics.EntPropFloat == nil {
-		missing("GetEntPropFloat")
-	}
 	return medics.EntPropFloat(entity, propType, prop)
 }
 
@@ -73,49 +66,28 @@ func EntPropFloatOf(entity int32, propType PropType, prop string) float32 {
 //
 //sp:method IsRangeGreaterThanEx
 func (b Bot) IsRangeGreaterThanEx(position [3]float32, distance float32) bool {
-	if medics.IsRangeGreaterThanEx == nil {
-		missing("INextBot.IsRangeGreaterThanEx")
-	}
 	return medics.IsRangeGreaterThanEx(b, position, distance)
 }
 
 // IsTaunting says whether the player is in the middle of a taunt.
 //
 //sp:native TF2_IsTaunting
-func IsTaunting(client int32) bool {
-	if medics.IsTaunting == nil {
-		missing("TF2_IsTaunting")
-	}
-	return medics.IsTaunting(client)
-}
+func IsTaunting(client int32) bool { return medics.IsTaunting(client) }
 
 // IsPlayerMoving says whether the player is going anywhere.
 //
 //sp:body IsPlayerMoving
-func IsPlayerMoving(client int32) bool {
-	if medics.IsPlayerMoving == nil {
-		missing("IsPlayerMoving")
-	}
-	return medics.IsPlayerMoving(client)
-}
+func IsPlayerMoving(client int32) bool { return medics.IsPlayerMoving(client) }
 
 // CanWeaponAddUberOnHit says whether hitting somebody with it fills the charge.
 //
 //sp:body CanWeaponAddUberOnHit
-func CanWeaponAddUberOnHit(weapon int32) bool {
-	if medics.CanWeaponAddUberOnHit == nil {
-		missing("CanWeaponAddUberOnHit")
-	}
-	return medics.CanWeaponAddUberOnHit(weapon)
-}
+func CanWeaponAddUberOnHit(weapon int32) bool { return medics.CanWeaponAddUberOnHit(weapon) }
 
 // EnemyNearestToMe is util.sp:1183, ported: internal/body/scan generates it.
 //
 //sp:body FindEnemyNearestToMe
 func EnemyNearestToMe(client int32, maxDistance float32, giantsOnly bool, ignoreUber bool, stunnedOnly bool, class Class) int32 {
-	if medics.EnemyNearestToMe == nil {
-		missing("FindEnemyNearestToMe")
-	}
 	return medics.EnemyNearestToMe(client, maxDistance, giantsOnly, ignoreUber, stunnedOnly, class)
 }
 
@@ -138,20 +110,12 @@ func DamageOf(address int32) Damage { return Damage(address) }
 // Amount is how much damage it was.
 //
 //sp:method GetDamage
-func (d Damage) Amount() float32 {
-	if medics.DamageAmount == nil {
-		missing("CTakeDamageInfo.GetDamage")
-	}
-	return medics.DamageAmount(d)
-}
+func (d Damage) Amount() float32 { return medics.DamageAmount(d) }
 
 // IsRangeLessThanEx says whether the bot is closer than that to a position.
 //
 //sp:method IsRangeLessThanEx
 func (b Bot) IsRangeLessThanEx(position [3]float32, distance float32) bool {
-	if medics.IsRangeLessThanEx == nil {
-		missing("INextBot.IsRangeLessThanEx")
-	}
 	return medics.IsRangeLessThanEx(b, position, distance)
 }
 
@@ -160,9 +124,6 @@ func (b Bot) IsRangeLessThanEx(position [3]float32, distance float32) bool {
 //
 //sp:body IsPathToVectorPossible
 func IsPathToVectorPossible(client int32, position [3]float32) bool {
-	if medics.IsPathToVectorPossible == nil {
-		missing("IsPathToVectorPossible")
-	}
 	return medics.IsPathToVectorPossible(client, position)
 }
 
@@ -172,9 +133,6 @@ func IsPathToVectorPossible(client int32, position [3]float32) bool {
 //
 //sp:body IsPathToVectorPossible
 func IsPathToVectorPossibleLength(client int32, position [3]float32) (ok bool, length float32) {
-	if medics.IsPathToVectorPossibleLength == nil {
-		missing("IsPathToVectorPossible")
-	}
 	return medics.IsPathToVectorPossibleLength(client, position)
 }
 
@@ -182,21 +140,13 @@ func IsPathToVectorPossibleLength(client int32, position [3]float32) (ok bool, l
 //
 //sp:body GetNearestReviveMarker
 func NearestReviveMarker(client int32, maxDistance float32) int32 {
-	if medics.NearestReviveMarker == nil {
-		missing("GetNearestReviveMarker")
-	}
 	return medics.NearestReviveMarker(client, maxDistance)
 }
 
 // AbsOriginOf is util.sp's GetAbsOrigin, ported: internal/body/scan generates it.
 //
 //sp:body GetAbsOrigin returns
-func AbsOriginOf(entity int32) [3]float32 {
-	if medics.AbsOrigin == nil {
-		missing("GetAbsOrigin")
-	}
-	return medics.AbsOrigin(entity)
-}
+func AbsOriginOf(entity int32) [3]float32 { return medics.AbsOrigin(entity) }
 
 // WeaponSlotPrimary is TFWeaponSlot_Primary.
 //

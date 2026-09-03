@@ -26,6 +26,7 @@ var compositions CompositionCalls
 // InstallCompositions puts a set of answers behind them.
 func InstallCompositions(c CompositionCalls) func() {
 	previous := compositions
+	Fill(&c)
 	compositions = c
 	return func() { compositions = previous }
 }
@@ -33,22 +34,12 @@ func InstallCompositions(c CompositionCalls) func() {
 // StringInto reads a convar into a buffer the caller already has.
 //
 //sp:method GetString
-func (c ConVar) StringInto(out Text, maxlen int32) {
-	if compositions.ConVarStringInto == nil {
-		missing("ConVar.GetString")
-	}
-	compositions.ConVarStringInto(c, out, maxlen)
-}
+func (c ConVar) StringInto(out Text, maxlen int32) { compositions.ConVarStringInto(c, out, maxlen) }
 
 // String reads a convar into a fresh buffer.
 //
 //sp:method GetString fills
-func (c ConVar) String() (out Text) {
-	if compositions.ConVarString == nil {
-		missing("ConVar.GetString")
-	}
-	return compositions.ConVarString(c)
-}
+func (c ConVar) String() (out Text) { return compositions.ConVarString(c) }
 
 // ClassBlacklist is redbots_manager_class_blacklist, the classes a server owner
 // told the mod never to play.
@@ -60,9 +51,6 @@ func ClassBlacklist() ConVar { return 0 }
 //
 //sp:native strcopy
 func StrcopyFromText(out Text, maxlen int32, from Text) {
-	if compositions.StrcopyFromText == nil {
-		missing("strcopy")
-	}
 	compositions.StrcopyFromText(out, maxlen, from)
 }
 
@@ -70,21 +58,13 @@ func StrcopyFromText(out Text, maxlen int32, from Text) {
 // outlive the bot that owns them. Ported, roster_counts.
 //
 //sp:body ClearBuildingsBeforeKick
-func ClearBuildingsBeforeKick(client int32) {
-	if compositions.ClearBuildingsBeforeKick == nil {
-		missing("ClearBuildingsBeforeKick")
-	}
-	compositions.ClearBuildingsBeforeKick(client)
-}
+func ClearBuildingsBeforeKick(client int32) { compositions.ClearBuildingsBeforeKick(client) }
 
 // GetWantedTeamComposition is the lineup to fill RED with, or an empty string
 // to leave it to the lineup mode. Ported, composition.
 //
 //sp:body GetWantedTeamComposition
 func GetWantedTeamComposition(out Text, maxlen int32) {
-	if compositions.GetWantedTeamComposition == nil {
-		missing("GetWantedTeamComposition")
-	}
 	compositions.GetWantedTeamComposition(out, maxlen)
 }
 
@@ -92,21 +72,13 @@ func GetWantedTeamComposition(out Text, maxlen int32) {
 // Ported, composition.
 //
 //sp:body IsBotClassBlacklisted
-func IsBotClassBlacklisted(class Text) bool {
-	if compositions.IsBotClassBlacklisted == nil {
-		missing("IsBotClassBlacklisted")
-	}
-	return compositions.IsBotClassBlacklisted(class)
-}
+func IsBotClassBlacklisted(class Text) bool { return compositions.IsBotClassBlacklisted(class) }
 
 // IsClassInTeamComposition asks whether the named team wants that class
 // anywhere. Ported, composition.
 //
 //sp:body IsClassInTeamComposition
 func IsClassInTeamComposition(class Text, typedTeamOnly bool) bool {
-	if compositions.IsClassInTeamComposition == nil {
-		missing("IsClassInTeamComposition")
-	}
 	return compositions.IsClassInTeamComposition(class, typedTeamOnly)
 }
 
@@ -128,9 +100,6 @@ does not delete what it does not understand.
 //
 //sp:slot2 g_sBotTeamCompositions
 func BotTeamComposition(team int32, seat int32) Text {
-	if compositions.BotTeamComposition == nil {
-		missing("g_sBotTeamCompositions")
-	}
 	return compositions.BotTeamComposition(team, seat)
 }
 

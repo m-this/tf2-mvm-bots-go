@@ -10,8 +10,6 @@ BehaviorAction CTFBotMvMEngineerIdle()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define SENTRY_WATCH_BOMB_RANGE (400.0)
 
 #define NEST_ADVANCE_MARGIN (600.0)
@@ -63,7 +61,7 @@ stock bool IsWorthAdvancingTo(CNavArea held, CNavArea candidate)
 	{
 		return true;
 	}
-	return GetTravelDistanceToBombTarget(candidate) < (GetTravelDistanceToBombTarget(held) - NEST_ADVANCE_MARGIN);
+	return GetTravelDistanceToBombTarget(view_as<CTFNavArea>(candidate)) < (GetTravelDistanceToBombTarget(view_as<CTFNavArea>(held)) - NEST_ADVANCE_MARGIN);
 }
 
 static Action CTFBotMvMEngineerIdle_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
@@ -702,7 +700,7 @@ stock bool CTFBotMvMEngineerIdle_ShouldAdvanceNestSpot(int actor)
 	{
 		return false;
 	}
-	float flBombTargetDistance = GetTravelDistanceToBombTarget(m_aNestArea[actor]);
+	float flBombTargetDistance = GetTravelDistanceToBombTarget(view_as<CTFNavArea>(m_aNestArea[actor]));
 	if (flBombTargetDistance <= 1000.0)
 	{
 		return false;

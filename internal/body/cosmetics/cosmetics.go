@@ -8,10 +8,10 @@ none: what is here is everything they call.
 */
 package cosmetics
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // Classes is one more than the last class, so the array is indexed by class.
 const Classes = 10
@@ -84,18 +84,18 @@ var hats [Classes]engine.List
 var hatEffects engine.List
 
 //sp:name g_wardrobe
-var wardrobe [Slots]Wardrobe
+var wardrobe [slots.Count]Wardrobe
 
 // The hat entity itself, which the game destroys on every respawn and this puts
 // back.
 //
 //sp:name g_iBotHat
-var botHat = [Slots]int32{engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference()}
+var botHat = [slots.Count]int32{engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference()}
 
 // Whether a bot is already waiting to be dressed, so it is dressed once.
 //
 //sp:name g_bCosmeticsPending
-var cosmeticsPending [Slots]bool
+var cosmeticsPending [slots.Count]bool
 
 /*
 The item a bot is in the middle of putting on, and nothing the rest of the time.
@@ -107,7 +107,7 @@ comes out of the pool.
 */
 //
 //sp:name g_iEquipping
-var equipping [Slots]int32
+var equipping [slots.Count]int32
 
 /*
 DrawWardrobe is what this bot is going to wear for the rest of the mission.

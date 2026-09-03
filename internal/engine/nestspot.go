@@ -28,6 +28,7 @@ var nestSpots NestSpotCalls
 // InstallNestSpots puts a set of answers behind them.
 func InstallNestSpots(c NestSpotCalls) func() {
 	previous := nestSpots
+	Fill(&c)
 	nestSpots = c
 	return func() { nestSpots = previous }
 }
@@ -56,85 +57,47 @@ func NestNoTankSpots() List { return 0 }
 // ArcTangent2 is the angle of a vector, in radians.
 //
 //sp:native ArcTangent2
-func ArcTangent2(y float32, x float32) float32 {
-	if nestSpots.ArcTangent2 == nil {
-		missing("ArcTangent2")
-	}
-	return nestSpots.ArcTangent2(y, x)
-}
+func ArcTangent2(y float32, x float32) float32 { return nestSpots.ArcTangent2(y, x) }
 
 // DegToRad converts, because the ring is written in degrees and the maths is in
 // radians.
 //
 //sp:native DegToRad
-func DegToRad(degrees float32) float32 {
-	if nestSpots.DegToRad == nil {
-		missing("DegToRad")
-	}
-	return nestSpots.DegToRad(degrees)
-}
+func DegToRad(degrees float32) float32 { return nestSpots.DegToRad(degrees) }
 
 // Cosine of an angle in radians.
 //
 //sp:native Cosine
-func Cosine(radians float32) float32 {
-	if nestSpots.Cosine == nil {
-		missing("Cosine")
-	}
-	return nestSpots.Cosine(radians)
-}
+func Cosine(radians float32) float32 { return nestSpots.Cosine(radians) }
 
 // Sine of an angle in radians.
 //
 //sp:native Sine
-func Sine(radians float32) float32 {
-	if nestSpots.Sine == nil {
-		missing("Sine")
-	}
-	return nestSpots.Sine(radians)
-}
+func Sine(radians float32) float32 { return nestSpots.Sine(radians) }
 
 // FloatAbs drops the sign.
 //
 //sp:native FloatAbs
-func FloatAbs(value float32) float32 {
-	if nestSpots.FloatAbs == nil {
-		missing("FloatAbs")
-	}
-	return nestSpots.FloatAbs(value)
-}
+func FloatAbs(value float32) float32 { return nestSpots.FloatAbs(value) }
 
 // ClosestPointOnArea is where on the area a position lands, which is the ground
 // under a stand point rather than the point itself.
 //
 //sp:method GetClosestPointOnArea
 func (a Area) ClosestPointOnArea(from [3]float32) (ground [3]float32) {
-	if nestSpots.ClosestPointOnArea == nil {
-		missing("CNavArea.GetClosestPointOnArea")
-	}
 	return nestSpots.ClosestPointOnArea(a, from)
 }
 
 // Extent is the box an area covers, low corner and high.
 //
 //sp:method GetExtent
-func (a Area) Extent() (low [3]float32, high [3]float32) {
-	if nestSpots.Extent == nil {
-		missing("CNavArea.GetExtent")
-	}
-	return nestSpots.Extent(a)
-}
+func (a Area) Extent() (low [3]float32, high [3]float32) { return nestSpots.Extent(a) }
 
 // Z is the height of the area's own surface under a point, which is what stops a
 // random point inside the box floating above or below the floor.
 //
 //sp:method GetZ
-func (a Area) Z(x float32, y float32) float32 {
-	if nestSpots.Z == nil {
-		missing("CNavArea.GetZ")
-	}
-	return nestSpots.Z(a, x, y)
-}
+func (a Area) Z(x float32, y float32) float32 { return nestSpots.Z(a, x, y) }
 
 // NestSpotMatchRange is how near an authored spot has to be to a nest area
 // before it is that nest. internal/body/nestspot declares it.
@@ -151,9 +114,6 @@ func FeatureNestZones() int32 { return 4 }
 //
 //sp:body BestNestArea
 func BestNestArea(client int32, areas List, target [3]float32, sentryRange float32) Area {
-	if nestSpots.BestNestArea == nil {
-		missing("BestNestArea")
-	}
 	return nestSpots.BestNestArea(client, areas, target, sentryRange)
 }
 
@@ -166,23 +126,13 @@ func NestDepth() ConVar { return 0 }
 // MaxFloat is the larger of two. The plugin has its own, and the generator's own
 // max would emit a second one beside it.
 //
-//sp:plugin MaxFloat
-func MaxFloat(a float32, b float32) float32 {
-	if nestSpots.MaxFloat == nil {
-		missing("MaxFloat")
-	}
-	return nestSpots.MaxFloat(a, b)
-}
+//sp:library MaxFloat
+func MaxFloat(a float32, b float32) float32 { return nestSpots.MaxFloat(a, b) }
 
 // NavAreaAt is one area of the whole mesh, by index.
 //
 //sp:method Get
-func (l NavAreaList) NavAreaAt(index int32) NavArea {
-	if nestSpots.NavAreaAt == nil {
-		missing("TheNavAreas.Get")
-	}
-	return nestSpots.NavAreaAt(l, index)
-}
+func (l NavAreaList) NavAreaAt(index int32) NavArea { return nestSpots.NavAreaAt(l, index) }
 
 // NavAreaList is TheNavAreas, the mesh as a list.
 //
@@ -198,9 +148,6 @@ func AllNavAreas() NavAreaList { return 0 }
 //
 //sp:body PickConfiguredNestArea
 func PickConfiguredNestArea(client int32, target [3]float32, sentryRange float32) Area {
-	if nestSpots.PickConfiguredNestArea == nil {
-		missing("PickConfiguredNestArea")
-	}
 	return nestSpots.PickConfiguredNestArea(client, target, sentryRange)
 }
 
@@ -208,9 +155,6 @@ func PickConfiguredNestArea(client int32, target [3]float32, sentryRange float32
 //
 //sp:body PickMapHintNestArea
 func PickMapHintNestArea(client int32, target [3]float32, sentryRange float32) Area {
-	if nestSpots.PickMapHintNestArea == nil {
-		missing("PickMapHintNestArea")
-	}
 	return nestSpots.PickMapHintNestArea(client, target, sentryRange)
 }
 
@@ -219,9 +163,6 @@ func PickMapHintNestArea(client int32, target [3]float32, sentryRange float32) A
 //
 //sp:body PickBuildAreaPreRound
 func PickBuildAreaPreRound(client int32, sentryRange float32) Area {
-	if nestSpots.PickBuildAreaPreRound == nil {
-		missing("PickBuildAreaPreRound")
-	}
 	return nestSpots.PickBuildAreaPreRound(client, sentryRange)
 }
 
@@ -230,9 +171,6 @@ func PickBuildAreaPreRound(client int32, sentryRange float32) Area {
 //
 //sp:body IsNestRangeSane
 func IsNestRangeSane(rangeToBomb float32, sentryRange float32) bool {
-	if nestSpots.IsNestRangeSane == nil {
-		missing("IsNestRangeSane")
-	}
 	return nestSpots.IsNestRangeSane(rangeToBomb, sentryRange)
 }
 
@@ -240,12 +178,7 @@ func IsNestRangeSane(rangeToBomb float32, sentryRange float32) bool {
 // ground.
 //
 //sp:body NestDistanceLimit
-func NestDistanceLimit() float32 {
-	if nestSpots.NestDistanceLimit == nil {
-		missing("NestDistanceLimit")
-	}
-	return nestSpots.NestDistanceLimit()
-}
+func NestDistanceLimit() float32 { return nestSpots.NestDistanceLimit() }
 
 // NestRelocateScoreGainMin is how much better a spot has to score than the one an
 // engineer holds before he moves to it between waves.
@@ -257,9 +190,6 @@ func NestRelocateScoreGainMin() ConVar { return 0 }
 //
 //sp:body ScoreNestArea
 func ScoreNestArea(client int32, area NavArea, target [3]float32, sentryRange float32, approach List) float32 {
-	if nestSpots.ScoreNestArea == nil {
-		missing("ScoreNestArea")
-	}
 	return nestSpots.ScoreNestArea(client, area, target, sentryRange, approach)
 }
 
@@ -267,9 +197,6 @@ func ScoreNestArea(client int32, area NavArea, target [3]float32, sentryRange fl
 //
 //sp:body CollectBombApproachAreas
 func CollectBombApproachAreas(target [3]float32, sentryRange float32, out List) {
-	if nestSpots.CollectBombApproachAreas == nil {
-		missing("CollectBombApproachAreas")
-	}
 	nestSpots.CollectBombApproachAreas(target, sentryRange, out)
 }
 
@@ -278,8 +205,5 @@ func CollectBombApproachAreas(target [3]float32, sentryRange float32, out List) 
 //
 //sp:body PickBuildArea
 func PickBuildAreaRanged(client int32, sentryRange float32) Area {
-	if nestSpots.PickBuildAreaRanged == nil {
-		missing("PickBuildArea")
-	}
 	return nestSpots.PickBuildAreaRanged(client, sentryRange)
 }

@@ -56,6 +56,7 @@ var bots BotCalls
 // undo, the same way Install does for the rest.
 func InstallBots(c BotCalls) func() {
 	previous := bots
+	Fill(&c)
 	bots = c
 	return func() { bots = previous }
 }
@@ -63,59 +64,31 @@ func InstallBots(c BotCalls) func() {
 // NextBotOf is the nextbot of an entity, and Address_Null when it has none.
 //
 //sp:native CBaseNPC_GetNextBotOfEntity
-func NextBotOf(entity int32) Bot {
-	if bots.NextBotOf == nil {
-		missing("CBaseNPC_GetNextBotOfEntity")
-	}
-	return bots.NextBotOf(entity)
-}
+func NextBotOf(entity int32) Bot { return bots.NextBotOf(entity) }
 
 // Vision is what the bot has noticed.
 //
 //sp:method GetVisionInterface
-func (b Bot) Vision() Vision {
-	if bots.Vision == nil {
-		missing("INextBot.GetVisionInterface")
-	}
-	return bots.Vision(b)
-}
+func (b Bot) Vision() Vision { return bots.Vision(b) }
 
 // Locomotion is how the bot moves.
 //
 //sp:method GetLocomotionInterface
-func (b Bot) Locomotion() Locomotion {
-	if bots.Locomotion == nil {
-		missing("INextBot.GetLocomotionInterface")
-	}
-	return bots.Locomotion(b)
-}
+func (b Bot) Locomotion() Locomotion { return bots.Locomotion(b) }
 
 // Body is the bot's posture and aim.
 //
 //sp:method GetBodyInterface
-func (b Bot) Body() Body {
-	if bots.Body == nil {
-		missing("INextBot.GetBodyInterface")
-	}
-	return bots.Body(b)
-}
+func (b Bot) Body() Body { return bots.Body(b) }
 
 // Entity is the client the bot belongs to.
 //
 //sp:method GetEntity
-func (b Bot) Entity() int32 {
-	if bots.Entity == nil {
-		missing("INextBot.GetEntity")
-	}
-	return bots.Entity(b)
-}
+func (b Bot) Entity() int32 { return bots.Entity(b) }
 
 // PrimaryKnownThreat is what the bot is most worried about, and 0 for nothing.
 //
 //sp:method GetPrimaryKnownThreat
 func (v Vision) PrimaryKnownThreat(onlyVisible bool) Known {
-	if bots.PrimaryKnownThreat == nil {
-		missing("IVision.GetPrimaryKnownThreat")
-	}
 	return bots.PrimaryKnownThreat(v, onlyVisible)
 }

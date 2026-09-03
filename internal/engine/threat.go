@@ -25,6 +25,7 @@ var threats ThreatCalls
 // InstallThreats puts a set of answers behind them.
 func InstallThreats(c ThreatCalls) func() {
 	previous := threats
+	Fill(&c)
 	threats = c
 	return func() { threats = previous }
 }
@@ -59,21 +60,13 @@ func ConceptJeers() int32 { return 0 }
 // Entity is what the remembered thing actually is.
 //
 //sp:method GetEntity
-func (k Known) Entity() int32 {
-	if threats.Entity == nil {
-		missing("CKnownEntity.GetEntity")
-	}
-	return threats.Entity(k)
-}
+func (k Known) Entity() int32 { return threats.Entity(k) }
 
 // SelectCloserThreat is whichever of the two is nearer, which is all a melee
 // bot can act on.
 //
 //sp:body SelectCloserThreat
 func SelectCloserThreat(bot Bot, threat1 Known, threat2 Known) Known {
-	if threats.SelectCloserThreat == nil {
-		missing("SelectCloserThreat")
-	}
 	return threats.SelectCloserThreat(bot, threat1, threat2)
 }
 
@@ -81,32 +74,19 @@ func SelectCloserThreat(bot Bot, threat1 Known, threat2 Known) Known {
 // to.
 //
 //sp:body IsMeleeWeapon
-func IsMeleeWeapon(entity int32) bool {
-	if threats.IsMeleeWeapon == nil {
-		missing("IsMeleeWeapon")
-	}
-	return threats.IsMeleeWeapon(entity)
-}
+func IsMeleeWeapon(entity int32) bool { return threats.IsMeleeWeapon(entity) }
 
 // EyePosition is where the client is looking from. Its SourcePawn returns the
 // array.
 //
 //sp:body GetEyePosition returns
-func EyePosition(client int32) [3]float32 {
-	if threats.EyePosition == nil {
-		missing("GetEyePosition")
-	}
-	return threats.EyePosition(client)
-}
+func EyePosition(client int32) [3]float32 { return threats.EyePosition(client) }
 
 // IsLineOfFireClearEntity says whether the bot could actually hit it from
 // there.
 //
 //sp:body IsLineOfFireClearEntity
 func IsLineOfFireClearEntity(client int32, from [3]float32, who int32) bool {
-	if threats.IsLineOfFireClearEntity == nil {
-		missing("IsLineOfFireClearEntity")
-	}
 	return threats.IsLineOfFireClearEntity(client, from, who)
 }
 
@@ -114,20 +94,12 @@ func IsLineOfFireClearEntity(client int32, from [3]float32, who int32) bool {
 // how one job is kept to one bot.
 //
 //sp:body GetCountOfBotsWithNamedAction
-func CountOfBotsWithNamedAction(name string) int32 {
-	if threats.CountOfBotsWithNamedAction == nil {
-		missing("GetCountOfBotsWithNamedAction")
-	}
-	return threats.CountOfBotsWithNamedAction(name)
-}
+func CountOfBotsWithNamedAction(name string) int32 { return threats.CountOfBotsWithNamedAction(name) }
 
 // SpeakConceptIfAllowed makes the bot say something, if the game lets it.
 //
 //sp:native BaseMultiplayerPlayer_SpeakConceptIfAllowed
 func SpeakConceptIfAllowed(client int32, concept int32) {
-	if threats.SpeakConceptIfAllowed == nil {
-		missing("BaseMultiplayerPlayer_SpeakConceptIfAllowed")
-	}
 	threats.SpeakConceptIfAllowed(client, concept)
 }
 
@@ -135,8 +107,5 @@ func SpeakConceptIfAllowed(client int32, concept int32) {
 //
 //sp:body GetNearestEnemyTeleporter
 func NearestEnemyTeleporter(client int32, maxDistance float32) int32 {
-	if threats.NearestEnemyTeleporter == nil {
-		missing("GetNearestEnemyTeleporter")
-	}
 	return threats.NearestEnemyTeleporter(client, maxDistance)
 }

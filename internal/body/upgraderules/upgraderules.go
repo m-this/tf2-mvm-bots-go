@@ -41,7 +41,7 @@ func IsUpgradeWasted(client int32, attribute engine.Text) bool {
 		}
 
 		// A flamethrower that cannot airblast, which is the Phlogistinator and anything like it
-		return engine.AttribByName(primary, "airblast disabled") != engine.AddressNull()
+		return engine.AttribByName(primary, "airblast disabled") != engine.NoAddress()
 	}
 
 	/* Destroy Projectiles is an airblast on a Pyro and a spun-up minigun on a Heavy
@@ -57,7 +57,7 @@ func IsUpgradeWasted(client int32, attribute engine.Text) bool {
 			return true
 		}
 
-		return engine.AttribByName(primary, "airblast disabled") != engine.AddressNull()
+		return engine.AttribByName(primary, "airblast disabled") != engine.NoAddress()
 	}
 
 	/* The Projectile Shield, which nothing in this mod presses

@@ -25,6 +25,7 @@ var convars ConVarCalls
 // InstallConVars puts a set of answers behind them.
 func InstallConVars(c ConVarCalls) func() {
 	previous := convars
+	Fill(&c)
 	convars = c
 	return func() { convars = previous }
 }
@@ -57,29 +58,14 @@ func DebugActions() ConVar {
 // Bool is the convar as a switch.
 //
 //sp:property BoolValue
-func (c ConVar) Bool() bool {
-	if convars.BoolValue == nil {
-		missing("ConVar.BoolValue")
-	}
-	return convars.BoolValue(c)
-}
+func (c ConVar) Bool() bool { return convars.BoolValue(c) }
 
 // Int is the convar as a number.
 //
 //sp:property IntValue
-func (c ConVar) Int() int32 {
-	if convars.IntValue == nil {
-		missing("ConVar.IntValue")
-	}
-	return convars.IntValue(c)
-}
+func (c ConVar) Int() int32 { return convars.IntValue(c) }
 
 // Float is the convar as a distance or a time.
 //
 //sp:property FloatValue
-func (c ConVar) Float() float32 {
-	if convars.FloatValue == nil {
-		missing("ConVar.FloatValue")
-	}
-	return convars.FloatValue(c)
-}
+func (c ConVar) Float() float32 { return convars.FloatValue(c) }

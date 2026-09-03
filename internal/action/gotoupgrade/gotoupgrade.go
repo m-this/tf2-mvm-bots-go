@@ -9,13 +9,13 @@ bot to, and each is named by a hard coded position.
 */
 package gotoupgrade
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 //sp:name m_iStation
-var station [Slots]int32
+var station [slots.Count]int32
 
 // OnStart picks a station, and pretends the bot is at one when there is none it
 // could reach.
@@ -115,7 +115,7 @@ func OnNavAreaChanged(actor int32, newArea engine.NavArea, oldArea engine.NavAre
 //
 //sp:name FindClosestUpgradeStation
 func FindClosestUpgradeStation(actor int32) int32 {
-	var stations [Slots]int32
+	var stations [slots.Count]int32
 	stationcount := int32(0)
 
 	i := int32(-1)

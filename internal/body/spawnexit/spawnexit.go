@@ -6,10 +6,10 @@ bot making none is moved to walkable ground near the objective.
 */
 package spawnexit
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // SpawnExitWatchInterval is how often the watch looks.
 //
@@ -27,16 +27,16 @@ const SpawnExitStallTime = 6.0
 const SpawnExitProgress = 96.0
 
 //sp:name m_vecSpawnExitProgress
-var spawnExitProgress [Slots][3]float32
+var spawnExitProgress [slots.Count][3]float32
 
 //sp:name m_flSpawnExitProgressAt
-var spawnExitProgressAt [Slots]float32
+var spawnExitProgressAt [slots.Count]float32
 
 //sp:name m_flSpawnExitStartedAt
-var spawnExitStartedAt [Slots]float32
+var spawnExitStartedAt [slots.Count]float32
 
 //sp:name m_flSpawnExitWatchAt
-var spawnExitWatchAt [Slots]float32
+var spawnExitWatchAt [slots.Count]float32
 
 // ResetSpawnExitWatch forgets the walk, which a successful exit is.
 //
@@ -222,7 +222,7 @@ func FindSpawnRecoveryArea(client int32, source engine.Text, sourceLength int32)
 			continue
 		}
 
-		travel := engine.TravelDistanceToBombTarget(engine.Area(area))
+		travel := engine.TravelDistanceToBombTarget(area)
 
 		if travel >= 0.0 && travel < shortestBombTravel {
 			shortestBombTravel = travel

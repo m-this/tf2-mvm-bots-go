@@ -44,7 +44,7 @@ func HandleTeamPlayerCountChanged(team engine.Team, iWhoChanging int32) {
 	case engine.LineupModeChoose(), engine.LineupModePreferenceChoose():
 		// Allow the classes to be picked again, but do not clear the list.
 		engine.SetBotClassesLocked(false)
-		engine.PrintToChatTeam(team, "%s You can repick your bot team lineup.", engine.PluginPrefix())
+		engine.PrintToChatTeam(int32(team), "%s You can repick your bot team lineup.", engine.PluginPrefix())
 	}
 
 	if !engine.BotsEnabled() {
@@ -54,7 +54,7 @@ func HandleTeamPlayerCountChanged(team engine.Team, iWhoChanging int32) {
 	if iWhoChanging > 0 && engine.ClientOfUserID(engine.BotSummoner()) == iWhoChanging {
 		// The summoner changed teams, so RED may repick its bots.
 		engine.SetAllowBotRedo(true)
-		engine.PrintToChatTeam(team, "%s Use command !redobots to repick your bot team lineup.", engine.PluginPrefix())
+		engine.PrintToChatTeam(int32(team), "%s Use command !redobots to repick your bot team lineup.", engine.PluginPrefix())
 	}
 
 	iWhoToUnready := int32(-1)

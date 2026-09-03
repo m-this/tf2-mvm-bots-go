@@ -24,10 +24,10 @@ which tries again three seconds later with a freshly scored nest.
 */
 package engineerbuildsentrygun
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // A build's reach short of the spot, with the spot in front of him, same as the
 // other two.
@@ -85,7 +85,7 @@ const (
 )
 
 //sp:name m_ctSentryReachDeadline
-var reachDeadline [Slots]float32
+var reachDeadline [slots.Count]float32
 
 /*
 What the stuck watchdog had counted when this build attempt started.
@@ -104,7 +104,7 @@ Counting stucks across the restarts is what survives them.
 */
 //
 //sp:name m_iSentryStuckMark
-var stuckMark [Slots]int32
+var stuckMark [slots.Count]int32
 
 /*
 The nest the mark above belongs to, so a restart does not look like a new
@@ -116,7 +116,7 @@ does not; the generated one leaves it out.
 */
 //
 //sp:name m_aSentryStuckArea
-var stuckArea [Slots]engine.Area
+var stuckArea [slots.Count]engine.Area
 
 // Stucks inside one attempt before the spot is the suspect rather than the walk.
 //
@@ -125,20 +125,20 @@ const stuckGiveUp = 2
 
 var (
 	//sp:name m_ctSentryGiveUpTime
-	giveUpTime [Slots]float32
+	giveUpTime [slots.Count]float32
 	//sp:name m_ctSentryTryDeadline
-	tryDeadline [Slots]float32
+	tryDeadline [slots.Count]float32
 	// When the last build press is allowed to have landed, so the next frame
 	// is not another press.
 	//
 	//sp:name m_ctSentryPressed
-	pressed [Slots]float32
+	pressed [slots.Count]float32
 	//sp:name m_iSentryTry
-	tryIndex [Slots]int32
+	tryIndex [slots.Count]int32
 	//sp:name m_vSentrySpot
-	sentrySpot [Slots][3]float32
+	sentrySpot [slots.Count][3]float32
 	//sp:name m_vSentryStand
-	sentryStand [Slots][3]float32
+	sentryStand [slots.Count][3]float32
 )
 
 // OnStart arms every clock, teleports him onto the nest between rounds, and
@@ -270,7 +270,7 @@ func Update(actor int32) engine.Outcome {
 		}
 
 		// It goes where he looks, so he looks at the spot rather than at the ground under himself
-		engine.AimHeadTowards(myBody, spot, engine.AimMandatory(), 0.1, engine.AddressNull(), "Placing sentry")
+		engine.AimHeadTowards(myBody, spot, engine.AimMandatory(), 0.1, engine.NoAddress(), "Placing sentry")
 	}
 
 	if rangeToStand > 70.0 {

@@ -19,6 +19,7 @@ var loadouts LoadoutCalls
 // InstallLoadouts puts a set of answers behind them.
 func InstallLoadouts(c LoadoutCalls) func() {
 	previous := loadouts
+	Fill(&c)
 	loadouts = c
 	return func() { loadouts = previous }
 }
@@ -28,9 +29,6 @@ func InstallLoadouts(c LoadoutCalls) func() {
 //
 //sp:body GetPreferredWeaponForClass
 func PreferredWeaponForClass(class string, slot string, client int32) int32 {
-	if loadouts.PreferredWeaponForClass == nil {
-		missing("GetPreferredWeaponForClass")
-	}
 	return loadouts.PreferredWeaponForClass(class, slot, client)
 }
 
@@ -38,20 +36,12 @@ func PreferredWeaponForClass(class string, slot string, client int32) int32 {
 // lurk rather than stand where he shopped.
 //
 //sp:body SetMission
-func SetMission(client int32, mission int32) {
-	if loadouts.SetMission == nil {
-		missing("SetMission")
-	}
-	loadouts.SetMission(client, mission)
-}
+func SetMission(client int32, mission int32) { loadouts.SetMission(client, mission) }
 
 // AttribByDefIndex is the address of one attribute on an entity.
 //
 //sp:native TF2Attrib_GetByDefIndex
 func AttribByDefIndex(entity int32, defIndex int32) Address {
-	if loadouts.AttribByDefIndex == nil {
-		missing("TF2Attrib_GetByDefIndex")
-	}
 	return loadouts.AttribByDefIndex(entity, defIndex)
 }
 
@@ -59,23 +49,13 @@ func AttribByDefIndex(entity int32, defIndex int32) Address {
 // hands back.
 //
 //sp:native TF2Attrib_GetValue
-func AttribValueAt(attrib Address) float32 {
-	if loadouts.AttribValueAt == nil {
-		missing("TF2Attrib_GetValue")
-	}
-	return loadouts.AttribValueAt(attrib)
-}
+func AttribValueAt(attrib Address) float32 { return loadouts.AttribValueAt(attrib) }
 
 // ListDefIndices writes every attribute index on the entity into the caller's
 // array and says how many it wrote.
 //
 //sp:native TF2Attrib_ListDefIndices
-func ListDefIndices(entity int32, out [20]int32) int32 {
-	if loadouts.ListDefIndices == nil {
-		missing("TF2Attrib_ListDefIndices")
-	}
-	return loadouts.ListDefIndices(entity, out)
-}
+func ListDefIndices(entity int32, out [20]int32) int32 { return loadouts.ListDefIndices(entity, out) }
 
 // UseCustomLoadouts is redbots_manager_use_custom_loadouts.
 //

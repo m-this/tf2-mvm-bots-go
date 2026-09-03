@@ -9,10 +9,10 @@ is mvm-z83.64.
 */
 package upgrade
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // UpgradeAttributeShare is the fraction of one trip's wallet any single
 // attribute may take.
@@ -23,12 +23,12 @@ const UpgradeAttributeShare = 0.5
 // What this bot had to spend when the trip started.
 //
 //sp:name m_iSessionWallet
-var sessionWallet [Slots]int32
+var sessionWallet [slots.Count]int32
 
 // What it has put into each attribute so far.
 //
 //sp:name m_iSpentOnUpgrade
-var spentOnUpgrade [Slots][128]int32
+var spentOnUpgrade [slots.Count][128]int32
 
 /*
 NothingLeftToBuild says the engineer has nothing further to do to this
@@ -156,7 +156,7 @@ const (
 )
 
 //sp:name CTFPlayerUpgrades
-var playerUpgrades [Slots]engine.List
+var playerUpgrades [slots.Count]engine.List
 
 /*
 When this bot may buy again, how much it has bought, and when the window shuts.
@@ -168,14 +168,14 @@ reader.
 
 //nolint:unused // emitted, not read from Go: botreset reaches them by slot
 //sp:name m_flNextUpgrade
-var nextUpgrade [Slots]float32
+var nextUpgrade [slots.Count]float32
 
 //sp:name m_nPurchasedUpgrades
-var purchasedUpgrades [Slots]int32
+var purchasedUpgrades [slots.Count]int32
 
 //nolint:unused // emitted, not read from Go: botreset reaches them by slot
 //sp:name m_flUpgradingTime
-var upgradingTime [Slots]float32
+var upgradingTime [slots.Count]float32
 
 /*
 GetUpgradePriority is what one candidate is worth to this bot.
@@ -405,7 +405,7 @@ func CollectUpgrades(client int32) {
 // the window on the same no.
 //
 //sp:name m_bRefusedUpgrade
-var refusedUpgrade [Slots][128]bool
+var refusedUpgrade [slots.Count][128]bool
 
 /*
 ChooseUpgrade is the best thing this bot can still afford, as a row index, and

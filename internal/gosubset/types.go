@@ -112,6 +112,12 @@ func (c *checker) checkConstExpr(expr ast.Expr, what string) {
 		c.checkBasicLit(e)
 	case *ast.Ident:
 		return
+	case *ast.SelectorExpr:
+		// A constant another generated package declares. It is a
+		// constant there and folds here, so SourcePawn sees a literal
+		// and the packages that share a size share one declaration of
+		// it rather than one each.
+		c.checkSelector(e)
 	case *ast.ParenExpr:
 		c.checkConstExpr(e.X, what)
 	case *ast.UnaryExpr:

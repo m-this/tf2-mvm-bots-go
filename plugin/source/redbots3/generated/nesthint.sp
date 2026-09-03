@@ -109,7 +109,7 @@ stock float BombPathLength()
 		{
 			continue;
 		}
-		longest = MaxFloat(longest, GetTravelDistanceToBombTarget(view_as<CNavArea>(area)));
+		longest = MaxFloat(longest, GetTravelDistanceToBombTarget(area));
 	}
 	return longest;
 }

@@ -15,8 +15,6 @@ BehaviorAction CTFBotSpySap()
 
 #define Go_sapRange (40.0)
 
-#define Go_Slots (65)
-
 int m_iSapTarget[65];
 
 public Action CTFBotSpySap_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)

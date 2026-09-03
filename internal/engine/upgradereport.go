@@ -19,6 +19,7 @@ var upgradeReports UpgradeReportCalls
 // InstallUpgradeReports puts a set of answers behind them.
 func InstallUpgradeReports(c UpgradeReportCalls) func() {
 	previous := upgradeReports
+	Fill(&c)
 	upgradeReports = c
 	return func() { upgradeReports = previous }
 }
@@ -26,33 +27,18 @@ func InstallUpgradeReports(c UpgradeReportCalls) func() {
 // FormatEx writes a formatted line into a fresh buffer.
 //
 //sp:native FormatEx fills
-func FormatEx(format string, args ...any) (out Text) {
-	if upgradeReports.FormatEx == nil {
-		missing("FormatEx")
-	}
-	return upgradeReports.FormatEx(format, args)
-}
+func FormatEx(format string, args ...any) (out Text) { return upgradeReports.FormatEx(format, args) }
 
 // AttributeName is what the schema calls that attribute, and whether it knows
 // it at all.
 //
 //sp:native TF2Econ_GetAttributeName sized
-func AttributeName(index int32) (ok bool, name Text) {
-	if upgradeReports.AttributeName == nil {
-		missing("TF2Econ_GetAttributeName")
-	}
-	return upgradeReports.AttributeName(index)
-}
+func AttributeName(index int32) (ok bool, name Text) { return upgradeReports.AttributeName(index) }
 
 // StrcopyText overwrites a buffer with a literal.
 //
 //sp:native strcopy
-func StrcopyText(out Text, maxlen int32, from string) {
-	if upgradeReports.StrcopyText == nil {
-		missing("strcopy")
-	}
-	upgradeReports.StrcopyText(out, maxlen, from)
-}
+func StrcopyText(out Text, maxlen int32, from string) { upgradeReports.StrcopyText(out, maxlen, from) }
 
 // AttributeNameSize is the 128 the printer declares for a name.
 //

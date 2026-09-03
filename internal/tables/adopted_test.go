@@ -52,6 +52,11 @@ func TestAdoptedFilesMatchTheGenerator(t *testing.T) {
 	// is already named above; roster is the generator's proof and ships
 	// nowhere, so it is skipped.
 	for _, b := range slices.Concat(body.Actions, body.All) {
+		if b.Out == "" {
+			// A package of constants, which every caller folds and
+			// nothing includes. There is no file to have drifted.
+			continue
+		}
 		name := filepath.Base(b.Out)
 		if strings.HasPrefix(name, "roster") {
 			continue

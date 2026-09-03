@@ -9,8 +9,6 @@ BehaviorAction CTFBotCollectMoney()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define MONEY_URGENT_TIME (15.0)
 #define MONEY_URGENT_WORTH (3000.0)
 

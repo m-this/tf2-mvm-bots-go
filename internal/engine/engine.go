@@ -18,6 +18,7 @@ Three kinds of call, and the directive names which:
 	//sp:body NAME       SourcePawn this port already generates
 	//sp:global NAME     a SourcePawn variable, not a call at all
 	//sp:plugin NAME     a plugin function the port has not reached yet
+	//sp:library NAME    a function a vendored include declares
 	//sp:sdkcall HANDLE  SDKCall through a handle prepared at load
 	//sp:address NAME    a read through a raw address
 
@@ -29,7 +30,14 @@ a call can only be an argument to something else.
 A plugin extern is temporary by construction. It names SourcePawn this
 repository is going to own, and when it does the extern goes and the call
 becomes an ordinary one. internal/body refuses an extern that names a function a
-body already generates, so the two can never both be there.
+body already generates, so the two can never both be there. Five are left.
+
+A library extern is permanent. It names a function somebody else's include
+declares -- SourceMod's own stocks, stocklib, tf2utils, tf2attributes -- and no
+amount of porting will make it this repository's, because reimplementing a
+dependency in Go is vendoring it by hand rather than calling it. 28 of these
+were declared as plugin externs, which made the port's own list of work
+remaining wrong by a factor of five.
 
 In a Go process none of them mean anything, so the default answer to all of them
 is a panic. Install puts a set of answers behind them, which is what the
@@ -37,8 +45,6 @@ differential test does: the same canned answers on both sides, and the two call
 traces have to match.
 */
 package engine
-
-import "fmt"
 
 // Class is SourceMod's TFClassType, named here so a ported signature keeps the
 // tag its callers pass rather than widening to int.
@@ -130,143 +136,77 @@ var installed Calls
 // which is why nothing here runs in parallel.
 func Install(c Calls) func() {
 	previous := installed
+	Fill(&c)
 	installed = c
 	return func() { installed = previous }
-}
-
-func missing(name string) {
-	panic(fmt.Sprintf("engine: %s was called and no answer is installed; this call has meaning on a game server and none here", name))
 }
 
 // IsClientInGame says whether the slot holds a client that has entered the game.
 //
 //sp:native IsClientInGame
-func IsClientInGame(client int32) bool {
-	if installed.IsClientInGame == nil {
-		missing("IsClientInGame")
-	}
-	return installed.IsClientInGame(client)
-}
+func IsClientInGame(client int32) bool { return installed.IsClientInGame(client) }
 
 // IsPlayerAlive says whether the client is alive right now.
 //
 //sp:native IsPlayerAlive
-func IsPlayerAlive(client int32) bool {
-	if installed.IsPlayerAlive == nil {
-		missing("IsPlayerAlive")
-	}
-	return installed.IsPlayerAlive(client)
-}
+func IsPlayerAlive(client int32) bool { return installed.IsPlayerAlive(client) }
 
 // GetClientTeam is the team index the client is on.
 //
 //sp:native GetClientTeam
-func GetClientTeam(client int32) int32 {
-	if installed.GetClientTeam == nil {
-		missing("GetClientTeam")
-	}
-	return installed.GetClientTeam(client)
-}
+func GetClientTeam(client int32) int32 { return installed.GetClientTeam(client) }
 
 // SDKHasAmmo is the raw SDKCall form, which internal/body/roster uses to prove
 // the generator can emit one. A port calls the plugin's wrapper below.
 //
 //sp:sdkcall m_hHasAmmo
-func SDKHasAmmo(weapon int32) bool {
-	if installed.HasAmmo == nil {
-		missing("HasAmmo")
-	}
-	return installed.HasAmmo(weapon)
-}
+func SDKHasAmmo(weapon int32) bool { return installed.HasAmmo(weapon) }
 
 // SDKClip1 is the raw SDKCall form, for the same reason.
 //
 //sp:sdkcall m_hClip1
-func SDKClip1(weapon int32) int32 {
-	if installed.Clip1 == nil {
-		missing("Clip1")
-	}
-	return installed.Clip1(weapon)
-}
+func SDKClip1(weapon int32) int32 { return installed.Clip1(weapon) }
 
 // Origin is where the client is standing.
 //
 //sp:native GetClientAbsOrigin
-func Origin(client int32) (origin [3]float32) {
-	if installed.Origin == nil {
-		missing("GetClientAbsOrigin")
-	}
-	return installed.Origin(client)
-}
+func Origin(client int32) (origin [3]float32) { return installed.Origin(client) }
 
 // MaxClients is the highest client slot the server has.
 //
 //sp:global MaxClients
-func MaxClients() int32 {
-	if installed.MaxClients == nil {
-		missing("MaxClients")
-	}
-	return installed.MaxClients()
-}
+func MaxClients() int32 { return installed.MaxClients() }
 
 // VectorDistance is how far apart two points are.
 //
 //sp:native GetVectorDistance
-func VectorDistance(a [3]float32, b [3]float32) float32 {
-	if installed.VectorDistance == nil {
-		missing("GetVectorDistance")
-	}
-	return installed.VectorDistance(a, b)
-}
+func VectorDistance(a [3]float32, b [3]float32) float32 { return installed.VectorDistance(a, b) }
 
 // IsSentryBusterRobot says whether the robot is a sentry buster, which is
 // usually not a threat worth counting.
 //
 //sp:body IsSentryBusterRobot
-func IsSentryBusterRobot(client int32) bool {
-	if installed.IsSentryBusterRobot == nil {
-		missing("IsSentryBusterRobot")
-	}
-	return installed.IsSentryBusterRobot(client)
-}
+func IsSentryBusterRobot(client int32) bool { return installed.IsSentryBusterRobot(client) }
 
 // IsInvulnerable says whether the player cannot be hurt right now.
 //
 //sp:native TF2_IsInvulnerable
-func IsInvulnerable(client int32) bool {
-	if installed.IsInvulnerable == nil {
-		missing("TF2_IsInvulnerable")
-	}
-	return installed.IsInvulnerable(client)
-}
+func IsInvulnerable(client int32) bool { return installed.IsInvulnerable(client) }
 
 // IsStealthed says whether the player is cloaked.
 //
 //sp:native TF2_IsStealthed
-func IsStealthed(client int32) bool {
-	if installed.IsStealthed == nil {
-		missing("TF2_IsStealthed")
-	}
-	return installed.IsStealthed(client)
-}
+func IsStealthed(client int32) bool { return installed.IsStealthed(client) }
 
 // IsCloakedPlayerExposed says whether a cloaked player can be seen anyway.
 //
 //sp:body IsCloakedPlayerExposed
-func IsCloakedPlayerExposed(client int32) bool {
-	if installed.IsCloakedPlayerExposed == nil {
-		missing("IsCloakedPlayerExposed")
-	}
-	return installed.IsCloakedPlayerExposed(client)
-}
+func IsCloakedPlayerExposed(client int32) bool { return installed.IsCloakedPlayerExposed(client) }
 
 // EntityWorldSpaceCenter is stocklib's: it fills the array it is given.
 //
 //sp:native BaseEntity_WorldSpaceCenter
 func EntityWorldSpaceCenter(entity int32) (centre [3]float32) {
-	if installed.WorldSpaceCenter == nil {
-		missing("BaseEntity_WorldSpaceCenter")
-	}
 	return installed.WorldSpaceCenter(entity)
 }
 
@@ -283,52 +223,29 @@ func ConditionDazed() Condition { return 17 }
 // IsMiniBoss says whether the robot is a giant.
 //
 //sp:native TF2_IsMiniBoss
-func IsMiniBoss(client int32) bool {
-	if installed.IsMiniBoss == nil {
-		missing("TF2_IsMiniBoss")
-	}
-	return installed.IsMiniBoss(client)
-}
+func IsMiniBoss(client int32) bool { return installed.IsMiniBoss(client) }
 
 // IsPlayerInCondition says whether the player carries the condition.
 //
 //sp:native TF2_IsPlayerInCondition
 func IsPlayerInCondition(client int32, condition Condition) bool {
-	if installed.IsPlayerInCondition == nil {
-		missing("TF2_IsPlayerInCondition")
-	}
 	return installed.IsPlayerInCondition(client, condition)
 }
 
 // PlayerClass is the class the player is playing.
 //
 //sp:native TF2_GetPlayerClass
-func PlayerClass(client int32) Class {
-	if installed.PlayerClass == nil {
-		missing("TF2_GetPlayerClass")
-	}
-	return installed.PlayerClass(client)
-}
+func PlayerClass(client int32) Class { return installed.PlayerClass(client) }
 
 // PlayerTeam is the team the player is on, as a tag rather than an index.
 //
 //sp:native TF2_GetClientTeam
-func PlayerTeam(client int32) Team {
-	if installed.PlayerTeam == nil {
-		missing("TF2_GetClientTeam")
-	}
-	return installed.PlayerTeam(client)
-}
+func PlayerTeam(client int32) Team { return installed.PlayerTeam(client) }
 
 // EnemyTeam is the team fighting this one.
 //
 //sp:native TF2_GetEnemyTeam
-func EnemyTeam(team Team) Team {
-	if installed.EnemyTeam == nil {
-		missing("TF2_GetEnemyTeam")
-	}
-	return installed.EnemyTeam(team)
-}
+func EnemyTeam(team Team) Team { return installed.EnemyTeam(team) }
 
 // ClassEngineer is TFClass_Engineer.
 //
@@ -345,101 +262,53 @@ func ObjectSapper() Object { return 3 }
 //
 //sp:native FindEntityByClassname
 func FindEntityByClassname(start int32, classname string) int32 {
-	if installed.FindEntityByClassname == nil {
-		missing("FindEntityByClassname")
-	}
 	return installed.FindEntityByClassname(start, classname)
 }
 
 // ObjectType is what the building is.
 //
 //sp:native TF2_GetObjectType
-func ObjectType(entity int32) Object {
-	if installed.ObjectType == nil {
-		missing("TF2_GetObjectType")
-	}
-	return installed.ObjectType(entity)
-}
+func ObjectType(entity int32) Object { return installed.ObjectType(entity) }
 
 // EntityTeamNumber is the team the entity belongs to.
 //
 //sp:native BaseEntity_GetTeamNumber
-func EntityTeamNumber(entity int32) int32 {
-	if installed.EntityTeamNumber == nil {
-		missing("BaseEntity_GetTeamNumber")
-	}
-	return installed.EntityTeamNumber(entity)
-}
+func EntityTeamNumber(entity int32) int32 { return installed.EntityTeamNumber(entity) }
 
 // IsPlacing says whether the building is still a blueprint.
 //
 //sp:native TF2_IsPlacing
-func IsPlacing(entity int32) bool {
-	if installed.IsPlacing == nil {
-		missing("TF2_IsPlacing")
-	}
-	return installed.IsPlacing(entity)
-}
+func IsPlacing(entity int32) bool { return installed.IsPlacing(entity) }
 
 // IsCarried says whether an engineer is holding the building.
 //
 //sp:native TF2_IsCarried
-func IsCarried(entity int32) bool {
-	if installed.IsCarried == nil {
-		missing("TF2_IsCarried")
-	}
-	return installed.IsCarried(entity)
-}
+func IsCarried(entity int32) bool { return installed.IsCarried(entity) }
 
 // HasSapper says whether the building is sapped already.
 //
 //sp:native TF2_HasSapper
-func HasSapper(entity int32) bool {
-	if installed.HasSapper == nil {
-		missing("TF2_HasSapper")
-	}
-	return installed.HasSapper(entity)
-}
+func HasSapper(entity int32) bool { return installed.HasSapper(entity) }
 
 // EntityAbsOrigin is stocklib's: it fills the array it is given.
 //
 //sp:native BaseEntity_GetAbsOrigin
-func EntityAbsOrigin(entity int32) (origin [3]float32) {
-	if installed.AbsOrigin == nil {
-		missing("BaseEntity_GetAbsOrigin")
-	}
-	return installed.AbsOrigin(entity)
-}
+func EntityAbsOrigin(entity int32) (origin [3]float32) { return installed.AbsOrigin(entity) }
 
 // IsPlayer says whether the entity is a client rather than a building.
 //
 //sp:native BaseEntity_IsPlayer
-func IsPlayer(entity int32) bool {
-	if installed.IsPlayer == nil {
-		missing("BaseEntity_IsPlayer")
-	}
-	return installed.IsPlayer(entity)
-}
+func IsPlayer(entity int32) bool { return installed.IsPlayer(entity) }
 
 // NumHealers is how many medics are healing the player.
 //
 //sp:native TF2_GetNumHealers
-func NumHealers(client int32) int32 {
-	if installed.NumHealers == nil {
-		missing("TF2_GetNumHealers")
-	}
-	return installed.NumHealers(client)
-}
+func NumHealers(client int32) int32 { return installed.NumHealers(client) }
 
 // PlayerHealer is one of the players healing this one.
 //
 //sp:native TF2Util_GetPlayerHealer
-func PlayerHealer(client int32, index int32) int32 {
-	if installed.PlayerHealer == nil {
-		missing("TF2Util_GetPlayerHealer")
-	}
-	return installed.PlayerHealer(client, index)
-}
+func PlayerHealer(client int32, index int32) int32 { return installed.PlayerHealer(client, index) }
 
 // PropSend is Prop_Send, the networked table.
 //
@@ -465,9 +334,6 @@ func WeaponMedigun() Weapon { return 29 }
 //
 //sp:native GetEntPropFloat
 func EntPropFloat(entity int32, propType PropType, prop string) float32 {
-	if installed.EntPropFloat == nil {
-		missing("GetEntPropFloat")
-	}
 	return installed.EntPropFloat(entity, propType, prop)
 }
 
@@ -476,39 +342,23 @@ func EntPropFloat(entity int32, propType PropType, prop string) float32 {
 //
 //sp:native GetEntPropEnt
 func EntPropEnt(entity int32, propType PropType, prop string) int32 {
-	if installed.EntPropEnt == nil {
-		missing("GetEntPropEnt")
-	}
 	return installed.EntPropEnt(entity, propType, prop)
 }
 
 // ActiveWeapon is what the player is holding.
 //
 //sp:native BaseCombatCharacter_GetActiveWeapon
-func ActiveWeapon(client int32) int32 {
-	if installed.ActiveWeapon == nil {
-		missing("BaseCombatCharacter_GetActiveWeapon")
-	}
-	return installed.ActiveWeapon(client)
-}
+func ActiveWeapon(client int32) int32 { return installed.ActiveWeapon(client) }
 
 // WeaponID is which weapon it is.
 //
 //sp:native TF2Util_GetWeaponID
-func WeaponID(weapon int32) Weapon {
-	if installed.WeaponID == nil {
-		missing("TF2Util_GetWeaponID")
-	}
-	return installed.WeaponID(weapon)
-}
+func WeaponID(weapon int32) Weapon { return installed.WeaponID(weapon) }
 
 // EntProp reads an integer from one of the entity's property tables.
 //
 //sp:native GetEntProp
 func EntProp(entity int32, propType PropType, prop string) int32 {
-	if installed.EntProp == nil {
-		missing("GetEntProp")
-	}
 	return installed.EntProp(entity, propType, prop)
 }
 
@@ -516,12 +366,7 @@ func EntProp(entity int32, propType PropType, prop string) int32 {
 // it has landed.
 //
 //sp:native GetEntityFlags
-func EntityFlags(entity int32) int32 {
-	if installed.EntityFlags == nil {
-		missing("GetEntityFlags")
-	}
-	return installed.EntityFlags(entity)
-}
+func EntityFlags(entity int32) int32 { return installed.EntityFlags(entity) }
 
 // FlagOnGround is FL_ONGROUND.
 //
@@ -532,12 +377,7 @@ func FlagOnGround() int32 { return 1 }
 // actually calls.
 //
 //sp:body HasAmmo
-func HasAmmo(weapon int32) bool {
-	if installed.HasAmmo == nil {
-		missing("HasAmmo")
-	}
-	return installed.HasAmmo(weapon)
-}
+func HasAmmo(weapon int32) bool { return installed.HasAmmo(weapon) }
 
 /*
 Choose is SourcePawn's a ? b : c, which Go does not have.

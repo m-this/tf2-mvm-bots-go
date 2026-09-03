@@ -8,8 +8,6 @@ BehaviorAction CTFBotEvadeBuster()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define BUSTER_ESCAPE_SEARCH_RANGE (1500.0)
 
 #define BUSTER_EVADE_MAX_TIME (8.0)

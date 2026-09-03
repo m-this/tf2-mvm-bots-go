@@ -8,8 +8,6 @@ BehaviorAction CTFBotStickyTrap()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define STICKY_TRAP_BOMBS (8)
 
 #define STICKY_TRAP_SPREAD (40.0)

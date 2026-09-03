@@ -111,8 +111,8 @@ func PickBuildArea(client int32, sentryRange float32) engine.Area {
 			continue
 		}
 
-		bombTargetDistanceAtArea := engine.TravelDistanceToBombTarget(engine.Area(area))
-		bombTargetDistanceAtBomb := engine.TravelDistanceToBombTarget(engine.Area(bombArea))
+		bombTargetDistanceAtArea := engine.TravelDistanceToBombTarget(area)
+		bombTargetDistanceAtBomb := engine.TravelDistanceToBombTarget(bombArea)
 
 		if bombTargetDistanceAtArea < hatchClearance {
 			continue
@@ -254,7 +254,7 @@ func PickBuildAreaPreRound(client int32, sentryRange float32) engine.Area {
 			continue
 		}
 
-		distance := engine.TravelDistanceToBombTarget(engine.Area(area))
+		distance := engine.TravelDistanceToBombTarget(area)
 
 		if distance < hatchClearance {
 			continue

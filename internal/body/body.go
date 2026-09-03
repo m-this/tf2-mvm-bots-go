@@ -9,7 +9,9 @@ package body
 
 import (
 	"fmt"
+	"maps"
 	"path/filepath"
+	"slices"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/gosubset"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spaction"
@@ -24,7 +26,15 @@ const ExternDir = "internal/engine"
 type Body struct {
 	// Dir is the package, relative to the repository root.
 	Dir string
-	// Out is the generated file, relative to the output directory.
+	/*
+		Out is the generated file, relative to the output directory.
+
+		Empty means the package emits nothing, which is what a package
+		of constants does: a caller folds a constant, so the value is
+		written where it is used and there is no declaration to put
+		anywhere. Such a package is in the list because being in the
+		list is what makes it importable.
+	*/
 	Out string
 	// Hooks is the generated DHook callbacks, relative to the output
 	// directory. They are a file of their own because they name SourceMod's
@@ -181,6 +191,10 @@ var Actions = []Body{
 
 // All is every body. Adding one here is what makes it generated.
 var All = []Body{
+	// One constant, and no emitted file: SourcePawn needs no declaration
+	// for a number every caller folds. It is in the list because being in
+	// the list is what makes a package importable.
+	{Dir: "internal/body/slots", Prefix: "Go_"},
 	{Dir: "internal/body/roster", Out: "sourcepawn/roster.sp", Hooks: "sourcepawn/roster_dhooks.sp", Prefix: "Go_"},
 	{Dir: "internal/body/scan", Out: "sourcepawn/scan.sp", Prefix: "Go_"},
 	{Dir: "internal/body/medic", Out: "sourcepawn/medic.sp", Prefix: "Go_"},
@@ -516,27 +530,44 @@ func GenerateWith(root string, alsoOwned string) (map[string][]byte, error) {
 		return nil, err
 	}
 	out := make(map[string][]byte, len(All))
-	owned := make(map[string]string)
+	owned := make(map[string]owner)
 	if alsoOwned != "" {
-		owned[alsoOwned] = "a caller's test"
+		owned[alsoOwned] = owner{Dir: "a caller's test"}
 	}
 
 	for _, name := range generatedElsewhere {
-		owned[name] = "a generator outside this list"
+		owned[name] = owner{Dir: "a generator outside this list"}
+	}
+	table, err := importable(root)
+	if err != nil {
+		return nil, err
+	}
+	// One type check of internal/engine for the whole list rather than one
+	// per body. It is 18000 lines and there are ninety of them.
+	cache, err := spbody.NewCache(filepath.Join(root, ExternDir))
+	if err != nil {
+		return nil, err
 	}
 	for _, b := range All {
+		externs, err := externsFor(root, b.Dir, declared.Funcs, table)
+		if err != nil {
+			return nil, err
+		}
 		g, err := spbody.GenerateDir(filepath.Join(root, b.Dir), spbody.Config{
 			Prefix:  b.Prefix,
-			Externs: declared.Funcs,
+			Externs: externs,
 			Tags:    declared.Tags,
+			Cache:   cache,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("generating %s: %w", b.Dir, err)
 		}
-		for _, name := range g.Emitted {
-			owned[name] = b.Dir
+		for _, d := range g.Declares {
+			owned[d.SP] = owner{Dir: b.Dir, Decl: d}
 		}
-		out[b.Out] = []byte(g.Source)
+		if b.Out != "" {
+			out[b.Out] = []byte(g.Source)
+		}
 		if g.Hooks == "" {
 			continue
 		}
@@ -546,50 +577,117 @@ func GenerateWith(root string, alsoOwned string) (map[string][]byte, error) {
 		out[b.Hooks] = []byte(g.Hooks)
 	}
 	for _, a := range Actions {
-		source, emitted, err := spaction.Generate(filepath.Join(root, a.Dir), spbody.Config{
+		externs, err := externsFor(root, a.Dir, declared.Funcs, table)
+		if err != nil {
+			return nil, err
+		}
+		source, declares, err := spaction.Generate(filepath.Join(root, a.Dir), spbody.Config{
 			Prefix:  a.Prefix,
-			Externs: declared.Funcs,
+			Externs: externs,
 			Tags:    declared.Tags,
+			Cache:   cache,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("generating %s: %w", a.Dir, err)
 		}
-		for _, name := range emitted {
-			owned[name] = a.Dir
+		for _, d := range declares {
+			owned[d.SP] = owner{Dir: a.Dir, Decl: d}
 		}
 		out[a.Out] = []byte(source)
 	}
 
-	// A plugin extern names SourcePawn this repository has not written yet.
-	// The day it does, the extern has to go: a function owned in both places
-	// is the duplication the epic exists to remove, and nothing else would
-	// notice, because both would compile.
-	for qualified, x := range declared.Funcs {
-		if x.Plugin {
-			if dir, ported := owned[x.Func]; ported {
-				return nil, fmt.Errorf("%s is declared as a plugin extern and %s generates %s; delete the extern and call it directly", qualified, dir, x.Func)
-			}
-			continue
-		}
-		// The other direction: a body extern says the port owns it, and
-		// a name nothing generates is a claim that stopped being true.
-		if x.Body {
-			if _, ported := owned[x.Func]; !ported {
-				return nil, fmt.Errorf("%s is declared as a body extern and nothing generates %s; make it a plugin extern, or port it", qualified, x.Func)
-			}
-		}
+	if err := checkExterns(root, declared, owned); err != nil {
+		return nil, err
+	}
+	if err := CheckResets(root, declared, owned); err != nil {
+		return nil, err
 	}
 	return out, nil
 }
 
-// SubsetConfig is what gosubset accepts in a body: the extern package, by the
-// names it actually declares, and nothing else.
+// owner is the package that generates one SourcePawn name, and the declaration
+// it generates it from. The declaration is empty for a name nothing in this
+// list translates: a constructor spaction writes itself, or a generator outside
+// the list.
+type owner struct {
+	Dir  string
+	Decl spbody.Declaration
+}
+
+/*
+checkExterns holds every extern against what the port actually generates.
+
+Two directions, and they fail differently.
+
+A plugin extern names SourcePawn this repository has not written yet. The day it
+does, the extern has to go: a function owned in both places is the duplication
+the epic exists to remove, and nothing else would notice, because both would
+compile.
+
+A body extern says the opposite, that the port owns the name. That claim has two
+halves and only the first was ever checked. A name nothing generates is a claim
+that stopped being true. A name something generates with a different shape is
+worse, because it survives the generator, survives spcomp -- int, float, every
+tag and every handle are one cell -- and arrives as a bot doing the wrong thing
+with an argument it read as the wrong type.
+*/
+func checkExterns(root string, declared spbody.Declared, owned map[string]owner) error {
+	signatures, err := spbody.SignaturesFromDir(filepath.Join(root, ExternDir))
+	if err != nil {
+		return err
+	}
+	for _, qualified := range slices.Sorted(maps.Keys(declared.Funcs)) {
+		x := declared.Funcs[qualified]
+		if x.Plugin {
+			if o, ported := owned[x.Func]; ported {
+				return fmt.Errorf("%s is declared as a plugin extern and %s generates %s; delete the extern and call it directly", qualified, o.Dir, x.Func)
+			}
+			continue
+		}
+		if !x.Body {
+			continue
+		}
+		o, ported := owned[x.Func]
+		if !ported {
+			return fmt.Errorf("%s is declared as a body extern and nothing generates %s; make it a plugin extern, or port it", qualified, x.Func)
+		}
+		if o.Decl.Sig == nil {
+			// A constructor spaction writes, or a generator outside
+			// the list. Neither has a Go signature to compare.
+			continue
+		}
+		if x.Untyped {
+			continue
+		}
+		here, checked := signatures[qualified]
+		if !checked {
+			return fmt.Errorf("%s is declared as a body extern and the extern package type checks no function of that name", qualified)
+		}
+		allowance := spbody.Allowance{Trail: len(x.Trail), Buffer: x.Sized || x.Fills || x.Into}
+		if difference, same := spbody.SameShape(here, o.Decl.Sig, o.Decl.Optional, allowance); !same {
+			return fmt.Errorf("%s is declared as a body extern for %s, which %s generates from %s, and they are different shapes: %s",
+				qualified, x.Func, o.Dir, o.Decl.Go, difference)
+		}
+	}
+	return nil
+}
+
+// SubsetConfig is what gosubset accepts in a body: the extern package and the
+// other generated packages, each by the names it actually declares, and nothing
+// else.
 func SubsetConfig(root string) (gosubset.Config, error) {
 	declared, err := spbody.ExternsFromDir(filepath.Join(root, ExternDir))
 	if err != nil {
 		return gosubset.Config{}, err
 	}
+	table, err := importable(root)
+	if err != nil {
+		return gosubset.Config{}, err
+	}
 	cfg := gosubset.DefaultConfig()
+	for p, names := range subsetPackages(table) {
+		cfg.Packages[p] = names
+	}
 	names := make([]string, 0, len(declared.Funcs)+len(declared.Tags))
 	for qualified := range declared.Funcs {
 		names = append(names, qualified[len(externPackage)+1:])

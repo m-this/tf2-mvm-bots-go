@@ -13,6 +13,7 @@ var ammo AmmoCalls
 // InstallAmmo puts a set of answers behind them.
 func InstallAmmo(c AmmoCalls) func() {
 	previous := ammo
+	Fill(&c)
 	ammo = c
 	return func() { ammo = previous }
 }
@@ -38,40 +39,20 @@ func FeatureAmmoFailover() int32 { return 19 }
 // engineer.
 //
 //sp:body IsAmmoFull
-func IsAmmoFull(client int32) bool {
-	if ammo.IsAmmoFull == nil {
-		missing("IsAmmoFull")
-	}
-	return ammo.IsAmmoFull(client)
-}
+func IsAmmoFull(client int32) bool { return ammo.IsAmmoFull(client) }
 
 // OnAmmoWalkStart arms the injected path refusals, and does nothing unless a
 // debug convar is set.
 //
 //sp:body DebugFaults_OnAmmoWalkStart
-func OnAmmoWalkStart(client int32) {
-	if ammo.OnAmmoWalkStart == nil {
-		missing("DebugFaults_OnAmmoWalkStart")
-	}
-	ammo.OnAmmoWalkStart(client)
-}
+func OnAmmoWalkStart(client int32) { ammo.OnAmmoWalkStart(client) }
 
 // RefuseAmmoPath is one of those refusals being handed out.
 //
 //sp:body DebugFaults_RefuseAmmoPath
-func RefuseAmmoPath(client int32) bool {
-	if ammo.RefuseAmmoPath == nil {
-		missing("DebugFaults_RefuseAmmoPath")
-	}
-	return ammo.RefuseAmmoPath(client)
-}
+func RefuseAmmoPath(client int32) bool { return ammo.RefuseAmmoPath(client) }
 
 // SetAt writes one cell of a wide entry.
 //
 //sp:method Set
-func (l List) SetAt(index int32, value int32, block int32) {
-	if ammo.ListSetAt == nil {
-		missing("ArrayList.Set")
-	}
-	ammo.ListSetAt(l, index, value, block)
-}
+func (l List) SetAt(index int32, value int32, block int32) { ammo.ListSetAt(l, index, value, block) }

@@ -7,10 +7,10 @@ Shooting the tank, and choosing what to shoot it with.
 */
 package attacktank
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 const (
 	//sp:name TANK_ATTACK_RANGE_MELEE
@@ -34,7 +34,7 @@ that for a tank that is still driving at him.
 const blastSafeRange = 250.0
 
 //sp:name m_iTankTarget
-var tankTarget [Slots]int32
+var tankTarget [slots.Count]int32
 
 // OnStart only sets the look-ahead: the target was chosen before the action
 // started.

@@ -27,6 +27,7 @@ var manages ManageCalls
 // InstallManages puts a set of answers behind them.
 func InstallManages(c ManageCalls) func() {
 	previous := manages
+	Fill(&c)
 	manages = c
 	return func() { manages = previous }
 }
@@ -34,22 +35,12 @@ func InstallManages(c ManageCalls) func() {
 // ServerCommand runs a line on the server console.
 //
 //sp:native ServerCommand
-func ServerCommand(format string, args ...any) {
-	if manages.ServerCommand == nil {
-		missing("ServerCommand")
-	}
-	manages.ServerCommand(format, args)
-}
+func ServerCommand(format string, args ...any) { manages.ServerCommand(format, args) }
 
 // ThrowError aborts the callback with a logged message.
 //
 //sp:native ThrowError
-func ThrowError(format string, args ...any) {
-	if manages.ThrowError == nil {
-		missing("ThrowError")
-	}
-	manages.ThrowError(format, args)
-}
+func ThrowError(format string, args ...any) { manages.ThrowError(format, args) }
 
 // ChooseString is the ternary between two written strings.
 //
@@ -100,32 +91,17 @@ func TeamComposition() ConVar { return 0 }
 // BotsEnabled is g_bBotsEnabled, whether the manager is on.
 //
 //sp:global g_bBotsEnabled
-func BotsEnabled() bool {
-	if manages.BotsEnabled == nil {
-		missing("g_bBotsEnabled")
-	}
-	return manages.BotsEnabled()
-}
+func BotsEnabled() bool { return manages.BotsEnabled() }
 
 // SetBotsEnabled writes it.
 //
 //sp:globalset g_bBotsEnabled
-func SetBotsEnabled(on bool) {
-	if manages.SetBotsEnabled == nil {
-		missing("g_bBotsEnabled")
-	}
-	manages.SetBotsEnabled(on)
-}
+func SetBotsEnabled(on bool) { manages.SetBotsEnabled(on) }
 
 // MapComposition is the lineup the map config wants, read off the record.
 //
 //sp:global g_arrMapConfig.strComposition
-func MapComposition() Text {
-	if manages.MapComposition == nil {
-		missing("g_arrMapConfig.strComposition")
-	}
-	return manages.MapComposition()
-}
+func MapComposition() Text { return manages.MapComposition() }
 
 /*
 What the seating still leaves in the plugin.
@@ -138,42 +114,24 @@ char array, which the subset has no shape for yet.
 // AddBotsFromChosenTeamComposition seats the lineup the vote chose.
 //
 //sp:body AddBotsFromChosenTeamComposition
-func AddBotsFromChosenTeamComposition() {
-	if manages.AddBotsFromChosenTeamComposition == nil {
-		missing("AddBotsFromChosenTeamComposition")
-	}
-	manages.AddBotsFromChosenTeamComposition()
-}
+func AddBotsFromChosenTeamComposition() { manages.AddBotsFromChosenTeamComposition() }
 
 // AddBotsFromTeamComposition seats the typed or map lineup and says how many
 // it seated.
 //
 //sp:body AddBotsFromTeamComposition
-func AddBotsFromTeamComposition(count int32) int32 {
-	if manages.AddBotsFromTeamComposition == nil {
-		missing("AddBotsFromTeamComposition")
-	}
-	return manages.AddBotsFromTeamComposition(count)
-}
+func AddBotsFromTeamComposition(count int32) int32 { return manages.AddBotsFromTeamComposition(count) }
 
 // AddBotsBasedOnPreferences seats what the players asked for.
 //
 //sp:body AddBotsBasedOnPreferences
-func AddBotsBasedOnPreferences(count int32) {
-	if manages.AddBotsBasedOnPreferences == nil {
-		missing("AddBotsBasedOnPreferences")
-	}
-	manages.AddBotsBasedOnPreferences(count)
-}
+func AddBotsBasedOnPreferences(count int32) { manages.AddBotsBasedOnPreferences(count) }
 
 // PickAllowedBotClass writes the wanted class, or a random allowed one when
 // the blacklist refuses it.
 //
 //sp:body PickAllowedBotClass
 func PickAllowedBotClass(wanted Text, buffer Text, maxlen int32) {
-	if manages.PickAllowedBotClass == nil {
-		missing("PickAllowedBotClass")
-	}
 	manages.PickAllowedBotClass(wanted, buffer, maxlen)
 }
 
@@ -181,42 +139,22 @@ func PickAllowedBotClass(wanted Text, buffer Text, maxlen int32) {
 // else's bot. Ported, roster_counts.
 //
 //sp:body GetHumanAndDefenderBotCount
-func HumanAndDefenderBotCount(team Team) int32 {
-	if manages.HumanAndDefenderBotCount == nil {
-		missing("GetHumanAndDefenderBotCount")
-	}
-	return manages.HumanAndDefenderBotCount(team)
-}
+func HumanAndDefenderBotCount(team Team) int32 { return manages.HumanAndDefenderBotCount(team) }
 
 // ExtendUpgradeTimeForNewBots gives a late bot enough break to shop in.
 // Ported, roster_counts.
 //
 //sp:body ExtendUpgradeTimeForNewBots
-func ExtendUpgradeTimeForNewBots() {
-	if manages.ExtendUpgradeTimeForNewBots == nil {
-		missing("ExtendUpgradeTimeForNewBots")
-	}
-	manages.ExtendUpgradeTimeForNewBots()
-}
+func ExtendUpgradeTimeForNewBots() { manages.ExtendUpgradeTimeForNewBots() }
 
 // KickClientText is KickClient handed a buffer: RemoveAllDefenderBots takes
 // the reason as a parameter and passes it straight through.
 //
 //sp:native KickClient
-func KickClientText(client int32, reason Text) {
-	if manages.KickClientText == nil {
-		missing("KickClient")
-	}
-	manages.KickClientText(client, reason)
-}
+func KickClientText(client int32, reason Text) { manages.KickClientText(client, reason) }
 
 // MakePlayerDance is the final wave's send-off, in place of a kick. Ported,
 // manage.
 //
 //sp:body MakePlayerDance
-func MakePlayerDance(client int32) {
-	if manages.MakePlayerDance == nil {
-		missing("MakePlayerDance")
-	}
-	manages.MakePlayerDance(client)
-}
+func MakePlayerDance(client int32) { manages.MakePlayerDance(client) }

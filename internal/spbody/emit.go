@@ -93,8 +93,10 @@ type emitter struct {
 	// pending are the defers seen so far in the function being emitted, in
 	// the order they were written; they discharge in reverse.
 	pending []deferred
-	// emitted are the SourcePawn function names this emission declares.
-	emitted []string
+	// declares is every plain function this emission writes, in source
+	// order: what it is called in both languages, and the Go signature it
+	// was checked against.
+	declares []Declaration
 	// state is every package-level var, in declaration order, so Reset puts
 	// them back in the order they were declared.
 	state []stateVar

@@ -51,6 +51,7 @@ var engineers EngineerCalls
 // InstallEngineers puts a set of answers behind them.
 func InstallEngineers(c EngineerCalls) func() {
 	previous := engineers
+	Fill(&c)
 	engineers = c
 	return func() { engineers = previous }
 }
@@ -121,9 +122,6 @@ ArrayList.SortCustom uses.
 */
 //nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
 func CreateTimer(interval float32, callback func(timer Timer) Outcome, data int32, flags int32) Timer {
-	if engineers.CreateRepeatingTimer == nil {
-		missing("CreateTimer")
-	}
 	return engineers.CreateRepeatingTimer(interval)
 }
 
@@ -136,82 +134,44 @@ func TimerNoMapChange() int32 { return 2 }
 // KillTimer stops it.
 //
 //sp:native KillTimer
-func KillTimer(timer Timer) {
-	if engineers.KillTimer == nil {
-		missing("KillTimer")
-	}
-	engineers.KillTimer(timer)
-}
+func KillTimer(timer Timer) { engineers.KillTimer(timer) }
 
 // AbsAnglesOf is which way the entity is facing.
 //
 //sp:body GetAbsAngles returns
-func AbsAnglesOf(entity int32) (angles [3]float32) {
-	if engineers.AbsAnglesOf == nil {
-		missing("GetAbsAngles")
-	}
-	return engineers.AbsAnglesOf(entity)
-}
+func AbsAnglesOf(entity int32) (angles [3]float32) { return engineers.AbsAnglesOf(entity) }
 
 // ShouldBuildTeleporter is the teleporter behaviour's own precondition.
 //
 //sp:body ShouldBuildTeleporter
-func ShouldBuildTeleporter(actor int32) bool {
-	if engineers.ShouldBuildTeleporter == nil {
-		missing("ShouldBuildTeleporter")
-	}
-	return engineers.ShouldBuildTeleporter(actor)
-}
+func ShouldBuildTeleporter(actor int32) bool { return engineers.ShouldBuildTeleporter(actor) }
 
 // GunslingerEquipped says this engineer builds minis rather than level threes.
 //
 //sp:body TF2_IsGunslingerEquipped
-func GunslingerEquipped(client int32) bool {
-	if engineers.GunslingerEquipped == nil {
-		missing("TF2_IsGunslingerEquipped")
-	}
-	return engineers.GunslingerEquipped(client)
-}
+func GunslingerEquipped(client int32) bool { return engineers.GunslingerEquipped(client) }
 
 // EngineerGunSpendsMetal is an engineer carrying a gun that costs metal to
 // fire: the Widowmaker, the Short Circuit and the Rescue Ranger.
 //
 //sp:body EngineerGunSpendsMetal
-func EngineerGunSpendsMetal(client int32) bool {
-	if engineers.EngineerGunSpendsMetal == nil {
-		missing("EngineerGunSpendsMetal")
-	}
-	return engineers.EngineerGunSpendsMetal(client)
-}
+func EngineerGunSpendsMetal(client int32) bool { return engineers.EngineerGunSpendsMetal(client) }
 
 // NestRelocateOf is the ground the between-waves answer wants this engineer to
 // move to, NULL_AREA for none. The array is util.sp's, not the idle action's.
 //
 //sp:slot m_aNestAreaRelocate
-func NestRelocateOf(client int32) Area {
-	if engineers.NestRelocateOf == nil {
-		missing("m_aNestAreaRelocate")
-	}
-	return engineers.NestRelocateOf(client)
-}
+func NestRelocateOf(client int32) Area { return engineers.NestRelocateOf(client) }
 
 // SetNestRelocate writes it.
 //
 //sp:slotset m_aNestAreaRelocate
-func SetNestRelocate(client int32, area Area) {
-	if engineers.SetNestRelocate == nil {
-		missing("m_aNestAreaRelocate")
-	}
-	engineers.SetNestRelocate(client, area)
-}
+func SetNestRelocate(client int32, area Area) { engineers.SetNestRelocate(client, area) }
 
 // PickBusterRetreatArea is ground out of the blast to carry the sentry to.
 //
 //sp:body PickBusterRetreatArea
 func PickBusterRetreatArea(sentry int32, buster int32) Area {
-	if engineers.PickBusterRetreatArea == nil {
-		missing("PickBusterRetreatArea")
-	}
 	return engineers.PickBusterRetreatArea(sentry, buster)
 }
 
@@ -219,248 +179,140 @@ func PickBusterRetreatArea(sentry int32, buster int32) Area {
 //
 //sp:body DetonateObjectOfType
 func DetonateObjectOfType(client int32, objectType Object) {
-	if engineers.DetonateObjectOfType == nil {
-		missing("DetonateObjectOfType")
-	}
 	engineers.DetonateObjectOfType(client, objectType)
 }
 
 // CarriedObject is what is in his hands, and -1 for nothing.
 //
-//sp:plugin TF2_GetCarriedObject
-func CarriedObject(client int32) int32 {
-	if engineers.CarriedObject == nil {
-		missing("TF2_GetCarriedObject")
-	}
-	return engineers.CarriedObject(client)
-}
+//sp:library TF2_GetCarriedObject
+func CarriedObject(client int32) int32 { return engineers.CarriedObject(client) }
 
 // IsMiniBuilding says it came out of a Gunslinger, so it is rebuilt rather than
 // nursed.
 //
-//sp:plugin TF2_IsMiniBuilding
-func IsMiniBuilding(building int32) bool {
-	if engineers.IsMiniBuilding == nil {
-		missing("TF2_IsMiniBuilding")
-	}
-	return engineers.IsMiniBuilding(building)
-}
+//sp:library TF2_IsMiniBuilding
+func IsMiniBuilding(building int32) bool { return engineers.IsMiniBuilding(building) }
 
 // IsBuildingUp says the thing is still going up.
 //
-//sp:plugin TF2_IsBuilding
-func IsBuildingUp(building int32) bool {
-	if engineers.IsBuildingUp == nil {
-		missing("TF2_IsBuilding")
-	}
-	return engineers.IsBuildingUp(building)
-}
+//sp:library TF2_IsBuilding
+func IsBuildingUp(building int32) bool { return engineers.IsBuildingUp(building) }
 
 // UpgradeLevel is one, two or three.
 //
-//sp:plugin TF2_GetUpgradeLevel
-func UpgradeLevel(building int32) int32 {
-	if engineers.UpgradeLevel == nil {
-		missing("TF2_GetUpgradeLevel")
-	}
-	return engineers.UpgradeLevel(building)
-}
+//sp:library TF2_GetUpgradeLevel
+func UpgradeLevel(building int32) int32 { return engineers.UpgradeLevel(building) }
 
 // EntityHealth is what it has left.
 //
-//sp:plugin BaseEntity_GetHealth
-func EntityHealth(entity int32) int32 {
-	if engineers.EntityHealth == nil {
-		missing("BaseEntity_GetHealth")
-	}
-	return engineers.EntityHealth(entity)
-}
+//sp:library BaseEntity_GetHealth
+func EntityHealth(entity int32) int32 { return engineers.EntityHealth(entity) }
 
 // EntityMaxHealth is what it had.
 //
 //sp:native TF2Util_GetEntityMaxHealth
-func EntityMaxHealth(entity int32) int32 {
-	if engineers.EntityMaxHealth == nil {
-		missing("TF2Util_GetEntityMaxHealth")
-	}
-	return engineers.EntityMaxHealth(entity)
-}
+func EntityMaxHealth(entity int32) int32 { return engineers.EntityMaxHealth(entity) }
 
 // IsRescueRangerEquipped says he can repair from behind cover.
 //
 //sp:body TF2_IsRescueRangerEquipped
-func IsRescueRangerEquipped(client int32) bool {
-	if engineers.IsRescueRangerEquipped == nil {
-		missing("TF2_IsRescueRangerEquipped")
-	}
-	return engineers.IsRescueRangerEquipped(client)
-}
+func IsRescueRangerEquipped(client int32) bool { return engineers.IsRescueRangerEquipped(client) }
 
 // TurretAngles is where the sentry is pointing, which is what the engineer
 // stands behind.
 //
 //sp:body GetTurretAngles
-func TurretAngles(sentry int32) (angles [3]float32) {
-	if engineers.TurretAngles == nil {
-		missing("GetTurretAngles")
-	}
-	return engineers.TurretAngles(sentry)
-}
+func TurretAngles(sentry int32) (angles [3]float32) { return engineers.TurretAngles(sentry) }
 
 // ShouldRelocateNest is the between-waves question, and the ground it answers
 // with.
 //
 //sp:body ShouldRelocateNest
 func ShouldRelocateNest(client int32) (yes bool, destination Area) {
-	if engineers.ShouldRelocateNest == nil {
-		missing("ShouldRelocateNest")
-	}
 	return engineers.ShouldRelocateNest(client)
 }
 
 // ShouldBuildDisposable says a second gun beside the first is worth the metal.
 //
 //sp:body ShouldBuildDisposable
-func ShouldBuildDisposable(actor int32) bool {
-	if engineers.ShouldBuildDisposable == nil {
-		missing("ShouldBuildDisposable")
-	}
-	return engineers.ShouldBuildDisposable(actor)
-}
+func ShouldBuildDisposable(actor int32) bool { return engineers.ShouldBuildDisposable(actor) }
 
 // RunScriptCodeAt is RunScriptCode with arguments folded into the line, which is
 // how a threat index reaches the script.
 //
-//sp:plugin OSLib_RunScriptCode
+//sp:library OSLib_RunScriptCode
 //nolint:revive // unused-parameter: the two are SourcePawn's own defaults, written through
 func RunScriptCodeAt(client int32, first int32, second int32, code string, args ...any) {
-	if engineers.RunScriptCodeAt == nil {
-		missing("OSLib_RunScriptCode")
-	}
 	engineers.RunScriptCodeAt(client, code, args...)
 }
 
 // RunScriptCode hands a line of VScript to the bot, which is the only way to
 // press two buttons on the same frame while the sentry is wrangled.
 //
-//sp:plugin OSLib_RunScriptCode
+//sp:library OSLib_RunScriptCode
 //nolint:revive // unused-parameter: the two are SourcePawn's own defaults, written through
 func RunScriptCode(client int32, first int32, second int32, code string) {
-	if engineers.RunScriptCode == nil {
-		missing("OSLib_RunScriptCode")
-	}
 	engineers.RunScriptCode(client, code)
 }
 
 // HeadSteadyDuration is how long the head has been pointing where it points.
 //
 //sp:method GetHeadSteadyDuration
-func (b Body) HeadSteadyDuration() float32 {
-	if engineers.HeadSteadyDuration == nil {
-		missing("IBody.GetHeadSteadyDuration")
-	}
-	return engineers.HeadSteadyDuration(b)
-}
+func (b Body) HeadSteadyDuration() float32 { return engineers.HeadSteadyDuration(b) }
 
 // SetPathGoalEntity walks the bot at a thing rather than at a place.
 //
 //sp:method SetPathGoalEntity
-func (p PluginBot) SetPathGoalEntity(entity int32) {
-	if engineers.SetPathGoalEntity == nil {
-		missing("PluginBot.SetPathGoalEntity")
-	}
-	engineers.SetPathGoalEntity(p, entity)
-}
+func (p PluginBot) SetPathGoalEntity(entity int32) { engineers.SetPathGoalEntity(p, entity) }
 
 // EntIndexToEntRef is the reference that survives the entity being deleted.
 //
 //sp:native EntIndexToEntRef
-func EntIndexToEntRef(entity int32) int32 {
-	if engineers.EntIndexToEntRef == nil {
-		missing("EntIndexToEntRef")
-	}
-	return engineers.EntIndexToEntRef(entity)
-}
+func EntIndexToEntRef(entity int32) int32 { return engineers.EntIndexToEntRef(entity) }
 
 // EntRefToEntIndex is the way back, and INVALID_ENT_REFERENCE when the thing is
 // gone.
 //
 //sp:native EntRefToEntIndex
-func EntRefToEntIndex(ref int32) int32 {
-	if engineers.EntRefToEntIndex == nil {
-		missing("EntRefToEntIndex")
-	}
-	return engineers.EntRefToEntIndex(ref)
-}
+func EntRefToEntIndex(ref int32) int32 { return engineers.EntRefToEntIndex(ref) }
 
 // AmmoOf is one slot of the player's ammo array, which needs the element index
 // a plain property read does not take.
 //
 //sp:native GetEntProp after 4
 func AmmoOf(client int32, propType PropType, prop string, element int32) int32 {
-	if engineers.AmmoOf == nil {
-		missing("GetEntProp")
-	}
 	return engineers.AmmoOf(client, propType, prop, element)
 }
 
 // BuildSentrygun is the behaviour that stands one up.
 //
 //sp:body CTFBotMvMEngineerBuildSentrygun
-func BuildSentrygun() Behaviour {
-	if engineers.BuildSentrygun == nil {
-		missing("CTFBotMvMEngineerBuildSentrygun")
-	}
-	return engineers.BuildSentrygun()
-}
+func BuildSentrygun() Behaviour { return engineers.BuildSentrygun() }
 
 // BuildDispenser is the one that feeds it.
 //
 //sp:body CTFBotMvMEngineerBuildDispenser
-func BuildDispenser() Behaviour {
-	if engineers.BuildDispenser == nil {
-		missing("CTFBotMvMEngineerBuildDispenser")
-	}
-	return engineers.BuildDispenser()
-}
+func BuildDispenser() Behaviour { return engineers.BuildDispenser() }
 
 // BuildTeleporter is what he does with the time left over.
 //
 //sp:body CTFBotMvMEngineerBuildTeleporter
-func BuildTeleporter() Behaviour {
-	if engineers.BuildTeleporter == nil {
-		missing("CTFBotMvMEngineerBuildTeleporter")
-	}
-	return engineers.BuildTeleporter()
-}
+func BuildTeleporter() Behaviour { return engineers.BuildTeleporter() }
 
 // BuildDisposable stands a mini beside the nest.
 //
 //sp:body CTFBotMvMEngineerBuildDisposable
-func BuildDisposable() Behaviour {
-	if engineers.BuildDisposable == nil {
-		missing("CTFBotMvMEngineerBuildDisposable")
-	}
-	return engineers.BuildDisposable()
-}
+func BuildDisposable() Behaviour { return engineers.BuildDisposable() }
 
 // NavAreaCount is how many areas the mesh has, which is the unit every "why did
 // that frame take so long" answer is counted in.
 //
 //sp:global TheNavAreas.Count
-func NavAreaCount() int32 {
-	if engineers.NavAreaCount == nil {
-		missing("TheNavAreas.Count")
-	}
-	return engineers.NavAreaCount()
-}
+func NavAreaCount() int32 { return engineers.NavAreaCount() }
 
 // BuilderOf is who the game says owns a building.
 //
 //sp:native GetEntPropEnt
 func BuilderOf(building int32, propType PropType, prop string) int32 {
-	if engineers.BuilderOf == nil {
-		missing("GetEntPropEnt")
-	}
 	return engineers.BuilderOf(building, propType, prop)
 }

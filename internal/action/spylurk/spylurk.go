@@ -67,7 +67,7 @@ func Update(actor int32) engine.Outcome {
 
 		if engine.IsLineOfFireClearEntity(actor, engine.EyePosition(actor), target) {
 			if threatRange < circleStrafeRange {
-				engine.AimHeadTowards(myBot.Body(), engine.WorldSpaceCenter(target), engine.AimMandatory(), 0.1, engine.AddressNull(), "Aim stab")
+				engine.AimHeadTowards(myBot.Body(), engine.WorldSpaceCenter(target), engine.AimMandatory(), 0.1, engine.NoAddress(), "Aim stab")
 
 				if !isBehindVictim {
 					// Try to circle around the enemy

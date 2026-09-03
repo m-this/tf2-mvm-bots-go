@@ -111,7 +111,7 @@ stock void BluAssistSay(int client, float health)
 
 stock void BluAssistBendAttrib(int client, const char[] name, float neutral, float delta, float scale = 1.0)
 {
-	int attrib = TF2Attrib_GetByName(client, name);
+	Address attrib = TF2Attrib_GetByName(client, name);
 	float current = neutral;
 	if (attrib != Address_Null)
 	{

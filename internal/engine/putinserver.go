@@ -41,6 +41,7 @@ var putInServers PutInServerCalls
 // InstallPutInServers puts a set of answers behind them.
 func InstallPutInServers(c PutInServerCalls) func() {
 	previous := putInServers
+	Fill(&c)
 	putInServers = c
 	return func() { putInServers = previous }
 }
@@ -49,12 +50,7 @@ func InstallPutInServers(c PutInServerCalls) func() {
 // Ported, mediccall.
 //
 //sp:body ForgetMedicCall
-func ForgetMedicCall(client int32) {
-	if putInServers.ForgetMedicCall == nil {
-		missing("ForgetMedicCall")
-	}
-	putInServers.ForgetMedicCall(client)
-}
+func ForgetMedicCall(client int32) { putInServers.ForgetMedicCall(client) }
 
 // ButtonInput is esButtonInput, the extra button state kept per client. An
 // enum struct with a method on it, which the generator has no form for, so the
@@ -72,60 +68,32 @@ func ExtraButtons(client int32) ButtonInput { return 0 }
 // Reset puts every field of it back to its starting value.
 //
 //sp:method Reset
-func (b ButtonInput) Reset() {
-	if putInServers.ResetExtraButtons == nil {
-		missing("esButtonInput.Reset")
-	}
-	putInServers.ResetExtraButtons(int32(b))
-}
+func (b ButtonInput) Reset() { putInServers.ResetExtraButtons(int32(b)) }
 
 // SetDeadRethinkTime writes m_flDeadRethinkTime for one client.
 //
 //sp:slotset m_flDeadRethinkTime
-func SetDeadRethinkTime(client int32, when float32) {
-	if putInServers.SetDeadRethinkTime == nil {
-		missing("m_flDeadRethinkTime")
-	}
-	putInServers.SetDeadRethinkTime(client, when)
-}
+func SetDeadRethinkTime(client int32, when float32) { putInServers.SetDeadRethinkTime(client, when) }
 
 // SetBuybackNumber writes g_iBuybackNumber for one client.
 //
 //sp:slotset g_iBuybackNumber
-func SetBuybackNumber(client int32, number int32) {
-	if putInServers.SetBuybackNumber == nil {
-		missing("g_iBuybackNumber")
-	}
-	putInServers.SetBuybackNumber(client, number)
-}
+func SetBuybackNumber(client int32, number int32) { putInServers.SetBuybackNumber(client, number) }
 
 // SetNextRollTime writes m_flNextRollTime for one client.
 //
 //sp:slotset m_flNextRollTime
-func SetNextRollTime(client int32, when float32) {
-	if putInServers.SetNextRollTime == nil {
-		missing("m_flNextRollTime")
-	}
-	putInServers.SetNextRollTime(client, when)
-}
+func SetNextRollTime(client int32, when float32) { putInServers.SetNextRollTime(client, when) }
 
 // ResetCommandThrottle forgets when that client last typed. Ported, humans.
 //
 //sp:body Go_ResetCommandThrottle
-func ResetCommandThrottle(client int32) {
-	if putInServers.ResetCommandThrottle == nil {
-		missing("Go_ResetCommandThrottle")
-	}
-	putInServers.ResetCommandThrottle(client)
-}
+func ResetCommandThrottle(client int32) { putInServers.ResetCommandThrottle(client) }
 
 // SetLastReadyInputTime writes m_flLastReadyInputTime for one client.
 //
 //sp:slotset m_flLastReadyInputTime
 func SetLastReadyInputTime(client int32, when float32) {
-	if putInServers.SetLastReadyInputTime == nil {
-		missing("m_flLastReadyInputTime")
-	}
 	putInServers.SetLastReadyInputTime(client, when)
 }
 
@@ -133,34 +101,19 @@ func SetLastReadyInputTime(client int32, when float32) {
 // Ported, botreset.
 //
 //sp:body ResetNextBot
-func ResetNextBot(client int32) {
-	if putInServers.ResetNextBot == nil {
-		missing("ResetNextBot")
-	}
-	putInServers.ResetNextBot(client)
-}
+func ResetNextBot(client int32) { putInServers.ResetNextBot(client) }
 
 // TakeBotSeat hands the waiting seat to the bot that just entered. Ported,
 // playerpref.
 //
 //sp:body TakeBotSeat
-func TakeBotSeat(client int32) {
-	if putInServers.TakeBotSeat == nil {
-		missing("TakeBotSeat")
-	}
-	putInServers.TakeBotSeat(client)
-}
+func TakeBotSeat(client int32) { putInServers.TakeBotSeat(client) }
 
 // MakeRoomForHumanPlayer frees a defender seat for somebody who just
 // connected. Ported, manage.
 //
 //sp:body MakeRoomForHumanPlayer
-func MakeRoomForHumanPlayer(client int32) {
-	if putInServers.MakeRoomForHumanPlayer == nil {
-		missing("MakeRoomForHumanPlayer")
-	}
-	putInServers.MakeRoomForHumanPlayer(client)
-}
+func MakeRoomForHumanPlayer(client int32) { putInServers.MakeRoomForHumanPlayer(client) }
 
 /*
 The tournament ready panel's listener reaches these.
@@ -173,12 +126,7 @@ the mission, the team and the lineup before it lets one through.
 // Ported, roster_counts.
 //
 //sp:body GetDefenderBotCount
-func DefenderBotCount(team Team) int32 {
-	if putInServers.DefenderBotCount == nil {
-		missing("GetDefenderBotCount")
-	}
-	return putInServers.DefenderBotCount(team)
-}
+func DefenderBotCount(team Team) int32 { return putInServers.DefenderBotCount(team) }
 
 // MinPlayers is redbots_manager_min_players, the floor a server owner set, and
 // -1 for no floor at all.
@@ -189,100 +137,50 @@ func MinPlayers() ConVar { return 0 }
 // ShouldProcessCommand throttles how fast one client may type. Ported, humans.
 //
 //sp:body ShouldProcessCommand
-func ShouldProcessCommand(client int32) bool {
-	if putInServers.ShouldProcessCommand == nil {
-		missing("ShouldProcessCommand")
-	}
-	return putInServers.ShouldProcessCommand(client)
-}
+func ShouldProcessCommand(client int32) bool { return putInServers.ShouldProcessCommand(client) }
 
 // LastReadyInputTime reads m_flLastReadyInputTime for one client.
 //
 //sp:slot m_flLastReadyInputTime
-func LastReadyInputTime(client int32) float32 {
-	if putInServers.LastReadyInputTime == nil {
-		missing("m_flLastReadyInputTime")
-	}
-	return putInServers.LastReadyInputTime(client)
-}
+func LastReadyInputTime(client int32) float32 { return putInServers.LastReadyInputTime(client) }
 
 // MissionDifficultyNow is how hard the popfile being played is. Ported,
 // mapconfig.
 //
 //sp:body GetMissionDifficulty
-func MissionDifficultyNow() MissionDifficulty {
-	if putInServers.MissionDifficultyNow == nil {
-		missing("GetMissionDifficulty")
-	}
-	return putInServers.MissionDifficultyNow()
-}
+func MissionDifficultyNow() MissionDifficulty { return putInServers.MissionDifficultyNow() }
 
 // Press is the buttons being held down for this client.
 //
 //sp:property iPress
-func (b ButtonInput) Press() int32 {
-	if putInServers.Press == nil {
-		missing("esButtonInput.iPress")
-	}
-	return putInServers.Press(int32(b))
-}
+func (b ButtonInput) Press() int32 { return putInServers.Press(int32(b)) }
 
 // SetPress writes them.
 //
 //sp:propertyset iPress
-func (b ButtonInput) SetPress(buttons int32) {
-	if putInServers.SetPress == nil {
-		missing("esButtonInput.iPress")
-	}
-	putInServers.SetPress(int32(b), buttons)
-}
+func (b ButtonInput) SetPress(buttons int32) { putInServers.SetPress(int32(b), buttons) }
 
 // PressTime is when the held buttons may be let go of.
 //
 //sp:property flPressTime
-func (b ButtonInput) PressTime() float32 {
-	if putInServers.PressTime == nil {
-		missing("esButtonInput.flPressTime")
-	}
-	return putInServers.PressTime(int32(b))
-}
+func (b ButtonInput) PressTime() float32 { return putInServers.PressTime(int32(b)) }
 
 // Release is the buttons being held off for this client.
 //
 //sp:property iRelease
-func (b ButtonInput) Release() int32 {
-	if putInServers.Release == nil {
-		missing("esButtonInput.iRelease")
-	}
-	return putInServers.Release(int32(b))
-}
+func (b ButtonInput) Release() int32 { return putInServers.Release(int32(b)) }
 
 // SetRelease writes them.
 //
 //sp:propertyset iRelease
-func (b ButtonInput) SetRelease(buttons int32) {
-	if putInServers.SetRelease == nil {
-		missing("esButtonInput.iRelease")
-	}
-	putInServers.SetRelease(int32(b), buttons)
-}
+func (b ButtonInput) SetRelease(buttons int32) { putInServers.SetRelease(int32(b), buttons) }
 
 // ReleaseTime is when the held-off buttons may be pressed again.
 //
 //sp:property flReleaseTime
-func (b ButtonInput) ReleaseTime() float32 {
-	if putInServers.ReleaseTime == nil {
-		missing("esButtonInput.flReleaseTime")
-	}
-	return putInServers.ReleaseTime(int32(b))
-}
+func (b ButtonInput) ReleaseTime() float32 { return putInServers.ReleaseTime(int32(b)) }
 
 // KeySpeed is how fast a held turn key moves the view.
 //
 //sp:property flKeySpeed
-func (b ButtonInput) KeySpeed() float32 {
-	if putInServers.KeySpeed == nil {
-		missing("esButtonInput.flKeySpeed")
-	}
-	return putInServers.KeySpeed(int32(b))
-}
+func (b ButtonInput) KeySpeed() float32 { return putInServers.KeySpeed(int32(b)) }

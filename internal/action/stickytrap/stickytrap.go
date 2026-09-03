@@ -28,10 +28,10 @@ landed, which is better than trusting where they were aimed.
 */
 package stickytrap
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // The launcher holds eight, and eight is the trap.
 //
@@ -90,17 +90,17 @@ const trapCooldown = 20.0
 
 var (
 	//sp:name m_ctStickyTrapEnd
-	trapEnd [Slots]float32
+	trapEnd [slots.Count]float32
 	//sp:name m_ctStickyTrapNextShot
-	trapNextShot [Slots]float32
+	trapNextShot [slots.Count]float32
 	//sp:name m_ctStickyTrapAgain
-	trapAgain [Slots]float32
+	trapAgain [slots.Count]float32
 	//sp:name m_iStickyTrapBombsLeft
-	trapBombsLeft [Slots]int32
+	trapBombsLeft [slots.Count]int32
 	//sp:name m_vStickyTrapSpot
-	trapSpot [Slots][3]float32
+	trapSpot [slots.Count][3]float32
 	//sp:name m_vStickyTrapPoint
-	trapPoint [Slots][3]float32
+	trapPoint [slots.Count][3]float32
 )
 
 // OnStart picks the ground and counts the bombs.
@@ -203,7 +203,7 @@ func Update(actor int32) engine.Outcome {
 
 	myBody := myBot.Body()
 
-	engine.AimHeadTowards(myBody, trapPoint[actor], engine.AimCritical(), 1.0, engine.AddressNull(), "Laying a sticky trap")
+	engine.AimHeadTowards(myBody, trapPoint[actor], engine.AimCritical(), 1.0, engine.NoAddress(), "Laying a sticky trap")
 
 	if trapNextShot[actor] > engine.GameTime() {
 		return engine.Continue()

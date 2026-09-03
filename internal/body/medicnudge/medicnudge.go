@@ -9,10 +9,10 @@ its patient is written.
 */
 package medicnudge
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 /*
 MedicPatientInterval is how often the game is told who its patient should be.
@@ -25,7 +25,7 @@ beam does not need an answer more often than the team changes shape.
 const MedicPatientInterval = 2.0
 
 //sp:name m_ctNextPatientNudge
-var nextPatientNudge [Slots]float32
+var nextPatientNudge [slots.Count]float32
 
 /*
 PointMedicAtBiggestBody writes the patient handle from inside the action's own

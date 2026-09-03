@@ -12,10 +12,10 @@ include list, which is its build order.
 */
 package declarations
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is MAXPLAYERS + 1, the client array size.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // ManagerMode is which of the three ways the mod runs.
 const (
@@ -98,15 +98,15 @@ One entry per client, for the bots.
 
 //sp:name g_bIsDefenderBot
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var isDefenderBot [Slots]bool
+var isDefenderBot [slots.Count]bool
 
 //sp:name g_bIsBeingRevived
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var isBeingRevived [Slots]bool
+var isBeingRevived [slots.Count]bool
 
 //sp:name g_bHasUpgraded
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var hasUpgraded [Slots]bool
+var hasUpgraded [slots.Count]bool
 
 /*
 shoppedThisBreak is whether this bot has done its shopping since the last wave
@@ -122,31 +122,31 @@ of the mission.
 //
 //sp:name g_bShoppedThisBreak
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var shoppedThisBreak [Slots]bool
+var shoppedThisBreak [slots.Count]bool
 
 //sp:name g_arrExtraButtons
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var extraButtons [Slots]engine.ButtonInput
+var extraButtons [slots.Count]engine.ButtonInput
 
 //sp:name m_flDeadRethinkTime
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var deadRethinkTime [Slots]float32
+var deadRethinkTime [slots.Count]float32
 
 //sp:name g_iBuybackNumber
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var buybackNumber [Slots]int32
+var buybackNumber [slots.Count]int32
 
 //sp:name g_iBuyUpgradesNumber
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var buyUpgradesNumber [Slots]int32
+var buyUpgradesNumber [slots.Count]int32
 
 //sp:name m_flNextSnipeFireTime
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var nextSnipeFireTime [Slots]float32
+var nextSnipeFireTime [slots.Count]float32
 
 //sp:name m_flNextRollTime
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var nextRollTime [Slots]float32
+var nextRollTime [slots.Count]float32
 
 /*
 One entry per client, for the people.
@@ -154,15 +154,15 @@ One entry per client, for the people.
 
 //sp:name g_bChoosingBotClasses
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var choosingBotClasses [Slots]bool
+var choosingBotClasses [slots.Count]bool
 
 //sp:name g_flEnableBotsCooldown
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var enableBotsCooldown [Slots]float32
+var enableBotsCooldown [slots.Count]float32
 
 //sp:name m_flLastReadyInputTime
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var lastReadyInputTime [Slots]float32
+var lastReadyInputTime [slots.Count]float32
 
 /*
 The map's config, and the world.

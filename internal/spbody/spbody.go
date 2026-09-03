@@ -32,6 +32,50 @@ type Config struct {
 	// so a selector can be resolved back to an extern without go/types
 	// having to name the package twice.
 	Import map[string]string
+	/*
+		Cache is one caller's type check of everything it imports.
+
+		A body imports internal/engine, which is 18000 lines, and there
+		are ninety bodies. Type checking it once per body is most of the
+		cost of generating them all, and none of it buys anything: the
+		declarations do not change between one body and the next.
+
+		Nil means no sharing, which is right for a caller emitting one
+		package. NewCache is right for a caller emitting the list.
+	*/
+	Cache *Cache
+}
+
+/*
+Cache is a file set and an importer shared across one run of emissions.
+
+Sharing the file set is what makes sharing the importer sound: a resolved
+package holds positions into the set it was parsed with, so an importer can only
+be reused by emissions that read the same one. One FileSet holds as many files
+as it is given, which is what it is for.
+*/
+type Cache struct {
+	fset *token.FileSet
+	imp  *moduleImporter
+}
+
+// NewCache prepares one, rooted anywhere inside the module.
+func NewCache(dir string) (*Cache, error) {
+	fset := token.NewFileSet()
+	imp, err := newModuleImporter(fset, dir)
+	if err != nil {
+		return nil, err
+	}
+	return &Cache{fset: fset, imp: imp}, nil
+}
+
+// parts are the file set and importer an emission should use: the shared ones
+// when there is a cache, and a fresh set with no importer when there is not.
+func (c *Cache) parts(string) (*token.FileSet, *moduleImporter) {
+	if c == nil {
+		return token.NewFileSet(), nil
+	}
+	return c.fset, c.imp
 }
 
 // Extern is one call the engine already has, and how the emitted SourcePawn
@@ -43,11 +87,18 @@ type Extern struct {
 	// Lead are arguments written before the Go ones. A native has none; an
 	// SDKCall has the handle prepared at load.
 	Lead []string
-	// Plugin says this is not the engine at all but a function the plugin
-	// still has in hand-written SourcePawn. Every one of these is work the
-	// port has not done, and the day the port does it the extern has to go:
-	// a function owned in both places is the duplication this epic exists
-	// to remove.
+	/* Plugin says this is a function the plugin still has in hand-written
+	SourcePawn. Every one of these is work the port has not done, and the
+	day the port does it the extern has to go: a function owned in both
+	places is the duplication this epic exists to remove.
+
+	It is not what a call into a vendored include is. //sp:library is that,
+	and carries no flag at all, because there is nothing to say about it: it
+	is a dependency's API, it will never be ported, and reimplementing
+	stocklib's MinFloat in Go would be vendoring somebody else's library by
+	hand rather than calling it. 28 of the 34 declarations that used to say
+	plugin were really this, which made the list of work remaining wrong by
+	a factor of five. */
 	Plugin bool
 	// ReturnsArray says the SourcePawn declaration returns the array rather
 	// than filling a parameter with it, which is the float[] form. Such a
@@ -158,14 +209,67 @@ type Extern struct {
 	// the assertion, because internal/body requires a body of that name to
 	// exist and refuses the declaration when it does not.
 	Body bool
+	/*
+		Untyped drops the shape comparison for one body extern.
+
+		The extern package cannot name a type a body declares, and a body
+		that declares a methodmap returns one: the generated function
+		returns CEconItemAttributeDefinition and the extern has nothing
+		to write for it but the Address it is a methodmap over. That is
+		the same cell and a different name, and no rule this side of an
+		import can tell it from the mismatches the comparison exists to
+		catch.
+
+		So it is written down instead, one extern at a time, with the
+		reason in the comment above it. There are no others.
+	*/
+	Untyped bool
+}
+
+/*
+Declaration is one plain function an emission writes.
+
+Both names are kept because both are read. SP is what another SourcePawn file
+calls, and what an extern claiming this function has to name. Go is what a
+caller in this module writes, and what an import of this package resolves
+against. Sig is the Go signature the function type checked as, which is the only
+form the two languages can be compared in: SourcePawn is one cell wide for
+int, float, every tag and every handle, so its declaration cannot tell a
+threshold from an entity index and comparing there would pass everything.
+*/
+type Declaration struct {
+	Go       string
+	SP       string
+	Sig      *types.Signature
+	Exported bool
+	/*
+		Optional says, per parameter, that a caller need not write it.
+
+		Four directives make one. //sp:default gives it a value, so
+		SourcePawn lets it be left off. //sp:byref and //sp:mutates make
+		it an answer rather than an argument. //sp:length names the
+		buffer and the size a call filling text is passed instead of
+		returning it.
+
+		An extern for such a function is shorter than the function, and
+		is right rather than wrong. It may also take one of these back as
+		a trailing result, which is how a Go caller reads a written-
+		through answer at all.
+
+		Per parameter and not a count, because the trailing arguments a
+		directive supplies sit behind these and are not optional in the
+		same way: only the extern knows about those, so only the extern
+		can do the counting.
+	*/
+	Optional []bool
 }
 
 // Generated is one emission: the SourcePawn, and what was left out of it.
 type Generated struct {
 	Package string
-	// Emitted are the SourcePawn names this emission declares, so a caller
-	// can hold them against what is still declared as an extern.
-	Emitted []string
+	// Declares is every plain function this emission writes, in source
+	// order.
+	Declares []Declaration
 	// Source is the bodies: plain functions, which run anywhere a
 	// SourcePawn VM does once the engine calls are stubbed.
 	Source string
@@ -179,6 +283,16 @@ type Generated struct {
 	Skipped []string
 }
 
+// Emitted are the SourcePawn names this emission declares, so a caller can hold
+// them against what is still declared as an extern.
+func (g Generated) Emitted() []string {
+	names := make([]string, 0, len(g.Declares))
+	for _, d := range g.Declares {
+		names = append(names, d.SP)
+	}
+	return names
+}
+
 // GenerateDir type checks every non-test .go file directly under dir as one
 // package and translates it.
 //
@@ -186,7 +300,7 @@ type Generated struct {
 // same failure here: an error naming file, line and what to write instead. The
 // caller has nothing to sort out because nothing partial is returned.
 func GenerateDir(dir string, cfg Config) (Generated, error) {
-	fset := token.NewFileSet()
+	fset, imp := cfg.Cache.parts(dir)
 	files, skipped, err := parseDir(fset, dir)
 	if err != nil {
 		return Generated{}, err
@@ -200,9 +314,10 @@ func GenerateDir(dir string, cfg Config) (Generated, error) {
 		Uses:       make(map[*ast.Ident]types.Object),
 		Selections: make(map[*ast.SelectorExpr]*types.Selection),
 	}
-	imp, err := newModuleImporter(fset, dir)
-	if err != nil {
-		return Generated{}, err
+	if imp == nil {
+		if imp, err = newModuleImporter(fset, dir); err != nil {
+			return Generated{}, err
+		}
 	}
 	conf := types.Config{Importer: imp}
 	pkg, err := conf.Check(dir, fset, files, info)
@@ -215,7 +330,7 @@ func GenerateDir(dir string, cfg Config) (Generated, error) {
 		return Generated{}, err
 	}
 	const banner = "/* Generated by internal/spbody from the Go it is named after. Do not edit. */\n\n"
-	g := Generated{Package: pkg.Name(), Emitted: e.emitted, Source: banner + e.prologue() + e.b.String(), Skipped: skipped}
+	g := Generated{Package: pkg.Name(), Declares: e.declares, Source: banner + e.prologue() + e.b.String(), Skipped: skipped}
 	if e.hooks.Len() > 0 {
 		g.Hooks = banner + e.hooks.String()
 	}

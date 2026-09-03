@@ -22,6 +22,7 @@ var conVarSets ConVarSetCalls
 // InstallConVarSets puts a set of answers behind them.
 func InstallConVarSets(c ConVarSetCalls) func() {
 	previous := conVarSets
+	Fill(&c)
 	conVarSets = c
 	return func() { conVarSets = previous }
 }
@@ -30,9 +31,6 @@ func InstallConVarSets(c ConVarSetCalls) func() {
 //
 //sp:native CreateConVar
 func CreateConVar(name string, def string, description string, flags int32) ConVar {
-	if conVarSets.CreateConVar == nil {
-		missing("CreateConVar")
-	}
 	return conVarSets.CreateConVar(name, def, description, flags)
 }
 
@@ -40,9 +38,6 @@ func CreateConVar(name string, def string, description string, flags int32) ConV
 //
 //sp:native CreateConVar
 func CreateBoundedConVar(name string, def string, description string, flags int32, hasMin bool, low float32, hasMax bool, high float32) ConVar {
-	if conVarSets.CreateBounded == nil {
-		missing("CreateConVar")
-	}
 	return conVarSets.CreateBounded(name, def, description, flags, hasMin, low, hasMax, high)
 }
 
@@ -50,9 +45,6 @@ func CreateBoundedConVar(name string, def string, description string, flags int3
 //
 //sp:native CreateConVar
 func CreateFlooredConVar(name string, def string, description string, flags int32, hasMin bool, low float32) ConVar {
-	if conVarSets.CreateFloored == nil {
-		missing("CreateConVar")
-	}
 	return conVarSets.CreateFloored(name, def, description, flags, hasMin, low)
 }
 

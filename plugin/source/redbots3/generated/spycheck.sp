@@ -8,8 +8,6 @@ BehaviorAction CTFBotSpyCheck()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define SPY_PARANOIA_SPEED (320.0)
 
 #define SPY_PARANOIA_RANGE_MAX (2000.0)

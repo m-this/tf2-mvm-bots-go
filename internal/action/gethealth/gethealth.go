@@ -8,13 +8,13 @@ across.
 */
 package gethealth
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 //sp:name m_iHealthPack
-var healthPack [Slots]int32
+var healthPack [slots.Count]int32
 
 /*
 How long an answer about health is kept for.
@@ -31,9 +31,9 @@ const askInterval = 0.5
 
 var (
 	//sp:name m_ctHealthAsk
-	healthAsk [Slots]float32
+	healthAsk [slots.Count]float32
 	//sp:name m_bHealthPossible
-	healthPossible [Slots]bool
+	healthPossible [slots.Count]bool
 )
 
 /*

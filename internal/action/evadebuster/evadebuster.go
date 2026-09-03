@@ -26,10 +26,10 @@ So there are two answers, at two distances, and only the second one is here:
 */
 package evadebuster
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // How far out to look for ground to run to.
 //
@@ -47,7 +47,7 @@ const evadeMaxTime = 8.0
 const maxAreas = 256
 
 //sp:name m_ctEvadeBusterGiveUp
-var evadeBusterGiveUp [Slots]float32
+var evadeBusterGiveUp [slots.Count]float32
 
 // OnStart starts the clock and tells the team what is coming.
 func OnStart(actor int32) engine.Outcome {

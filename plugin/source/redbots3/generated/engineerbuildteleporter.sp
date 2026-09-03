@@ -9,8 +9,6 @@ BehaviorAction CTFBotMvMEngineerBuildTeleporter()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define TELEPORTER_BUILD_MAX_TIME (40.0)
 
 #define TELEPORTER_EXIT_REACH_TIME (12.0)

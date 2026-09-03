@@ -9,8 +9,6 @@ BehaviorAction CTFBotMarkGiant()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define Go_fanOWar (355)
 
 int m_iTarget[65];

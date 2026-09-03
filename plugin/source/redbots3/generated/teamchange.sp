@@ -27,7 +27,7 @@ stock void HandleTeamPlayerCountChanged(TFTeam team, int iWhoChanging = -1)
 		case BOT_LINEUP_MODE_CHOOSE, BOT_LINEUP_MODE_PREFERENCE_CHOOSE:
 		{
 			g_bBotClassesLocked = false;
-			PrintToChatTeam(team, "%s You can repick your bot team lineup.", PLUGIN_PREFIX);
+			PrintToChatTeam(view_as<int>(team), "%s You can repick your bot team lineup.", PLUGIN_PREFIX);
 		}
 	}
 	if (!g_bBotsEnabled)
@@ -37,7 +37,7 @@ stock void HandleTeamPlayerCountChanged(TFTeam team, int iWhoChanging = -1)
 	if ((iWhoChanging > 0) && (GetClientOfUserId(g_iUIDBotSummoner) == iWhoChanging))
 	{
 		g_bAllowBotTeamRedo = true;
-		PrintToChatTeam(team, "%s Use command !redobots to repick your bot team lineup.", PLUGIN_PREFIX);
+		PrintToChatTeam(view_as<int>(team), "%s Use command !redobots to repick your bot team lineup.", PLUGIN_PREFIX);
 	}
 	int iWhoToUnready = -1;
 	int iReadyCount = 0;

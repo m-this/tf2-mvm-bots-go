@@ -1,54 +1,57 @@
 package loadouts
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // Whether the bot in this seat is carrying what the loadout gave it.
 //
 //sp:name g_bHasCustomLoadout
-var hasCustomLoadout [Slots]bool
+var hasCustomLoadout [slots.Count]bool
 
 // Read by the command that stays in the plugin, which is why nothing here
 // touches it.
 //
 //sp:name g_bHasBoughtUpgrades
 //nolint:unused // the shipped file leaves it to Command_BoughtUpgrades as well
-var hasBoughtUpgrades [Slots]bool
+var hasBoughtUpgrades [slots.Count]bool
 
 // Each cell is a weapon item definition index.
 //
 //sp:name m_iWeaponPrimary
-var weaponPrimary [Slots]int32
+var weaponPrimary [slots.Count]int32
 
 //sp:name m_iWeaponSecondary
-var weaponSecondary [Slots]int32
+var weaponSecondary [slots.Count]int32
 
 //sp:name m_iWeaponMelee
-var weaponMelee [Slots]int32
+var weaponMelee [slots.Count]int32
 
 //sp:name m_iWeaponPDA2
-var weaponPDA2 [Slots]int32
+var weaponPDA2 [slots.Count]int32
 
 // Each cell is an attribute index.
 //
 //sp:name m_iAttribPrimary
-var attribPrimary [Slots][MaxRuntimeAttributes]int32
+var attribPrimary [slots.Count][MaxRuntimeAttributes]int32
 
 //sp:name m_iAttribSecondary
-var attribSecondary [Slots][MaxRuntimeAttributes]int32
+var attribSecondary [slots.Count][MaxRuntimeAttributes]int32
 
 //sp:name m_iAttribMelee
-var attribMelee [Slots][MaxRuntimeAttributes]int32
+var attribMelee [slots.Count][MaxRuntimeAttributes]int32
 
 // Each cell is an attribute value.
 //
 //sp:name m_flAttrValPrimary
-var attrValPrimary [Slots][MaxRuntimeAttributes]float32
+var attrValPrimary [slots.Count][MaxRuntimeAttributes]float32
 
 //sp:name m_flAttrValSecondary
-var attrValSecondary [Slots][MaxRuntimeAttributes]float32
+var attrValSecondary [slots.Count][MaxRuntimeAttributes]float32
 
 //sp:name m_flAttrValMelee
-var attrValMelee [Slots][MaxRuntimeAttributes]float32
+var attrValMelee [slots.Count][MaxRuntimeAttributes]float32
 
 // ClearSavedAttributes forgets what the last weapon carried.
 //

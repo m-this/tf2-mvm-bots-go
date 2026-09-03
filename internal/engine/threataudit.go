@@ -17,6 +17,7 @@ var threatAudits ThreatAuditCalls
 // InstallThreatAudits puts a set of answers behind them.
 func InstallThreatAudits(c ThreatAuditCalls) func() {
 	previous := threatAudits
+	Fill(&c)
 	threatAudits = c
 	return func() { threatAudits = previous }
 }
@@ -26,9 +27,6 @@ func InstallThreatAudits(c ThreatAuditCalls) func() {
 //
 //sp:body ThreatPriorityOf
 func ThreatPriorityOf(rangeSq float32, isPlayer bool, inGame bool, playerClass Class, giant bool, carrier bool) int32 {
-	if threatAudits.ThreatPriorityOf == nil {
-		missing("ThreatPriorityOf")
-	}
 	return threatAudits.ThreatPriorityOf(rangeSq, isPlayer, inGame, playerClass, giant, carrier)
 }
 

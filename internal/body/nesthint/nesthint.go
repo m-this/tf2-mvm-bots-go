@@ -157,7 +157,7 @@ func BombPathLength() float32 {
 			continue
 		}
 
-		longest = engine.MaxFloat(longest, engine.TravelDistanceToBombTarget(engine.Area(area)))
+		longest = engine.MaxFloat(longest, engine.TravelDistanceToBombTarget(area))
 	}
 
 	return longest

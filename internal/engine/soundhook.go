@@ -21,6 +21,7 @@ var soundHooks SoundHookCalls
 // InstallSoundHooks puts a set of answers behind them.
 func InstallSoundHooks(c SoundHookCalls) func() {
 	previous := soundHooks
+	Fill(&c)
 	soundHooks = c
 	return func() { soundHooks = previous }
 }
@@ -43,42 +44,24 @@ DataPack local by value emits its name, which is what SourcePawn wants there.
 //
 //nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
 func CreateDataTimerWith(interval float32, callback func(timer Timer, pack DataPack), pack DataPack, flags int32) Timer {
-	if soundHooks.CreateDataTimerWith == nil {
-		missing("CreateDataTimer")
-	}
 	return soundHooks.CreateDataTimerWith(interval, pack, flags)
 }
 
 // WriteCell puts one cell on the end of the pack.
 //
 //sp:method WriteCell
-func (p DataPack) WriteCell(value int32) {
-	if soundHooks.WriteCell == nil {
-		missing("DataPack.WriteCell")
-	}
-	soundHooks.WriteCell(p, value)
-}
+func (p DataPack) WriteCell(value int32) { soundHooks.WriteCell(p, value) }
 
 // ReadCell takes the next cell off it.
 //
 //sp:method ReadCell
-func (p DataPack) ReadCell() int32 {
-	if soundHooks.ReadCell == nil {
-		missing("DataPack.ReadCell")
-	}
-	return soundHooks.ReadCell(p)
-}
+func (p DataPack) ReadCell() int32 { return soundHooks.ReadCell(p) }
 
 // Reset puts the read position back to the start, which is what makes the
 // cells the writer just wrote readable by the callback.
 //
 //sp:method Reset
-func (p DataPack) Reset() {
-	if soundHooks.ResetPack == nil {
-		missing("DataPack.Reset")
-	}
-	soundHooks.ResetPack(p)
-}
+func (p DataPack) Reset() { soundHooks.ResetPack(p) }
 
 // SoundChannelVoice is SNDCHAN_VOICE, the channel a player's own lines play on.
 //

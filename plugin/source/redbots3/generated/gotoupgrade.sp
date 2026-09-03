@@ -10,8 +10,6 @@ BehaviorAction CTFBotGotoUpgrade()
 	return action;
 }
 
-#define Go_Slots (65)
-
 int m_iStation[65];
 
 public Action CTFBotGotoUpgrade_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)

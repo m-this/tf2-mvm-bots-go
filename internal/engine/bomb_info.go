@@ -12,7 +12,7 @@ a struct tag, which is what struct tags are for.
 // BombInfoCalls are the answers.
 type BombInfoCalls struct {
 	GetBombInfo                func() (bool, BombInfo)
-	TravelDistanceToBombTarget func(area Area) float32
+	TravelDistanceToBombTarget func(area NavArea) float32
 	IsBaseBoss                 func(entity int32) bool
 	NearestNavAreaAt           func(position [3]float32) Area
 	BombHatchPosition          func() [3]float32
@@ -24,6 +24,7 @@ var bombInfos BombInfoCalls
 // InstallBombInfo puts a set of answers behind them.
 func InstallBombInfo(c BombInfoCalls) func() {
 	previous := bombInfos
+	Fill(&c)
 	bombInfos = c
 	return func() { bombInfos = previous }
 }
@@ -54,7 +55,7 @@ func WeaponPipebombLauncher() Weapon { return 20 }
 // AimCritical is CRITICAL, the aim priority a trap uses.
 //
 //sp:global CRITICAL
-func AimCritical() int32 { return 2 }
+func AimCritical() LookAtPriority { return 2 }
 
 // FeatureStickyStack is the switch between stacking the bombs and carpeting.
 //
@@ -65,10 +66,7 @@ func FeatureStickyStack() int32 { return 3 }
 // going, along the route rather than through the walls.
 //
 //sp:body GetTravelDistanceToBombTarget
-func TravelDistanceToBombTarget(area Area) float32 {
-	if bombInfos.TravelDistanceToBombTarget == nil {
-		missing("GetTravelDistanceToBombTarget")
-	}
+func TravelDistanceToBombTarget(area NavArea) float32 {
 	return bombInfos.TravelDistanceToBombTarget(area)
 }
 
@@ -76,33 +74,18 @@ func TravelDistanceToBombTarget(area Area) float32 {
 // from.
 //
 //sp:body GetBombInfo
-func GetBombInfo() (found bool, info BombInfo) {
-	if bombInfos.GetBombInfo == nil {
-		missing("GetBombInfo")
-	}
-	return bombInfos.GetBombInfo()
-}
+func GetBombInfo() (found bool, info BombInfo) { return bombInfos.GetBombInfo() }
 
 // BombHatchPosition is where the hatch is, which is the trap spot when no bomb
 // is in play. Its SourcePawn returns the array.
 //
 //sp:body GetBombHatchPosition returns
-func BombHatchPosition() [3]float32 {
-	if bombInfos.BombHatchPosition == nil {
-		missing("GetBombHatchPosition")
-	}
-	return bombInfos.BombHatchPosition()
-}
+func BombHatchPosition() [3]float32 { return bombInfos.BombHatchPosition() }
 
 // IsHeadAimingOnTarget says the bot is actually looking where it was told to.
 //
 //sp:method IsHeadAimingOnTarget
-func (b Body) IsHeadAimingOnTarget() bool {
-	if bombInfos.IsHeadAimingOnTarget == nil {
-		missing("IBody.IsHeadAimingOnTarget")
-	}
-	return bombInfos.IsHeadAimingOnTarget(b)
-}
+func (b Body) IsHeadAimingOnTarget() bool { return bombInfos.IsHeadAimingOnTarget(b) }
 
 // FeatureDemoStickySelfVeto is the switch on a demoman refusing the button when
 // one of his own bombs is on top of him.
@@ -114,12 +97,7 @@ func FeatureDemoStickySelfVeto() int32 { return 12 }
 // map called tank_boss.
 //
 //sp:body IsBaseBoss
-func IsBaseBoss(entity int32) bool {
-	if bombInfos.IsBaseBoss == nil {
-		missing("IsBaseBoss")
-	}
-	return bombInfos.IsBaseBoss(entity)
-}
+func IsBaseBoss(entity int32) bool { return bombInfos.IsBaseBoss(entity) }
 
 // FlagInfoHome is TF_FLAGINFO_HOME, a bomb still on its stand.
 //
@@ -130,9 +108,4 @@ func FlagInfoHome() int32 { return 0 }
 // mesh's own default rather than by an argument.
 //
 //sp:native TheNavMesh.GetNearestNavArea
-func NearestNavAreaAt(position [3]float32) Area {
-	if bombInfos.NearestNavAreaAt == nil {
-		missing("TheNavMesh.GetNearestNavArea")
-	}
-	return bombInfos.NearestNavAreaAt(position)
-}
+func NearestNavAreaAt(position [3]float32) Area { return bombInfos.NearestNavAreaAt(position) }

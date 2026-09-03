@@ -7,10 +7,10 @@ shipped file and this record came from a different one.
 */
 package pluginbot
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is MAXPLAYERS + 1, the client array size.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 /*
 Record is esPluginBot: where a plugin-driven bot is walking to.
@@ -69,4 +69,4 @@ func (p *Record) SetPathGoalEntity(entity int32) {
 
 //sp:name g_arrPluginBot
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var pluginBot [Slots]Record
+var pluginBot [slots.Count]Record

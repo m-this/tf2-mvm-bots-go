@@ -232,8 +232,8 @@ func BendAttrib(client int32, name string, neutral float32, delta float32, scale
 
 	current := neutral
 
-	if attrib != engine.AddressNull() {
-		current = engine.AttribValue(attrib)
+	if attrib != engine.NoAddress() {
+		current = engine.AttribValueAt(attrib)
 	}
 
 	engine.SetAttribByName(client, name, current*scale+delta)

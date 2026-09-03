@@ -9,10 +9,10 @@ the medic mid-revive is when the uber is worth popping.
 */
 package medicrevive
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 //sp:name MEDIC_REVIVE_RANGE
 const reviveRange = 600.0
@@ -41,9 +41,9 @@ const askInterval = 0.5
 // The memo the interval above protects.
 var (
 	//sp:name m_ctReviveAsk
-	reviveAsk [Slots]float32
+	reviveAsk [slots.Count]float32
 	//sp:name m_bRevivePossible
-	revivePossible [Slots]bool
+	revivePossible [slots.Count]bool
 )
 
 // OnStart aims the path.

@@ -9,8 +9,6 @@ BehaviorAction CTFBotMvMEngineerBuildDisposable()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define DISPOSABLE_RING_RADIUS (170.0)
 #define DISPOSABLE_BUILD_REACH (90.0)
 #define DISPOSABLE_TRY_POINTS (8)

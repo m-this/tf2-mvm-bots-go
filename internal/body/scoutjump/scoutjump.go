@@ -5,10 +5,10 @@ with a second half in the air often enough to be worth leading wrong.
 */
 package scoutjump
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // ScoutJumpThreatRange is how close a threat has to be before jumping is worth
 // the air time.
@@ -37,13 +37,13 @@ const ScoutDoubleJumpDelay = 0.22
 const ScoutJumpStrafeTime = 0.35
 
 //sp:name m_flNextJumpTime
-var nextJumpTime [Slots]float32
+var nextJumpTime [slots.Count]float32
 
 //sp:name m_flScoutDoubleJumpTime
-var scoutDoubleJumpTime [Slots]float32
+var scoutDoubleJumpTime [slots.Count]float32
 
 //sp:name m_iScoutDoubleJumpSide
-var scoutDoubleJumpSide [Slots]int32
+var scoutDoubleJumpSide [slots.Count]int32
 
 /*
 UpdateScoutCombatJump is the whole dodge, run per think.

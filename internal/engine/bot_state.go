@@ -31,6 +31,7 @@ var state StateCalls
 // InstallState puts a set of answers behind the shared arrays.
 func InstallState(c StateCalls) func() {
 	previous := state
+	Fill(&c)
 	state = c
 	return func() { state = previous }
 }
@@ -43,33 +44,18 @@ type Path int32
 // PathOf is the route the bot is walking, which every behaviour updates.
 //
 //sp:slot m_pPath
-func PathOf(actor int32) Path {
-	if state.Path == nil {
-		missing("m_pPath")
-	}
-	return state.Path(actor)
-}
+func PathOf(actor int32) Path { return state.Path(actor) }
 
 // RepathTime is when the bot may next ask the game for a route. Asking every
 // frame is what killed a server in mvm-bj8.
 //
 //sp:slot m_flRepathTime
-func RepathTime(actor int32) float32 {
-	if state.RepathTime == nil {
-		missing("m_flRepathTime")
-	}
-	return state.RepathTime(actor)
-}
+func RepathTime(actor int32) float32 { return state.RepathTime(actor) }
 
 // SetRepathTime puts the next repath off until then.
 //
 //sp:slotset m_flRepathTime
-func SetRepathTime(actor int32, when float32) {
-	if state.SetRepathTime == nil {
-		missing("m_flRepathTime")
-	}
-	state.SetRepathTime(actor, when)
-}
+func SetRepathTime(actor int32, when float32) { state.SetRepathTime(actor, when) }
 
 /*
 	SetMinLookAheadDistance is how far along the path the bot aims
@@ -105,51 +91,28 @@ func (p Path) Update(bot Bot) {
 // than owned.
 //
 //sp:slot m_iCurrencyPack
-func CurrencyPackOf(actor int32) int32 {
-	if state.CurrencyPack == nil {
-		missing("m_iCurrencyPack")
-	}
-	return state.CurrencyPack(actor)
-}
+func CurrencyPackOf(actor int32) int32 { return state.CurrencyPack(actor) }
 
 // SetCurrencyPack says which pack the bot is going for, and -1 for none.
 //
 //sp:slotset m_iCurrencyPack
-func SetCurrencyPack(actor int32, pack int32) {
-	if state.SetCurrencyPack == nil {
-		missing("m_iCurrencyPack")
-	}
-	state.SetCurrencyPack(actor, pack)
-}
+func SetCurrencyPack(actor int32, pack int32) { state.SetCurrencyPack(actor, pack) }
 
 // RepathToPos asks the game for a route to a point.
 //
 //sp:body RepathToPos
-func RepathToPos(actor int32, bot Bot, goal [3]float32) {
-	if state.RepathToPos == nil {
-		missing("RepathToPos")
-	}
-	state.RepathToPos(actor, bot, goal)
-}
+func RepathToPos(actor int32, bot Bot, goal [3]float32) { state.RepathToPos(actor, bot, goal) }
 
 // IsValidCurrencyPack says whether the pack is still there to be picked up.
 // Ported, collectmoney.sp.
 //
 //sp:body IsValidCurrencyPack
-func IsValidCurrencyPack(pack int32) bool {
-	if state.IsValidCurrencyPack == nil {
-		missing("IsValidCurrencyPack")
-	}
-	return state.IsValidCurrencyPack(pack)
-}
+func IsValidCurrencyPack(pack int32) bool { return state.IsValidCurrencyPack(pack) }
 
 // NearestCurrencyPack is util.sp's, ported: internal/body/scan generates it.
 //
 //sp:body GetNearestCurrencyPack
 func NearestCurrencyPack(client int32, maxDistance float32) int32 {
-	if state.NearestCurrencyPack == nil {
-		missing("GetNearestCurrencyPack")
-	}
 	return state.NearestCurrencyPack(client, maxDistance)
 }
 
@@ -157,12 +120,7 @@ func NearestCurrencyPack(client int32, maxDistance float32) int32 {
 // money pack has before it vanishes.
 //
 //sp:method GetNextThink
-func (e Entity) NextThink(context string) float32 {
-	if state.NextThink == nil {
-		missing("CBaseEntity.GetNextThink")
-	}
-	return state.NextThink(e, context)
-}
+func (e Entity) NextThink(context string) float32 { return state.NextThink(e, context) }
 
 // Entity is CBaseEntity, anything in the world.
 //

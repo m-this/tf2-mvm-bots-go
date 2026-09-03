@@ -14,10 +14,10 @@ it.
 */
 package engineeridle
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // The shipped file declares this and nothing reads it, here or anywhere else.
 // Dropping it would be a tidy riding along with a port, so it stays.
@@ -27,7 +27,7 @@ const Slots = 65
 const watchBombRange = 400.0
 
 //sp:name m_ctSentrySafe
-var sentrySafe [Slots]float32
+var sentrySafe [slots.Count]float32
 
 /*
 How much closer to the bomb the new ground has to be before the sentry is worth carrying
@@ -50,7 +50,7 @@ const (
 )
 
 //sp:name m_ctAdvanceAgain
-var advanceAgain [Slots]float32
+var advanceAgain [slots.Count]float32
 
 // IsWorthAdvancingTo says the candidate is further along the bomb's route by a
 // clear margin, which is what stops him trading two areas for ever.
@@ -66,42 +66,42 @@ func IsWorthAdvancingTo(held engine.Area, candidate engine.Area) bool {
 	}
 
 	// Travel distance to where the bomb is going, so "forward" means along the route and not through a wall
-	return engine.TravelDistanceToBombTarget(candidate) <
-		engine.TravelDistanceToBombTarget(held)-advanceMargin
+	return engine.TravelDistanceToBombTarget(engine.NavArea(candidate)) <
+		engine.TravelDistanceToBombTarget(engine.NavArea(held))-advanceMargin
 }
 
 var (
 	//sp:name m_ctSentryCooldown
-	sentryCooldown [Slots]float32
+	sentryCooldown [slots.Count]float32
 	//sp:name m_ctDispenserSafe
-	dispenserSafe [Slots]float32
+	dispenserSafe [slots.Count]float32
 	//sp:name m_ctDispenserCooldown
-	dispenserCooldown [Slots]float32
+	dispenserCooldown [slots.Count]float32
 	//sp:name m_ctFindNestHint
-	findNestHint [Slots]float32
+	findNestHint [slots.Count]float32
 	//sp:name m_ctAdvanceNestSpot
-	advanceNestSpot [Slots]float32
+	advanceNestSpot [slots.Count]float32
 	//sp:name m_ctRecomputePathMvMEngiIdle
-	recomputePath [Slots]float32
+	recomputePath [slots.Count]float32
 	//sp:name g_bGoingToGrabBuilding
-	goingToGrab [Slots]bool
+	goingToGrab [slots.Count]bool
 	//sp:name m_hBuildingToGrab
-	buildingToGrab [Slots]int32
+	buildingToGrab [slots.Count]int32
 	/* The nest an engineer was holding before a buster moved him off it, NULL_AREA when he is on it
 
 	The shipped declaration fills this with NULL_AREA. NULL_AREA is zero and a SourcePawn global
 	starts at zero, so the fill says nothing the declaration does not. */
 	//
 	//sp:name m_aNestAreaBeforeHaul
-	nestBeforeHaul [Slots]engine.Area
+	nestBeforeHaul [slots.Count]engine.Area
 	// The nest an engineer is leaving for better ground, NULL_AREA when no relocation haul is running
 	//
 	//sp:name m_aNestAreaBeforeRelocate
-	nestBeforeRelocate [Slots]engine.Area
+	nestBeforeRelocate [slots.Count]engine.Area
 	// When a relocation haul stops being worth finishing
 	//
 	//sp:name m_ctNestRelocateDeadline
-	relocateDeadline [Slots]float32
+	relocateDeadline [slots.Count]float32
 )
 
 /*
@@ -136,11 +136,11 @@ const carryGiveUpTime = 25.0
 
 var (
 	//sp:name m_ctCarryDeadline
-	carryDeadline [Slots]float32
+	carryDeadline [slots.Count]float32
 	//sp:name m_ctSentryUnderFire
-	sentryUnderFire [Slots]float32
+	sentryUnderFire [slots.Count]float32
 	//sp:name m_iSentryHealthLast
-	sentryHealthLast [Slots]int32
+	sentryHealthLast [slots.Count]int32
 )
 
 // How long a sentry counts as under fire after the last health it lost
@@ -180,7 +180,7 @@ is silent.
 const stallReport = 10.0
 
 //sp:name m_ctEngineerStallReport
-var stallReportAt [Slots]float32
+var stallReportAt [slots.Count]float32
 
 // ReportEngineerStall says which early return owns the wave.
 //
@@ -451,7 +451,7 @@ func Update(actor int32) engine.Outcome {
 			if flDistanceToBuilding < 90.0 {
 				engine.EquipWeaponSlot(actor, engine.WeaponSlotMelee())
 
-				engine.AimHeadTowards(myBody, engine.WorldSpaceCenter(building), engine.AimCritical(), 1.0, engine.AddressNull(), "Grab building")
+				engine.AimHeadTowards(myBody, engine.WorldSpaceCenter(building), engine.AimCritical(), 1.0, engine.NoAddress(), "Grab building")
 				engine.PressAltFireButton(actor)
 			}
 		} else { //nolint:gocritic // elseif: the shipped file nests these, and the port keeps its shape
@@ -543,7 +543,7 @@ func Update(actor int32) engine.Outcome {
 					defending := sentryUnderFire[actor] > engine.GameTime()
 
 					if (defending || engine.VectorDistance(engine.AbsOriginOf(sentry), engine.AbsOriginOf(iThreat)) > engine.SentryMaxRange()) && engine.IsLineOfFireClearEntity(actor, engine.EyePosition(actor), iThreat) {
-						engine.AimHeadTowards(myBody, engine.WorldSpaceCenter(iThreat), engine.AimMandatory(), 0.1, engine.AddressNull(), "Aiming!")
+						engine.AimHeadTowards(myBody, engine.WorldSpaceCenter(iThreat), engine.AimMandatory(), 0.1, engine.NoAddress(), "Aiming!")
 						engine.SetPlayerActiveWeapon(actor, mySecondary)
 
 						if myBody.IsHeadAimingOnTarget() && engine.EntProp(sentry, engine.PropSend(), "m_bPlayerControlled") != 0 {
@@ -656,7 +656,7 @@ func Update(actor int32) engine.Outcome {
 
 				engine.UpdateLookAroundForEnemies(actor, false)
 
-				engine.AimHeadTowards(myBody, engine.WorldSpaceCenter(dispenser), engine.AimCritical(), 1.0, engine.AddressNull(), "Work on my Dispenser")
+				engine.AimHeadTowards(myBody, engine.WorldSpaceCenter(dispenser), engine.AimCritical(), 1.0, engine.NoAddress(), "Work on my Dispenser")
 				engine.PressFireButton(actor)
 			}
 
@@ -678,7 +678,7 @@ func Update(actor int32) engine.Outcome {
 			// The Rescue Ranger repairs from behind cover, which is the whole reason to carry it
 			engine.EquipWeaponSlot(actor, engine.WeaponSlotPrimary())
 
-			engine.AimHeadTowards(myBody, engine.WorldSpaceCenter(sentry), engine.AimCritical(), 1.0, engine.AddressNull(), "Repair my Sentry from here")
+			engine.AimHeadTowards(myBody, engine.WorldSpaceCenter(sentry), engine.AimCritical(), 1.0, engine.NoAddress(), "Repair my Sentry from here")
 
 			if myBody.IsHeadAimingOnTarget() {
 				engine.PressFireButton(actor)
@@ -718,7 +718,7 @@ func Update(actor int32) engine.Outcome {
 
 			engine.UpdateLookAroundForEnemies(actor, false)
 
-			engine.AimHeadTowards(myBody, engine.WorldSpaceCenter(sentry), engine.AimCritical(), 1.0, engine.AddressNull(), "Work on my Sentry")
+			engine.AimHeadTowards(myBody, engine.WorldSpaceCenter(sentry), engine.AimCritical(), 1.0, engine.NoAddress(), "Work on my Sentry")
 			engine.PressFireButton(actor)
 		}
 	}
@@ -846,11 +846,11 @@ const rangeRepairPatience = 3.0
 
 var (
 	//sp:name m_iRangeRepairHealth
-	rangeRepairHealth [Slots]int32
+	rangeRepairHealth [slots.Count]int32
 	//sp:name m_ctRangeRepairSince
-	rangeRepairSince [Slots]float32
+	rangeRepairSince [slots.Count]float32
 	//sp:name m_iRangeRepairStalls
-	rangeRepairStalls [Slots]int32
+	rangeRepairStalls [slots.Count]int32
 )
 
 // RangeRepairStallsOf is how many times this engineer's bolts bought nothing.
@@ -1071,7 +1071,7 @@ func ShouldAdvanceNestSpot(actor int32) bool {
 		return false
 	}
 
-	flBombTargetDistance := engine.TravelDistanceToBombTarget(engine.NestAreaOf(actor))
+	flBombTargetDistance := engine.TravelDistanceToBombTarget(engine.NavArea(engine.NestAreaOf(actor)))
 
 	// No point in advancing now.
 	if flBombTargetDistance <= 1000.0 {

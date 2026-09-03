@@ -20,6 +20,7 @@ var busters BusterCalls
 // InstallBusters puts a set of answers behind them.
 func InstallBusters(c BusterCalls) func() {
 	previous := busters
+	Fill(&c)
 	busters = c
 	return func() { busters = previous }
 }
@@ -45,29 +46,16 @@ func ConceptIncoming() int32 { return 3 }
 // index when none has.
 //
 //sp:global g_iDetonatingPlayer
-func DetonatingPlayer() int32 {
-	if busters.DetonatingPlayer == nil {
-		missing("g_iDetonatingPlayer")
-	}
-	return busters.DetonatingPlayer()
-}
+func DetonatingPlayer() int32 { return busters.DetonatingPlayer() }
 
 // FindSentryBusterNear is a live buster within range, or -1.
 //
 //sp:body FindSentryBusterNear
 func FindSentryBusterNear(origin [3]float32, enemyTeam Team, maxRange float32) int32 {
-	if busters.FindSentryBusterNear == nil {
-		missing("FindSentryBusterNear")
-	}
 	return busters.FindSentryBusterNear(origin, enemyTeam, maxRange)
 }
 
 // IsInUpgradeZone says the bot is at the station between waves.
 //
-//sp:plugin TF2_IsInUpgradeZone
-func IsInUpgradeZone(client int32) bool {
-	if busters.IsInUpgradeZone == nil {
-		missing("TF2_IsInUpgradeZone")
-	}
-	return busters.IsInUpgradeZone(client)
-}
+//sp:library TF2_IsInUpgradeZone
+func IsInUpgradeZone(client int32) bool { return busters.IsInUpgradeZone(client) }

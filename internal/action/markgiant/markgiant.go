@@ -9,19 +9,19 @@ it. Eleventh behaviour across.
 */
 package markgiant
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // fanOWar is the item definition index of the Fan O'War.
 const fanOWar = 355
 
 //sp:name m_iTarget
-var target [Slots]int32
+var target [slots.Count]int32
 
 //sp:name m_flNextMarkTime
-var nextMarkTime [Slots]float32
+var nextMarkTime [slots.Count]float32
 
 // OnStart picks a giant at random out of the ones worth marking.
 func OnStart(actor int32) engine.Outcome {

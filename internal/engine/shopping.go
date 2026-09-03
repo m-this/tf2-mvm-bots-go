@@ -36,6 +36,7 @@ var shopping ShoppingCalls
 // InstallShopping puts a set of answers behind them.
 func InstallShopping(c ShoppingCalls) func() {
 	previous := shopping
+	Fill(&c)
 	shopping = c
 	return func() { shopping = previous }
 }
@@ -48,12 +49,7 @@ func MaxUpgrades() int32 { return 128 }
 // RoundToNearest is SourcePawn's rounding, which Go has no operator for.
 //
 //sp:native RoundToNearest
-func RoundToNearest(value float32) int32 {
-	if shopping.RoundToNearest == nil {
-		missing("RoundToNearest")
-	}
-	return shopping.RoundToNearest(value)
-}
+func RoundToNearest(value float32) int32 { return shopping.RoundToNearest(value) }
 
 // UpgradeInterval is redbots_manager_bot_upgrade_interval: a server owner's
 // override on how fast a bot shops, negative when they have not set one.
@@ -65,32 +61,17 @@ func UpgradeInterval() ConVar { return 0 }
 // prices a blast resistance. Ported, mission.
 //
 //sp:body WaveHasExplosiveRobots
-func WaveHasExplosiveRobots() bool {
-	if shopping.WaveHasExplosiveRobots == nil {
-		missing("WaveHasExplosiveRobots")
-	}
-	return shopping.WaveHasExplosiveRobots()
-}
+func WaveHasExplosiveRobots() bool { return shopping.WaveHasExplosiveRobots() }
 
 // WaveHasBulletRobots is the same for bullets. Ported, mission.
 //
 //sp:body WaveHasBulletRobots
-func WaveHasBulletRobots() bool {
-	if shopping.WaveHasBulletRobots == nil {
-		missing("WaveHasBulletRobots")
-	}
-	return shopping.WaveHasBulletRobots()
-}
+func WaveHasBulletRobots() bool { return shopping.WaveHasBulletRobots() }
 
 // WaveHasFireRobots is the same for fire. Ported, mission.
 //
 //sp:body WaveHasFireRobots
-func WaveHasFireRobots() bool {
-	if shopping.WaveHasFireRobots == nil {
-		missing("WaveHasFireRobots")
-	}
-	return shopping.WaveHasFireRobots()
-}
+func WaveHasFireRobots() bool { return shopping.WaveHasFireRobots() }
 
 /*
 Handing a bot its loadout.
@@ -103,12 +84,7 @@ tenth of a second after the spawn.
 // RemoveWeaponSlot takes whatever the game put in that slot back out.
 //
 //sp:native TF2_RemoveWeaponSlot
-func RemoveWeaponSlot(client int32, slot int32) {
-	if shopping.RemoveWeaponSlot == nil {
-		missing("TF2_RemoveWeaponSlot")
-	}
-	shopping.RemoveWeaponSlot(client, slot)
-}
+func RemoveWeaponSlot(client int32, slot int32) { shopping.RemoveWeaponSlot(client, slot) }
 
 // TranslateWeaponEntForClass rewrites a classname into the one that class
 // actually spawns, in place: the schema files several weapons under a name no
@@ -117,9 +93,6 @@ func RemoveWeaponSlot(client int32, slot int32) {
 //sp:native TF2Econ_TranslateWeaponEntForClass
 //nolint:revive // unused-parameter: the buffer is rewritten in place, which is the whole call
 func TranslateWeaponEntForClass(classname Text, maxlen int32, playerClass Class) {
-	if shopping.TranslateWeaponEntForClass == nil {
-		missing("TF2Econ_TranslateWeaponEntForClass")
-	}
 	shopping.TranslateWeaponEntForClass(classname, maxlen, playerClass)
 }
 
@@ -127,20 +100,12 @@ func TranslateWeaponEntForClass(classname Text, maxlen int32, playerClass Class)
 // secondary slot and must not be replaced.
 //
 //sp:native TF2_IsShieldEquipped
-func IsShieldEquipped(client int32) bool {
-	if shopping.IsShieldEquipped == nil {
-		missing("TF2_IsShieldEquipped")
-	}
-	return shopping.IsShieldEquipped(client)
-}
+func IsShieldEquipped(client int32) bool { return shopping.IsShieldEquipped(client) }
 
 // GivePlayerAmmo fills one ammo type.
 //
 //sp:native GivePlayerAmmo
 func GivePlayerAmmo(client int32, amount int32, ammoType int32, suppressSound bool) int32 {
-	if shopping.GivePlayerAmmo == nil {
-		missing("GivePlayerAmmo")
-	}
 	return shopping.GivePlayerAmmo(client, amount, ammoType, suppressSound)
 }
 
@@ -148,23 +113,13 @@ func GivePlayerAmmo(client int32, amount int32, ammoType int32, suppressSound bo
 // have moved.
 //
 //sp:native BaseEntity_SetMaxHealth
-func SetMaxHealth(entity int32, health int32) {
-	if shopping.SetMaxHealth == nil {
-		missing("BaseEntity_SetMaxHealth")
-	}
-	shopping.SetMaxHealth(entity, health)
-}
+func SetMaxHealth(entity int32, health int32) { shopping.SetMaxHealth(entity, health) }
 
 // PostInventoryApplication tells the game the loadout is settled, which is what
 // makes the new weapons real to it.
 //
 //sp:native PostInventoryApplication
-func PostInventoryApplication(client int32) {
-	if shopping.PostInventoryApplication == nil {
-		missing("PostInventoryApplication")
-	}
-	shopping.PostInventoryApplication(client)
-}
+func PostInventoryApplication(client int32) { shopping.PostInventoryApplication(client) }
 
 // WeaponSlotBuilding is TFWeaponSlot_Building, the spy's sapper and the
 // engineer's PDA.
@@ -184,9 +139,6 @@ func AmmoTypeCount() int32 { return 0 }
 //
 //sp:body GiveItemToPlayer
 func GiveItemToPlayerNamed(client int32, classname Text, itemDefIndex int32, level int32, quality int32) int32 {
-	if shopping.GiveItemToPlayerNamed == nil {
-		missing("GiveItemToPlayer")
-	}
 	return shopping.GiveItemToPlayerNamed(client, classname, itemDefIndex, level, quality)
 }
 
@@ -201,42 +153,24 @@ it over. GetNativeCell is how a native's argument arrives.
 // one into a native.
 //
 //sp:native GetNativeCell
-func NativeCell(position int32) int32 {
-	if shopping.NativeCell == nil {
-		missing("GetNativeCell")
-	}
-	return shopping.NativeCell(position)
-}
+func NativeCell(position int32) int32 { return shopping.NativeCell(position) }
 
 // RangeRepairStallsOf is how often this engineer fired bolts at a sentry that
 // gained nothing. Ported, engineeridle.
 //
 //sp:body RangeRepairStallsOf
-func RangeRepairStallsOf(client int32) int32 {
-	if shopping.RangeRepairStallsOf == nil {
-		missing("RangeRepairStallsOf")
-	}
-	return shopping.RangeRepairStallsOf(client)
-}
+func RangeRepairStallsOf(client int32) int32 { return shopping.RangeRepairStallsOf(client) }
 
 // CmdArg is one argument of the console command being handled.
 //
 //sp:native GetCmdArg sized
-func CmdArg(position int32) (length int32, arg Text) {
-	if shopping.CmdArg == nil {
-		missing("GetCmdArg")
-	}
-	return shopping.CmdArg(position)
-}
+func CmdArg(position int32) (length int32, arg Text) { return shopping.CmdArg(position) }
 
 // ShowActivity2 tells the server what an admin just did, with the prefix the
 // admin log wants.
 //
 //sp:native ShowActivity2
 func ShowActivity2(client int32, tag string, format string, args ...any) {
-	if shopping.ShowActivity2 == nil {
-		missing("ShowActivity2")
-	}
 	shopping.ShowActivity2(client, tag, format, args)
 }
 
@@ -244,52 +178,31 @@ func ShowActivity2(client int32, tag string, format string, args ...any) {
 // player_pref.sp.
 //
 //sp:body ShowCurrentBotClassChances
-func ShowCurrentBotClassChances(client int32) {
-	if shopping.ShowCurrentBotClassChances == nil {
-		missing("ShowCurrentBotClassChances")
-	}
-	shopping.ShowCurrentBotClassChances(client)
-}
+func ShowCurrentBotClassChances(client int32) { shopping.ShowCurrentBotClassChances(client) }
 
 // RemoveAllDefenderBotsFor kicks the team, saying why. Ported,
 // manage.
 //
 //sp:body RemoveAllDefenderBots
-func RemoveAllDefenderBotsFor(reason string) {
-	if shopping.RemoveAllDefenderBotsFor == nil {
-		missing("RemoveAllDefenderBots")
-	}
-	shopping.RemoveAllDefenderBotsFor(reason)
-}
+func RemoveAllDefenderBotsFor(reason string) { shopping.RemoveAllDefenderBotsFor(reason) }
 
 // DisplayPanelBotTeamComposition shows the lineup and says whether there was
 // one. Ported, panels.
 //
 //sp:body CreateDisplayPanelBotTeamComposition
 func DisplayPanelBotTeamComposition(client int32) bool {
-	if shopping.DisplayPanelBotTeamComposition == nil {
-		missing("CreateDisplayPanelBotTeamComposition")
-	}
 	return shopping.DisplayPanelBotTeamComposition(client)
 }
 
 // DisplayMenuAddDefenderBots shows the manual add menu. Ported, addmenu.
 //
 //sp:body CreateDisplayMenuAddDefenderBots
-func DisplayMenuAddDefenderBots(client int32) {
-	if shopping.DisplayMenuAddDefenderBots == nil {
-		missing("CreateDisplayMenuAddDefenderBots")
-	}
-	shopping.DisplayMenuAddDefenderBots(client)
-}
+func DisplayMenuAddDefenderBots(client int32) { shopping.DisplayMenuAddDefenderBots(client) }
 
 // AddBotsBasedOnLineupModeNow fills the team from the lineup mode. Ported,
 // manage.
 //
 //sp:body AddBotsBasedOnLineupMode
 func AddBotsBasedOnLineupModeNow(count int32, adjustTime bool) {
-	if shopping.AddBotsBasedOnLineupModeNow == nil {
-		missing("AddBotsBasedOnLineupMode")
-	}
 	shopping.AddBotsBasedOnLineupModeNow(count, adjustTime)
 }

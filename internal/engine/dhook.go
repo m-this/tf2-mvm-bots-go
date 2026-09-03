@@ -38,6 +38,7 @@ var dhooks DHookCalls
 // InstallDHooks puts a set of answers behind them.
 func InstallDHooks(c DHookCalls) func() {
 	previous := dhooks
+	Fill(&c)
 	dhooks = c
 	return func() { dhooks = previous }
 }
@@ -101,71 +102,38 @@ func NoHook() Hook { return 0 }
 // DetourFromConf builds one from the gamedata file.
 //
 //sp:native DynamicDetour.FromConf
-func DetourFromConf(g GameData, name string) Detour {
-	if dhooks.DetourFromConf == nil {
-		missing("DynamicDetour.FromConf")
-	}
-	return dhooks.DetourFromConf(g, name)
-}
+func DetourFromConf(g GameData, name string) Detour { return dhooks.DetourFromConf(g, name) }
 
 // Close releases the detour handle. The detour itself outlives it.
 //
 //sp:delete Close
-func (d Detour) Close() {
-	if dhooks.CloseDetour == nil {
-		missing("delete DynamicDetour")
-	}
-	dhooks.CloseDetour(d)
-}
+func (d Detour) Close() { dhooks.CloseDetour(d) }
 
 // HookFromConf builds a virtual hook from the gamedata file.
 //
 //sp:native DynamicHook.FromConf
-func HookFromConf(g GameData, name string) Hook {
-	if dhooks.HookFromConf == nil {
-		missing("DynamicHook.FromConf")
-	}
-	return dhooks.HookFromConf(g, name)
-}
+func HookFromConf(g GameData, name string) Hook { return dhooks.HookFromConf(g, name) }
 
 // Get is one argument the hooked function was called with.
 //
 //sp:method Get
-func (p DHookParam) Get(index int32) int32 {
-	if dhooks.ParamAt == nil {
-		missing("DHookParam.Get")
-	}
-	return dhooks.ParamAt(p, index)
-}
+func (p DHookParam) Get(index int32) int32 { return dhooks.ParamAt(p, index) }
 
 // SetBool writes the answer the callback is giving for the game.
 //
 //sp:propertyset Value
-func (r DHookReturn) SetBool(value bool) {
-	if dhooks.SetReturnBool == nil {
-		missing("DHookReturn.Value")
-	}
-	dhooks.SetReturnBool(r, value)
-}
+func (r DHookReturn) SetBool(value bool) { dhooks.SetReturnBool(r, value) }
 
 // SetGameRulesProp writes a game rules property, which is how the mod lies to
 // the vision code about whether this is Mann vs Machine.
 //
 //sp:native GameRules_SetProp
-func SetGameRulesProp(prop string, value int32) {
-	if dhooks.SetGameRulesProp == nil {
-		missing("GameRules_SetProp")
-	}
-	dhooks.SetGameRulesProp(prop, value)
-}
+func SetGameRulesProp(prop string, value int32) { dhooks.SetGameRulesProp(prop, value) }
 
 // SetPlayerClass moves a player to another class.
 //
 //sp:native TF2_SetPlayerClass
 func SetPlayerClass(client int32, class Class, weapons bool, persist bool) {
-	if dhooks.SetPlayerClass == nil {
-		missing("TF2_SetPlayerClass")
-	}
 	dhooks.SetPlayerClass(client, class, weapons, persist)
 }
 
@@ -179,92 +147,47 @@ func VisionBot(vision Address) Vision {
 // SetTouchCredits writes m_bTouchCredits.
 //
 //sp:globalset m_bTouchCredits
-func SetTouchCredits(on bool) {
-	if dhooks.SetTouchCredits == nil {
-		missing("m_bTouchCredits")
-	}
-	dhooks.SetTouchCredits(on)
-}
+func SetTouchCredits(on bool) { dhooks.SetTouchCredits(on) }
 
 // TouchCredits reads it.
 //
 //sp:global m_bTouchCredits
-func TouchCredits() bool {
-	if dhooks.TouchCredits == nil {
-		missing("m_bTouchCredits")
-	}
-	return dhooks.TouchCredits()
-}
+func TouchCredits() bool { return dhooks.TouchCredits() }
 
 // SetPlayerKilled writes m_bPlayerKilled.
 //
 //sp:globalset m_bPlayerKilled
-func SetPlayerKilled(on bool) {
-	if dhooks.SetPlayerKilled == nil {
-		missing("m_bPlayerKilled")
-	}
-	dhooks.SetPlayerKilled(on)
-}
+func SetPlayerKilled(on bool) { dhooks.SetPlayerKilled(on) }
 
 // PlayerKilled reads it.
 //
 //sp:global m_bPlayerKilled
-func PlayerKilled() bool {
-	if dhooks.PlayerKilled == nil {
-		missing("m_bPlayerKilled")
-	}
-	return dhooks.PlayerKilled()
-}
+func PlayerKilled() bool { return dhooks.PlayerKilled() }
 
 // SetEngineerKilled writes m_bEngineerKilled.
 //
 //sp:globalset m_bEngineerKilled
-func SetEngineerKilled(on bool) {
-	if dhooks.SetEngineerKilled == nil {
-		missing("m_bEngineerKilled")
-	}
-	dhooks.SetEngineerKilled(on)
-}
+func SetEngineerKilled(on bool) { dhooks.SetEngineerKilled(on) }
 
 // EngineerKilled reads it.
 //
 //sp:global m_bEngineerKilled
-func EngineerKilled() bool {
-	if dhooks.EngineerKilled == nil {
-		missing("m_bEngineerKilled")
-	}
-	return dhooks.EngineerKilled()
-}
+func EngineerKilled() bool { return dhooks.EngineerKilled() }
 
 // SetSpyKilled writes g_bSpyKilled.
 //
 //sp:globalset g_bSpyKilled
-func SetSpyKilled(on bool) {
-	if dhooks.SetSpyKilled == nil {
-		missing("g_bSpyKilled")
-	}
-	dhooks.SetSpyKilled(on)
-}
+func SetSpyKilled(on bool) { dhooks.SetSpyKilled(on) }
 
 // HasCustomLoadout says the bot's weapons have already been worked out.
 //
 //sp:slot g_bHasCustomLoadout
-func HasCustomLoadout(client int32) bool {
-	if dhooks.HasCustomLoadout == nil {
-		missing("g_bHasCustomLoadout")
-	}
-	return dhooks.HasCustomLoadout(client)
-}
+func HasCustomLoadout(client int32) bool { return dhooks.HasCustomLoadout(client) }
 
 // PrepareCustomLoadout works them out. Ported, loadouts.
 //
 //sp:body PrepareCustomLoadout
-func PrepareCustomLoadout(client int32) {
-	if dhooks.PrepareCustomLoadout == nil {
-		missing("PrepareCustomLoadout")
-	}
-	dhooks.PrepareCustomLoadout(client)
-}
+func PrepareCustomLoadout(client int32) { dhooks.PrepareCustomLoadout(client) }
 
 // ConditionImmuneToPushback is TFCond_ImmuneToPushback.
 //
@@ -387,12 +310,7 @@ func HookIsIgnored() Hook { return 0 }
 //
 //sp:method Enable
 //nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
-func (d Detour) Enable(when int32, callback DHookCallback) {
-	if dhooks.EnableDetour == nil {
-		missing("DynamicDetour.Enable")
-	}
-	dhooks.EnableDetour(d, when)
-}
+func (d Detour) Enable(when int32, callback DHookCallback) { dhooks.EnableDetour(d, when) }
 
 // SameCallback is != between two callback names, which SourcePawn compares
 // directly and Go will not.
@@ -406,9 +324,6 @@ func SameCallback(a func(pThis int32) Mres, b func(pThis int32) Mres) bool { ret
 //sp:method HookEntity
 //nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
 func (h Hook) HookEntity(when int32, entity int32, callback DHookCallback) {
-	if dhooks.HookEntity == nil {
-		missing("DynamicHook.HookEntity")
-	}
 	dhooks.HookEntity(h, when, entity)
 }
 
@@ -418,9 +333,6 @@ func (h Hook) HookEntity(when int32, entity int32, callback DHookCallback) {
 //sp:method HookRaw
 //nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
 func (h Hook) HookRaw(when int32, address Address, callback DHookCallback) {
-	if dhooks.HookRaw == nil {
-		missing("DynamicHook.HookRaw")
-	}
 	dhooks.HookRaw(h, when, address)
 }
 
@@ -435,9 +347,4 @@ func AddressOfVision(v Vision) Address {
 // Bot is the bot a vision interface belongs to.
 //
 //sp:method GetBot
-func (v Vision) Bot() Bot {
-	if dhooks.VisionBot == nil {
-		missing("IVision.GetBot")
-	}
-	return dhooks.VisionBot(Address(v))
-}
+func (v Vision) Bot() Bot { return dhooks.VisionBot(Address(v)) }

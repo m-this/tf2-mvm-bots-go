@@ -16,6 +16,7 @@ var spyChecks SpyCheckCalls
 // InstallSpyChecks puts a set of answers behind them.
 func InstallSpyChecks(c SpyCheckCalls) func() {
 	previous := spyChecks
+	Fill(&c)
 	spyChecks = c
 	return func() { spyChecks = previous }
 }
@@ -30,7 +31,7 @@ func UseFOV() bool { return true }
 // dropped for anything real.
 //
 //sp:global IMPORTANT
-func AimImportant() int32 { return 1 }
+func AimImportant() LookAtPriority { return 1 }
 
 // ConceptCloakedSpy is MP_CONCEPT_PLAYER_CLOAKEDSPY, the line a bot says while
 // it frisks its own team.
@@ -52,30 +53,17 @@ that is the order the native declares.
 
 //sp:native GetAngleVectors after NULL_VECTOR NULL_VECTOR
 */
-func AngleForward(angles [3]float32) (forward [3]float32) {
-	if spyChecks.AngleForward == nil {
-		missing("GetAngleVectors")
-	}
-	return spyChecks.AngleForward(angles)
-}
+func AngleForward(angles [3]float32) (forward [3]float32) { return spyChecks.AngleForward(angles) }
 
 // ClientEyeAngles is where the client is looking.
 //
 //sp:native GetClientEyeAngles
-func ClientEyeAngles(client int32) (angles [3]float32) {
-	if spyChecks.ClientEyeAngles == nil {
-		missing("GetClientEyeAngles")
-	}
-	return spyChecks.ClientEyeAngles(client)
-}
+func ClientEyeAngles(client int32) (angles [3]float32) { return spyChecks.ClientEyeAngles(client) }
 
 // IsAbleToSeeTarget is the bot's own eyes, field of view included.
 //
 //sp:method IsAbleToSeeTarget
 func (v Vision) IsAbleToSeeTarget(target int32, useFOV bool) bool {
-	if spyChecks.IsAbleToSeeTarget == nil {
-		missing("IVision.IsAbleToSeeTarget")
-	}
 	return spyChecks.IsAbleToSeeTarget(v, target, useFOV)
 }
 
@@ -83,40 +71,20 @@ func (v Vision) IsAbleToSeeTarget(target int32, useFOV bool) bool {
 // out of the frisking.
 //
 //sp:native IsFakeClient
-func IsFakeClient(client int32) bool {
-	if spyChecks.IsFakeClient == nil {
-		missing("IsFakeClient")
-	}
-	return spyChecks.IsFakeClient(client)
-}
+func IsFakeClient(client int32) bool { return spyChecks.IsFakeClient(client) }
 
 // HasTheFlag says the client is carrying the bomb.
 //
-//sp:plugin TF2_HasTheFlag
-func HasTheFlag(client int32) bool {
-	if spyChecks.HasTheFlag == nil {
-		missing("TF2_HasTheFlag")
-	}
-	return spyChecks.HasTheFlag(client)
-}
+//sp:library TF2_HasTheFlag
+func HasTheFlag(client int32) bool { return spyChecks.HasTheFlag(client) }
 
 // TimeSinceWeaponFired is the alibi a disguised spy cannot produce.
 //
 //sp:body GetTimeSinceWeaponFired
-func TimeSinceWeaponFired(client int32) float32 {
-	if spyChecks.TimeSinceWeaponFired == nil {
-		missing("GetTimeSinceWeaponFired")
-	}
-	return spyChecks.TimeSinceWeaponFired(client)
-}
+func TimeSinceWeaponFired(client int32) float32 { return spyChecks.TimeSinceWeaponFired(client) }
 
 // MinFloat is the smaller of two. The plugin has its own, and the generator's
 // own min would emit a second one beside it.
 //
-//sp:plugin MinFloat
-func MinFloat(a float32, b float32) float32 {
-	if spyChecks.MinFloat == nil {
-		missing("MinFloat")
-	}
-	return spyChecks.MinFloat(a, b)
-}
+//sp:library MinFloat
+func MinFloat(a float32, b float32) float32 { return spyChecks.MinFloat(a, b) }

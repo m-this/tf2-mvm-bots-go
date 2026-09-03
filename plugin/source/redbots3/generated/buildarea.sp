@@ -63,8 +63,8 @@ stock CNavArea PickBuildArea(int client, float sentryRange = 1300.0)
 		{
 			continue;
 		}
-		float bombTargetDistanceAtArea = GetTravelDistanceToBombTarget(view_as<CNavArea>(area));
-		float bombTargetDistanceAtBomb = GetTravelDistanceToBombTarget(view_as<CNavArea>(bombArea));
+		float bombTargetDistanceAtArea = GetTravelDistanceToBombTarget(area);
+		float bombTargetDistanceAtBomb = GetTravelDistanceToBombTarget(bombArea);
 		if (bombTargetDistanceAtArea < NEST_HATCH_CLEARANCE)
 		{
 			continue;
@@ -182,7 +182,7 @@ stock CNavArea PickBuildAreaPreRound(int client, float sentryRange = 1300.0)
 		{
 			continue;
 		}
-		float distance = GetTravelDistanceToBombTarget(view_as<CNavArea>(area));
+		float distance = GetTravelDistanceToBombTarget(area);
 		if (distance < NEST_HATCH_CLEARANCE)
 		{
 			continue;

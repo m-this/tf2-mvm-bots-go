@@ -37,6 +37,7 @@ var seatings SeatingCalls
 // InstallSeating puts a set of answers behind them.
 func InstallSeating(c SeatingCalls) func() {
 	previous := seatings
+	Fill(&c)
 	seatings = c
 	return func() { seatings = previous }
 }
@@ -44,72 +45,39 @@ func InstallSeating(c SeatingCalls) func() {
 // ReseatPending says a lineup change is waiting for the break.
 //
 //sp:global m_bReseatPending
-func ReseatPending() bool {
-	if seatings.ReseatPending == nil {
-		missing("m_bReseatPending")
-	}
-	return seatings.ReseatPending()
-}
+func ReseatPending() bool { return seatings.ReseatPending() }
 
 // SetReseatPending writes it.
 //
 //sp:globalset m_bReseatPending
-func SetReseatPending(pending bool) {
-	if seatings.SetReseatPending == nil {
-		missing("m_bReseatPending")
-	}
-	seatings.SetReseatPending(pending)
-}
+func SetReseatPending(pending bool) { seatings.SetReseatPending(pending) }
 
 // RecyclePending says bots held from mid-wave are waiting to be recycled.
 //
 //sp:global m_bRecyclePending
-func RecyclePending() bool {
-	if seatings.RecyclePending == nil {
-		missing("m_bRecyclePending")
-	}
-	return seatings.RecyclePending()
-}
+func RecyclePending() bool { return seatings.RecyclePending() }
 
 // SetRecyclePending writes it.
 //
 //sp:globalset m_bRecyclePending
-func SetRecyclePending(pending bool) {
-	if seatings.SetRecyclePending == nil {
-		missing("m_bRecyclePending")
-	}
-	seatings.SetRecyclePending(pending)
-}
+func SetRecyclePending(pending bool) { seatings.SetRecyclePending(pending) }
 
 // RecycleDefenderBots reclasses the bots in place and says how many it moved.
 // Ported, roster_counts.
 //
 //sp:body RecycleDefenderBots
-func RecycleDefenderBots() int32 {
-	if seatings.RecycleDefenderBots == nil {
-		missing("RecycleDefenderBots")
-	}
-	return seatings.RecycleDefenderBots()
-}
+func RecycleDefenderBots() int32 { return seatings.RecycleDefenderBots() }
 
 // ReseatDefenderBots kicks and re-adds so the team matches the lineup. Still in
 // tf2_defenderbots.sp.
 //
 //sp:body ReseatDefenderBots
-func ReseatDefenderBots() int32 {
-	if seatings.ReseatDefenderBots == nil {
-		missing("ReseatDefenderBots")
-	}
-	return seatings.ReseatDefenderBots()
-}
+func ReseatDefenderBots() int32 { return seatings.ReseatDefenderBots() }
 
 // DispatchKeyValueVec sets a three-float key before the spawn.
 //
 //sp:native DispatchKeyValueVector
 func DispatchKeyValueVec(entity int32, key string, value [3]float32) {
-	if seatings.DispatchKeyValueVec == nil {
-		missing("DispatchKeyValueVector")
-	}
 	seatings.DispatchKeyValueVec(entity, key, value)
 }
 
@@ -117,52 +85,29 @@ func DispatchKeyValueVec(entity int32, key string, value [3]float32) {
 //
 //sp:native DispatchKeyValue
 func DispatchKeyValue(entity int32, key string, value string) {
-	if seatings.DispatchKeyValue == nil {
-		missing("DispatchKeyValue")
-	}
 	seatings.DispatchKeyValue(entity, key, value)
 }
 
 // TeamClientCount is how many players are on that team, bots included.
 //
 //sp:native GetTeamClientCount
-func TeamClientCount(team Team) int32 {
-	if seatings.TeamClientCount == nil {
-		missing("GetTeamClientCount")
-	}
-	return seatings.TeamClientCount(team)
-}
+func TeamClientCount(team Team) int32 { return seatings.TeamClientCount(team) }
 
 // PlayersChoosingClasses is how many people have the lineup menu open. Ported,
 // teammenu.
 //
 //sp:body GetCountOfPlayersChoosingBotClasses
-func PlayersChoosingClasses() int32 {
-	if seatings.PlayersChoosingClasses == nil {
-		missing("GetCountOfPlayersChoosingBotClasses")
-	}
-	return seatings.PlayersChoosingClasses()
-}
+func PlayersChoosingClasses() int32 { return seatings.PlayersChoosingClasses() }
 
 // ChosenBotSeats is g_adtChosenBotSeats, the seat each chosen class sits in.
 //
 //sp:global g_adtChosenBotSeats
-func ChosenBotSeats() List {
-	if seatings.ChosenBotSeats == nil {
-		missing("g_adtChosenBotSeats")
-	}
-	return seatings.ChosenBotSeats()
-}
+func ChosenBotSeats() List { return seatings.ChosenBotSeats() }
 
 // BotClassesLocked says the lineup a player accepted is being held.
 //
 //sp:global g_bBotClassesLocked
-func BotClassesLocked() bool {
-	if seatings.BotClassesLocked == nil {
-		missing("g_bBotClassesLocked")
-	}
-	return seatings.BotClassesLocked()
-}
+func BotClassesLocked() bool { return seatings.BotClassesLocked() }
 
 /*
 The game's own convars, found once at startup.
@@ -225,32 +170,19 @@ func ClassNameMax() int32 { return 16 }
 // what a list of strings needs.
 //
 //sp:new ArrayList
-func NewListSized(blocksize int32) List {
-	if seatings.NewListSized == nil {
-		missing("new ArrayList")
-	}
-	return seatings.NewListSized(blocksize)
-}
+func NewListSized(blocksize int32) List { return seatings.NewListSized(blocksize) }
 
 // CollectPlayerBotClassPreferences fills a list with the classes the people on
 // RED asked for. Ported, playerpref.
 //
 //sp:body CollectPlayerBotClassPreferences
-func CollectPlayerBotClassPreferences(out List) {
-	if seatings.CollectPlayerBotClassPreferences == nil {
-		missing("CollectPlayerBotClassPreferences")
-	}
-	seatings.CollectPlayerBotClassPreferences(out)
-}
+func CollectPlayerBotClassPreferences(out List) { seatings.CollectPlayerBotClassPreferences(out) }
 
 // CollectMissingTeamComposition names the seats the convar still wants filled
 // and says how many. Still in tf2_defenderbots.sp.
 //
 //sp:body CollectMissingTeamComposition
 func CollectMissingTeamComposition(classes List, seats List, count int32) int32 {
-	if seatings.CollectMissingTeamComposition == nil {
-		missing("CollectMissingTeamComposition")
-	}
 	return seatings.CollectMissingTeamComposition(classes, seats, count)
 }
 
@@ -258,42 +190,22 @@ func CollectMissingTeamComposition(classes List, seats List, count int32) int32 
 // Ported, seating.
 //
 //sp:body ChooseBotClassesFromLineupMode
-func ChooseBotClassesFromLineupMode(count int32) {
-	if seatings.ChooseBotClassesFromLineupMode == nil {
-		missing("ChooseBotClassesFromLineupMode")
-	}
-	seatings.ChooseBotClassesFromLineupMode(count)
-}
+func ChooseBotClassesFromLineupMode(count int32) { seatings.ChooseBotClassesFromLineupMode(count) }
 
 // RandomClassBetween is GetRandomInt over two class values, which is how a
 // random lineup picks one.
 //
 //sp:native GetRandomInt
-func RandomClassBetween(low Class, high Class) Class {
-	if seatings.RandomClassBetween == nil {
-		missing("GetRandomInt")
-	}
-	return seatings.RandomClassBetween(low, high)
-}
+func RandomClassBetween(low Class, high Class) Class { return seatings.RandomClassBetween(low, high) }
 
 // NoteBotSeatPending remembers a seat asked for, waiting for the bot the server
 // has not created yet. Ported, playerpref.
 //
 //sp:body NoteBotSeatPending
-func NoteBotSeatPending(seat int32) {
-	if seatings.NoteBotSeatPending == nil {
-		missing("NoteBotSeatPending")
-	}
-	seatings.NoteBotSeatPending(seat)
-}
+func NoteBotSeatPending(seat int32) { seatings.NoteBotSeatPending(seat) }
 
 // ClassIndexFromString is the class a name means, and TFClass_Unknown for one
 // that means none.
 //
 //sp:native TF2_GetClassIndexFromString
-func ClassIndexFromString(name Text) Class {
-	if seatings.ClassIndexFromString == nil {
-		missing("TF2_GetClassIndexFromString")
-	}
-	return seatings.ClassIndexFromString(name)
-}
+func ClassIndexFromString(name Text) Class { return seatings.ClassIndexFromString(name) }

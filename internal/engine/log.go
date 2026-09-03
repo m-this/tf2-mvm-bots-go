@@ -29,6 +29,7 @@ var logs LogCalls
 // InstallLogs puts a set of answers behind them.
 func InstallLogs(c LogCalls) func() {
 	previous := logs
+	Fill(&c)
 	logs = c
 	return func() { logs = previous }
 }
@@ -37,30 +38,17 @@ func InstallLogs(c LogCalls) func() {
 // running commentary goes.
 //
 //sp:native PrintToServer
-func PrintToServer(format string, args ...any) {
-	if logs.PrintToServer == nil {
-		missing("PrintToServer")
-	}
-	logs.PrintToServer(format, args...)
-}
+func PrintToServer(format string, args ...any) { logs.PrintToServer(format, args...) }
 
 // PrintToChatAll writes a line every player sees.
 //
 //sp:native PrintToChatAll
-func PrintToChatAll(format string, args ...any) {
-	if logs.PrintToChatAll == nil {
-		missing("PrintToChatAll")
-	}
-	logs.PrintToChatAll(format, args...)
-}
+func PrintToChatAll(format string, args ...any) { logs.PrintToChatAll(format, args...) }
 
 // LogAction writes a line to the game's own log, attributed to a player.
 //
 //sp:native LogAction
 func LogAction(client int32, target int32, format string, args ...any) {
-	if logs.LogAction == nil {
-		missing("LogAction")
-	}
 	logs.LogAction(client, target, format, args...)
 }
 
@@ -79,6 +67,7 @@ var texts TextCalls
 // InstallTexts puts a set of answers behind them.
 func InstallTexts(c TextCalls) func() {
 	previous := texts
+	Fill(&c)
 	texts = c
 	return func() { texts = previous }
 }
@@ -86,23 +75,13 @@ func InstallTexts(c TextCalls) func() {
 // CurrentMap is the map being played, filled into the buffer it is given.
 //
 //sp:native GetCurrentMap sized
-func CurrentMap() (name Text) {
-	if texts.CurrentMap == nil {
-		missing("GetCurrentMap")
-	}
-	return texts.CurrentMap()
-}
+func CurrentMap() (name Text) { return texts.CurrentMap() }
 
 // ActionStackOf is the behaviour stack a bot is running, as text, which is what
 // the debug output prints.
 //
 //sp:body ActionStackOf sized
-func ActionStackOf(client int32) (stack Text) {
-	if texts.ActionStackOf == nil {
-		missing("ActionStackOf")
-	}
-	return texts.ActionStackOf(client)
-}
+func ActionStackOf(client int32) (stack Text) { return texts.ActionStackOf(client) }
 
 /*
 Text is a string buffer, and there is one size of it.
@@ -153,6 +132,7 @@ var textOps TextOps
 // InstallTextOps puts a set of answers behind them.
 func InstallTextOps(c TextOps) func() {
 	previous := textOps
+	Fill(&c)
 	textOps = c
 	return func() { textOps = previous }
 }
@@ -167,12 +147,7 @@ the caller passed is not something the generated code can see.
 
 //sp:native strcopy fills
 */
-func CopyText(from string) (into Text) {
-	if textOps.CopyText == nil {
-		missing("strcopy")
-	}
-	return textOps.CopyText(from)
-}
+func CopyText(from string) (into Text) { return textOps.CopyText(from) }
 
 // ChooseText is SourcePawn's ?: where one side is a buffer and the other a
 // literal, which is the shape [[Choose]] cannot take.
@@ -210,20 +185,12 @@ func ChooseInt(cond bool, yes int32, no int32) int32 {
 // is what a function handed a buffer has to write with.
 //
 //sp:native strcopy fills
-func CopyTextInto(from Text) (into Text) {
-	if textOps.CopyTextInto == nil {
-		missing("strcopy")
-	}
-	return textOps.CopyTextInto(from)
-}
+func CopyTextInto(from Text) (into Text) { return textOps.CopyTextInto(from) }
 
 // StrEqualFolded compares a buffer against a literal, case sensitively or not.
 //
 //sp:native StrEqual
 func StrEqualFolded(a Text, b string, caseSensitive bool) bool {
-	if textOps.StrEqualFolded == nil {
-		missing("StrEqual")
-	}
 	return textOps.StrEqualFolded(a, b, caseSensitive)
 }
 
@@ -232,50 +199,31 @@ func StrEqualFolded(a Text, b string, caseSensitive bool) bool {
 //
 //sp:native StrEqual
 func StrEqualLiteral(a string, b string, caseSensitive bool) bool {
-	if textOps.StrEqualLiteral == nil {
-		missing("StrEqual")
-	}
 	return textOps.StrEqualLiteral(a, b, caseSensitive)
 }
 
 // StrEqual says whether the buffer holds exactly that.
 //
 //sp:native StrEqual
-func StrEqual(a Text, b string) bool {
-	if textOps.StrEqual == nil {
-		missing("StrEqual")
-	}
-	return textOps.StrEqual(a, b)
-}
+func StrEqual(a Text, b string) bool { return textOps.StrEqual(a, b) }
 
 // StrContains is where the needle starts, and -1 when it is not there.
 //
 //sp:native StrContains
 func StrContains(haystack Text, needle string, caseSensitive bool) int32 {
-	if textOps.StrContains == nil {
-		missing("StrContains")
-	}
 	return textOps.StrContains(haystack, needle, caseSensitive)
 }
 
 // EntityClassname is what the entity is, filled into the buffer it is given.
 //
 //sp:native GetEntityClassname sized
-func EntityClassname(entity int32) (class Text) {
-	if textOps.EntityClassname == nil {
-		missing("GetEntityClassname")
-	}
-	return textOps.EntityClassname(entity)
-}
+func EntityClassname(entity int32) (class Text) { return textOps.EntityClassname(entity) }
 
 // ReplyToCommand answers whoever typed the command, in the console or the chat
 // depending on where they typed it.
 //
 //sp:native ReplyToCommand
 func ReplyToCommand(client int32, format string, args ...any) {
-	if logs.ReplyToCommand == nil {
-		missing("ReplyToCommand")
-	}
 	logs.ReplyToCommand(client, format, args...)
 }
 
@@ -284,9 +232,6 @@ func ReplyToCommand(client int32, format string, args ...any) {
 //
 //sp:native HasEntProp
 func HasEntProp(entity int32, propType PropType, prop string) bool {
-	if logs.HasEntProp == nil {
-		missing("HasEntProp")
-	}
 	return logs.HasEntProp(entity, propType, prop)
 }
 
@@ -300,9 +245,6 @@ func PluginHandled() Outcome { return 3 }
 //
 //sp:native PrintToChat
 func PrintToChatText(client int32, format string, text Line) {
-	if textOps.PrintToChatText == nil {
-		missing("PrintToChat")
-	}
 	textOps.PrintToChatText(client, format, text)
 }
 
@@ -310,20 +252,10 @@ func PrintToChatText(client int32, format string, text Line) {
 // the language it comes out in.
 //
 //sp:native SetGlobalTransTarget
-func SetGlobalTransTarget(client int32) {
-	if textOps.SetGlobalTransTarget == nil {
-		missing("SetGlobalTransTarget")
-	}
-	textOps.SetGlobalTransTarget(client)
-}
+func SetGlobalTransTarget(client int32) { textOps.SetGlobalTransTarget(client) }
 
 // VFormat writes a format and the caller's own variadic arguments into a buffer,
 // taking the index the arguments start at.
 //
 //sp:native VFormat fills
-func VFormat(format string, argIndex int32) (out Line) {
-	if textOps.VFormat == nil {
-		missing("VFormat")
-	}
-	return textOps.VFormat(format, argIndex)
-}
+func VFormat(format string, argIndex int32) (out Line) { return textOps.VFormat(format, argIndex) }

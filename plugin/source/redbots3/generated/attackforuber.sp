@@ -9,8 +9,6 @@ BehaviorAction CTFBotAttackUber()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define MEDIC_ATTACK_UBER_LOW_HEALTH (100)
 #define MEDIC_ATTACK_UBER_SEEK_RANGE (500.0)
 

@@ -9,8 +9,6 @@ BehaviorAction CTFBotDestroyTeleporter()
 	return action;
 }
 
-#define Go_Slots (65)
-
 int m_iTeleporterTarget[65];
 
 public Action CTFBotDestroyTeleporter_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)

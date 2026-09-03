@@ -5,10 +5,10 @@ fast a bot may type on their behalf.
 */
 package humans
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 /*
 The readiness answer, kept for a frame.
@@ -81,7 +81,7 @@ starts with its clock at now.
 */
 
 //sp:name m_flLastCommandTime
-var lastCommandTime [Slots]float32
+var lastCommandTime [slots.Count]float32
 
 // ResetCommandThrottle starts a seat's clock, which the plugin does as a player
 // is put in the server.

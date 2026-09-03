@@ -11,8 +11,6 @@ BehaviorAction CTFBotGetAmmo()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define AMMO_CANDIDATES_MAX (4)
 #define AMMO_REPATH_FAILS_MAX (3)
 #define AMMO_GIVEUP_TIME (3.0)

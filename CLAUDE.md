@@ -48,10 +48,13 @@ overtaken.
   becomes SourcePawn, engine calls included. It type checks with go/types
   first, so a width, a named type and an array length are read off the type
   rather than guessed.
-- `internal/engine` — the one package a body may import. One Go function per
-  engine call, each carrying the directive that says whether SourcePawn writes
-  it as a native, an SDKCall or an address read. Nothing here means anything in
-  a Go process: the differential test installs the answers.
+- `internal/engine` — how a body reaches anything it does not own. One Go
+  function per engine call, each carrying the directive that says whether
+  SourcePawn writes it as a native, an SDKCall or an address read. Nothing here
+  means anything in a Go process: the differential test installs the answers,
+  and `Fill` puts a panic naming itself behind every one the caller left out.
+  A body may also import another generated package: the registry knows what
+  each emits, so a shared decision is an import rather than an extern.
 - `internal/body/scan` — util.sp's client loop, ported one function at a time.
   The duplication it holds is collapsed once every variant is here, not on the
   way across.
@@ -105,6 +108,17 @@ counts were checked both ways. Everything is under the epic `mvm-z83`.
 - CI runs Make targets, never raw commands, so the gate runs the same locally.
 - No dependency without a reason written down. The standard library first.
 - Every generator has golden files. A generator without a test is decoration.
+- An extern says which of three things it is, and the three are not the same
+  work. `//sp:body` names SourcePawn this port generates: its Go signature is
+  checked against the function that generates it, because int, float, every tag
+  and every handle are one cell there and spcomp cannot see the difference.
+  `//sp:plugin` names SourcePawn the port has not reached, and there are five
+  left. `//sp:library` names somebody else's include and is not work at all.
+- A per-client array is cleared between bots or says `//sp:keep <reason>`.
+  `internal/body/reset.go` walks out from the three functions that put a seat
+  back and refuses a new one that neither.
+- One declaration per shared thing. SourcePawn has one flat namespace, so a
+  constant declared in two packages is two `#define`s of the same name.
 - The port is behaviour identical. No functionality lost, no new bugs, and no
   fix riding along with a port: a defect the port finds goes in a bead and
   stays in the code, because a run that moves cannot say whether the port or

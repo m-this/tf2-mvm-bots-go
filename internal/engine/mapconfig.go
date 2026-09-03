@@ -27,6 +27,7 @@ var mapConfigs MapConfigCalls
 // InstallMapConfigs puts a set of answers behind them.
 func InstallMapConfigs(c MapConfigCalls) func() {
 	previous := mapConfigs
+	Fill(&c)
 	mapConfigs = c
 	return func() { mapConfigs = previous }
 }
@@ -35,22 +36,12 @@ func InstallMapConfigs(c MapConfigCalls) func() {
 // into.
 //
 //sp:method GoBack
-func (kv KeyValues) GoBack() {
-	if mapConfigs.GoBack == nil {
-		missing("KeyValues.GoBack")
-	}
-	mapConfigs.GoBack(kv)
-}
+func (kv KeyValues) GoBack() { mapConfigs.GoBack(kv) }
 
 // Vector reads three floats under one key.
 //
 //sp:method GetVector
-func (kv KeyValues) Vector(key string) (out [3]float32) {
-	if mapConfigs.Vector == nil {
-		missing("KeyValues.GetVector")
-	}
-	return mapConfigs.Vector(kv, key)
-}
+func (kv KeyValues) Vector(key string) (out [3]float32) { return mapConfigs.Vector(kv, key) }
 
 // GotoFirstSubKeyKeysOnly is GotoFirstSubKey with the keys-only flag written
 // out: false visits values as well as sections, which is how a list of
@@ -58,9 +49,6 @@ func (kv KeyValues) Vector(key string) (out [3]float32) {
 //
 //sp:method GotoFirstSubKey
 func (kv KeyValues) GotoFirstSubKeyKeysOnly(keysOnly bool) bool {
-	if mapConfigs.GotoFirstSubKeyKeysOnly == nil {
-		missing("KeyValues.GotoFirstSubKey")
-	}
 	return mapConfigs.GotoFirstSubKeyKeysOnly(kv, keysOnly)
 }
 
@@ -68,9 +56,6 @@ func (kv KeyValues) GotoFirstSubKeyKeysOnly(keysOnly bool) bool {
 //
 //sp:method GotoNextKey
 func (kv KeyValues) GotoNextKeyKeysOnly(keysOnly bool) bool {
-	if mapConfigs.GotoNextKeyKeysOnly == nil {
-		missing("KeyValues.GotoNextKey")
-	}
 	return mapConfigs.GotoNextKeyKeysOnly(kv, keysOnly)
 }
 
@@ -78,22 +63,12 @@ func (kv KeyValues) GotoNextKeyKeysOnly(keysOnly bool) bool {
 // config loaders pass.
 //
 //sp:method GetString sized after ""
-func (kv KeyValues) StringOr(key string) (out Text) {
-	if mapConfigs.StringOr == nil {
-		missing("KeyValues.GetString")
-	}
-	return mapConfigs.StringOr(kv, key)
-}
+func (kv KeyValues) StringOr(key string) (out Text) { return mapConfigs.StringOr(kv, key) }
 
 // BuildPath is SourceMod's path under addons/sourcemod, formatted.
 //
 //sp:native BuildPath fills before Path_SM
-func BuildPath(format string, args ...any) (out Text) {
-	if mapConfigs.BuildPath == nil {
-		missing("BuildPath")
-	}
-	return mapConfigs.BuildPath(format, args)
-}
+func BuildPath(format string, args ...any) (out Text) { return mapConfigs.BuildPath(format, args) }
 
 // File is SourceMod's File handle.
 //
@@ -108,55 +83,30 @@ func NoFile() File { return 0 }
 // OpenFile opens one for reading or writing. The caller owns it.
 //
 //sp:native OpenFile
-func OpenFile(path Text, mode string) File {
-	if mapConfigs.OpenFile == nil {
-		missing("OpenFile")
-	}
-	return mapConfigs.OpenFile(path, mode)
-}
+func OpenFile(path Text, mode string) File { return mapConfigs.OpenFile(path, mode) }
 
 // ReadFileLine reads the next line, and says whether there was one. The
 // native form, which is what the plugin writes, rather than the methodmap's
 // ReadLine.
 //
 //sp:native ReadFileLine sized
-func ReadFileLine(f File) (ok bool, line Text) {
-	if mapConfigs.ReadFileLine == nil {
-		missing("ReadFileLine")
-	}
-	return mapConfigs.ReadFileLine(f)
-}
+func ReadFileLine(f File) (ok bool, line Text) { return mapConfigs.ReadFileLine(f) }
 
 // Close releases the handle, which the emitter writes as the plain delete
 // statement at every way out.
 //
 //sp:delete Close
-func (f File) Close() {
-	if mapConfigs.CloseFile == nil {
-		missing("delete File")
-	}
-	mapConfigs.CloseFile(f)
-}
+func (f File) Close() { mapConfigs.CloseFile(f) }
 
 // TrimString strips whitespace from both ends, in place.
 //
 //sp:native TrimString inplace
-func TrimString(text Text) {
-	if mapConfigs.TrimString == nil {
-		missing("TrimString")
-	}
-	mapConfigs.TrimString(text)
-}
+func TrimString(text Text) { mapConfigs.TrimString(text) }
 
 // PushStringText is PushString handed a buffer rather than a literal.
 //
 //sp:method PushString
-func (l List) PushStringText(text Text) {
-	if mapConfigs.PushStringText == nil {
-		missing("ArrayList.PushString")
-	}
-	mapConfigs.PushStringText(l, text)
-}
+func (l List) PushStringText(text Text) { mapConfigs.PushStringText(l, text) }
 
 // BotNames is m_adtBotNames, the list the random names are drawn from. The
 // plugin declares it; this reads it.
@@ -167,23 +117,13 @@ func BotNames() List { return 0 }
 // SetClientName renames a player, which the server tells everybody about.
 //
 //sp:native SetClientName
-func SetClientName(client int32, name Text) {
-	if mapConfigs.SetClientName == nil {
-		missing("SetClientName")
-	}
-	mapConfigs.SetClientName(client, name)
-}
+func SetClientName(client int32, name Text) { mapConfigs.SetClientName(client, name) }
 
 // DoesAnyPlayerUseThisName walks the players for one already called that.
 // Ported, stocks.
 //
 //sp:body DoesAnyPlayerUseThisName
-func DoesAnyPlayerUseThisName(name Text) bool {
-	if mapConfigs.DoesAnyPlayerUseThisName == nil {
-		missing("DoesAnyPlayerUseThisName")
-	}
-	return mapConfigs.DoesAnyPlayerUseThisName(name)
-}
+func DoesAnyPlayerUseThisName(name Text) bool { return mapConfigs.DoesAnyPlayerUseThisName(name) }
 
 /*
 The map file and the mission's difficulty.
@@ -211,6 +151,7 @@ var mapConfigMaps MapConfigMapCalls
 // InstallMapConfigMaps puts a set of answers behind them.
 func InstallMapConfigMaps(c MapConfigMapCalls) func() {
 	previous := mapConfigMaps
+	Fill(&c)
 	mapConfigMaps = c
 	return func() { mapConfigMaps = previous }
 }
@@ -219,21 +160,13 @@ func InstallMapConfigMaps(c MapConfigMapCalls) func() {
 // fields, which is the enum struct's own method.
 //
 //sp:plugin g_arrMapConfig.Reset
-func ResetMapConfig() {
-	if mapConfigMaps.ResetMapConfig == nil {
-		missing("g_arrMapConfig.Reset")
-	}
-	mapConfigMaps.ResetMapConfig()
-}
+func ResetMapConfig() { mapConfigMaps.ResetMapConfig() }
 
 // StringInto is GetString written out: the destination is a buffer that
 // already exists, which the sized form cannot express because it makes one.
 //
 //sp:method GetString
 func (kv KeyValues) StringInto(key string, out Text, maxlen int32, def string) {
-	if mapConfigMaps.StringInto == nil {
-		missing("KeyValues.GetString")
-	}
 	mapConfigMaps.StringInto(kv, key, out, maxlen, def)
 }
 
@@ -245,40 +178,22 @@ func MapCompositionSize() int32 { return 128 }
 // SetMovingNests writes whether this map's nests move.
 //
 //sp:globalset g_arrMapConfig.bMovingNests
-func SetMovingNests(on bool) {
-	if mapConfigMaps.SetMovingNests == nil {
-		missing("g_arrMapConfig.bMovingNests")
-	}
-	mapConfigMaps.SetMovingNests(on)
-}
+func SetMovingNests(on bool) { mapConfigMaps.SetMovingNests(on) }
 
 // MovingNests says whether they do.
 //
 //sp:global g_arrMapConfig.bMovingNests
-func MovingNests() bool {
-	if mapConfigMaps.MovingNestsIsSet == nil {
-		missing("g_arrMapConfig.bMovingNests")
-	}
-	return mapConfigMaps.MovingNestsIsSet()
-}
+func MovingNests() bool { return mapConfigMaps.MovingNestsIsSet() }
 
 // MvMPopfileName is the mission being played, path and extension included.
 //
 //sp:native TF2_GetMvMPopfileName sized
-func MvMPopfileName(resource int32) (name Text) {
-	if mapConfigMaps.MvMPopfileName == nil {
-		missing("TF2_GetMvMPopfileName")
-	}
-	return mapConfigMaps.MvMPopfileName(resource)
-}
+func MvMPopfileName(resource int32) (name Text) { return mapConfigMaps.MvMPopfileName(resource) }
 
 // ReplaceString rewrites every occurrence in place.
 //
 //sp:native ReplaceString
 func ReplaceString(text Text, maxlen int32, search string, replace string) {
-	if mapConfigMaps.ReplaceString == nil {
-		missing("ReplaceString")
-	}
 	mapConfigMaps.ReplaceString(text, maxlen, search, replace)
 }
 
@@ -334,9 +249,6 @@ func MissionMaxCount() MissionDifficulty { return 6 }
 //
 //sp:slot g_sMissionDifficultyFilePaths
 func MissionDifficultyFilePath(difficulty MissionDifficulty) Text {
-	if mapConfigMaps.MissionDifficultyFilePath == nil {
-		missing("g_sMissionDifficultyFilePaths")
-	}
 	return mapConfigMaps.MissionDifficultyFilePath(difficulty)
 }
 
@@ -344,12 +256,7 @@ func MissionDifficultyFilePath(difficulty MissionDifficulty) Text {
 // it rather than delete, and a port does not change what runs.
 //
 //sp:native CloseHandle frees
-func CloseHandle(kv KeyValues) {
-	if mapConfigMaps.CloseHandle == nil {
-		missing("CloseHandle")
-	}
-	mapConfigMaps.CloseHandle(kv)
-}
+func CloseHandle(kv KeyValues) { mapConfigMaps.CloseHandle(kv) }
 
 // PathMax is PLATFORM_MAX_PATH, the length of every path buffer the plugin
 // declares.
@@ -361,9 +268,4 @@ func PathMax() int32 { return 256 }
 // how the difficulty files are named: the path comes off a table.
 //
 //sp:native BuildPath fills before Path_SM
-func BuildPathText(format Text) (out Text) {
-	if mapConfigMaps.BuildPathText == nil {
-		missing("BuildPath")
-	}
-	return mapConfigMaps.BuildPathText(format)
-}
+func BuildPathText(format Text) (out Text) { return mapConfigMaps.BuildPathText(format) }

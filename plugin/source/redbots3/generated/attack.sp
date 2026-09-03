@@ -8,8 +8,6 @@ BehaviorAction CTFBotDefenderAttack()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define ATTACK_STRAFE_REACH (130.0)
 #define ATTACK_STRAFE_FLIP_MIN (0.5)
 #define ATTACK_STRAFE_FLIP_MAX (1.1)

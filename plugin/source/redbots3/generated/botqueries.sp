@@ -225,7 +225,7 @@ stock bool ShouldUseTeleporter(int client)
 	{
 		return false;
 	}
-	return (GetTravelDistanceToBombTarget(view_as<CNavArea>(myArea)) + TELEPORTER_WORTH_RIDING) < GetTravelDistanceToBombTarget(bombArea);
+	return (GetTravelDistanceToBombTarget(myArea) + TELEPORTER_WORTH_RIDING) < GetTravelDistanceToBombTarget(view_as<CTFNavArea>(bombArea));
 }
 
 stock int GetCountOfBotsWithNamedAction(const char[] name, int ignore = -1)

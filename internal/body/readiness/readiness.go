@@ -5,10 +5,10 @@ health pack is worth it.
 */
 package readiness
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // ReadyGrace is how long an unready bot gets before it is readied anyway.
 //
@@ -23,7 +23,7 @@ const BuildingMaxLevel = 3
 // The clock a bot's grace runs out on, per seat.
 //
 //sp:name m_ctReadyDeadline
-var readyDeadline [Slots]float32
+var readyDeadline [slots.Count]float32
 
 // IsBuildingFinished says the building is standing, built and at level three.
 //

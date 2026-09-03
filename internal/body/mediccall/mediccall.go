@@ -5,10 +5,10 @@ is worth the most on.
 */
 package mediccall
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 /*
 MedicPatientMargin is how much more maximum health a rival body needs before the
@@ -27,7 +27,7 @@ const MedicPatientMargin = 25
 const MedicCallAnswerTime = 10.0
 
 //sp:name m_ctMedicCalled
-var medicCalled [Slots]float32
+var medicCalled [slots.Count]float32
 
 // NoteMedicCall starts the clock a call runs down.
 //

@@ -51,6 +51,7 @@ var settings SettingsCalls
 // InstallSettings puts a set of answers behind them.
 func InstallSettings(c SettingsCalls) func() {
 	previous := settings
+	Fill(&c)
 	settings = c
 	return func() { settings = previous }
 }
@@ -58,23 +59,13 @@ func InstallSettings(c SettingsCalls) func() {
 // SetInt writes a convar as a number, which fires its own change hook.
 //
 //sp:method SetInt
-func (c ConVar) SetInt(value int32) {
-	if settings.SetConVarInt == nil {
-		missing("ConVar.SetInt")
-	}
-	settings.SetConVarInt(c, value)
-}
+func (c ConVar) SetInt(value int32) { settings.SetConVarInt(c, value) }
 
 // FreeChosenBotTeamAnnouncing drops the held lineup and says so in chat.
 // Ported, seating.
 //
 //sp:body FreeChosenBotTeam
-func FreeChosenBotTeamAnnouncing(announce bool) {
-	if settings.FreeChosenBotTeamAnnouncing == nil {
-		missing("FreeChosenBotTeam")
-	}
-	settings.FreeChosenBotTeamAnnouncing(announce)
-}
+func FreeChosenBotTeamAnnouncing(announce bool) { settings.FreeChosenBotTeamAnnouncing(announce) }
 
 /*
 The plugin's own forwards reach these.
@@ -87,64 +78,36 @@ files it includes, called from a forward that has been ported.
 // archipelago.
 //
 //sp:body Archipelago_Recheck
-func ArchipelagoRecheck() {
-	if settings.ArchipelagoRecheck == nil {
-		missing("Archipelago_Recheck")
-	}
-	settings.ArchipelagoRecheck()
-}
+func ArchipelagoRecheck() { settings.ArchipelagoRecheck() }
 
 // DebugFaultsOnGameFrame is the fault watcher's frame. Ported, faults.
 //
 //sp:body DebugFaults_OnGameFrame
-func DebugFaultsOnGameFrame() {
-	if settings.DebugFaultsOnGameFrame == nil {
-		missing("DebugFaults_OnGameFrame")
-	}
-	settings.DebugFaultsOnGameFrame()
-}
+func DebugFaultsOnGameFrame() { settings.DebugFaultsOnGameFrame() }
 
 // SetPopulationManager writes g_iPopulationManager, the info_populator the
 // wave record is read off.
 //
 //sp:globalset g_iPopulationManager
-func SetPopulationManager(entity int32) {
-	if settings.SetPopulationManager == nil {
-		missing("g_iPopulationManager")
-	}
-	settings.SetPopulationManager(entity)
-}
+func SetPopulationManager(entity int32) { settings.SetPopulationManager(entity) }
 
 // DHooksOnEntityCreated hooks whatever the entity needs hooking for. Still in
 // dhooks.sp.
 //
 //sp:body DHooks_OnEntityCreated
 func DHooksOnEntityCreated(entity int32, classname Text) {
-	if settings.DHooksOnEntityCreated == nil {
-		missing("DHooks_OnEntityCreated")
-	}
 	settings.DHooksOnEntityCreated(entity, classname)
 }
 
 // SetDetonatingPlayer writes g_iDetonatingPlayer, the buster winding up.
 //
 //sp:globalset g_iDetonatingPlayer
-func SetDetonatingPlayer(client int32) {
-	if settings.SetDetonatingPlayer == nil {
-		missing("g_iDetonatingPlayer")
-	}
-	settings.SetDetonatingPlayer(client)
-}
+func SetDetonatingPlayer(client int32) { settings.SetDetonatingPlayer(client) }
 
 // NoticeThreat tells a bot about somebody it has not seen. Ported, threat.
 //
 //sp:body TFBot_NoticeThreat
-func NoticeThreat(client int32, threat int32) {
-	if settings.NoticeThreat == nil {
-		missing("TFBot_NoticeThreat")
-	}
-	settings.NoticeThreat(client, threat)
-}
+func NoticeThreat(client int32, threat int32) { settings.NoticeThreat(client, threat) }
 
 // CreateTimerData is CreateTimer with a cell and no flags, which is the third
 // shape the plugin writes.
@@ -152,9 +115,6 @@ func NoticeThreat(client int32, threat int32) {
 //sp:native CreateTimer
 //nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
 func CreateTimerData(interval float32, callback func(timer Timer, data Cell) Outcome, data int32) Timer {
-	if settings.CreateTimerData == nil {
-		missing("CreateTimer")
-	}
 	return settings.CreateTimerData(interval, data)
 }
 
@@ -169,139 +129,74 @@ in one package calls into another.
 // SetAddingBotTime writes g_flAddingBotTime, when the last bot was asked for.
 //
 //sp:globalset g_flAddingBotTime
-func SetAddingBotTime(when float32) {
-	if settings.SetAddingBotTime == nil {
-		missing("g_flAddingBotTime")
-	}
-	settings.SetAddingBotTime(when)
-}
+func SetAddingBotTime(when float32) { settings.SetAddingBotTime(when) }
 
 // SetPlayerForcedPref writes g_iPlayerForcedPref, the one player whose
 // preferences stand in for everybody's.
 //
 //sp:globalset g_iPlayerForcedPref
-func SetPlayerForcedPref(client int32) {
-	if settings.SetPlayerForcedPref == nil {
-		missing("g_iPlayerForcedPref")
-	}
-	settings.SetPlayerForcedPref(client)
-}
+func SetPlayerForcedPref(client int32) { settings.SetPlayerForcedPref(client) }
 
 // PlayerForcedPref reads it.
 //
 //sp:global g_iPlayerForcedPref
-func PlayerForcedPref() int32 {
-	if settings.PlayerForcedPref == nil {
-		missing("g_iPlayerForcedPref")
-	}
-	return settings.PlayerForcedPref()
-}
+func PlayerForcedPref() int32 { return settings.PlayerForcedPref() }
 
 // ResetMapHintNests drops the nest spots the last map's hints put down. Ported,
 // nesthint.
 //
 //sp:body ResetMapHintNests
-func ResetMapHintNests() {
-	if settings.ResetMapHintNests == nil {
-		missing("ResetMapHintNests")
-	}
-	settings.ResetMapHintNests()
-}
+func ResetMapHintNests() { settings.ResetMapHintNests() }
 
 // ConfigLoadServerLoadout reads the server's own loadout file. Ported,
 // playerpref.
 //
 //sp:body Config_LoadServerLoadout
-func ConfigLoadServerLoadout() {
-	if settings.ConfigLoadServerLoadout == nil {
-		missing("Config_LoadServerLoadout")
-	}
-	settings.ConfigLoadServerLoadout()
-}
+func ConfigLoadServerLoadout() { settings.ConfigLoadServerLoadout() }
 
 // ConfigLoadBotNames reads the names the bots are drawn from. Ported,
 // mapconfig.
 //
 //sp:body Config_LoadBotNames
-func ConfigLoadBotNames() {
-	if settings.ConfigLoadBotNames == nil {
-		missing("Config_LoadBotNames")
-	}
-	settings.ConfigLoadBotNames()
-}
+func ConfigLoadBotNames() { settings.ConfigLoadBotNames() }
 
 // ConfigLoadMap reads the file for the map being played. Ported, mapconfig.
 //
 //sp:body Config_LoadMap
-func ConfigLoadMap() {
-	if settings.ConfigLoadMap == nil {
-		missing("Config_LoadMap")
-	}
-	settings.ConfigLoadMap()
-}
+func ConfigLoadMap() { settings.ConfigLoadMap() }
 
 // CreateBotPreferenceMenu builds the menu once, for everybody. Ported,
 // prefmenu.
 //
 //sp:body CreateBotPreferenceMenu
-func CreateBotPreferenceMenu() {
-	if settings.CreateBotPreferenceMenu == nil {
-		missing("CreateBotPreferenceMenu")
-	}
-	settings.CreateBotPreferenceMenu()
-}
+func CreateBotPreferenceMenu() { settings.CreateBotPreferenceMenu() }
 
 // ResetSpawnExitWatch forgets what that client was doing on the way out of
 // spawn. Ported, spawnexit.
 //
 //sp:body ResetSpawnExitWatch
-func ResetSpawnExitWatch(client int32) {
-	if settings.ResetSpawnExitWatch == nil {
-		missing("ResetSpawnExitWatch")
-	}
-	settings.ResetSpawnExitWatch(client)
-}
+func ResetSpawnExitWatch(client int32) { settings.ResetSpawnExitWatch(client) }
 
 // ResetLoadouts forgets the weapons that client was given. Ported, loadouts.
 //
 //sp:body ResetLoadouts
-func ResetLoadouts(client int32) {
-	if settings.ResetLoadouts == nil {
-		missing("ResetLoadouts")
-	}
-	settings.ResetLoadouts(client)
-}
+func ResetLoadouts(client int32) { settings.ResetLoadouts(client) }
 
 // ForgetBotSeat gives the seat back. Ported, playerpref.
 //
 //sp:body ForgetBotSeat
-func ForgetBotSeat(client int32) {
-	if settings.ForgetBotSeat == nil {
-		missing("ForgetBotSeat")
-	}
-	settings.ForgetBotSeat(client)
-}
+func ForgetBotSeat(client int32) { settings.ForgetBotSeat(client) }
 
 // ForgetBotCosmetics drops the hats that client was wearing. Ported,
 // cosmetics.
 //
 //sp:body ForgetBotCosmetics
-func ForgetBotCosmetics(client int32) {
-	if settings.ForgetBotCosmetics == nil {
-		missing("ForgetBotCosmetics")
-	}
-	settings.ForgetBotCosmetics(client)
-}
+func ForgetBotCosmetics(client int32) { settings.ForgetBotCosmetics(client) }
 
 // ReseatOnMapStart drops a pending lineup change. Ported, seating.
 //
 //sp:body Reseat_OnMapStart
-func ReseatOnMapStart() {
-	if settings.ReseatOnMapStart == nil {
-		missing("Reseat_OnMapStart")
-	}
-	settings.ReseatOnMapStart()
-}
+func ReseatOnMapStart() { settings.ReseatOnMapStart() }
 
 // CreateTimerFlags is CreateTimer with no data cell, which is the fourth shape
 // the plugin writes.
@@ -309,9 +204,6 @@ func ReseatOnMapStart() {
 //sp:native CreateTimer
 //nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
 func CreateTimerFlags(interval float32, callback func(timer Timer) Outcome, flags int32) Timer {
-	if settings.CreateTimerFlags == nil {
-		missing("CreateTimer")
-	}
 	return settings.CreateTimerFlags(interval, flags)
 }
 
@@ -319,63 +211,37 @@ func CreateTimerFlags(interval float32, callback func(timer Timer) Outcome, flag
 // default, which is how the plugin writes it.
 //
 //sp:native strcmp
-func CompareTextTo(a Text, b string) int32 {
-	if settings.CompareTextTo == nil {
-		missing("strcmp")
-	}
-	return settings.CompareTextTo(a, b)
-}
+func CompareTextTo(a Text, b string) int32 { return settings.CompareTextTo(a, b) }
 
 // UpdateChosenBotTeamCompositionFor decides the lineup and names who asked.
 // Ported, seating.
 //
 //sp:body UpdateChosenBotTeamComposition
 func UpdateChosenBotTeamCompositionFor(caller int32) {
-	if settings.UpdateChosenBotTeamCompositionFor == nil {
-		missing("UpdateChosenBotTeamComposition")
-	}
 	settings.UpdateChosenBotTeamCompositionFor(caller)
 }
 
 // AllowBotRedo reads g_bAllowBotTeamRedo.
 //
 //sp:global g_bAllowBotTeamRedo
-func AllowBotRedo() bool {
-	if settings.AllowBotRedo == nil {
-		missing("g_bAllowBotTeamRedo")
-	}
-	return settings.AllowBotRedo()
-}
+func AllowBotRedo() bool { return settings.AllowBotRedo() }
 
 // ShowDefenderBotTeamSetupMenu puts the lineup menu up. Ported, teammenu.
 //
 //sp:body ShowDefenderBotTeamSetupMenu
 func ShowDefenderBotTeamSetupMenu(client int32, itemPosition int32, initialize bool, numBotsToAdd int32) {
-	if settings.ShowDefenderBotTeamSetupMenu == nil {
-		missing("ShowDefenderBotTeamSetupMenu")
-	}
 	settings.ShowDefenderBotTeamSetupMenu(client, itemPosition, initialize, numBotsToAdd)
 }
 
 // TeamHumanClientCount is how many people, not bots, are on that team.
 //
 //sp:native GetTeamHumanClientCount
-func TeamHumanClientCount(team Team) int32 {
-	if settings.TeamHumanClientCount == nil {
-		missing("GetTeamHumanClientCount")
-	}
-	return settings.TeamHumanClientCount(team)
-}
+func TeamHumanClientCount(team Team) int32 { return settings.TeamHumanClientCount(team) }
 
 // StartBotVote puts the bot vote up. Ported, prefmenu.
 //
 //sp:body StartBotVote
-func StartBotVote(client int32) bool {
-	if settings.StartBotVote == nil {
-		missing("StartBotVote")
-	}
-	return settings.StartBotVote(client)
-}
+func StartBotVote(client int32) bool { return settings.StartBotVote(client) }
 
 // ExtraBots is redbots_manager_extra_bots, how many over the team size a
 // player may ask for.
@@ -393,9 +259,6 @@ func PluginBadLoad() Outcome { return 2 }
 //
 //sp:native strcmp
 func CompareTextCased(a Text, b string, caseSensitive bool) int32 {
-	if settings.CompareTextCased == nil {
-		missing("strcmp")
-	}
 	return settings.CompareTextCased(a, b, caseSensitive)
 }
 
@@ -403,41 +266,21 @@ func CompareTextCased(a Text, b string, caseSensitive bool) int32 {
 // which is how the extra-bot command calls it. Ported, manage.
 //
 //sp:body AddDefenderTFBot
-func AddDefenderTFBotClass(count int32, class Text) {
-	if settings.AddDefenderTFBotClass == nil {
-		missing("AddDefenderTFBot")
-	}
-	settings.AddDefenderTFBotClass(count, class)
-}
+func AddDefenderTFBotClass(count int32, class Text) { settings.AddDefenderTFBotClass(count, class) }
 
 // AddBotsBasedOnLineupModeCount is AddBotsBasedOnLineupMode with the time
 // adjustment left at its default. Ported, manage.
 //
 //sp:body AddBotsBasedOnLineupMode
-func AddBotsBasedOnLineupModeCount(count int32) {
-	if settings.AddBotsBasedOnLineupModeCount == nil {
-		missing("AddBotsBasedOnLineupMode")
-	}
-	settings.AddBotsBasedOnLineupModeCount(count)
-}
+func AddBotsBasedOnLineupModeCount(count int32) { settings.AddBotsBasedOnLineupModeCount(count) }
 
 // HavePlayersChosenBotTeam says the lineup is settled enough to seat bots on.
 // Ported, seating.
 //
 //sp:body HavePlayersChosenBotTeam
-func HavePlayersChosenBotTeam() bool {
-	if settings.HavePlayersChosenBotTeam == nil {
-		missing("HavePlayersChosenBotTeam")
-	}
-	return settings.HavePlayersChosenBotTeam()
-}
+func HavePlayersChosenBotTeam() bool { return settings.HavePlayersChosenBotTeam() }
 
 // AddingBotTime reads g_flAddingBotTime.
 //
 //sp:global g_flAddingBotTime
-func AddingBotTime() float32 {
-	if settings.AddingBotTime == nil {
-		missing("g_flAddingBotTime")
-	}
-	return settings.AddingBotTime()
-}
+func AddingBotTime() float32 { return settings.AddingBotTime() }

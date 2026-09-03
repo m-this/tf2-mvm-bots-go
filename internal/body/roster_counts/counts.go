@@ -6,9 +6,6 @@ package rostercounts
 
 import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
 
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
-
 // BuyUpgradesMaxTime is how long a shopping trip is given, owned here because
 // this file is the first to read it and a define has to come before its reader.
 //

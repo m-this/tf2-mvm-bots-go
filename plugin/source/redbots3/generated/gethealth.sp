@@ -11,8 +11,6 @@ BehaviorAction CTFBotGetHealth()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define HEALTH_ASK_INTERVAL (0.5)
 
 int m_iHealthPack[65];

@@ -96,7 +96,7 @@ stock Address DereferencePointer(Address addr)
 
 stock int ReadInt(Address addr)
 {
-	if (addr == view_as<Address>(Address_Null))
+	if (addr == Address_Null)
 	{
 		return -1;
 	}

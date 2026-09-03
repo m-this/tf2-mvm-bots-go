@@ -44,6 +44,7 @@ var sdkCalls SDKCallCalls
 // InstallSDKCalls puts a set of answers behind them.
 func InstallSDKCalls(c SDKCallCalls) func() {
 	previous := sdkCalls
+	Fill(&c)
 	sdkCalls = c
 	return func() { sdkCalls = previous }
 }
@@ -158,64 +159,38 @@ func VencodeCopyback() int32 { return 0 }
 // StartPrepSDKCall begins one.
 //
 //sp:native StartPrepSDKCall
-func StartPrepSDKCall(kind int32) {
-	if sdkCalls.StartPrepSDKCall == nil {
-		missing("StartPrepSDKCall")
-	}
-	sdkCalls.StartPrepSDKCall(kind)
-}
+func StartPrepSDKCall(kind int32) { sdkCalls.StartPrepSDKCall(kind) }
 
 // PrepSetFromConf says where in the binary it is.
 //
 //sp:native PrepSDKCall_SetFromConf
 func PrepSetFromConf(g GameData, source int32, name string) bool {
-	if sdkCalls.PrepSetFromConf == nil {
-		missing("PrepSDKCall_SetFromConf")
-	}
 	return sdkCalls.PrepSetFromConf(g, source, name)
 }
 
 // PrepAddParameter describes the next argument.
 //
 //sp:native PrepSDKCall_AddParameter
-func PrepAddParameter(kind int32, pass int32) {
-	if sdkCalls.PrepAddParameter == nil {
-		missing("PrepSDKCall_AddParameter")
-	}
-	sdkCalls.PrepAddParameter(kind, pass)
-}
+func PrepAddParameter(kind int32, pass int32) { sdkCalls.PrepAddParameter(kind, pass) }
 
 // PrepAddParameterFlagged is the same with the encode flags written out, which
 // is how a by-reference vector is copied back.
 //
 //sp:native PrepSDKCall_AddParameter
 func PrepAddParameterFlagged(kind int32, pass int32, decodeFlags int32, encodeFlags int32) {
-	if sdkCalls.PrepAddParameterFlagged == nil {
-		missing("PrepSDKCall_AddParameter")
-	}
 	sdkCalls.PrepAddParameterFlagged(kind, pass, decodeFlags, encodeFlags)
 }
 
 // PrepSetReturnInfo describes what comes back.
 //
 //sp:native PrepSDKCall_SetReturnInfo
-func PrepSetReturnInfo(kind int32, pass int32) {
-	if sdkCalls.PrepSetReturnInfo == nil {
-		missing("PrepSDKCall_SetReturnInfo")
-	}
-	sdkCalls.PrepSetReturnInfo(kind, pass)
-}
+func PrepSetReturnInfo(kind int32, pass int32) { sdkCalls.PrepSetReturnInfo(kind, pass) }
 
 // EndPrepSDKCall finishes it, and answers null when the binary had no such
 // function.
 //
 //sp:native EndPrepSDKCall
-func EndPrepSDKCall() Call {
-	if sdkCalls.EndPrepSDKCall == nil {
-		missing("EndPrepSDKCall")
-	}
-	return sdkCalls.EndPrepSDKCall()
-}
+func EndPrepSDKCall() Call { return sdkCalls.EndPrepSDKCall() }
 
 /*
 Reading and writing the prepared handles.
@@ -393,21 +368,13 @@ func (c SDKCallCalls) get(name string) Call {
 // NewGameDataText parses a gamedata file whose name is in a buffer.
 //
 //sp:new GameData
-func NewGameDataText(name Text) GameData {
-	if sdkCalls.NewGameDataText == nil {
-		missing("new GameData")
-	}
-	return sdkCalls.NewGameDataText(name)
-}
+func NewGameDataText(name Text) GameData { return sdkCalls.NewGameDataText(name) }
 
 // PrepSetFromConfText is PrepSDKCall_SetFromConf against a config the caller
 // opened rather than the mod's own.
 //
 //sp:native PrepSDKCall_SetFromConf
 func PrepSetFromConfText(g GameData, source int32, name string) bool {
-	if sdkCalls.PrepSetFromConfText == nil {
-		missing("PrepSDKCall_SetFromConf")
-	}
 	return sdkCalls.PrepSetFromConfText(g, source, name)
 }
 
@@ -421,80 +388,44 @@ function's own arguments.
 // DoPostInventoryApplication runs the prepared call.
 //
 //sp:native SDKCall before m_hPostInventoryApplication
-func DoPostInventoryApplication(client int32) {
-	if sdkCalls.DoPostInventoryApplication == nil {
-		missing("SDKCall")
-	}
-	sdkCalls.DoPostInventoryApplication(client)
-}
+func DoPostInventoryApplication(client int32) { sdkCalls.DoPostInventoryApplication(client) }
 
 // DoSetMission runs the prepared call.
 //
 //sp:native SDKCall before m_hSetMission
 func DoSetMission(client int32, mission int32, resetBehaviorSystem bool) {
-	if sdkCalls.DoSetMission == nil {
-		missing("SDKCall")
-	}
 	sdkCalls.DoSetMission(client, mission, resetBehaviorSystem)
 }
 
 // DoLookupBone runs the prepared call.
 //
 //sp:native SDKCall before m_hLookupBone
-func DoLookupBone(entity int32, name string) int32 {
-	if sdkCalls.DoLookupBone == nil {
-		missing("SDKCall")
-	}
-	return sdkCalls.DoLookupBone(entity, name)
-}
+func DoLookupBone(entity int32, name string) int32 { return sdkCalls.DoLookupBone(entity, name) }
 
 // DoHasAmmo runs the prepared call.
 //
 //sp:native SDKCall before m_hHasAmmo
-func DoHasAmmo(weapon int32) bool {
-	if sdkCalls.DoHasAmmo == nil {
-		missing("SDKCall")
-	}
-	return sdkCalls.DoHasAmmo(weapon)
-}
+func DoHasAmmo(weapon int32) bool { return sdkCalls.DoHasAmmo(weapon) }
 
 // DoClip1 runs the prepared call.
 //
 //sp:native SDKCall before m_hClip1
-func DoClip1(weapon int32) int32 {
-	if sdkCalls.DoClip1 == nil {
-		missing("SDKCall")
-	}
-	return sdkCalls.DoClip1(weapon)
-}
+func DoClip1(weapon int32) int32 { return sdkCalls.DoClip1(weapon) }
 
 // DoGetProjectileSpeed runs the prepared call.
 //
 //sp:native SDKCall before m_hGetProjectileSpeed
-func DoGetProjectileSpeed(weapon int32) float32 {
-	if sdkCalls.DoGetProjectileSpeed == nil {
-		missing("SDKCall")
-	}
-	return sdkCalls.DoGetProjectileSpeed(weapon)
-}
+func DoGetProjectileSpeed(weapon int32) float32 { return sdkCalls.DoGetProjectileSpeed(weapon) }
 
 // DoGEconItemSchema runs the prepared call.
 //
 //sp:native SDKCall before m_hGEconItemSchema
-func DoGEconItemSchema() Address {
-	if sdkCalls.DoGEconItemSchema == nil {
-		missing("SDKCall")
-	}
-	return sdkCalls.DoGEconItemSchema()
-}
+func DoGEconItemSchema() Address { return sdkCalls.DoGEconItemSchema() }
 
 // DoGetAttributeDefinitionByName runs the prepared call.
 //
 //sp:native SDKCall before m_hGetAttributeDefinitionByName
 func DoGetAttributeDefinitionByName(schema Address, name string) Address {
-	if sdkCalls.DoGetAttributeDefinitionByName == nil {
-		missing("SDKCall")
-	}
 	return sdkCalls.DoGetAttributeDefinitionByName(schema, name)
 }
 
@@ -502,9 +433,6 @@ func DoGetAttributeDefinitionByName(schema Address, name string) Address {
 //
 //sp:native SDKCall before m_hCanUpgradeWithAttrib
 func DoCanUpgradeWithAttrib(player int32, slot int32, attrib int32, upgrade Address) bool {
-	if sdkCalls.DoCanUpgradeWithAttrib == nil {
-		missing("SDKCall")
-	}
 	return sdkCalls.DoCanUpgradeWithAttrib(player, slot, attrib, upgrade)
 }
 
@@ -512,29 +440,18 @@ func DoCanUpgradeWithAttrib(player int32, slot int32, attrib int32, upgrade Addr
 //
 //sp:native SDKCall before m_hGetCostForUpgrade
 func DoGetCostForUpgrade(upgrade Address, slot int32, class int32, purchaser int32) int32 {
-	if sdkCalls.DoGetCostForUpgrade == nil {
-		missing("SDKCall")
-	}
 	return sdkCalls.DoGetCostForUpgrade(upgrade, slot, class, purchaser)
 }
 
 // DoGetUpgradeTier runs the prepared call.
 //
 //sp:native SDKCall before m_hGetUpgradeTier
-func DoGetUpgradeTier(upgrade int32) int32 {
-	if sdkCalls.DoGetUpgradeTier == nil {
-		missing("SDKCall")
-	}
-	return sdkCalls.DoGetUpgradeTier(upgrade)
-}
+func DoGetUpgradeTier(upgrade int32) int32 { return sdkCalls.DoGetUpgradeTier(upgrade) }
 
 // DoIsUpgradeTierEnabled runs the prepared call.
 //
 //sp:native SDKCall before m_hIsUpgradeTierEnabled
 func DoIsUpgradeTierEnabled(player int32, slot int32, upgrade int32) bool {
-	if sdkCalls.DoIsUpgradeTierEnabled == nil {
-		missing("SDKCall")
-	}
 	return sdkCalls.DoIsUpgradeTierEnabled(player, slot, upgrade)
 }
 
@@ -542,9 +459,6 @@ func DoIsUpgradeTierEnabled(player int32, slot int32, upgrade int32) bool {
 //
 //sp:native SDKCall before m_hShouldCollide
 func DoShouldCollide(entity int32, collisionGroup int32, contentsMask int32) bool {
-	if sdkCalls.DoShouldCollide == nil {
-		missing("SDKCall")
-	}
 	return sdkCalls.DoShouldCollide(entity, collisionGroup, contentsMask)
 }
 
@@ -553,9 +467,6 @@ func DoShouldCollide(entity int32, collisionGroup int32, contentsMask int32) boo
 //
 //sp:native SDKCall before m_hGetBonePosition
 func DoGetBonePosition(entity int32, bone int32) (origin [3]float32, angles [3]float32) {
-	if sdkCalls.DoGetBonePosition == nil {
-		missing("SDKCall")
-	}
 	return sdkCalls.DoGetBonePosition(entity, bone)
 }
 
@@ -563,9 +474,6 @@ func DoGetBonePosition(entity int32, bone int32) (origin [3]float32, angles [3]f
 //
 //sp:native SDKCall before m_hAimHeadTowards
 func DoAimHeadTowards(body Body, lookAtPos [3]float32, priority LookAtPriority, duration float32, replyWhenAimed Address, reason string) {
-	if sdkCalls.DoAimHeadTowards == nil {
-		missing("SDKCall")
-	}
 	sdkCalls.DoAimHeadTowards(body, lookAtPos, priority, duration, replyWhenAimed, reason)
 }
 
@@ -578,9 +486,4 @@ type LookAtPriority int32
 // DereferencePointer follows a pointer one step. Ported, sapper.
 //
 //sp:body DereferencePointer
-func DereferencePointer(addr Address) Address {
-	if sdkCalls.DereferencePointer == nil {
-		missing("DereferencePointer")
-	}
-	return sdkCalls.DereferencePointer(addr)
-}
+func DereferencePointer(addr Address) Address { return sdkCalls.DereferencePointer(addr) }

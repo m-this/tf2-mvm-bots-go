@@ -147,7 +147,7 @@ func DereferencePointer(addr engine.Address) engine.Address {
 //
 //sp:name ReadInt
 func ReadInt(addr engine.Address) int32 {
-	if addr == engine.Address(engine.AddressNull()) {
+	if addr == engine.NoAddress() {
 		return -1
 	}
 

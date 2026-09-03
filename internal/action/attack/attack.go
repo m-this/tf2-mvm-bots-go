@@ -9,16 +9,17 @@ into are generated already, so all four are body externs.
 */
 package attack
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/action/campbomb"
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 //sp:name m_iAttackTarget
-var attackTarget [Slots]int32
+var attackTarget [slots.Count]int32
 
 //sp:name m_flRevalidateTarget
-var revalidateTarget [Slots]float32
+var revalidateTarget [slots.Count]float32
 
 /*
 Sidestepping while it shoots, because a bot that has arrived stops moving
@@ -53,9 +54,9 @@ const (
 
 var (
 	//sp:name m_ctAttackStrafeFlip
-	strafeFlip [Slots]float32
+	strafeFlip [slots.Count]float32
 	//sp:name m_bAttackStrafeRight
-	strafeRight [Slots]bool
+	strafeRight [slots.Count]bool
 )
 
 // OnStart aims the path. The target is usually chosen before this action starts.
@@ -79,7 +80,7 @@ func Update(actor int32) engine.Outcome {
 		}
 	}
 
-	if engine.CampBombIsPossible(actor) {
+	if campbomb.IsPossible(actor) {
 		return engine.ChangeTo(engine.CampBomb(), "Camp bomb")
 	}
 

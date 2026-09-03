@@ -18,10 +18,10 @@ top of it.
 */
 package engineerbuildteleporter
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 /*
 One half of a teleporter, walk included
@@ -140,27 +140,27 @@ const (
 
 var (
 	//sp:name m_ctTeleporterGiveUp
-	giveUp [Slots]float32
+	giveUp [slots.Count]float32
 	//sp:name m_ctTeleporterReachDeadline
-	reachDeadline [Slots]float32
+	reachDeadline [slots.Count]float32
 	//sp:name m_ctTeleporterTryDeadline
-	tryDeadline [Slots]float32
+	tryDeadline [slots.Count]float32
 	//sp:name m_ctTeleporterClimb
-	climbAt [Slots]float32
+	climbAt [slots.Count]float32
 	//sp:name m_iTeleporterClimbs
-	climbs [Slots]int32
+	climbs [slots.Count]int32
 	//sp:name m_iTeleporterTry
-	tryIndex [Slots]int32
+	tryIndex [slots.Count]int32
 	//sp:name m_nTeleporterMode
-	mode [Slots]engine.ObjectMode
+	mode [slots.Count]engine.ObjectMode
 	//sp:name m_vTeleporterSpot
-	spotOf [Slots][3]float32
+	spotOf [slots.Count][3]float32
 	//sp:name m_vTeleporterStand
-	standOf [Slots][3]float32
+	standOf [slots.Count][3]float32
 	//sp:name m_vTeleporterSpawn
-	spawnOf [Slots][3]float32
+	spawnOf [slots.Count][3]float32
 	//sp:name m_vTeleporterNest
-	nestOf [Slots][3]float32
+	nestOf [slots.Count][3]float32
 	/* The way out of spawn, read once while he is still standing at the far end of it
 
 	Read per attempt instead, it was read from wherever he had walked to, and the second attempt asked
@@ -168,15 +168,15 @@ var (
 	one place on Coaltown and gave up. */
 	//
 	//sp:name m_vTeleporterRouteSpot
-	routeSpot [Slots][tryPoints][3]float32
+	routeSpot [slots.Count][tryPoints][3]float32
 	//sp:name m_vTeleporterRouteStand
-	routeStand [Slots][tryPoints][3]float32
+	routeStand [slots.Count][tryPoints][3]float32
 	//sp:name m_iTeleporterRoutePoints
-	routePoints [Slots]int32
+	routePoints [slots.Count]int32
 	// The map named the spot, so the attempts walk around it instead of out of the spawn door
 	//
 	//sp:name m_bTeleporterNamedSpot
-	namedSpot [Slots]bool
+	namedSpot [slots.Count]bool
 	/* He tried everything and none of it worked, so he stops asking until the next wave is over
 
 	Without this the idle action suspends into this one again the moment it ends, which is an engineer
@@ -184,11 +184,11 @@ var (
 	does it. */
 	//
 	//sp:name m_bTeleporterGaveUp
-	gaveUp [Slots]bool
+	gaveUp [slots.Count]bool
 	// Why the last attempt ended, for sm_dump_nest, since every give-up looks the same from outside
 	//
 	//sp:name m_sTeleporterLastResult
-	lastResult [Slots]engine.Text
+	lastResult [slots.Count]engine.Text
 )
 
 // OnStart reads the route out of spawn while he is still standing at his nest.
@@ -297,7 +297,7 @@ func Update(actor int32) engine.Outcome {
 		}
 
 		// It goes where he looks, so he looks at the spot
-		engine.AimHeadTowards(myBody, spot, engine.AimMandatory(), 0.1, engine.AddressNull(), "Placing teleporter")
+		engine.AimHeadTowards(myBody, spot, engine.AimMandatory(), 0.1, engine.NoAddress(), "Placing teleporter")
 	}
 
 	if teleporterRange > 70.0 {
@@ -450,7 +450,7 @@ func ClimbToSpot(actor int32, myBody engine.Body, spot [3]float32) bool {
 
 	SayClimb(actor, "climbing", rise, out)
 
-	engine.AimHeadTowards(myBody, spot, engine.AimMandatory(), 0.2, engine.AddressNull(), "Climbing to the teleporter spot")
+	engine.AimHeadTowards(myBody, spot, engine.AimMandatory(), 0.2, engine.NoAddress(), "Climbing to the teleporter spot")
 
 	if climbAt[actor] > engine.GameTime() {
 		return true

@@ -10,15 +10,15 @@ enough to stop it getting there.
 */
 package destroyteleporter
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // teleporterTarget is the teleporter each bot is going for.
 //
 //sp:name m_iTeleporterTarget
-var teleporterTarget [Slots]int32
+var teleporterTarget [slots.Count]int32
 
 // OnStart aims the path and makes the bot swear at what it is about to hit.
 func OnStart(actor int32) engine.Outcome {

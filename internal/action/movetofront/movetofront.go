@@ -15,10 +15,10 @@ written.
 */
 package movetofront
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 const (
 	//sp:name MOVE_TO_FRONT_ARRIVED
@@ -31,13 +31,13 @@ const (
 
 var (
 	//sp:name m_vecGoalArea
-	goalArea [Slots][3]float32
+	goalArea [slots.Count][3]float32
 	//sp:name m_ctMoveTimeout
-	moveTimeout [Slots]float32
+	moveTimeout [slots.Count]float32
 	//sp:name m_iMoveToFrontTry
-	moveToFrontTry [Slots]int32
+	moveToFrontTry [slots.Count]int32
 	//sp:name m_bAtTheFront
-	atTheFront [Slots]bool
+	atTheFront [slots.Count]bool
 )
 
 /*

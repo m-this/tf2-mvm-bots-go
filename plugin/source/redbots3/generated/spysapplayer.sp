@@ -10,8 +10,6 @@ BehaviorAction CTFBotSpySapPlayers()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define Go_groupRadius (800.0)
 
 int m_iPlayerSapTarget[65];

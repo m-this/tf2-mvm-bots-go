@@ -9,8 +9,6 @@ BehaviorAction CTFBotMvMEngineerBuildSentrygun()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define SENTRY_BUILD_REACH (90.0)
 
 #define SENTRY_TRY_POINTS (8)

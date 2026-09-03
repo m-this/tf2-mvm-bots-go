@@ -5,10 +5,10 @@ already has it.
 */
 package botnames
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // MaxTries is how many redraws a bot gets before it keeps a name somebody
 // else has.
@@ -23,7 +23,7 @@ var playerUseMyNameResponse = [2]string{
 }
 
 //sp:name m_iFindNameTries
-var findNameTries [Slots]int32
+var findNameTries [slots.Count]int32
 
 /*
 SetRandomNameOnBot names the bot, and mocks whoever is already using the name

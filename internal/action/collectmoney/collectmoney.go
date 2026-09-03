@@ -9,10 +9,10 @@ here, so it comes across with this file.
 */
 package collectmoney
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 /*
 How long a pack has left before it is worth crossing the map for, and what that
@@ -43,10 +43,10 @@ const (
 const askInterval = 0.3
 
 //sp:name m_iCurrencyPack
-var currencyPack [Slots]int32
+var currencyPack [slots.Count]int32
 
 //sp:name m_ctMoneyAsk
-var moneyAsk [Slots]float32
+var moneyAsk [slots.Count]float32
 
 // OnStart aims the path and picks a pack.
 func OnStart(actor int32) engine.Outcome {

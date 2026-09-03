@@ -18,6 +18,7 @@ var teleporters TeleporterCalls
 // InstallTeleporters puts a set of answers behind them.
 func InstallTeleporters(c TeleporterCalls) func() {
 	previous := teleporters
+	Fill(&c)
 	teleporters = c
 	return func() { teleporters = previous }
 }
@@ -83,9 +84,6 @@ arrays it fills, so it is written as a trailing argument rather than a Go one.
 //sp:body SpawnRoutePoints after TELEPORTER_TRY_POINTS
 */
 func SpawnRoutePoints(actor int32, spawn [3]float32, first float32, step float32, reach float32) (found int32, spots [8][3]float32, stands [8][3]float32) {
-	if teleporters.SpawnRoutePoints == nil {
-		missing("SpawnRoutePoints")
-	}
 	return teleporters.SpawnRoutePoints(actor, spawn, first, step, reach)
 }
 
@@ -94,9 +92,6 @@ func SpawnRoutePoints(actor int32, spawn [3]float32, first float32, step float32
 //
 //sp:body NearestSpawnPoint
 func NearestSpawnPoint(actor int32) (ok bool, spawn [3]float32) {
-	if teleporters.NearestSpawnPoint == nil {
-		missing("NearestSpawnPoint")
-	}
 	return teleporters.NearestSpawnPoint(actor)
 }
 
@@ -105,9 +100,6 @@ func NearestSpawnPoint(actor int32) (ok bool, spawn [3]float32) {
 //
 //sp:body HasObjectOfType
 func HasObjectOfType(client int32, objectType Object, mode ObjectMode) int32 {
-	if teleporters.HasObjectOfType == nil {
-		missing("HasObjectOfType")
-	}
 	return teleporters.HasObjectOfType(client, objectType, mode)
 }
 
@@ -115,9 +107,6 @@ func HasObjectOfType(client int32, objectType Object, mode ObjectMode) int32 {
 //
 //sp:body GetObjectOfType
 func ObjectOfTypeMode(client int32, objectType Object, mode ObjectMode) int32 {
-	if teleporters.ObjectOfTypeMode == nil {
-		missing("GetObjectOfType")
-	}
 	return teleporters.ObjectOfTypeMode(client, objectType, mode)
 }
 
@@ -125,9 +114,6 @@ func ObjectOfTypeMode(client int32, objectType Object, mode ObjectMode) int32 {
 //
 //sp:body IsBuilderSetTo
 func IsBuilderSetToMode(client int32, objectType Object, mode ObjectMode) bool {
-	if teleporters.IsBuilderSetToMode == nil {
-		missing("IsBuilderSetTo")
-	}
 	return teleporters.IsBuilderSetToMode(client, objectType, mode)
 }
 
@@ -135,38 +121,20 @@ func IsBuilderSetToMode(client int32, objectType Object, mode ObjectMode) bool {
 //
 //sp:body EngineerTeleporter_LastResult
 func TeleporterLastResult(actor int32, buffer Text, maxlength int32) {
-	if teleporters.LastResult == nil {
-		missing("EngineerTeleporter_LastResult")
-	}
 	teleporters.LastResult(actor, buffer, maxlength)
 }
 
 // TeleporterHasGivenUp says the engineer stopped asking for this round.
 //
 //sp:body EngineerTeleporter_HasGivenUp
-func TeleporterHasGivenUp(actor int32) bool {
-	if teleporters.HasGivenUp == nil {
-		missing("EngineerTeleporter_HasGivenUp")
-	}
-	return teleporters.HasGivenUp(actor)
-}
+func TeleporterHasGivenUp(actor int32) bool { return teleporters.HasGivenUp(actor) }
 
 // TeleporterMode is which half he is building.
 //
 //sp:body EngineerTeleporter_Mode
-func TeleporterMode(actor int32) ObjectMode {
-	if teleporters.Mode == nil {
-		missing("EngineerTeleporter_Mode")
-	}
-	return teleporters.Mode(actor)
-}
+func TeleporterMode(actor int32) ObjectMode { return teleporters.Mode(actor) }
 
 // TeleporterSpot is where this attempt puts it.
 //
 //sp:body EngineerTeleporter_Spot
-func TeleporterSpot(actor int32) (spot [3]float32) {
-	if teleporters.Spot == nil {
-		missing("EngineerTeleporter_Spot")
-	}
-	return teleporters.Spot(actor)
-}
+func TeleporterSpot(actor int32) (spot [3]float32) { return teleporters.Spot(actor) }

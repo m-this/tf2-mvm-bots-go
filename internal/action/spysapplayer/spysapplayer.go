@@ -8,10 +8,10 @@ a giant dead. Fourth behaviour across.
 */
 package spysapplayer
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // groupRadius is how far a crowd counts as a crowd. The shipped code declares
 // it inside SelectTarget.
@@ -20,7 +20,7 @@ const groupRadius = 800.0
 // playerSapTarget is the player each spy is going for.
 //
 //sp:name m_iPlayerSapTarget
-var playerSapTarget [Slots]int32
+var playerSapTarget [slots.Count]int32
 
 // OnStart aims the path.
 func OnStart(actor int32) engine.Outcome {
@@ -110,7 +110,7 @@ func SelectTarget(actor int32) bool {
 	if playerSapTarget[actor] == -1 {
 		secondary := engine.PlayerWeaponSlot(actor, engine.WeaponSlotSecondary())
 
-		if secondary != -1 && engine.WeaponID(secondary) == engine.WeaponBuilder() && engine.AttribByName(secondary, "robo sapper") != engine.AddressNull() {
+		if secondary != -1 && engine.WeaponID(secondary) == engine.WeaponBuilder() && engine.AttribByName(secondary, "robo sapper") != engine.NoAddress() {
 			// If there's a group of enemies near us, let's put a sapper on one of them
 			if engine.NearestEnemyCount(actor, groupRadius, false) >= 4 {
 				playerSapTarget[actor] = engine.FarthestSappablePlayer(actor, groupRadius, false, engine.ClassUnknown(), 0.0)

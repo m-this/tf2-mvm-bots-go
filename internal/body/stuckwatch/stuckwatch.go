@@ -8,10 +8,10 @@ attempts at the wedge fix were defeated that way.
 */
 package stuckwatch
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // StuckRadius is how far a bot must move for the watchdog to call it moving.
 //
@@ -45,25 +45,25 @@ const SniperAtSpot = 400.0
 const SniperStallTime = 20.0
 
 //sp:name m_vStuckOrigin
-var stuckOrigin [Slots][3]float32
+var stuckOrigin [slots.Count][3]float32
 
 //sp:name m_ctStuckDeadline
-var stuckDeadline [Slots]float32
+var stuckDeadline [slots.Count]float32
 
 //sp:name m_iStuckCount
-var stuckCount [Slots]int32
+var stuckCount [slots.Count]int32
 
 // Where a bot kept getting stuck, and how many times running, so a wedge is
 // told from a slow walk.
 //
 //sp:name m_vStuckWedge
-var stuckWedge [Slots][3]float32
+var stuckWedge [slots.Count][3]float32
 
 //sp:name m_iStuckWedgeCount
-var stuckWedgeCount [Slots]int32
+var stuckWedgeCount [slots.Count]int32
 
 //sp:name m_ctSniperStallDeadline
-var sniperStallDeadline [Slots]float32
+var sniperStallDeadline [slots.Count]float32
 
 /*
 Set once the stall is called, and never cleared while he is on this team.
@@ -74,7 +74,7 @@ and the break reads it, which is the only place a bot can be handed an action.
 */
 //
 //sp:name m_bSniperStalled
-var sniperStalled [Slots]bool
+var sniperStalled [slots.Count]bool
 
 // StuckCountOf is how many times the watchdog has caught this bot.
 //

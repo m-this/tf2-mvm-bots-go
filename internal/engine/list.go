@@ -29,6 +29,7 @@ var lists ListCalls
 // InstallLists puts a set of answers behind them.
 func InstallLists(c ListCalls) func() {
 	previous := lists
+	Fill(&c)
 	lists = c
 	return func() { lists = previous }
 }
@@ -41,52 +42,27 @@ type List int32
 // NewList makes one. The caller owns it.
 //
 //sp:new ArrayList
-func NewList() List {
-	if lists.NewList == nil {
-		missing("new ArrayList")
-	}
-	return lists.NewList()
-}
+func NewList() List { return lists.NewList() }
 
 // Push adds one to the end.
 //
 //sp:method Push
-func (l List) Push(value int32) {
-	if lists.ListPush == nil {
-		missing("ArrayList.Push")
-	}
-	lists.ListPush(l, value)
-}
+func (l List) Push(value int32) { lists.ListPush(l, value) }
 
 // Get is the one at that index.
 //
 //sp:method Get
-func (l List) Get(index int32) int32 {
-	if lists.ListGet == nil {
-		missing("ArrayList.Get")
-	}
-	return lists.ListGet(l, index)
-}
+func (l List) Get(index int32) int32 { return lists.ListGet(l, index) }
 
 // Length is how many there are.
 //
 //sp:property Length
-func (l List) Length() int32 {
-	if lists.ListLength == nil {
-		missing("ArrayList.Length")
-	}
-	return lists.ListLength(l)
-}
+func (l List) Length() int32 { return lists.ListLength(l) }
 
 // Close deletes it. Deferred, never called by hand.
 //
 //sp:delete Close
-func (l List) Close() {
-	if lists.ListClose == nil {
-		missing("delete ArrayList")
-	}
-	lists.ListClose(l)
-}
+func (l List) Close() { lists.ListClose(l) }
 
 /*
 Handle is SourcePawn's untyped handle, which is what a sort callback is handed.
@@ -106,41 +82,23 @@ type Compare func(index1 int32, index2 int32, array Handle, hndl Handle) int32
 //
 //sp:method SortCustom
 //nolint:revive // unused-parameter: the comparison is a name the emitter writes, not something the Go calls
-func (l List) SortCustom(cmp Compare) {
-	if lists.SortCustom == nil {
-		missing("ArrayList.SortCustom")
-	}
-	lists.SortCustom(l, cmp)
-}
+func (l List) SortCustom(cmp Compare) { lists.SortCustom(l, cmp) }
 
 // PushFloat adds a float and answers where it landed, which is what a two-cell
 // entry needs before its second cell is written.
 //
 //sp:method Push
-func (l List) PushFloat(value float32) int32 {
-	if lists.PushFloat == nil {
-		missing("ArrayList.Push")
-	}
-	return lists.PushFloat(l, value)
-}
+func (l List) PushFloat(value float32) int32 { return lists.PushFloat(l, value) }
 
 // PushAt is Push answering where the entry landed.
 //
 //sp:method Push
-func (l List) PushAt(value int32) int32 {
-	if lists.PushAt == nil {
-		missing("ArrayList.Push")
-	}
-	return lists.PushAt(l, value)
-}
+func (l List) PushAt(value int32) int32 { return lists.PushAt(l, value) }
 
 // SetFloatAt writes a float into one cell of a wide entry.
 //
 //sp:method Set
 func (l List) SetFloatAt(index int32, value float32, block int32) {
-	if lists.SetFloatAt == nil {
-		missing("ArrayList.Set")
-	}
 	lists.SetFloatAt(l, index, value, block)
 }
 
@@ -154,12 +112,7 @@ func ListOf(h Handle) List {
 // Clear empties the list without releasing it.
 //
 //sp:method Clear
-func (l List) Clear() {
-	if lists.Clear == nil {
-		missing("ArrayList.Clear")
-	}
-	lists.Clear(l)
-}
+func (l List) Clear() { lists.Clear(l) }
 
 // NoList is null, which is what a caller passes when it has no list to give.
 //
@@ -170,19 +123,9 @@ func NoList() List { return 0 }
 // plugin keeps an entity and a distance side by side.
 //
 //sp:new ArrayList
-func NewBlocks(blockSize int32) List {
-	if lists.NewBlocks == nil {
-		missing("new ArrayList")
-	}
-	return lists.NewBlocks(blockSize)
-}
+func NewBlocks(blockSize int32) List { return lists.NewBlocks(blockSize) }
 
 // GetAt is one cell of a wide entry.
 //
 //sp:method Get
-func (l List) GetAt(index int32, block int32) int32 {
-	if lists.ListGetAt == nil {
-		missing("ArrayList.Get")
-	}
-	return lists.ListGetAt(l, index, block)
-}
+func (l List) GetAt(index int32, block int32) int32 { return lists.ListGetAt(l, index, block) }

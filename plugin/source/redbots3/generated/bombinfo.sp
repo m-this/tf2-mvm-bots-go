@@ -15,7 +15,7 @@ stock bool GetBombInfo(BombInfo_t info)
 		{
 			continue;
 		}
-		float bombTargetDistance = GetTravelDistanceToBombTarget(view_as<CNavArea>(area));
+		float bombTargetDistance = GetTravelDistanceToBombTarget(area);
 		hatchDist = MaxFloat(MaxFloat(bombTargetDistance, hatchDist), 0.0);
 	}
 	int closestFlag = INVALID_ENT_REFERENCE;
@@ -51,7 +51,7 @@ stock bool GetBombInfo(BombInfo_t info)
 		{
 			continue;
 		}
-		float bombTargetDistance = GetTravelDistanceToBombTarget(view_as<CNavArea>(area));
+		float bombTargetDistance = GetTravelDistanceToBombTarget(area);
 		if (bombTargetDistance < hatchDist)
 		{
 			closestFlag = flag;

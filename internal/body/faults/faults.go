@@ -18,10 +18,10 @@ side. Freezing the entity would be a different bug.
 */
 package faults
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // Far enough that only a teleport explains it. A bot shuffling inside the hold is still held.
 //
@@ -133,7 +133,7 @@ func TraceSnipers(timer engine.Timer) engine.Outcome {
 // How many refusals are still owed to this bot, counted down as they are handed out
 //
 //sp:name m_iAmmoRefusalsLeft
-var ammoRefusalsLeft [Slots]int32
+var ammoRefusalsLeft [slots.Count]int32
 
 // OnAmmoWalkStart starts the count again, or one bot spends the whole wave refused.
 //

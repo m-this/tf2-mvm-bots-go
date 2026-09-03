@@ -21,6 +21,7 @@ var dumpSpots DumpSpotCalls
 // InstallDumpSpots puts a set of answers behind them.
 func InstallDumpSpots(c DumpSpotCalls) func() {
 	previous := dumpSpots
+	Fill(&c)
 	dumpSpots = c
 	return func() { dumpSpots = previous }
 }
@@ -46,41 +47,25 @@ func RayTypeInfinite() int32 { return 0 }
 //sp:native TR_TraceRayFilterEx
 //nolint:revive // unused-parameter: the filter is a name the emitter writes, not something the Go calls
 func TraceRayFilterEx(from [3]float32, angles [3]float32, mask int32, rayType int32, filter func(entity int32, contentsMask int32, data Cell) bool, data int32) TraceHandle {
-	if dumpSpots.TraceRayFilterEx == nil {
-		missing("TR_TraceRayFilterEx")
-	}
 	return dumpSpots.TraceRayFilterEx(from, angles, mask, rayType, data)
 }
 
 // DidHitTrace says that ray hit something.
 //
 //sp:native TR_DidHit
-func DidHitTrace(trace TraceHandle) bool {
-	if dumpSpots.DidHitTrace == nil {
-		missing("TR_DidHit")
-	}
-	return dumpSpots.DidHitTrace(trace)
-}
+func DidHitTrace(trace TraceHandle) bool { return dumpSpots.DidHitTrace(trace) }
 
 // TraceEndPositionOf is where that ray stopped.
 //
 //sp:native TR_GetEndPosition into
 func TraceEndPositionOf(trace TraceHandle) (position [3]float32) {
-	if dumpSpots.TraceEndPositionOf == nil {
-		missing("TR_GetEndPosition")
-	}
 	return dumpSpots.TraceEndPositionOf(trace)
 }
 
 // Close releases the ray.
 //
 //sp:delete Close
-func (t TraceHandle) Close() {
-	if dumpSpots.CloseTrace == nil {
-		missing("delete Handle")
-	}
-	dumpSpots.CloseTrace(t)
-}
+func (t TraceHandle) Close() { dumpSpots.CloseTrace(t) }
 
 // LiteralText is a string literal used where a buffer is wanted, which is how
 // a local is declared with a value already in it.
@@ -96,8 +81,5 @@ func LiteralText(s string) Text {
 //
 //sp:native StrEqual
 func StrEqualCased(a Text, b string, caseSensitive bool) bool {
-	if dumpSpots.StrEqualCased == nil {
-		missing("StrEqual")
-	}
 	return dumpSpots.StrEqualCased(a, b, caseSensitive)
 }

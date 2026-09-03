@@ -307,7 +307,7 @@ func ShouldUseTeleporter(client int32) bool {
 		return false
 	}
 
-	return engine.TravelDistanceToBombTarget(engine.Area(myArea))+TeleporterWorthRiding < engine.TravelDistanceToBombTarget(bombArea)
+	return engine.TravelDistanceToBombTarget(myArea)+TeleporterWorthRiding < engine.TravelDistanceToBombTarget(engine.NavArea(bombArea))
 }
 
 // GetCountOfBotsWithNamedAction is how many defenders are doing that right now.

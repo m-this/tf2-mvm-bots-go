@@ -32,6 +32,7 @@ var fronts FrontCalls
 // InstallFronts puts a set of answers behind them.
 func InstallFronts(c FrontCalls) func() {
 	previous := fronts
+	Fill(&c)
 	fronts = c
 	return func() { fronts = previous }
 }
@@ -50,112 +51,61 @@ func InvalidAction() int32 { return 0 }
 // Format writes text into a buffer whose length comes first.
 //
 //sp:native Format fills
-func Format(format string, args ...any) (out Text) {
-	if fronts.Format == nil {
-		missing("Format")
-	}
-	return fronts.Format(format, args...)
-}
+func Format(format string, args ...any) (out Text) { return fronts.Format(format, args...) }
 
 // TextFrom is strcopy, which is Format with nothing to substitute.
 //
 //sp:native strcopy fills
-func TextFrom(source string) (out Text) {
-	if fronts.TextFrom == nil {
-		missing("strcopy")
-	}
-	return fronts.TextFrom(source)
-}
+func TextFrom(source string) (out Text) { return fronts.TextFrom(source) }
 
 // EntPropString reads a string property into a buffer whose length comes last.
 //
 //sp:native GetEntPropString sized
 func EntPropString(entity int32, propType PropType, prop string) (out Text) {
-	if fronts.EntPropString == nil {
-		missing("GetEntPropString")
-	}
 	return fronts.EntPropString(entity, propType, prop)
 }
 
 // RawPlayerClassName is the class name the debug output prints.
 //
 //sp:slot g_sRawPlayerClassNames
-func RawPlayerClassName(class Class) Text {
-	if fronts.RawPlayerClassName == nil {
-		missing("g_sRawPlayerClassNames")
-	}
-	return fronts.RawPlayerClassName(class)
-}
+func RawPlayerClassName(class Class) Text { return fronts.RawPlayerClassName(class) }
 
 // IsStuck says the bot is walking on the spot, which locomotion already knows
 // and nothing outside the engineer has ever asked it.
 //
 //sp:method IsStuck
-func (l Locomotion) IsStuck() bool {
-	if fronts.IsStuck == nil {
-		missing("ILocomotion.IsStuck")
-	}
-	return fronts.IsStuck(l)
-}
+func (l Locomotion) IsStuck() bool { return fronts.IsStuck(l) }
 
 // ClearStuckStatus tells it the bot has been dealt with.
 //
 //sp:method ClearStuckStatus
-func (l Locomotion) ClearStuckStatus(reason string) {
-	if fronts.ClearStuckStatus == nil {
-		missing("ILocomotion.ClearStuckStatus")
-	}
-	fronts.ClearStuckStatus(l, reason)
-}
+func (l Locomotion) ClearStuckStatus(reason string) { fronts.ClearStuckStatus(l, reason) }
 
 // SetPlayerReady presses the ready button for the bot.
 //
 //sp:body SetPlayerReady
-func SetPlayerReady(client int32, ready bool) {
-	if fronts.SetPlayerReady == nil {
-		missing("SetPlayerReady")
-	}
-	fronts.SetPlayerReady(client, ready)
-}
+func SetPlayerReady(client int32, ready bool) { fronts.SetPlayerReady(client, ready) }
 
 // IsPlayerReady says whether the ready registered.
 //
 //sp:body IsPlayerReady
-func IsPlayerReady(client int32) bool {
-	if fronts.IsPlayerReady == nil {
-		missing("IsPlayerReady")
-	}
-	return fronts.IsPlayerReady(client)
-}
+func IsPlayerReady(client int32) bool { return fronts.IsPlayerReady(client) }
 
 // StuckCountOf is how many times the bot has been wedged this break.
 //
 //sp:body StuckCountOf
-func StuckCountOf(client int32) int32 {
-	if fronts.StuckCountOf == nil {
-		missing("StuckCountOf")
-	}
-	return fronts.StuckCountOf(client)
-}
+func StuckCountOf(client int32) int32 { return fronts.StuckCountOf(client) }
 
 // PathFailuresOf is how many routes it has been refused.
 //
 //sp:body PathFailuresOf
-func PathFailuresOf(client int32) int32 {
-	if fronts.PathFailuresOf == nil {
-		missing("PathFailuresOf")
-	}
-	return fronts.PathFailuresOf(client)
-}
+func PathFailuresOf(client int32) int32 { return fronts.PathFailuresOf(client) }
 
 // RecoverDefenderFromDisconnectedSpawn puts a bot back on the mesh when the
 // spawn it woke in has no way out.
 //
 //sp:body RecoverDefenderFromDisconnectedSpawn
 func RecoverDefenderFromDisconnectedSpawn(actor int32) {
-	if fronts.RecoverDefenderFromDisconnectedSpawn == nil {
-		missing("RecoverDefenderFromDisconnectedSpawn")
-	}
 	fronts.RecoverDefenderFromDisconnectedSpawn(actor)
 }
 
@@ -164,9 +114,6 @@ func RecoverDefenderFromDisconnectedSpawn(actor int32) {
 //
 //sp:native ActionsManager.LookupEntityActionByName
 func LookupEntityActionByName(client int32, name string) int32 {
-	if fronts.LookupEntityActionByName == nil {
-		missing("ActionsManager.LookupEntityActionByName")
-	}
 	return fronts.LookupEntityActionByName(client, name)
 }
 
@@ -174,12 +121,7 @@ func LookupEntityActionByName(client int32, name string) int32 {
 // g_bIsDefenderBot[client] asks.
 //
 //sp:slot g_bIsDefenderBot
-func DefenderBotFlag(client int32) bool {
-	if fronts.DefenderBotFlag == nil {
-		missing("g_bIsDefenderBot")
-	}
-	return fronts.DefenderBotFlag(client)
-}
+func DefenderBotFlag(client int32) bool { return fronts.DefenderBotFlag(client) }
 
 /*
 IsDefenderBot is the function, which is not the same question as the flag.
@@ -191,19 +133,9 @@ the function quietly narrows it.
 
 //sp:body IsDefenderBot
 */
-func IsDefenderBot(client int32) bool {
-	if fronts.IsDefenderBot == nil {
-		missing("IsDefenderBot")
-	}
-	return fronts.IsDefenderBot(client)
-}
+func IsDefenderBot(client int32) bool { return fronts.IsDefenderBot(client) }
 
 // ShoppedThisBreak says the bot has been to the upgrade station.
 //
 //sp:slot g_bShoppedThisBreak
-func ShoppedThisBreak(client int32) bool {
-	if fronts.ShoppedThisBreak == nil {
-		missing("g_bShoppedThisBreak")
-	}
-	return fronts.ShoppedThisBreak(client)
-}
+func ShoppedThisBreak(client int32) bool { return fronts.ShoppedThisBreak(client) }

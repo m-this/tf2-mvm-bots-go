@@ -21,6 +21,7 @@ var pluginBots PluginBotCalls
 // InstallPluginBots puts a set of answers behind them.
 func InstallPluginBots(c PluginBotCalls) func() {
 	previous := pluginBots
+	Fill(&c)
 	pluginBots = c
 	return func() { pluginBots = previous }
 }
@@ -33,29 +34,14 @@ type PluginBot int32
 // PluginBotOf is the record for that client.
 //
 //sp:slot g_arrPluginBot
-func PluginBotOf(actor int32) PluginBot {
-	if pluginBots.PluginBot == nil {
-		missing("g_arrPluginBot")
-	}
-	return pluginBots.PluginBot(actor)
-}
+func PluginBotOf(actor int32) PluginBot { return pluginBots.PluginBot(actor) }
 
 // SetPathing turns the plugin's own walking on or off.
 //
 //sp:propertyset bPathing
-func (b PluginBot) SetPathing(pathing bool) {
-	if pluginBots.SetPathing == nil {
-		missing("PluginBot.bPathing")
-	}
-	pluginBots.SetPathing(b, pathing)
-}
+func (b PluginBot) SetPathing(pathing bool) { pluginBots.SetPathing(b, pathing) }
 
 // SetPathGoalVector says where that walking is going.
 //
 //sp:method SetPathGoalVector
-func (b PluginBot) SetPathGoalVector(goal [3]float32) {
-	if pluginBots.SetPathGoalVector == nil {
-		missing("PluginBot.SetPathGoalVector")
-	}
-	pluginBots.SetPathGoalVector(b, goal)
-}
+func (b PluginBot) SetPathGoalVector(goal [3]float32) { pluginBots.SetPathGoalVector(b, goal) }

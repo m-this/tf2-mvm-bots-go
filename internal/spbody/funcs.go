@@ -308,7 +308,11 @@ func (e *emitter) funcDecl(d *ast.FuncDecl) {
 	}
 	e.byRef = byRefParams(sig)
 	name := e.emittedName(d)
-	e.emitted = append(e.emitted, name)
+	e.declares = append(e.declares, Declaration{
+		Go: d.Name.Name, SP: name, Sig: sig,
+		Exported: d.Name.IsExported(),
+		Optional: optionalParams(sig, e.defaultsOf(d), e.byrefs, e.mutates, e.lengths),
+	})
 	switch decl, given := e.cfg.Declare[d.Name.Name]; {
 	case given:
 		e.line("%s", decl)

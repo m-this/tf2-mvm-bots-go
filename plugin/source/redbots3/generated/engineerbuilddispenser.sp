@@ -9,8 +9,6 @@ BehaviorAction CTFBotMvMEngineerBuildDispenser()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define DISPENSER_SPOT_TAKEN_RANGE (150.0)
 
 #define DISPENSER_SETTLE_RANGE (200.0)

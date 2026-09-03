@@ -6,10 +6,10 @@ slow-search log line.
 */
 package pathing
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 /*
 PathNudgeStep is how far off refusing ground a nudge steps.
@@ -76,10 +76,10 @@ func TakePathBudget() bool {
 }
 
 //sp:name m_bPathFailed
-var pathFailed [Slots]bool
+var pathFailed [slots.Count]bool
 
 //sp:name m_iPathFailures
-var pathFailures [Slots]int32
+var pathFailures [slots.Count]int32
 
 // PathFailuresOf is how many times this bot's route requests have failed.
 //

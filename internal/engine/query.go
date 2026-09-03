@@ -38,9 +38,4 @@ func Changed() Outcome { return 1 }
 // it reads it off the action the engine handed in.
 //
 //sp:global action.Actor
-func Actor() int32 {
-	if actions.Actor == nil {
-		missing("action.Actor")
-	}
-	return actions.Actor()
-}
+func Actor() int32 { return actions.Actor() }

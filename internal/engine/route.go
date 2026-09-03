@@ -22,6 +22,7 @@ var routes RouteCalls
 // InstallRoutes puts a set of answers behind them.
 func InstallRoutes(c RouteCalls) func() {
 	previous := routes
+	Fill(&c)
 	routes = c
 	return func() { routes = previous }
 }
@@ -52,39 +53,23 @@ methodmap the game returns rather than an object this port allocates.
 //sp:native PathFollower before _
 */
 func NewRoute(ignoreActors int32, onlyActors int32) Route {
-	if routes.NewRoute == nil {
-		missing("new PathFollower")
-	}
 	return routes.NewRoute(ignoreActors, onlyActors)
 }
 
 // Compute builds the route to a position, and says whether there was one.
 //
 //sp:method ComputeToPos
-func (r Route) Compute(bot Bot, goal [3]float32) bool {
-	if routes.RouteCompute == nil {
-		missing("PathFollower.ComputeToPos")
-	}
-	return routes.RouteCompute(r, bot, goal)
-}
+func (r Route) Compute(bot Bot, goal [3]float32) bool { return routes.RouteCompute(r, bot, goal) }
 
 // Length is how long the route is.
 //
 //sp:method GetLength
-func (r Route) Length() float32 {
-	if routes.RouteLength == nil {
-		missing("PathFollower.GetLength")
-	}
-	return routes.RouteLength(r)
-}
+func (r Route) Length() float32 { return routes.RouteLength(r) }
 
 // PositionAlong is the point that far along it.
 //
 //sp:method GetPosition
 func (r Route) PositionAlong(distance float32) (position [3]float32) {
-	if routes.RoutePosition == nil {
-		missing("PathFollower.GetPosition")
-	}
 	return routes.RoutePosition(r, distance)
 }
 
@@ -92,9 +77,4 @@ func (r Route) PositionAlong(distance float32) (position [3]float32) {
 // game's object and it has its own teardown.
 //
 //sp:delete Destroy
-func (r Route) Close() {
-	if routes.RouteDestroy == nil {
-		missing("PathFollower.Destroy")
-	}
-	routes.RouteDestroy(r)
-}
+func (r Route) Close() { routes.RouteDestroy(r) }

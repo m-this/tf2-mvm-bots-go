@@ -24,10 +24,10 @@ matters.
 */
 package engineerbuilddisposable
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // Far enough not to be inside the real one, near enough to hold the same ground.
 const (
@@ -48,17 +48,17 @@ const buildTime = 20.0
 
 var (
 	//sp:name m_ctDisposableGiveUp
-	giveUp [Slots]float32
+	giveUp [slots.Count]float32
 	//sp:name m_ctDisposableTryDeadline
-	tryDeadline [Slots]float32
+	tryDeadline [slots.Count]float32
 	//sp:name m_iDisposableTry
-	tryIndex [Slots]int32
+	tryIndex [slots.Count]int32
 	//sp:name m_vDisposableSpot
-	spot [Slots][3]float32
+	spot [slots.Count][3]float32
 	//sp:name m_vDisposableStand
-	stand [Slots][3]float32
+	stand [slots.Count][3]float32
 	//sp:name m_bDisposableGaveUp
-	gaveUp [Slots]bool
+	gaveUp [slots.Count]bool
 )
 
 // OnStart starts the clock and picks the first side of the nest to try.
@@ -115,7 +115,7 @@ func Update(actor int32) engine.Outcome {
 		}
 
 		// It goes where he looks, so he looks at the spot rather than at his own feet
-		engine.AimHeadTowards(myBody, mySpot, engine.AimMandatory(), 0.1, engine.AddressNull(), "Placing disposable sentry")
+		engine.AimHeadTowards(myBody, mySpot, engine.AimMandatory(), 0.1, engine.NoAddress(), "Placing disposable sentry")
 	}
 
 	if buildRange > 70.0 {

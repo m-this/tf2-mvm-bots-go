@@ -17,6 +17,7 @@ var archipelago ArchipelagoCalls
 // InstallArchipelago puts a set of answers behind them.
 func InstallArchipelago(c ArchipelagoCalls) func() {
 	previous := archipelago
+	Fill(&c)
 	archipelago = c
 	return func() { archipelago = previous }
 }
@@ -25,23 +26,13 @@ func InstallArchipelago(c ArchipelagoCalls) func() {
 // client that the game never recorded.
 //
 //sp:native TF2AP_GetBundleCredits
-func BundleCredits(client int32) int32 {
-	if archipelago.BundleCredits == nil {
-		missing("TF2AP_GetBundleCredits")
-	}
-	return archipelago.BundleCredits(client)
-}
+func BundleCredits(client int32) int32 { return archipelago.BundleCredits(client) }
 
 // NativeStatus asks whether an optional native exists right now, which is
 // GetFeatureStatus with the question fixed to natives.
 //
 //sp:native GetFeatureStatus before FeatureType_Native
-func NativeStatus(name string) int32 {
-	if archipelago.NativeStatus == nil {
-		missing("GetFeatureStatus")
-	}
-	return archipelago.NativeStatus(name)
-}
+func NativeStatus(name string) int32 { return archipelago.NativeStatus(name) }
 
 // FeatureAvailable is FeatureStatus_Available, the one answer that means yes.
 //
@@ -51,9 +42,4 @@ func FeatureAvailable() int32 { return 0 }
 // SetCurrency writes a player's balance.
 //
 //sp:native TF2_SetCurrency
-func SetCurrency(client int32, amount int32) {
-	if archipelago.SetCurrency == nil {
-		missing("TF2_SetCurrency")
-	}
-	archipelago.SetCurrency(client, amount)
-}
+func SetCurrency(client int32, amount int32) { archipelago.SetCurrency(client, amount) }

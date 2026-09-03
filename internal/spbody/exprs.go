@@ -63,14 +63,28 @@ func (e *emitter) expr(x ast.Expr) string {
 	}
 }
 
-// folded emits a constant expression as its value. A name is left alone so the
-// generated code reads like the Go beside it; everything else the type checker
-// could fold is folded, which is what spcomp would do anyway and what keeps
-// len over an array and arithmetic over constants out of the output.
+/*
+folded emits a constant expression as its value.
+
+A name is left alone so the generated code reads like the Go beside it;
+everything else the type checker could fold is folded, which is what spcomp
+would do anyway and what keeps len over an array and arithmetic over constants
+out of the output.
+
+A constant another package declares is the exception, and folds. There is no
+name to leave alone: SourcePawn writes a constant as a #define in one flat
+namespace, so the emission that declared it is the only one that may, and every
+other file has to write the value. Slots, the client array size, is the case --
+41 packages declared it and spcomp warned about the redefinition 39 times.
+*/
 func (e *emitter) folded(x ast.Expr) (string, bool) {
-	switch x.(type) {
-	case *ast.Ident, *ast.SelectorExpr:
+	switch n := x.(type) {
+	case *ast.Ident:
 		return "", false
+	case *ast.SelectorExpr:
+		if !e.importedConst(n) {
+			return "", false
+		}
 	}
 	tv, ok := e.info.Types[x]
 	if !ok || tv.Value == nil {
@@ -86,6 +100,20 @@ func (e *emitter) folded(x ast.Expr) (string, bool) {
 		return "", true
 	}
 	return lit, true
+}
+
+// importedConst says the selector is a constant declared by another package,
+// which is the one qualified name with a value and no SourcePawn name.
+func (e *emitter) importedConst(n *ast.SelectorExpr) bool {
+	id, qualified := n.X.(*ast.Ident)
+	if !qualified {
+		return false
+	}
+	if _, isPkg := e.info.Uses[id].(*types.PkgName); !isPkg {
+		return false
+	}
+	c, isConst := e.info.Uses[n.Sel].(*types.Const)
+	return isConst && c.Pkg() != e.pkg
 }
 
 // identExpr writes a name, with the prefix if it is one this package declares

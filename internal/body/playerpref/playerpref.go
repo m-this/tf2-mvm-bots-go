@@ -8,10 +8,10 @@ weapon it carries, and which seat of the composition it fills.
 */
 package playerpref
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // MaxPlayers is MAXPLAYERS, the highest seat a loadout may name.
 //
@@ -61,7 +61,7 @@ every engineer on the team the same two weapons.
 */
 //
 //sp:name m_iBotSeat
-var botSeat [Slots]int32
+var botSeat [slots.Count]int32
 
 // The seats asked for, waiting for bots the server has not created yet.
 //

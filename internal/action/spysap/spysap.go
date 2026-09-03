@@ -12,21 +12,21 @@ What did not come with it, and why, is at the bottom.
 */
 package spysap
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // sapRange is how close the spy has to be. The shipped code declares it inside
 // Update; it is here because the subset has no function-local const of its own
 // to emit and this reads the same.
 const sapRange = 40.0
 
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
-
 // sapTarget is the building each spy is going for. It was declared at the top
 // of spysap.sp and is the action's own state, so it comes across with it.
 //
 //sp:name m_iSapTarget
-var sapTarget [Slots]int32
+var sapTarget [slots.Count]int32
 
 // OnStart aims the path and stops the bot looking around for itself.
 func OnStart(actor int32) engine.Outcome {

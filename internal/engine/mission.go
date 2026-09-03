@@ -15,6 +15,7 @@ var missions MissionCalls
 // InstallMissions puts a set of answers behind them.
 func InstallMissions(c MissionCalls) func() {
 	previous := missions
+	Fill(&c)
 	missions = c
 	return func() { missions = previous }
 }
@@ -29,41 +30,23 @@ func MissionDestroySentries() int32 { return 1 }
 // from a demoman when the mission field says nothing.
 //
 //sp:native GetClientModel sized
-func ClientModel(client int32) (model Text) {
-	if missions.ClientModel == nil {
-		missing("GetClientModel")
-	}
-	return missions.ClientModel(client)
-}
+func ClientModel(client int32) (model Text) { return missions.ClientModel(client) }
 
 // WaveCount is which wave the mission is on.
 //
-//sp:plugin TF2_GetMannVsMachineWaveCount
-func WaveCount(resource int32) int32 {
-	if missions.WaveCount == nil {
-		missing("TF2_GetMannVsMachineWaveCount")
-	}
-	return missions.WaveCount(resource)
-}
+//sp:library TF2_GetMannVsMachineWaveCount
+func WaveCount(resource int32) int32 { return missions.WaveCount(resource) }
 
 // MaxWaveCount is how many the mission has.
 //
-//sp:plugin TF2_GetMannVsMachineMaxWaveCount
-func MaxWaveCount(resource int32) int32 {
-	if missions.MaxWaveCount == nil {
-		missing("TF2_GetMannVsMachineMaxWaveCount")
-	}
-	return missions.MaxWaveCount(resource)
-}
+//sp:library TF2_GetMannVsMachineMaxWaveCount
+func MaxWaveCount(resource int32) int32 { return missions.MaxWaveCount(resource) }
 
 // WaveClassName is one of the icons on the wave bar, which is how the mod knows
 // what is coming before it arrives.
 //
-//sp:plugin TF2_GetMannVsMachineWaveClassName sized
+//sp:library TF2_GetMannVsMachineWaveClassName sized
 func WaveClassName(resource int32, index int32) (icon Text) {
-	if missions.WaveClassName == nil {
-		missing("TF2_GetMannVsMachineWaveClassName")
-	}
 	return missions.WaveClassName(resource, index)
 }
 
@@ -71,9 +54,4 @@ func WaveClassName(resource int32, index int32) (icon Text) {
 // lists applies.
 //
 //sp:body IsTankWave
-func IsTankWave() bool {
-	if missions.IsTankWave == nil {
-		missing("IsTankWave")
-	}
-	return missions.IsTankWave()
-}
+func IsTankWave() bool { return missions.IsTankWave() }

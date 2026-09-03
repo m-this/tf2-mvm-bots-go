@@ -5,10 +5,10 @@ decision to drink it.
 */
 package bottle
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 /*
 The bottle this bot is wearing, kept rather than found again every frame.
@@ -25,13 +25,13 @@ drunk it. The type comes off the bottle now, which is where it was always true.
 */
 //
 //sp:name m_hPowerupBottle
-var powerupBottle = [Slots]int32{engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference()}
+var powerupBottle = [slots.Count]int32{engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference(), engine.InvalidEntReference()}
 
 //sp:name m_ctPowerupBottleLook
-var powerupBottleLook [Slots]float32
+var powerupBottleLook [slots.Count]float32
 
 //sp:name m_flNextBottleUseTime
-var nextBottleUseTime [Slots]float32
+var nextBottleUseTime [slots.Count]float32
 
 // PowerupBottleOf is the canteen, at the cost of one entity walk a second at
 // most.

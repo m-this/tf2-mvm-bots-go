@@ -31,7 +31,7 @@ func GetBombInfo() (found bool, info engine.BombInfo) {
 			continue
 		}
 
-		bombTargetDistance := engine.TravelDistanceToBombTarget(engine.Area(area))
+		bombTargetDistance := engine.TravelDistanceToBombTarget(area)
 
 		hatchDist = engine.MaxFloat(engine.MaxFloat(bombTargetDistance, hatchDist), 0.0)
 	}
@@ -74,7 +74,7 @@ func GetBombInfo() (found bool, info engine.BombInfo) {
 			continue
 		}
 
-		bombTargetDistance := engine.TravelDistanceToBombTarget(engine.Area(area))
+		bombTargetDistance := engine.TravelDistanceToBombTarget(area)
 
 		if bombTargetDistance < hatchDist {
 			closestFlag = flag

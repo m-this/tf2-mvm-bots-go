@@ -19,6 +19,7 @@ var targetings TargetingCalls
 // InstallTargetings puts a set of answers behind them.
 func InstallTargetings(c TargetingCalls) func() {
 	previous := targetings
+	Fill(&c)
 	targetings = c
 	return func() { targetings = previous }
 }
@@ -45,9 +46,6 @@ they sit between ordinary arguments rather than at either end.
 //sp:native ProcessTargetString
 */
 func ProcessTargetString(pattern Text, admin int32, targets [101]int32, maxTargets int32, filterFlags int32, targetName Text, nameMax int32, isML bool) int32 {
-	if targetings.ProcessTargetString == nil {
-		missing("ProcessTargetString")
-	}
 	return targetings.ProcessTargetString(pattern, admin, targets, maxTargets, filterFlags, targetName, nameMax, isML)
 }
 
@@ -55,20 +53,12 @@ func ProcessTargetString(pattern Text, admin int32, targets [101]int32, maxTarge
 // language.
 //
 //sp:native ReplyToTargetError
-func ReplyToTargetError(client int32, reason int32) {
-	if targetings.ReplyToTargetError == nil {
-		missing("ReplyToTargetError")
-	}
-	targetings.ReplyToTargetError(client, reason)
-}
+func ReplyToTargetError(client int32, reason int32) { targetings.ReplyToTargetError(client, reason) }
 
 // ShowPlayerUpgrades prints one player's, either the player itself or one
 // slot. Ported, upgradereport.
 //
 //sp:body ShowPlayerUpgrades
 func ShowPlayerUpgrades(client int32, target int32, slot int32) {
-	if targetings.ShowPlayerUpgrades == nil {
-		missing("ShowPlayerUpgrades")
-	}
 	targetings.ShowPlayerUpgrades(client, target, slot)
 }

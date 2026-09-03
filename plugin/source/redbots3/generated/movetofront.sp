@@ -9,8 +9,6 @@ BehaviorAction CTFBotMoveToFront()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define MOVE_TO_FRONT_ARRIVED (80.0)
 #define MOVE_TO_FRONT_REACH (60.0)
 #define MOVE_TO_FRONT_TRIES (3)

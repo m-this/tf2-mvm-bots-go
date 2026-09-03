@@ -9,10 +9,10 @@ across, and the first with a vector per client as its state.
 */
 package attackforuber
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // The two the shipped file defines at the top.
 const (
@@ -26,7 +26,7 @@ const (
 // to come back rather than chase somebody across the map.
 //
 //sp:name m_vecStartArea
-var startArea [Slots][3]float32
+var startArea [slots.Count][3]float32
 
 // OnStart aims the path and remembers where the medic is.
 func OnStart(actor int32) engine.Outcome {

@@ -29,6 +29,7 @@ var bombs BombCalls
 // InstallBombs puts a set of answers behind them.
 func InstallBombs(c BombCalls) func() {
 	previous := bombs
+	Fill(&c)
 	bombs = c
 	return func() { bombs = previous }
 }
@@ -47,40 +48,22 @@ func FeatureDispenserGuard() int32 { return 1 }
 // Feature says whether a switch is on.
 //
 //sp:plugin Feature
-func Feature(id int32) bool {
-	if bombs.Feature == nil {
-		missing("Feature")
-	}
-	return bombs.Feature(id)
-}
+func Feature(id int32) bool { return bombs.Feature(id) }
 
 // BombNearestToHatch is the bomb worth holding, and -1 when there is none.
 //
 //sp:body FindBombNearestToHatch
-func BombNearestToHatch() int32 {
-	if bombs.BombNearestToHatch == nil {
-		missing("FindBombNearestToHatch")
-	}
-	return bombs.BombNearestToHatch()
-}
+func BombNearestToHatch() int32 { return bombs.BombNearestToHatch() }
 
 // OwnerEntity is who is carrying it, and -1 for nobody.
 //
 //sp:native BaseEntity_GetOwnerEntity
-func OwnerEntity(entity int32) int32 {
-	if bombs.OwnerEntity == nil {
-		missing("BaseEntity_GetOwnerEntity")
-	}
-	return bombs.OwnerEntity(entity)
-}
+func OwnerEntity(entity int32) int32 { return bombs.OwnerEntity(entity) }
 
 // EquipBestWeaponForThreat puts the right thing in the bot's hands.
 //
 //sp:body EquipBestWeaponForThreat
 func EquipBestWeaponForThreat(client int32, threat Known) {
-	if bombs.EquipBestWeaponForThreat == nil {
-		missing("EquipBestWeaponForThreat")
-	}
 	bombs.EquipBestWeaponForThreat(client, threat)
 }
 
@@ -88,29 +71,18 @@ func EquipBestWeaponForThreat(client int32, threat Known) {
 //
 //sp:body IsLineOfFireClearPosition
 func IsLineOfFireClearPosition(client int32, from [3]float32, to [3]float32) bool {
-	if bombs.IsLineOfFireClearPosition == nil {
-		missing("IsLineOfFireClearPosition")
-	}
 	return bombs.IsLineOfFireClearPosition(client, from, to)
 }
 
 // WantsDispenser says whether the bot would use one if it were there.
 //
 //sp:body WantsDispenser
-func WantsDispenser(client int32) bool {
-	if bombs.WantsDispenser == nil {
-		missing("WantsDispenser")
-	}
-	return bombs.WantsDispenser(client)
-}
+func WantsDispenser(client int32) bool { return bombs.WantsDispenser(client) }
 
 // FindFriendlyDispenserNear is one on this ground, and -1 for none.
 //
 //sp:body FindFriendlyDispenserNear
 func FindFriendlyDispenserNear(client int32, origin [3]float32) int32 {
-	if bombs.FindFriendlyDispenserNear == nil {
-		missing("FindFriendlyDispenserNear")
-	}
 	return bombs.FindFriendlyDispenserNear(client, origin)
 }
 
@@ -120,40 +92,22 @@ func FindFriendlyDispenserNear(client int32, origin [3]float32) int32 {
 // AttackTank is CTFBotAttackTank.
 //
 //sp:body CTFBotAttackTank
-func AttackTank() Behaviour {
-	if bombs.AttackTank == nil {
-		missing("CTFBotAttackTank")
-	}
-	return bombs.AttackTank()
-}
+func AttackTank() Behaviour { return bombs.AttackTank() }
 
 // DefenderAttack is CTFBotDefenderAttack.
 //
 //sp:body CTFBotDefenderAttack
-func DefenderAttack() Behaviour {
-	if bombs.DefenderAttack == nil {
-		missing("CTFBotDefenderAttack")
-	}
-	return bombs.DefenderAttack()
-}
+func DefenderAttack() Behaviour { return bombs.DefenderAttack() }
 
 // AttackTankSelectTarget is the tank behaviour's own precondition.
 //
 //sp:body CTFBotAttackTank_SelectTarget
-func AttackTankSelectTarget(client int32) bool {
-	if bombs.AttackTankSelectTarget == nil {
-		missing("CTFBotAttackTank_SelectTarget")
-	}
-	return bombs.AttackTankSelectTarget(client)
-}
+func AttackTankSelectTarget(client int32) bool { return bombs.AttackTankSelectTarget(client) }
 
 // EnemyPlayerNearestToPosition is util.sp:1550, ported.
 //
 //sp:body GetEnemyPlayerNearestToPosition
 func EnemyPlayerNearestToPosition(client int32, position [3]float32, maxDistance float32) int32 {
-	if bombs.EnemyPlayerNearestToPosition == nil {
-		missing("GetEnemyPlayerNearestToPosition")
-	}
 	return bombs.EnemyPlayerNearestToPosition(client, position, maxDistance)
 }
 
@@ -180,10 +134,5 @@ func ClassDemoMan() Class { return 4 }
 // CaptureFlagIsHome says the bomb is still on its stand, which is a bomb nobody
 // is carrying anywhere.
 //
-//sp:plugin CaptureFlag_IsHome
-func CaptureFlagIsHome(flag int32) bool {
-	if bombs.CaptureFlagIsHome == nil {
-		missing("CaptureFlag_IsHome")
-	}
-	return bombs.CaptureFlagIsHome(flag)
-}
+//sp:library CaptureFlag_IsHome
+func CaptureFlagIsHome(flag int32) bool { return bombs.CaptureFlagIsHome(flag) }

@@ -9,8 +9,6 @@ BehaviorAction CTFBotUpgrade()
 	return action;
 }
 
-#define Go_Slots (65)
-
 #define UPGRADE_ATTRIBUTE_SHARE (0.5)
 
 #define MAX_INT (99999999)

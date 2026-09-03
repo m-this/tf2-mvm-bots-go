@@ -24,6 +24,7 @@ var players PlayerCalls
 // InstallPlayers puts a set of answers behind them.
 func InstallPlayers(c PlayerCalls) func() {
 	previous := players
+	Fill(&c)
 	players = c
 	return func() { players = previous }
 }
@@ -36,41 +37,25 @@ type KeyValues int32
 // SquareRoot is the square root.
 //
 //sp:native SquareRoot
-func SquareRoot(value float32) float32 {
-	if players.SquareRoot == nil {
-		missing("SquareRoot")
-	}
-	return players.SquareRoot(value)
-}
+func SquareRoot(value float32) float32 { return players.SquareRoot(value) }
 
 // VectorLengthSquared is the length, or its square when asked: the square is the
 // cheap one and a comparison rarely needs the root.
 //
 //sp:native GetVectorLength
 func VectorLengthSquared(v [3]float32, squared bool) float32 {
-	if players.VectorLengthSquared == nil {
-		missing("GetVectorLength")
-	}
 	return players.VectorLengthSquared(v, squared)
 }
 
 // EyePositionOf is where the client is looking from, filled into a buffer.
 //
-//sp:plugin BaseEntity_EyePosition
-func EyePositionOf(client int32) (position [3]float32) {
-	if players.EyePositionOf == nil {
-		missing("BaseEntity_EyePosition")
-	}
-	return players.EyePositionOf(client)
-}
+//sp:library BaseEntity_EyePosition
+func EyePositionOf(client int32) (position [3]float32) { return players.EyePositionOf(client) }
 
 // FakeClientCommand issues a console command as the client, unthrottled.
 //
 //sp:native FakeClientCommand
 func FakeClientCommand(client int32, format string, args ...any) {
-	if players.FakeClientCommand == nil {
-		missing("FakeClientCommand")
-	}
 	players.FakeClientCommand(client, format, args...)
 }
 
@@ -78,63 +63,33 @@ func FakeClientCommand(client int32, format string, args ...any) {
 // another plugin is detected.
 //
 //sp:native FindConVar
-func FindConVar(name string) ConVar {
-	if players.FindConVar == nil {
-		missing("FindConVar")
-	}
-	return players.FindConVar(name)
-}
+func FindConVar(name string) ConVar { return players.FindConVar(name) }
 
 // NewKeyValues makes one.
 //
 //sp:new KeyValues
-func NewKeyValues(name string) KeyValues {
-	if players.NewKeyValues == nil {
-		missing("new KeyValues")
-	}
-	return players.NewKeyValues(name)
-}
+func NewKeyValues(name string) KeyValues { return players.NewKeyValues(name) }
 
 // Close releases it.
 //
 //sp:delete Close
-func (kv KeyValues) Close() {
-	if players.CloseKeyValues == nil {
-		missing("delete KeyValues")
-	}
-	players.CloseKeyValues(kv)
-}
+func (kv KeyValues) Close() { players.CloseKeyValues(kv) }
 
 // FakeCommandKV sends a command the game reads as key values, which is how the
 // action slot is used.
 //
 //sp:native FakeClientCommandKeyValues
-func FakeCommandKV(client int32, kv KeyValues) {
-	if players.FakeCommandKV == nil {
-		missing("FakeClientCommandKeyValues")
-	}
-	players.FakeCommandKV(client, kv)
-}
+func FakeCommandKV(client int32, kv KeyValues) { players.FakeCommandKV(client, kv) }
 
 // ClientCount is how many are connected.
 //
 //sp:native GetClientCount
-func ClientCount(inGameOnly bool) int32 {
-	if players.ClientCount == nil {
-		missing("GetClientCount")
-	}
-	return players.ClientCount(inGameOnly)
-}
+func ClientCount(inGameOnly bool) int32 { return players.ClientCount(inGameOnly) }
 
 // ResourceEntity is the player resource, which carries the per-client tables.
 //
 //sp:native GetPlayerResourceEntity
-func ResourceEntity() int32 {
-	if players.ResourceEntity == nil {
-		missing("GetPlayerResourceEntity")
-	}
-	return players.ResourceEntity()
-}
+func ResourceEntity() int32 { return players.ResourceEntity() }
 
 // PlayerSideSpeed is PLAYER_SIDESPEED, the strafe speed a bot is pushed at.
 //
@@ -144,20 +99,12 @@ func PlayerSideSpeed() float32 { return 450.0 }
 // SetVariantString sets the value the next entity input carries.
 //
 //sp:native SetVariantString
-func SetVariantString(value string) {
-	if players.SetVariantString == nil {
-		missing("SetVariantString")
-	}
-	players.SetVariantString(value)
-}
+func SetVariantString(value string) { players.SetVariantString(value) }
 
 // AcceptEntityInput fires an input on an entity.
 //
 //sp:native AcceptEntityInput
 func AcceptEntityInput(entity int32, input string, activator int32, caller int32, outputID int32) bool {
-	if players.AcceptEntityInput == nil {
-		missing("AcceptEntityInput")
-	}
 	return players.AcceptEntityInput(entity, input, activator, caller, outputID)
 }
 
@@ -165,30 +112,17 @@ func AcceptEntityInput(entity int32, input string, activator int32, caller int32
 // from a real attachment point.
 //
 //sp:native strlen
-func TextLengthOf(text string) int32 {
-	if players.TextLengthOf == nil {
-		missing("strlen")
-	}
-	return players.TextLengthOf(text)
-}
+func TextLengthOf(text string) int32 { return players.TextLengthOf(text) }
 
 // TextLength is how long a buffer's text is.
 //
 //sp:native strlen
-func TextLength(text Text) int32 {
-	if players.TextLength == nil {
-		missing("strlen")
-	}
-	return players.TextLength(text)
-}
+func TextLength(text Text) int32 { return players.TextLength(text) }
 
 // FakeClientCommandText is FakeClientCommand handed a command that was built
 // rather than written out, so there is nothing to format.
 //
 //sp:native FakeClientCommand
 func FakeClientCommandText(client int32, command string) {
-	if players.FakeClientCommandText == nil {
-		missing("FakeClientCommand")
-	}
 	players.FakeClientCommandText(client, command)
 }

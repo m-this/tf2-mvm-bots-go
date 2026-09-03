@@ -19,6 +19,7 @@ var conditions ConditionCalls
 // InstallConditions puts a set of answers behind them.
 func InstallConditions(c ConditionCalls) func() {
 	previous := conditions
+	Fill(&c)
 	conditions = c
 	return func() { conditions = previous }
 }
@@ -58,9 +59,6 @@ func ConditionGas() Condition { return 127 }
 //
 //sp:native TF2Attrib_HookValueFloat
 func AttribHookValueFloat(value float32, name string, weapon int32) float32 {
-	if conditions.AttribHookValueFloat == nil {
-		missing("TF2Attrib_HookValueFloat")
-	}
 	return conditions.AttribHookValueFloat(value, name, weapon)
 }
 
@@ -68,12 +66,7 @@ func AttribHookValueFloat(value float32, name string, weapon int32) float32 {
 // told from a walking one.
 //
 //sp:method GetAbsVelocity
-func (e Entity) AbsVelocity() (velocity [3]float32) {
-	if conditions.AbsVelocity == nil {
-		missing("CBaseEntity.GetAbsVelocity")
-	}
-	return conditions.AbsVelocity(e)
-}
+func (e Entity) AbsVelocity() (velocity [3]float32) { return conditions.AbsVelocity(e) }
 
 // ConditionMeleeOnly is TFCond_MeleeOnly, which a mission can put a wave in.
 //

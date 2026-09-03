@@ -54,6 +54,7 @@ var tacticals TacticalCalls
 // InstallTacticals puts a set of answers behind them.
 func InstallTacticals(c TacticalCalls) func() {
 	previous := tacticals
+	Fill(&c)
 	tacticals = c
 	return func() { tacticals = previous }
 }
@@ -72,33 +73,18 @@ type Countdown int32
 // CountdownAt is the timer at that address.
 //
 //sp:native CountdownTimer
-func CountdownAt(address Address) Countdown {
-	if tacticals.CountdownAt == nil {
-		missing("CountdownTimer")
-	}
-	return tacticals.CountdownAt(address)
-}
+func CountdownAt(address Address) Countdown { return tacticals.CountdownAt(address) }
 
 // Address says the timer is really there, which an offset that has moved is
 // not.
 //
 //sp:property Address
-func (c Countdown) Address() Address {
-	if tacticals.CountdownAddress == nil {
-		missing("CountdownTimer.Address")
-	}
-	return tacticals.CountdownAddress(c)
-}
+func (c Countdown) Address() Address { return tacticals.CountdownAddress(c) }
 
 // Start runs it for that long.
 //
 //sp:method Start
-func (c Countdown) Start(duration float32) {
-	if tacticals.CountdownStart == nil {
-		missing("CountdownTimer.Start")
-	}
-	tacticals.CountdownStart(c, duration)
-}
+func (c Countdown) Start(duration float32) { tacticals.CountdownStart(c, duration) }
 
 // NoAddress is Address_Null.
 //
@@ -115,184 +101,96 @@ func FindTeleporterOffset() int32 { return 0x70 }
 // that bot.
 //
 //sp:body GetOpportunisticTimer
-func OpportunisticTimer(client int32) Address {
-	if tacticals.OpportunisticTimer == nil {
-		missing("GetOpportunisticTimer")
-	}
-	return tacticals.OpportunisticTimer(client)
-}
+func OpportunisticTimer(client int32) Address { return tacticals.OpportunisticTimer(client) }
 
 // EvadeBusterIsPossible says a sentry buster is close enough to run from.
 // Ported, evadebuster.
 //
 //sp:body CTFBotEvadeBuster_IsPossible
-func EvadeBusterIsPossible(actor int32) bool {
-	if tacticals.EvadeBusterIsPossible == nil {
-		missing("CTFBotEvadeBuster_IsPossible")
-	}
-	return tacticals.EvadeBusterIsPossible(actor)
-}
+func EvadeBusterIsPossible(actor int32) bool { return tacticals.EvadeBusterIsPossible(actor) }
 
 // EvadeBuster is CTFBotEvadeBuster. Ported, evadebuster.
 //
 //sp:body CTFBotEvadeBuster
-func EvadeBuster() Behaviour {
-	if tacticals.EvadeBuster == nil {
-		missing("CTFBotEvadeBuster")
-	}
-	return tacticals.EvadeBuster()
-}
+func EvadeBuster() Behaviour { return tacticals.EvadeBuster() }
 
 // SpyCheckIsPossible says somebody is worth frisking. Ported, spycheck.
 //
 //sp:body CTFBotSpyCheck_IsPossible
-func SpyCheckIsPossible(actor int32) bool {
-	if tacticals.SpyCheckIsPossible == nil {
-		missing("CTFBotSpyCheck_IsPossible")
-	}
-	return tacticals.SpyCheckIsPossible(actor)
-}
+func SpyCheckIsPossible(actor int32) bool { return tacticals.SpyCheckIsPossible(actor) }
 
 // SpyCheck is CTFBotSpyCheck. Ported, spycheck.
 //
 //sp:body CTFBotSpyCheck
-func SpyCheck() Behaviour {
-	if tacticals.SpyCheck == nil {
-		missing("CTFBotSpyCheck")
-	}
-	return tacticals.SpyCheck()
-}
+func SpyCheck() Behaviour { return tacticals.SpyCheck() }
 
 // GetHealthIsPossible says there is a pack worth walking to. Ported, gethealth.
 //
 //sp:body CTFBotGetHealth_IsPossible
-func GetHealthIsPossible(actor int32) bool {
-	if tacticals.GetHealthIsPossible == nil {
-		missing("CTFBotGetHealth_IsPossible")
-	}
-	return tacticals.GetHealthIsPossible(actor)
-}
+func GetHealthIsPossible(actor int32) bool { return tacticals.GetHealthIsPossible(actor) }
 
 // GetHealth is CTFBotGetHealth. Ported, gethealth.
 //
 //sp:body CTFBotGetHealth
-func GetHealth() Behaviour {
-	if tacticals.GetHealth == nil {
-		missing("CTFBotGetHealth")
-	}
-	return tacticals.GetHealth()
-}
+func GetHealth() Behaviour { return tacticals.GetHealth() }
 
 // GetAmmoIsPossible is the same for ammo. Ported, getammo.
 //
 //sp:body CTFBotGetAmmo_IsPossible
-func GetAmmoIsPossible(actor int32) bool {
-	if tacticals.GetAmmoIsPossible == nil {
-		missing("CTFBotGetAmmo_IsPossible")
-	}
-	return tacticals.GetAmmoIsPossible(actor)
-}
+func GetAmmoIsPossible(actor int32) bool { return tacticals.GetAmmoIsPossible(actor) }
 
 // GetAmmo is CTFBotGetAmmo. Ported, getammo.
 //
 //sp:body CTFBotGetAmmo
-func GetAmmo() Behaviour {
-	if tacticals.GetAmmo == nil {
-		missing("CTFBotGetAmmo")
-	}
-	return tacticals.GetAmmo()
-}
+func GetAmmo() Behaviour { return tacticals.GetAmmo() }
 
 // ShouldDetonateStickies says the trap is worth blowing now. Ported, stickies.
 //
 //sp:body ShouldDetonateStickies
-func ShouldDetonateStickies(actor int32) bool {
-	if tacticals.ShouldDetonateStickies == nil {
-		missing("ShouldDetonateStickies")
-	}
-	return tacticals.ShouldDetonateStickies(actor)
-}
+func ShouldDetonateStickies(actor int32) bool { return tacticals.ShouldDetonateStickies(actor) }
 
 // UpdateSpyIntel is what the bot can honestly say it has seen of a spy.
 // Ported, spycheck.
 //
 //sp:body UpdateSpyIntel
-func UpdateSpyIntel(actor int32) {
-	if tacticals.UpdateSpyIntel == nil {
-		missing("UpdateSpyIntel")
-	}
-	tacticals.UpdateSpyIntel(actor)
-}
+func UpdateSpyIntel(actor int32) { tacticals.UpdateSpyIntel(actor) }
 
 // HealthRatio is the fraction of maximum health left. Ported, state.
 //
 //sp:body HealthRatio
-func HealthRatio(actor int32) float32 {
-	if tacticals.HealthRatio == nil {
-		missing("HealthRatio")
-	}
-	return tacticals.HealthRatio(actor)
-}
+func HealthRatio(actor int32) float32 { return tacticals.HealthRatio(actor) }
 
 // UpdateDefenderReadiness is the ready screen. Ported, readiness.
 //
 //sp:body UpdateDefenderReadiness
-func UpdateDefenderReadiness(actor int32) {
-	if tacticals.UpdateDefenderReadiness == nil {
-		missing("UpdateDefenderReadiness")
-	}
-	tacticals.UpdateDefenderReadiness(actor)
-}
+func UpdateDefenderReadiness(actor int32) { tacticals.UpdateDefenderReadiness(actor) }
 
 // UpdateStuckWatchdog is the watch. Ported, stuckwatch.
 //
 //sp:body UpdateStuckWatchdog
-func UpdateStuckWatchdog(actor int32) {
-	if tacticals.UpdateStuckWatchdog == nil {
-		missing("UpdateStuckWatchdog")
-	}
-	tacticals.UpdateStuckWatchdog(actor)
-}
+func UpdateStuckWatchdog(actor int32) { tacticals.UpdateStuckWatchdog(actor) }
 
 // UpdateScoutCombatJump is the dodge. Ported, scoutjump.
 //
 //sp:body UpdateScoutCombatJump
-func UpdateScoutCombatJump(client int32) {
-	if tacticals.UpdateScoutCombatJump == nil {
-		missing("UpdateScoutCombatJump")
-	}
-	tacticals.UpdateScoutCombatJump(client)
-}
+func UpdateScoutCombatJump(client int32) { tacticals.UpdateScoutCombatJump(client) }
 
 // ShouldUseTeleporterNow is the ride question. Ported, botqueries.
 //
 //sp:body ShouldUseTeleporter
-func ShouldUseTeleporterNow(client int32) bool {
-	if tacticals.ShouldUseTeleporterNow == nil {
-		missing("ShouldUseTeleporter")
-	}
-	return tacticals.ShouldUseTeleporterNow(client)
-}
+func ShouldUseTeleporterNow(client int32) bool { return tacticals.ShouldUseTeleporterNow(client) }
 
 // ShouldLeaveToBePatchedUp is the medic exception. Ported, readiness.
 //
 //sp:body ShouldLeaveToBePatchedUp
 func ShouldLeaveToBePatchedUp(client int32, healthRatio float32) bool {
-	if tacticals.ShouldLeaveToBePatchedUp == nil {
-		missing("ShouldLeaveToBePatchedUp")
-	}
 	return tacticals.ShouldLeaveToBePatchedUp(client, healthRatio)
 }
 
 // IsAmmoLowNow is the ammo question. Ported, botqueries.
 //
 //sp:body IsAmmoLow
-func IsAmmoLowNow(client int32) bool {
-	if tacticals.IsAmmoLowNow == nil {
-		missing("IsAmmoLow")
-	}
-	return tacticals.IsAmmoLowNow(client)
-}
+func IsAmmoLowNow(client int32) bool { return tacticals.IsAmmoLowNow(client) }
 
 // HealthOkRatio is tf_bot_health_ok_ratio.
 //
@@ -304,9 +202,6 @@ func HealthOkRatio() ConVar { return 0 }
 //
 //sp:body FindOnlyOneVisibleEntity
 func FindOnlyOneVisibleEntity(client int32, first int32, second int32) int32 {
-	if tacticals.FindOnlyOneVisibleEntity == nil {
-		missing("FindOnlyOneVisibleEntity")
-	}
 	return tacticals.FindOnlyOneVisibleEntity(client, first, second)
 }
 
@@ -314,20 +209,12 @@ func FindOnlyOneVisibleEntity(client int32, first int32, second int32) int32 {
 // botqueries.
 //
 //sp:body HealerOrThreat
-func HealerOrThreat(bot Bot, threat Known) Known {
-	if tacticals.HealerOrThreat == nil {
-		missing("HealerOrThreat")
-	}
-	return tacticals.HealerOrThreat(bot, threat)
-}
+func HealerOrThreat(bot Bot, threat Known) Known { return tacticals.HealerOrThreat(bot, threat) }
 
 // SelectCloserThreatOf is the nearer of two. Ported, botqueries.
 //
 //sp:body SelectCloserThreat
 func SelectCloserThreatOf(bot Bot, threat1 Known, threat2 Known) Known {
-	if tacticals.SelectCloserThreat == nil {
-		missing("SelectCloserThreat")
-	}
 	return tacticals.SelectCloserThreat(bot, threat1, threat2)
 }
 
@@ -355,9 +242,6 @@ deleted then.
 //
 //sp:body ThreatPriority
 func ThreatPriority(threat int32, rangeSq float32) int32 {
-	if tacticals.ThreatPriority == nil {
-		missing("ThreatPriority")
-	}
 	return tacticals.ThreatPriority(threat, rangeSq)
 }
 
@@ -365,21 +249,13 @@ func ThreatPriority(threat int32, rangeSq float32) int32 {
 //
 //sp:body ThreatPriorityGenerated
 func ThreatPriorityGenerated(threat int32, rangeSq float32) int32 {
-	if tacticals.ThreatPriorityGenerated == nil {
-		missing("ThreatPriorityGenerated")
-	}
 	return tacticals.ThreatPriorityGenerated(threat, rangeSq)
 }
 
 // ThreatPortAudit records where the two disagree. Ported, threataudit.
 //
 //sp:body ThreatPortAudit
-func ThreatPortAudit(threat int32, rangeSq float32) {
-	if tacticals.ThreatPortAudit == nil {
-		missing("ThreatPortAudit")
-	}
-	tacticals.ThreatPortAudit(threat, rangeSq)
-}
+func ThreatPortAudit(threat int32, rangeSq float32) { tacticals.ThreatPortAudit(threat, rangeSq) }
 
 // ChooseThreat is the ternary the shipped file writes to pick between two
 // known entities.
@@ -405,30 +281,17 @@ hitting.
 // ballistic lead is computed from.
 //
 //sp:body GetProjectileSpeed
-func ProjectileSpeed(weapon int32) float32 {
-	if tacticals.ProjectileSpeed == nil {
-		missing("GetProjectileSpeed")
-	}
-	return tacticals.ProjectileSpeed(weapon)
-}
+func ProjectileSpeed(weapon int32) float32 { return tacticals.ProjectileSpeed(weapon) }
 
 // LookupBone is the bone's index on that entity, or -1.
 //
 //sp:body LookupBone
-func LookupBone(entity int32, name string) int32 {
-	if tacticals.LookupBone == nil {
-		missing("LookupBone")
-	}
-	return tacticals.LookupBone(entity, name)
-}
+func LookupBone(entity int32, name string) int32 { return tacticals.LookupBone(entity, name) }
 
 // BonePosition is where the bone is, and which way it faces.
 //
 //sp:body GetBonePosition
 func BonePosition(entity int32, bone int32) (position [3]float32, angles [3]float32) {
-	if tacticals.BonePosition == nil {
-		missing("GetBonePosition")
-	}
 	return tacticals.BonePosition(entity, bone)
 }
 
@@ -437,30 +300,19 @@ func BonePosition(entity int32, bone int32) (position [3]float32, angles [3]floa
 //
 //sp:body ShouldAimRocketsAtFeet
 func ShouldAimRocketsAtFeet(client int32, target int32, weaponID Weapon) bool {
-	if tacticals.ShouldAimRocketsAtFeet == nil {
-		missing("ShouldAimRocketsAtFeet")
-	}
 	return tacticals.ShouldAimRocketsAtFeet(client, target, weaponID)
 }
 
 // CanRevolverHeadshot says this revolver is an Ambassador. Ported, state.
 //
 //sp:body CanRevolverHeadshot
-func CanRevolverHeadshot(weapon int32) bool {
-	if tacticals.CanRevolverHeadshot == nil {
-		missing("CanRevolverHeadshot")
-	}
-	return tacticals.CanRevolverHeadshot(weapon)
-}
+func CanRevolverHeadshot(weapon int32) bool { return tacticals.CanRevolverHeadshot(weapon) }
 
 // FlameThrowerAimForTank is the point above a tank a Pyro aims at. Ported,
 // botqueries.
 //
 //sp:body GetFlameThrowerAimForTank
 func FlameThrowerAimForTank(tank int32) (aimPos [3]float32) {
-	if tacticals.FlameThrowerAimForTank == nil {
-		missing("GetFlameThrowerAimForTank")
-	}
 	return tacticals.FlameThrowerAimForTank(tank)
 }
 
@@ -473,12 +325,7 @@ func Pi() float32 { return 3.14159265358979323846 }
 // opposed to a toolbox or a disguise kit. Ported, botqueries.
 //
 //sp:body IsCombatWeapon
-func IsCombatWeapon(client int32, weapon int32) bool {
-	if tacticals.IsCombatWeapon == nil {
-		missing("IsCombatWeapon")
-	}
-	return tacticals.IsCombatWeapon(client, weapon)
-}
+func IsCombatWeapon(client int32, weapon int32) bool { return tacticals.IsCombatWeapon(client, weapon) }
 
 // RangeTuningNone is RANGE_TUNING_NONE, the tuning table saying it has no
 // opinion about this weapon's range.
@@ -490,20 +337,10 @@ func RangeTuningNone() float32 { return 0.0 }
 // internal/tables with the rest of the tuning.
 //
 //sp:body DemoPipeMaxRange
-func DemoPipeMaxRange() float32 {
-	if tacticals.DemoPipeMaxRange == nil {
-		missing("DemoPipeMaxRange")
-	}
-	return tacticals.DemoPipeMaxRange()
-}
+func DemoPipeMaxRange() float32 { return tacticals.DemoPipeMaxRange() }
 
 // IsMannVsMachineMode says the server is running MvM, where the flamethrower
 // reaches further than it does elsewhere.
 //
 //sp:native TF2_IsMannVsMachineMode
-func IsMannVsMachineMode() bool {
-	if tacticals.IsMannVsMachineMode == nil {
-		missing("TF2_IsMannVsMachineMode")
-	}
-	return tacticals.IsMannVsMachineMode()
-}
+func IsMannVsMachineMode() bool { return tacticals.IsMannVsMachineMode() }

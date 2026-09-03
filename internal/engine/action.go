@@ -67,6 +67,7 @@ var actions ActionCalls
 // InstallActions puts a set of answers behind the four and returns the undo.
 func InstallActions(c ActionCalls) func() {
 	previous := actions
+	Fill(&c)
 	actions = c
 	return func() { actions = previous }
 }
@@ -74,12 +75,7 @@ func InstallActions(c ActionCalls) func() {
 // Continue keeps the behaviour running.
 //
 //sp:native action.Continue
-func Continue() Outcome {
-	if actions.Continue == nil {
-		missing("action.Continue")
-	}
-	return actions.Continue()
-}
+func Continue() Outcome { return actions.Continue() }
 
 // ThisAction is the action the engine handed the callback, for a helper that
 // takes it rather than being one.
@@ -91,61 +87,33 @@ func ThisAction() Behaviour { return 0 }
 // call with the receiver spelled out.
 //
 //sp:method Done
-func (a Behaviour) EndWith(reason string) Outcome {
-	if actions.Done == nil {
-		missing("action.Done")
-	}
-	return actions.Done(reason)
-}
+func (a Behaviour) EndWith(reason string) Outcome { return actions.Done(reason) }
 
 // Done ends the behaviour and says why.
 //
 //sp:native action.Done
-func Done(reason string) Outcome {
-	if actions.Done == nil {
-		missing("action.Done")
-	}
-	return actions.Done(reason)
-}
+func Done(reason string) Outcome { return actions.Done(reason) }
 
 // ChangeTo replaces this behaviour with another.
 //
 //sp:native action.ChangeTo
-func ChangeTo(next Behaviour, reason string) Outcome {
-	if actions.ChangeTo == nil {
-		missing("action.ChangeTo")
-	}
-	return actions.ChangeTo(next, reason)
-}
+func ChangeTo(next Behaviour, reason string) Outcome { return actions.ChangeTo(next, reason) }
 
 // SuspendFor runs another behaviour and comes back to this one.
 //
 //sp:native action.SuspendFor
-func SuspendFor(next Behaviour, reason string) Outcome {
-	if actions.SuspendFor == nil {
-		missing("action.SuspendFor")
-	}
-	return actions.SuspendFor(next, reason)
-}
+func SuspendFor(next Behaviour, reason string) Outcome { return actions.SuspendFor(next, reason) }
 
 // TryToSustain asks to keep going, which the engine may refuse.
 //
 //sp:native action.TryToSustain
-func TryToSustain() Outcome {
-	if actions.TryToSustain == nil {
-		missing("action.TryToSustain")
-	}
-	return actions.TryToSustain()
-}
+func TryToSustain() Outcome { return actions.TryToSustain() }
 
 // TryChangeTo asks to become another behaviour, at a priority the engine
 // weighs against whatever else wants to run.
 //
 //sp:native action.TryChangeTo
 func TryChangeTo(next Behaviour, priority int32, reason string) Outcome {
-	if actions.TryChangeTo == nil {
-		missing("action.TryChangeTo")
-	}
 	return actions.TryChangeTo(next, priority, reason)
 }
 
@@ -158,22 +126,12 @@ func ResultCritical() int32 { return 3 }
 // TryContinue asks to keep going, at the engine's discretion.
 //
 //sp:native action.TryContinue
-func TryContinue() Outcome {
-	if actions.TryContinue == nil {
-		missing("action.TryContinue")
-	}
-	return actions.TryContinue()
-}
+func TryContinue() Outcome { return actions.TryContinue() }
 
 // TryDone asks to stop, at a priority the engine weighs.
 //
 //sp:native action.TryDone
-func TryDone(priority int32, reason string) Outcome {
-	if actions.TryDone == nil {
-		missing("action.TryDone")
-	}
-	return actions.TryDone(priority, reason)
-}
+func TryDone(priority int32, reason string) Outcome { return actions.TryDone(priority, reason) }
 
 // ResultImportant is RESULT_IMPORTANT.
 //
@@ -183,12 +141,7 @@ func ResultImportant() int32 { return 2 }
 // ActionName is what the behaviour calls itself, filled into a buffer.
 //
 //sp:method GetName sized
-func (a Behaviour) ActionName() (name Text) {
-	if actions.ActionName == nil {
-		missing("BehaviorAction.GetName")
-	}
-	return actions.ActionName(a)
-}
+func (a Behaviour) ActionName() (name Text) { return actions.ActionName(a) }
 
 // IterateActions walks a bot's action stack, calling the visitor for each,
 // taking it by name.
@@ -196,31 +149,18 @@ func (a Behaviour) ActionName() (name Text) {
 //sp:native ActionsManager.Iterator
 //nolint:revive // unused-parameter: the visitor is a name the emitter writes, not something the Go calls
 func IterateActions(client int32, visit func(action Behaviour)) {
-	if actions.IterateActions == nil {
-		missing("ActionsManager.Iterator")
-	}
 	actions.IterateActions(client, visit)
 }
 
 // AppendText adds to the end of a buffer, which is how the stack is built up.
 //
 //sp:native StrCat fills
-func AppendText(from string) (into Text) {
-	if actions.AppendText == nil {
-		missing("StrCat")
-	}
-	return actions.AppendText(from)
-}
+func AppendText(from string) (into Text) { return actions.AppendText(from) }
 
 // AppendTextFrom is StrCat where what is added is another buffer.
 //
 //sp:native StrCat fills
-func AppendTextFrom(from Text) (into Text) {
-	if actions.AppendTextFrom == nil {
-		missing("StrCat")
-	}
-	return actions.AppendTextFrom(from)
-}
+func AppendTextFrom(from Text) (into Text) { return actions.AppendTextFrom(from) }
 
 /*
 The constructors and questions the dispatcher hands off through, every one of
@@ -230,124 +170,66 @@ them generated by internal/action.
 // GotoUpgrade is CTFBotGotoUpgrade. Ported, gotoupgrade.
 //
 //sp:body CTFBotGotoUpgrade
-func GotoUpgrade() Behaviour {
-	if actions.GotoUpgrade == nil {
-		missing("CTFBotGotoUpgrade")
-	}
-	return actions.GotoUpgrade()
-}
+func GotoUpgrade() Behaviour { return actions.GotoUpgrade() }
 
 // MoveToFront is CTFBotMoveToFront. Ported, movetofront.
 //
 //sp:body CTFBotMoveToFront
-func MoveToFront() Behaviour {
-	if actions.MoveToFront == nil {
-		missing("CTFBotMoveToFront")
-	}
-	return actions.MoveToFront()
-}
+func MoveToFront() Behaviour { return actions.MoveToFront() }
 
 // MarkGiant is CTFBotMarkGiant. Ported, markgiant.
 //
 //sp:body CTFBotMarkGiant
-func MarkGiant() Behaviour {
-	if actions.MarkGiant == nil {
-		missing("CTFBotMarkGiant")
-	}
-	return actions.MarkGiant()
-}
+func MarkGiant() Behaviour { return actions.MarkGiant() }
 
 // CollectNearMoney is CTFBotCollectNearMoney. Ported, collectnearmoney.
 //
 //sp:body CTFBotCollectNearMoney
-func CollectNearMoney() Behaviour {
-	if actions.CollectNearMoney == nil {
-		missing("CTFBotCollectNearMoney")
-	}
-	return actions.CollectNearMoney()
-}
+func CollectNearMoney() Behaviour { return actions.CollectNearMoney() }
 
 // StickyTrap is CTFBotStickyTrap. Ported, stickytrap.
 //
 //sp:body CTFBotStickyTrap
-func StickyTrap() Behaviour {
-	if actions.StickyTrap == nil {
-		missing("CTFBotStickyTrap")
-	}
-	return actions.StickyTrap()
-}
+func StickyTrap() Behaviour { return actions.StickyTrap() }
 
 // EngineerIdle is CTFBotMvMEngineerIdle. Ported, engineeridle.
 //
 //sp:body CTFBotMvMEngineerIdle
-func EngineerIdle() Behaviour {
-	if actions.EngineerIdle == nil {
-		missing("CTFBotMvMEngineerIdle")
-	}
-	return actions.EngineerIdle()
-}
+func EngineerIdle() Behaviour { return actions.EngineerIdle() }
 
 // SpyLurk is CTFBotSpyLurkMvM. Ported, spylurk.
 //
 //sp:body CTFBotSpyLurkMvM
-func SpyLurk() Behaviour {
-	if actions.SpyLurk == nil {
-		missing("CTFBotSpyLurkMvM")
-	}
-	return actions.SpyLurk()
-}
+func SpyLurk() Behaviour { return actions.SpyLurk() }
 
 // MarkGiantIsPossible says there is a giant worth marking. Ported, markgiant.
 //
 //sp:body CTFBotMarkGiant_IsPossible
-func MarkGiantIsPossible(client int32) bool {
-	if actions.MarkGiantIsPossible == nil {
-		missing("CTFBotMarkGiant_IsPossible")
-	}
-	return actions.MarkGiantIsPossible(client)
-}
+func MarkGiantIsPossible(client int32) bool { return actions.MarkGiantIsPossible(client) }
 
 // CollectNearMoneySelectTarget says there is money within reach. Ported,
 // collectnearmoney.
 //
 //sp:body CTFBotCollectNearMoney_SelectTarget
 func CollectNearMoneySelectTarget(client int32) bool {
-	if actions.CollectNearMoneySelectTarget == nil {
-		missing("CTFBotCollectNearMoney_SelectTarget")
-	}
 	return actions.CollectNearMoneySelectTarget(client)
 }
 
 // StickyTrapIsPossible says the ground is worth trapping. Ported, stickytrap.
 //
 //sp:body CTFBotStickyTrap_IsPossible
-func StickyTrapIsPossible(client int32) bool {
-	if actions.StickyTrapIsPossible == nil {
-		missing("CTFBotStickyTrap_IsPossible")
-	}
-	return actions.StickyTrapIsPossible(client)
-}
+func StickyTrapIsPossible(client int32) bool { return actions.StickyTrapIsPossible(client) }
 
 // End is Done with no reason, which the shims that only refuse write.
 //
 //sp:method Done
-func (a Behaviour) End() Outcome {
-	if actions.Done == nil {
-		missing("action.Done")
-	}
-	return actions.Done("")
-}
+func (a Behaviour) End() Outcome { return actions.Done("") }
 
 // ShouldEmptyStack is the faults injector asking for a bot with no behaviour.
 // Ported, faults.
 //
 //sp:body DebugFaults_ShouldEmpty
-func ShouldEmptyStack(actor int32) bool {
-	if actions.ShouldEmptyStack == nil {
-		missing("DebugFaults_ShouldEmpty")
-	}
-	return actions.ShouldEmptyStack(actor)
-}
+func ShouldEmptyStack(actor int32) bool { return actions.ShouldEmptyStack(actor) }
 
 // ActionResult is the out-parameter the game hands a behaviour callback, which
 // the mod never writes: every answer here goes through the return value.
@@ -373,9 +255,6 @@ by-reference parameter SourcePawn passes.
 //sp:propertyset SelectTargetPoint
 //nolint:revive // unused-parameter: the callback is a name the emitter writes
 func (a Behaviour) SetSelectTargetPoint(callback func(action Behaviour, nextbot Bot, entity int32) (Outcome, [3]float32)) {
-	if actions.SetCallback == nil {
-		missing("BehaviorAction.SelectTargetPoint")
-	}
 	actions.SetCallback(a, "SelectTargetPoint")
 }
 
@@ -384,9 +263,6 @@ func (a Behaviour) SetSelectTargetPoint(callback func(action Behaviour, nextbot 
 //sp:propertyset ShouldAttack
 //nolint:revive // unused-parameter: the callback is a name the emitter writes
 func (a Behaviour) SetShouldAttack(callback func(action Behaviour, nextbot Bot, knownEntity Known) (Outcome, Answer)) {
-	if actions.SetCallback == nil {
-		missing("BehaviorAction.ShouldAttack")
-	}
 	actions.SetCallback(a, "ShouldAttack")
 }
 
@@ -395,9 +271,6 @@ func (a Behaviour) SetShouldAttack(callback func(action Behaviour, nextbot Bot, 
 //sp:propertyset Update
 //nolint:revive // unused-parameter: the callback is a name the emitter writes
 func (a Behaviour) SetUpdate(callback func(action Behaviour, actor int32, interval float32, result ActionResult) Outcome) {
-	if actions.SetCallback == nil {
-		missing("BehaviorAction.Update")
-	}
 	actions.SetCallback(a, "Update")
 }
 
@@ -407,9 +280,6 @@ func (a Behaviour) SetUpdate(callback func(action Behaviour, actor int32, interv
 //sp:propertyset UpdatePost
 //nolint:revive // unused-parameter: the callback is a name the emitter writes
 func (a Behaviour) SetUpdatePost(callback func(action Behaviour, actor int32, interval float32, result ActionResult) Outcome) {
-	if actions.SetCallback == nil {
-		missing("BehaviorAction.UpdatePost")
-	}
 	actions.SetCallback(a, "UpdatePost")
 }
 
@@ -418,9 +288,6 @@ func (a Behaviour) SetUpdatePost(callback func(action Behaviour, actor int32, in
 //sp:propertyset OnStart
 //nolint:revive // unused-parameter: the callback is a name the emitter writes
 func (a Behaviour) SetOnStart(callback func(action Behaviour, actor int32, priorAction Behaviour, result ActionResult) Outcome) {
-	if actions.SetCallback == nil {
-		missing("BehaviorAction.OnStart")
-	}
 	actions.SetCallback(a, "OnStart")
 }
 
@@ -429,31 +296,18 @@ func (a Behaviour) SetOnStart(callback func(action Behaviour, actor int32, prior
 //sp:propertyset SelectMoreDangerousThreat
 //nolint:revive // unused-parameter: the callback is a name the emitter writes
 func (a Behaviour) SetSelectMoreDangerousThreat(callback func(action Behaviour, nextbot Bot, entity int32, threat1 Known, threat2 Known) (Outcome, Known)) {
-	if actions.SetCallback == nil {
-		missing("BehaviorAction.SelectMoreDangerousThreat")
-	}
 	actions.SetCallback(a, "SelectMoreDangerousThreat")
 }
 
 // ResultType is the kind of answer a callback's result carries.
 //
 //sp:property type
-func (r ActionResult) ResultType() int32 {
-	if actions.ResultType == nil {
-		missing("ActionResult.type")
-	}
-	return actions.ResultType(r)
-}
+func (r ActionResult) ResultType() int32 { return actions.ResultType(r) }
 
 // ResultAction is the behaviour the result names, when it names one.
 //
 //sp:property action
-func (r ActionResult) ResultAction() Behaviour {
-	if actions.ResultAction == nil {
-		missing("ActionResult.action")
-	}
-	return actions.ResultAction(r)
-}
+func (r ActionResult) ResultAction() Behaviour { return actions.ResultAction(r) }
 
 // ChangeToResult is CHANGE_TO, the result that swaps the behaviour out next
 // frame.
@@ -464,44 +318,26 @@ func ChangeToResult() int32 { return 1 }
 // AttackUber is CTFBotAttackUber. Ported, attackforuber.
 //
 //sp:body CTFBotAttackUber
-func AttackUber() Behaviour {
-	if actions.AttackUber == nil {
-		missing("CTFBotAttackUber")
-	}
-	return actions.AttackUber()
-}
+func AttackUber() Behaviour { return actions.AttackUber() }
 
 // AttackUberIsPossible says there is an uber worth breaking. Ported,
 // attackforuber.
 //
 //sp:body CTFBotAttackUber_IsPossible
 func AttackUberIsPossible(actor int32, medigun int32) bool {
-	if actions.AttackUberIsPossible == nil {
-		missing("CTFBotAttackUber_IsPossible")
-	}
 	return actions.AttackUberIsPossible(actor, medigun)
 }
 
 // MedicRevive is CTFBotMedicRevive. Ported, medicrevive.
 //
 //sp:body CTFBotMedicRevive
-func MedicRevive() Behaviour {
-	if actions.MedicRevive == nil {
-		missing("CTFBotMedicRevive")
-	}
-	return actions.MedicRevive()
-}
+func MedicRevive() Behaviour { return actions.MedicRevive() }
 
 // MedicReviveIsPossible says somebody is down and worth raising. Ported,
 // medicrevive.
 //
 //sp:body CTFBotMedicRevive_IsPossible
-func MedicReviveIsPossible(actor int32) bool {
-	if actions.MedicReviveIsPossible == nil {
-		missing("CTFBotMedicRevive_IsPossible")
-	}
-	return actions.MedicReviveIsPossible(actor)
-}
+func MedicReviveIsPossible(actor int32) bool { return actions.MedicReviveIsPossible(actor) }
 
 // FeatureMedicPocketsBiggest is FEATURE_MEDIC_POCKETS_BIGGEST.
 //
@@ -512,9 +348,6 @@ func FeatureMedicPocketsBiggest() int32 { return 10 }
 //
 //sp:body PointMedicAtBiggestBody
 func PointMedicAtBiggestBodyNow(action Behaviour, actor int32) {
-	if actions.PointMedicAtBiggestBody == nil {
-		missing("PointMedicAtBiggestBody")
-	}
 	actions.PointMedicAtBiggestBody(action, actor)
 }
 
@@ -522,9 +355,6 @@ func PointMedicAtBiggestBodyNow(action Behaviour, actor int32) {
 //
 //sp:body MedicUberAndResist
 func MedicUberAndResistNow(actor int32, medigun int32, patient int32) {
-	if actions.MedicUberAndResist == nil {
-		missing("MedicUberAndResist")
-	}
 	actions.MedicUberAndResist(actor, medigun, patient)
 }
 
@@ -532,8 +362,5 @@ func MedicUberAndResistNow(actor int32, medigun int32, patient int32) {
 //
 //sp:body GetDesiredBotAction
 func DesiredBotAction(client int32, action Behaviour) Outcome {
-	if actions.DesiredBotAction == nil {
-		missing("GetDesiredBotAction")
-	}
 	return actions.DesiredBotAction(client, action)
 }

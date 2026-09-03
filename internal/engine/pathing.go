@@ -29,6 +29,7 @@ var pathings PathingCalls
 // InstallPathings puts a set of answers behind them.
 func InstallPathings(c PathingCalls) func() {
 	previous := pathings
+	Fill(&c)
 	pathings = c
 	return func() { pathings = previous }
 }
@@ -38,9 +39,6 @@ func InstallPathings(c PathingCalls) func() {
 //
 //sp:method ComputeToTarget
 func (p Path) ComputeToTargetBuilt(bot Bot, target int32, maxDistance float32) bool {
-	if pathings.ComputeToTargetBuilt == nil {
-		missing("PathFollower.ComputeToTarget")
-	}
 	return pathings.ComputeToTargetBuilt(p, bot, target, maxDistance)
 }
 
@@ -48,41 +46,23 @@ func (p Path) ComputeToTargetBuilt(bot Bot, target int32, maxDistance float32) b
 //
 //sp:method ComputeToPos
 func (p Path) ComputeToPosBuilt(bot Bot, goal [3]float32, maxDistance float32) bool {
-	if pathings.ComputeToPosBuilt == nil {
-		missing("PathFollower.ComputeToPos")
-	}
 	return pathings.ComputeToPosBuilt(p, bot, goal, maxDistance)
 }
 
 // Length is how long the computed route is.
 //
 //sp:method GetLength
-func (p Path) Length() float32 {
-	if pathings.PathLength == nil {
-		missing("PathFollower.GetLength")
-	}
-	return pathings.PathLength(p)
-}
+func (p Path) Length() float32 { return pathings.PathLength(p) }
 
 // WallClock is GetEngineTime, for measuring rather than scheduling.
 //
 //sp:native GetEngineTime
-func WallClock() float32 {
-	if pathings.EngineTime == nil {
-		missing("GetEngineTime")
-	}
-	return pathings.EngineTime()
-}
+func WallClock() float32 { return pathings.EngineTime() }
 
 // GameTickCount is the server's frame number.
 //
 //sp:native GetGameTickCount
-func GameTickCount() int32 {
-	if pathings.GameTickCount == nil {
-		missing("GetGameTickCount")
-	}
-	return pathings.GameTickCount()
-}
+func GameTickCount() int32 { return pathings.GameTickCount() }
 
 // FeaturePathLengthCap is FEATURE_PATH_LENGTH_CAP.
 //
@@ -94,32 +74,19 @@ func FeaturePathLengthCap() int32 { return 15 }
 //
 //sp:body DebugFaults_UnreachableGoal fills
 func UnreachableGoal(actor int32) (injected bool, goal [3]float32) {
-	if pathings.UnreachableGoal == nil {
-		missing("DebugFaults_UnreachableGoal")
-	}
 	return pathings.UnreachableGoal(actor)
 }
 
 // Pathing is the read half of bPathing: whether the plugin's own walking is on.
 //
 //sp:property bPathing
-func (b PluginBot) Pathing() bool {
-	if pathings.Pathing == nil {
-		missing("PluginBot.bPathing")
-	}
-	return pathings.Pathing(b)
-}
+func (b PluginBot) Pathing() bool { return pathings.Pathing(b) }
 
 // MoveWedgedDefender teleports a bot off ground it cannot leave on its own.
 // Ported, stuckwatch.
 //
 //sp:body MoveWedgedDefender
-func MoveWedgedDefender(actor int32) bool {
-	if pathings.MoveWedgedDefender == nil {
-		missing("MoveWedgedDefender")
-	}
-	return pathings.MoveWedgedDefender(actor)
-}
+func MoveWedgedDefender(actor int32) bool { return pathings.MoveWedgedDefender(actor) }
 
 // FeatureWatchIdleBots is FEATURE_WATCH_IDLE_BOTS.
 //
@@ -165,20 +132,12 @@ func DirectionCount() Direction { return 4 }
 // AdjacentCount is how many areas touch this one on that side.
 //
 //sp:method GetAdjacentCount
-func (a Area) AdjacentCount(dir Direction) int32 {
-	if pathings.AdjacentCount == nil {
-		missing("CNavArea.GetAdjacentCount")
-	}
-	return pathings.AdjacentCount(a, dir)
-}
+func (a Area) AdjacentCount(dir Direction) int32 { return pathings.AdjacentCount(a, dir) }
 
 // AdjacentArea is one of them, by index.
 //
 //sp:method GetAdjacentArea
 func (a Area) AdjacentArea(dir Direction, index int32) Area {
-	if pathings.AdjacentArea == nil {
-		missing("CNavArea.GetAdjacentArea")
-	}
 	return pathings.AdjacentArea(a, dir, index)
 }
 
@@ -186,49 +145,24 @@ func (a Area) AdjacentArea(dir Direction, index int32) Area {
 // kept only so a run can measure what replacing it was worth. Ported, faults.
 //
 //sp:body DebugFaults_OldWedgeRecovery
-func OldWedgeRecovery() bool {
-	if pathings.OldWedgeRecovery == nil {
-		missing("DebugFaults_OldWedgeRecovery")
-	}
-	return pathings.OldWedgeRecovery()
-}
+func OldWedgeRecovery() bool { return pathings.OldWedgeRecovery() }
 
 // HasPathGoalVector says a behaviour set a point to walk to.
 //
 //sp:method HasPathGoalVector
-func (b PluginBot) HasPathGoalVector() bool {
-	if pathings.HasPathGoalVector == nil {
-		missing("PluginBot.HasPathGoalVector")
-	}
-	return pathings.HasPathGoalVector(b)
-}
+func (b PluginBot) HasPathGoalVector() bool { return pathings.HasPathGoalVector(b) }
 
 // HasPathGoalEntity says a behaviour set a thing to walk to.
 //
 //sp:method HasPathGoalEntity
-func (b PluginBot) HasPathGoalEntity() bool {
-	if pathings.HasPathGoalEntity == nil {
-		missing("PluginBot.HasPathGoalEntity")
-	}
-	return pathings.HasPathGoalEntity(b)
-}
+func (b PluginBot) HasPathGoalEntity() bool { return pathings.HasPathGoalEntity(b) }
 
 // PathGoalVector is the point.
 //
 //sp:property vecPathGoal
-func (b PluginBot) PathGoalVector() [3]float32 {
-	if pathings.PathGoalVector == nil {
-		missing("PluginBot.vecPathGoal")
-	}
-	return pathings.PathGoalVector(b)
-}
+func (b PluginBot) PathGoalVector() [3]float32 { return pathings.PathGoalVector(b) }
 
 // PathGoalEntity is the thing.
 //
 //sp:property iPathGoalEntity
-func (b PluginBot) PathGoalEntity() int32 {
-	if pathings.PathGoalEntity == nil {
-		missing("PluginBot.iPathGoalEntity")
-	}
-	return pathings.PathGoalEntity(b)
-}
+func (b PluginBot) PathGoalEntity() int32 { return pathings.PathGoalEntity(b) }

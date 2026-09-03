@@ -36,6 +36,7 @@ var runCmds RunCmdCalls
 // InstallRunCmds puts a set of answers behind them.
 func InstallRunCmds(c RunCmdCalls) func() {
 	previous := runCmds
+	Fill(&c)
 	runCmds = c
 	return func() { runCmds = previous }
 }
@@ -68,54 +69,31 @@ func ObserverModeDeathcam() int32 { return 0 }
 // PluginBotSimulateFrame runs a plugin-driven bot's frame. Ported, pathing.
 //
 //sp:body PluginBot_SimulateFrame
-func PluginBotSimulateFrame(client int32) {
-	if runCmds.PluginBotSimulateFrame == nil {
-		missing("PluginBot_SimulateFrame")
-	}
-	runCmds.PluginBotSimulateFrame(client)
-}
+func PluginBotSimulateFrame(client int32) { runCmds.PluginBotSimulateFrame(client) }
 
 // IsPlayingHorn says the buff banner is mid-blow, which is when holding fire
 // stops meaning anything. Still in offsets.sp.
 //
 //sp:body IsPlayingHorn
-func IsPlayingHorn(weapon int32) bool {
-	if runCmds.IsPlayingHorn == nil {
-		missing("IsPlayingHorn")
-	}
-	return runCmds.IsPlayingHorn(weapon)
-}
+func IsPlayingHorn(weapon int32) bool { return runCmds.IsPlayingHorn(weapon) }
 
 // LastAccuracyCheck is when the revolver last decided its shot was accurate.
 // Still in offsets.sp.
 //
 //sp:body GetLastAccuracyCheck
-func LastAccuracyCheck(weapon int32) float32 {
-	if runCmds.LastAccuracyCheck == nil {
-		missing("GetLastAccuracyCheck")
-	}
-	return runCmds.LastAccuracyCheck(weapon)
-}
+func LastAccuracyCheck(weapon int32) float32 { return runCmds.LastAccuracyCheck(weapon) }
 
 // MonitorKnownEntities keeps the bot's memory of what it has seen current.
 // Ported, botqueries.
 //
 //sp:body MonitorKnownEntities
-func MonitorKnownEntities(client int32, vision Vision) {
-	if runCmds.MonitorKnownEntities == nil {
-		missing("MonitorKnownEntities")
-	}
-	runCmds.MonitorKnownEntities(client, vision)
-}
+func MonitorKnownEntities(client int32, vision Vision) { runCmds.MonitorKnownEntities(client, vision) }
 
 // UseWeaponAbilities fires whatever the weapon offers for free. Ported,
 // botqueries.
 //
 //sp:body OpportunisticallyUseWeaponAbilities
 func UseWeaponAbilities(client int32, weapon int32, bot Bot, threat Known) {
-	if runCmds.UseWeaponAbilities == nil {
-		missing("OpportunisticallyUseWeaponAbilities")
-	}
 	runCmds.UseWeaponAbilities(client, weapon, bot, threat)
 }
 
@@ -124,9 +102,6 @@ func UseWeaponAbilities(client int32, weapon int32, bot Bot, threat Known) {
 //
 //sp:body OpportunisticallyUsePowerupBottle
 func UsePowerupBottle(client int32, weapon int32, bot Bot, threat Known) {
-	if runCmds.UsePowerupBottle == nil {
-		missing("OpportunisticallyUsePowerupBottle")
-	}
 	runCmds.UsePowerupBottle(client, weapon, bot, threat)
 }
 
@@ -134,21 +109,13 @@ func UsePowerupBottle(client int32, weapon int32, bot Bot, threat Known) {
 // state.
 //
 //sp:body CanWeaponAirblast
-func CanWeaponAirblast(weapon int32) bool {
-	if runCmds.CanWeaponAirblast == nil {
-		missing("CanWeaponAirblast")
-	}
-	return runCmds.CanWeaponAirblast(weapon)
-}
+func CanWeaponAirblast(weapon int32) bool { return runCmds.CanWeaponAirblast(weapon) }
 
 // UtilizeCompressionBlast pushes what is in front of the bot. Ported,
 // botqueries.
 //
 //sp:body UtilizeCompressionBlast
 func UtilizeCompressionBlast(client int32, bot Bot, threat Known, mode int32) {
-	if runCmds.UtilizeCompressionBlast == nil {
-		missing("UtilizeCompressionBlast")
-	}
 	runCmds.UtilizeCompressionBlast(client, bot, threat, mode)
 }
 
@@ -156,33 +123,18 @@ func UtilizeCompressionBlast(client int32, bot Bot, threat Known, mode int32) {
 // Ported, botqueries.
 //
 //sp:body ShouldBuybackIntoGame
-func ShouldBuybackIntoGame(client int32) bool {
-	if runCmds.ShouldBuybackIntoGame == nil {
-		missing("ShouldBuybackIntoGame")
-	}
-	return runCmds.ShouldBuybackIntoGame(client)
-}
+func ShouldBuybackIntoGame(client int32) bool { return runCmds.ShouldBuybackIntoGame(client) }
 
 // PlayerBuyback pays it. Ported, stocks.
 //
 //sp:body PlayerBuyback
-func PlayerBuyback(client int32) {
-	if runCmds.PlayerBuyback == nil {
-		missing("PlayerBuyback")
-	}
-	runCmds.PlayerBuyback(client)
-}
+func PlayerBuyback(client int32) { runCmds.PlayerBuyback(client) }
 
 // ObserverMode is what a dead player is watching through, which decides
 // whether buying back is possible at all.
 //
 //sp:native BasePlayer_GetObserverMode
-func ObserverMode(client int32) int32 {
-	if runCmds.ObserverMode == nil {
-		missing("BasePlayer_GetObserverMode")
-	}
-	return runCmds.ObserverMode(client)
-}
+func ObserverMode(client int32) int32 { return runCmds.ObserverMode(client) }
 
 // AimSkill is redbots_manager_bot_aim_skill, how much the mod helps a bot aim.
 //
@@ -204,60 +156,32 @@ func SniperReactionTime() float32 { return 0.5 }
 // NextSnipeFireTime reads m_flNextSnipeFireTime for one client.
 //
 //sp:slot m_flNextSnipeFireTime
-func NextSnipeFireTime(client int32) float32 {
-	if runCmds.NextSnipeFireTime == nil {
-		missing("m_flNextSnipeFireTime")
-	}
-	return runCmds.NextSnipeFireTime(client)
-}
+func NextSnipeFireTime(client int32) float32 { return runCmds.NextSnipeFireTime(client) }
 
 // SetNextSnipeFireTime writes it.
 //
 //sp:slotset m_flNextSnipeFireTime
-func SetNextSnipeFireTime(client int32, when float32) {
-	if runCmds.SetNextSnipeFireTime == nil {
-		missing("m_flNextSnipeFireTime")
-	}
-	runCmds.SetNextSnipeFireTime(client, when)
-}
+func SetNextSnipeFireTime(client int32, when float32) { runCmds.SetNextSnipeFireTime(client, when) }
 
 // DeadRethinkTime reads m_flDeadRethinkTime for one client.
 //
 //sp:slot m_flDeadRethinkTime
-func DeadRethinkTime(client int32) float32 {
-	if runCmds.DeadRethinkTime == nil {
-		missing("m_flDeadRethinkTime")
-	}
-	return runCmds.DeadRethinkTime(client)
-}
+func DeadRethinkTime(client int32) float32 { return runCmds.DeadRethinkTime(client) }
 
 // NextRollTime reads m_flNextRollTime for one client.
 //
 //sp:slot m_flNextRollTime
-func NextRollTime(client int32) float32 {
-	if runCmds.NextRollTime == nil {
-		missing("m_flNextRollTime")
-	}
-	return runCmds.NextRollTime(client)
-}
+func NextRollTime(client int32) float32 { return runCmds.NextRollTime(client) }
 
 // WatchDefenderSpawnExit notices a bot leaving spawn. Ported, spawnexit.
 //
 //sp:body WatchDefenderSpawnExit
-func WatchDefenderSpawnExit(client int32) {
-	if runCmds.WatchDefenderSpawnExit == nil {
-		missing("WatchDefenderSpawnExit")
-	}
-	runCmds.WatchDefenderSpawnExit(client)
-}
+func WatchDefenderSpawnExit(client int32) { runCmds.WatchDefenderSpawnExit(client) }
 
 // SelectTargetPointOf is where the intention interface says to aim at that
 // entity, which is the same answer the behaviour layer would give.
 //
 //sp:method SelectTargetPoint into
 func (i Intention) SelectTargetPointOf(entity int32) (aimPos [3]float32) {
-	if runCmds.SelectTargetPoint == nil {
-		missing("IIntention.SelectTargetPoint")
-	}
 	return runCmds.SelectTargetPoint(i, entity)
 }

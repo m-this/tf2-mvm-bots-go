@@ -7,9 +7,6 @@ console command and a timer are function references and the subset has none.
 */
 package loadouts
 
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
-
 // MaxRuntimeAttributes is how many attributes one weapon may carry back from
 // the upgrade station.
 //

@@ -16,6 +16,7 @@ var tanks TankCalls
 // InstallTanks puts a set of answers behind them.
 func InstallTanks(c TankCalls) func() {
 	previous := tanks
+	Fill(&c)
 	tanks = c
 	return func() { tanks = previous }
 }
@@ -36,9 +37,6 @@ func MaxTankAttackers() ConVar { return 0 }
 //
 //sp:body GetCountOfBotsWithNamedAction
 func CountOfBotsWithNamedActionExcept(name string, ignore int32) int32 {
-	if tanks.CountExcept == nil {
-		missing("GetCountOfBotsWithNamedAction")
-	}
 	return tanks.CountExcept(name, ignore)
 }
 
@@ -58,9 +56,6 @@ func ClassHeavyweapons() Class { return 6 }
 //
 //sp:method Approach
 func (l Locomotion) ApproachWeighted(goal [3]float32, weight float32) {
-	if tanks.ApproachWeighted == nil {
-		missing("ILocomotion.Approach")
-	}
 	tanks.ApproachWeighted(l, goal, weight)
 }
 
@@ -68,31 +63,18 @@ func (l Locomotion) ApproachWeighted(goal [3]float32, weight float32) {
 // destination, so the Go assigns the answer back to the same vector.
 //
 //sp:native ScaleVector inplace
-func ScaleVector(v [3]float32, scale float32) [3]float32 {
-	if tanks.ScaleVector == nil {
-		missing("ScaleVector")
-	}
-	return tanks.ScaleVector(v, scale)
-}
+func ScaleVector(v [3]float32, scale float32) [3]float32 { return tanks.ScaleVector(v, scale) }
 
 // AddVectors adds them.
 //
 //sp:native AddVectors
-func AddVectors(a [3]float32, b [3]float32) (sum [3]float32) {
-	if tanks.AddVectors == nil {
-		missing("AddVectors")
-	}
-	return tanks.AddVectors(a, b)
-}
+func AddVectors(a [3]float32, b [3]float32) (sum [3]float32) { return tanks.AddVectors(a, b) }
 
 // ComputeToPos builds a path to a position, with its own arguments: a tank is a
 // moving hull, and the goal is wanted even when the path fails.
 //
 //sp:method ComputeToPos
 func (p Path) ComputeToPos(bot Bot, goal [3]float32, maxDistance float32, includeGoal bool) {
-	if tanks.ComputeToPos == nil {
-		missing("PathFollower.ComputeToPos")
-	}
 	tanks.ComputeToPos(p, bot, goal, maxDistance, includeGoal)
 }
 
@@ -100,18 +82,10 @@ func (p Path) ComputeToPos(bot Bot, goal [3]float32, maxDistance float32, includ
 //
 //sp:native GetEntPropVector
 func EntPropVector(entity int32, propType PropType, prop string) (out [3]float32) {
-	if tanks.EntPropVector == nil {
-		missing("GetEntPropVector")
-	}
 	return tanks.EntPropVector(entity, propType, prop)
 }
 
 // LogError writes a line to the error log.
 //
 //sp:native LogError
-func LogError(format string, args ...any) {
-	if tanks.LogError == nil {
-		missing("LogError")
-	}
-	tanks.LogError(format, args...)
-}
+func LogError(format string, args ...any) { tanks.LogError(format, args...) }

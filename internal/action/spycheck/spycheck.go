@@ -37,10 +37,10 @@ check to end still gets his stab.
 */
 package spycheck
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // How fast the circle of ground a Spy could have reached grows, in units a second
 //
@@ -102,17 +102,17 @@ var (
 
 var (
 	//sp:name m_ctSpyCheckEnd
-	checkEnd [Slots]float32
+	checkEnd [slots.Count]float32
 	//sp:name m_ctSpyCheckNextLook
-	nextLook [Slots]float32
+	nextLook [slots.Count]float32
 	//sp:name m_iSpyCheckSuspect
-	suspectOf [Slots]int32
+	suspectOf [slots.Count]int32
 	//sp:name m_bSpyCheckHit
-	hit [Slots]bool
+	hit [slots.Count]bool
 	//sp:name m_bSpyCheckSeen
-	seen [Slots][Slots]bool
+	seen [slots.Count][slots.Count]bool
 	//sp:name m_ctSpyBehindSince
-	behindSince [Slots]float32
+	behindSince [slots.Count]float32
 )
 
 // NoteSighting is a Spy seen doing something a Spy does. Everything else here
@@ -226,7 +226,7 @@ func Update(actor int32) engine.Outcome {
 
 	myBody := myBot.Body()
 
-	engine.AimHeadTowards(myBody, engine.WorldSpaceCenter(suspect), engine.AimCritical(), 0.5, engine.AddressNull(), "Spy check")
+	engine.AimHeadTowards(myBody, engine.WorldSpaceCenter(suspect), engine.AimCritical(), 0.5, engine.NoAddress(), "Spy check")
 
 	spyRange := engine.VectorDistance(engine.AbsOriginOf(actor), engine.AbsOriginOf(suspect))
 
@@ -353,7 +353,7 @@ const (
 )
 
 //sp:name m_ctNextSpyGlance
-var nextGlance [Slots]float32
+var nextGlance [slots.Count]float32
 
 // UpdateGlance turns the bot round when the team is worried about Spies.
 //
@@ -385,7 +385,7 @@ func UpdateGlance(client int32) {
 	behind[1] -= myForward[1] * glanceRange
 	behind[2] -= myForward[2] * glanceRange
 
-	engine.AimHeadTowards(myBot.Body(), behind, engine.AimImportant(), glanceTime, engine.AddressNull(), "Checking behind me")
+	engine.AimHeadTowards(myBot.Body(), behind, engine.AimImportant(), glanceTime, engine.NoAddress(), "Checking behind me")
 }
 
 /*

@@ -16,15 +16,15 @@ that the rule holds for every path rather than the one that was written.
 */
 package guardpoint
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // pointDefendArea is the piece of ground each bot is holding.
 //
 //sp:name m_vecPointDefendArea
-var pointDefendArea [Slots][3]float32
+var pointDefendArea [slots.Count][3]float32
 
 // OnStart finds a piece of ground near the point that the bot can actually
 // reach, and gives up on the whole idea if there is none.

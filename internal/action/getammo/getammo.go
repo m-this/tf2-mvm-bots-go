@@ -11,13 +11,13 @@ neither yet. mvm-z83 carries that gap.
 */
 package getammo
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
-
-// Slots is the client array size, MAXPLAYERS + 1.
-const Slots = 65
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 //sp:name m_iAmmoPack
-var ammoPack [Slots]int32
+var ammoPack [slots.Count]int32
 
 /*
 The other packs he could have had, kept so a refused path is not the end of the walk
@@ -45,13 +45,13 @@ const (
 
 var (
 	//sp:name m_arrAmmoCandidates
-	candidates [Slots][candidatesMax]int32
+	candidates [slots.Count][candidatesMax]int32
 	//sp:name m_iAmmoCandidateCount
-	candidateCount [Slots]int32
+	candidateCount [slots.Count]int32
 	//sp:name m_iAmmoCandidate
-	candidate [Slots]int32
+	candidate [slots.Count]int32
 	//sp:name m_iAmmoRepathFails
-	repathFails [Slots]int32
+	repathFails [slots.Count]int32
 )
 
 // OnStart ranks the packs in range and takes the nearest.
@@ -271,9 +271,9 @@ const askInterval = 0.5
 
 var (
 	//sp:name m_ctAmmoAsk
-	ammoAsk [Slots]float32
+	ammoAsk [slots.Count]float32
 	//sp:name m_bAmmoPossible
-	ammoPossible [Slots]bool
+	ammoPossible [slots.Count]bool
 )
 
 /*

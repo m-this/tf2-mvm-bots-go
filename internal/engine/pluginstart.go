@@ -52,6 +52,7 @@ var pluginStarts PluginStartCalls
 // InstallPluginStarts puts a set of answers behind them.
 func InstallPluginStarts(c PluginStartCalls) func() {
 	previous := pluginStarts
+	Fill(&c)
 	pluginStarts = c
 	return func() { pluginStarts = previous }
 }
@@ -61,9 +62,6 @@ func InstallPluginStarts(c PluginStartCalls) func() {
 //sp:native RegAdminCmd
 //nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
 func RegAdminCmd(name string, callback func(client int32, args int32) Outcome, flags int32, description string) {
-	if pluginStarts.RegAdminCmd == nil {
-		missing("RegAdminCmd")
-	}
 	pluginStarts.RegAdminCmd(name, flags, description)
 }
 
@@ -73,9 +71,6 @@ func RegAdminCmd(name string, callback func(client int32, args int32) Outcome, f
 //sp:native RegAdminCmd
 //nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
 func RegAdminCmdPlain(name string, callback func(client int32, args int32) Outcome, flags int32) {
-	if pluginStarts.RegAdminCmd == nil {
-		missing("RegAdminCmd")
-	}
 	pluginStarts.RegAdminCmd(name, flags, "")
 }
 
@@ -94,9 +89,6 @@ func RegConsoleCmdPlain(name string, callback func(client int32, args int32) Out
 //sp:native HookConVarChange
 //nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
 func HookConVarChange(c ConVar, callback func(convar ConVar, before Text, after Text)) {
-	if pluginStarts.HookConVarChange == nil {
-		missing("HookConVarChange")
-	}
 	pluginStarts.HookConVarChange(c)
 }
 
@@ -105,9 +97,6 @@ func HookConVarChange(c ConVar, callback func(convar ConVar, before Text, after 
 //sp:native AddCommandListener
 //nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
 func AddCommandListener(callback func(client int32, command Text, argc int32) Outcome, command string) {
-	if pluginStarts.AddCommandListener == nil {
-		missing("AddCommandListener")
-	}
 	pluginStarts.AddCommandListener(command)
 }
 
@@ -116,21 +105,13 @@ func AddCommandListener(callback func(client int32, command Text, argc int32) Ou
 //sp:native AddNormalSoundHook
 //nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
 func AddNormalSoundHook(callback func(clients [101]int32, numClients int32, sample Text, entity int32, channel int32, volume float32, level int32, pitch int32, flags int32, soundEntry Text, seed int32) Outcome) {
-	if pluginStarts.AddNormalSoundHook == nil {
-		missing("AddNormalSoundHook")
-	}
 	pluginStarts.AddNormalSoundHook()
 }
 
 // SetFailState stops the plugin, saying why. Nothing after it runs.
 //
 //sp:native SetFailState
-func SetFailState(format string, args ...any) {
-	if pluginStarts.SetFailState == nil {
-		missing("SetFailState")
-	}
-	pluginStarts.SetFailState(format, args)
-}
+func SetFailState(format string, args ...any) { pluginStarts.SetFailState(format, args) }
 
 // GameData is a parsed gamedata file, which the caller owns.
 //
@@ -145,218 +126,113 @@ func NoGameData() GameData { return 0 }
 // NewGameData parses one by name.
 //
 //sp:new GameData
-func NewGameData(name string) GameData {
-	if pluginStarts.NewGameData == nil {
-		missing("new GameData")
-	}
-	return pluginStarts.NewGameData(name)
-}
+func NewGameData(name string) GameData { return pluginStarts.NewGameData(name) }
 
 // Close releases it.
 //
 //sp:delete Close
-func (g GameData) Close() {
-	if pluginStarts.CloseGameData == nil {
-		missing("delete GameData")
-	}
-	pluginStarts.CloseGameData(g)
-}
+func (g GameData) Close() { pluginStarts.CloseGameData(g) }
 
 // GameConfAddress is an address the gamedata file names.
 //
 //sp:native GameConfGetAddress
-func GameConfAddress(g GameData, name string) Address {
-	if pluginStarts.GameConfAddress == nil {
-		missing("GameConfGetAddress")
-	}
-	return pluginStarts.GameConfAddress(g, name)
-}
+func GameConfAddress(g GameData, name string) Address { return pluginStarts.GameConfAddress(g, name) }
 
 // InitOffsets reads every offset the mod needs. Still in offsets.sp.
 //
 //sp:body InitOffsets
-func InitOffsets(g GameData) {
-	if pluginStarts.InitOffsets == nil {
-		missing("InitOffsets")
-	}
-	pluginStarts.InitOffsets(g)
-}
+func InitOffsets(g GameData) { pluginStarts.InitOffsets(g) }
 
 // InitMvMUpgrades reads the upgrade offsets. Still in tf_upgrades.sp.
 //
 //sp:body InitMvMUpgrades
-func InitMvMUpgrades(g GameData) {
-	if pluginStarts.InitMvMUpgrades == nil {
-		missing("InitMvMUpgrades")
-	}
-	pluginStarts.InitMvMUpgrades(g)
-}
+func InitMvMUpgrades(g GameData) { pluginStarts.InitMvMUpgrades(g) }
 
 // InitSDKCalls prepares every SDKCall, and says whether it could. Still in
 // sdkcalls.sp.
 //
 //sp:body InitSDKCalls
-func InitSDKCalls(g GameData) bool {
-	if pluginStarts.InitSDKCalls == nil {
-		missing("InitSDKCalls")
-	}
-	return pluginStarts.InitSDKCalls(g)
-}
+func InitSDKCalls(g GameData) bool { return pluginStarts.InitSDKCalls(g) }
 
 // InitDHooks prepares every detour, and says whether it could. Still in
 // dhooks.sp.
 //
 //sp:body InitDHooks
-func InitDHooks(g GameData) bool {
-	if pluginStarts.InitDHooks == nil {
-		missing("InitDHooks")
-	}
-	return pluginStarts.InitDHooks(g)
-}
+func InitDHooks(g GameData) bool { return pluginStarts.InitDHooks(g) }
 
 // SetUpgradesAddress writes g_pMannVsMachineUpgrades.
 //
 //sp:globalset g_pMannVsMachineUpgrades
-func SetUpgradesAddress(address Address) {
-	if pluginStarts.SetUpgradesAddress == nil {
-		missing("g_pMannVsMachineUpgrades")
-	}
-	pluginStarts.SetUpgradesAddress(address)
-}
+func SetUpgradesAddress(address Address) { pluginStarts.SetUpgradesAddress(address) }
 
 // LateLoad says the plugin was loaded onto a running server, so the world
 // already exists and has to be looked at rather than waited for.
 //
 //sp:global g_bLateLoad
-func LateLoad() bool {
-	if pluginStarts.LateLoad == nil {
-		missing("g_bLateLoad")
-	}
-	return pluginStarts.LateLoad()
-}
+func LateLoad() bool { return pluginStarts.LateLoad() }
 
 // LoadFeatures publishes what this build can do. Ported, features.
 //
 //sp:plugin LoadFeatures
-func LoadFeatures() {
-	if pluginStarts.LoadFeatures == nil {
-		missing("LoadFeatures")
-	}
-	pluginStarts.LoadFeatures()
-}
+func LoadFeatures() { pluginStarts.LoadFeatures() }
 
 // BluAssistInit prepares the BLU-side helper. Ported, bluassist.
 //
 //sp:body BluAssist_Init
-func BluAssistInit() {
-	if pluginStarts.BluAssistInit == nil {
-		missing("BluAssist_Init")
-	}
-	pluginStarts.BluAssistInit()
-}
+func BluAssistInit() { pluginStarts.BluAssistInit() }
 
 // DebugFaultsInit prepares the fault watcher. Ported, faults.
 //
 //sp:body DebugFaults_Init
-func DebugFaultsInit() {
-	if pluginStarts.DebugFaultsInit == nil {
-		missing("DebugFaults_Init")
-	}
-	pluginStarts.DebugFaultsInit()
-}
+func DebugFaultsInit() { pluginStarts.DebugFaultsInit() }
 
 // LoadLoadoutFunctions prepares the loadout tables. Ported, loadouts.
 //
 //sp:body LoadLoadoutFunctions
-func LoadLoadoutFunctions() {
-	if pluginStarts.LoadLoadoutFuncs == nil {
-		missing("LoadLoadoutFunctions")
-	}
-	pluginStarts.LoadLoadoutFuncs()
-}
+func LoadLoadoutFunctions() { pluginStarts.LoadLoadoutFuncs() }
 
 // LoadPreferencesData reads the saved player preferences. Ported, playerpref.
 //
 //sp:body LoadPreferencesData
-func LoadPreferencesData() {
-	if pluginStarts.LoadPreferences == nil {
-		missing("LoadPreferencesData")
-	}
-	pluginStarts.LoadPreferences()
-}
+func LoadPreferencesData() { pluginStarts.LoadPreferences() }
 
 // InitNextBotPathing prepares the path objects every bot keeps. Ported,
 // botreset.
 //
 //sp:body InitNextBotPathing
-func InitNextBotPathing() {
-	if pluginStarts.InitNextBotPathing == nil {
-		missing("InitNextBotPathing")
-	}
-	pluginStarts.InitNextBotPathing()
-}
+func InitNextBotPathing() { pluginStarts.InitNextBotPathing() }
 
 // ArchipelagoInit prepares the campaign seam. Ported, archipelago.
 //
 //sp:body Archipelago_Init
-func ArchipelagoInit() {
-	if pluginStarts.ArchipelagoInit == nil {
-		missing("Archipelago_Init")
-	}
-	pluginStarts.ArchipelagoInit()
-}
+func ArchipelagoInit() { pluginStarts.ArchipelagoInit() }
 
 // InitGameEventHooks asks for every game event the mod watches. Ported,
 // gameevents.
 //
 //sp:body InitGameEventHooks
-func InitGameEventHooks() {
-	if pluginStarts.InitGameEventHooks == nil {
-		missing("InitGameEventHooks")
-	}
-	pluginStarts.InitGameEventHooks()
-}
+func InitGameEventHooks() { pluginStarts.InitGameEventHooks() }
 
 // InitMapConfig empties the record and makes its lists, which is the enum
 // struct's own method.
 //
 //sp:plugin g_arrMapConfig.Initialize
-func InitMapConfig() {
-	if pluginStarts.InitMapConfig == nil {
-		missing("g_arrMapConfig.Initialize")
-	}
-	pluginStarts.InitMapConfig()
-}
+func InitMapConfig() { pluginStarts.InitMapConfig() }
 
 // SetChosenBotClasses writes g_adtChosenBotClasses.
 //
 //sp:globalset g_adtChosenBotClasses
-func SetChosenBotClasses(l List) {
-	if pluginStarts.SetChosenClasses == nil {
-		missing("g_adtChosenBotClasses")
-	}
-	pluginStarts.SetChosenClasses(l)
-}
+func SetChosenBotClasses(l List) { pluginStarts.SetChosenClasses(l) }
 
 // SetChosenBotSeats writes g_adtChosenBotSeats.
 //
 //sp:globalset g_adtChosenBotSeats
-func SetChosenBotSeats(l List) {
-	if pluginStarts.SetChosenSeats == nil {
-		missing("g_adtChosenBotSeats")
-	}
-	pluginStarts.SetChosenSeats(l)
-}
+func SetChosenBotSeats(l List) { pluginStarts.SetChosenSeats(l) }
 
 // SetBotNames writes m_adtBotNames.
 //
 //sp:globalset m_adtBotNames
-func SetBotNames(l List) {
-	if pluginStarts.SetBotNames == nil {
-		missing("m_adtBotNames")
-	}
-	pluginStarts.SetBotNames(l)
-}
+func SetBotNames(l List) { pluginStarts.SetBotNames(l) }
 
 // NameMax is MAX_NAME_LENGTH, the block size the bot names list wants.
 //
@@ -366,21 +242,13 @@ func NameMax() int32 { return 32 }
 // PlayerPrefPath is g_sPlayerPrefPath, the file the preferences are kept in.
 //
 //sp:global g_sPlayerPrefPath
-func PlayerPrefPath() Text {
-	if pluginStarts.SetPlayerPrefPath == nil {
-		missing("g_sPlayerPrefPath")
-	}
-	return Text{}
-}
+func PlayerPrefPath() Text { return Text{} }
 
 // BuildPathInto is BuildPath writing into a buffer that already exists, which
 // the preference path is: the plugin declares it and this fills it.
 //
 //sp:native BuildPath before Path_SM
 func BuildPathInto(out Text, maxlen int32, format string) {
-	if pluginStarts.BuildPathInto == nil {
-		missing("BuildPath")
-	}
 	pluginStarts.BuildPathInto(out, maxlen, format)
 }
 
@@ -388,22 +256,12 @@ func BuildPathInto(out Text, maxlen int32, format string) {
 // upgrades are read out of.
 //
 //sp:global g_pMannVsMachineUpgrades
-func UpgradesAddress() Address {
-	if pluginStarts.UpgradesAddress == nil {
-		missing("g_pMannVsMachineUpgrades")
-	}
-	return pluginStarts.UpgradesAddress()
-}
+func UpgradesAddress() Address { return pluginStarts.UpgradesAddress() }
 
 // FindGameConsoleVariables looks up the game's own convars. Ported, seating.
 //
 //sp:body FindGameConsoleVariables
-func FindGameConsoleVariables() {
-	if pluginStarts.FindGameConsoleVariables == nil {
-		missing("FindGameConsoleVariables")
-	}
-	pluginStarts.FindGameConsoleVariables()
-}
+func FindGameConsoleVariables() { pluginStarts.FindGameConsoleVariables() }
 
 /*
 Asking to be loaded, and what the plugin offers once it is.
@@ -426,21 +284,13 @@ func AplResSuccess() AplRes { return 0 }
 // SetLateLoad writes g_bLateLoad.
 //
 //sp:globalset g_bLateLoad
-func SetLateLoad(late bool) {
-	if pluginStarts.SetLateLoad == nil {
-		missing("g_bLateLoad")
-	}
-	pluginStarts.SetLateLoad(late)
-}
+func SetLateLoad(late bool) { pluginStarts.SetLateLoad(late) }
 
 // CreateNative offers one under that name.
 //
 //sp:native CreateNative
 //nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
 func CreateNative(name string, callback func(plugin int32, params int32) int32) {
-	if pluginStarts.CreateNative == nil {
-		missing("CreateNative")
-	}
 	pluginStarts.CreateNative(name)
 }
 
@@ -448,22 +298,12 @@ func CreateNative(name string, callback func(plugin int32, params int32) int32) 
 // missing, which without it fails the whole load rather than the call.
 //
 //sp:native MarkNativeAsOptional
-func MarkNativeAsOptional(name string) {
-	if pluginStarts.MarkNativeAsOptional == nil {
-		missing("MarkNativeAsOptional")
-	}
-	pluginStarts.MarkNativeAsOptional(name)
-}
+func MarkNativeAsOptional(name string) { pluginStarts.MarkNativeAsOptional(name) }
 
 // RegPluginLibrary publishes the library name other plugins test for.
 //
 //sp:native RegPluginLibrary
-func RegPluginLibrary(name string) {
-	if pluginStarts.RegPluginLibrary == nil {
-		missing("RegPluginLibrary")
-	}
-	pluginStarts.RegPluginLibrary(name)
-}
+func RegPluginLibrary(name string) { pluginStarts.RegPluginLibrary(name) }
 
 // NativeGetPathLength is the native of that name. Ported, statnatives.
 //
@@ -512,20 +352,10 @@ type MapConfigRecord int32
 // is what an ArrayList of strings is sized in.
 //
 //sp:native ByteCountToCells
-func ByteCountToCells(bytes int32) int32 {
-	if pluginStarts.ByteCountToCells == nil {
-		missing("ByteCountToCells")
-	}
-	return pluginStarts.ByteCountToCells(bytes)
-}
+func ByteCountToCells(bytes int32) int32 { return pluginStarts.ByteCountToCells(bytes) }
 
 // VectorIsZero says every component is zero, which is what an unset path goal
 // looks like.
 //
-//sp:plugin Vector_IsZero
-func VectorIsZero(v [3]float32) bool {
-	if pluginStarts.VectorIsZero == nil {
-		missing("Vector_IsZero")
-	}
-	return pluginStarts.VectorIsZero(v)
-}
+//sp:library Vector_IsZero
+func VectorIsZero(v [3]float32) bool { return pluginStarts.VectorIsZero(v) }

@@ -15,6 +15,7 @@ var ubers UberCalls
 // InstallUbers puts a set of answers behind them.
 func InstallUbers(c UberCalls) func() {
 	previous := ubers
+	Fill(&c)
 	ubers = c
 	return func() { ubers = previous }
 }
@@ -42,63 +43,35 @@ func FeatureMedicShield() int32 { return 14 }
 // MedigunType is which of the four this medigun is.
 //
 //sp:body GetMedigunType
-func MedigunType(weapon int32) int32 {
-	if ubers.MedigunType == nil {
-		missing("GetMedigunType")
-	}
-	return ubers.MedigunType(weapon)
-}
+func MedigunType(weapon int32) int32 { return ubers.MedigunType(weapon) }
 
 // CountEnemiesNearPosition is how many robots are in the fight at that spot.
 //
 //sp:body CountEnemiesNearPosition
 func CountEnemiesNearPosition(client int32, origin [3]float32, radius float32) int32 {
-	if ubers.CountEnemiesNearPosition == nil {
-		missing("CountEnemiesNearPosition")
-	}
 	return ubers.CountEnemiesNearPosition(client, origin, radius)
 }
 
 // RageMeter is how full the banner or the shield is.
 //
-//sp:plugin TF2_GetRageMeter
-func RageMeter(client int32) float32 {
-	if ubers.RageMeter == nil {
-		missing("TF2_GetRageMeter")
-	}
-	return ubers.RageMeter(client)
-}
+//sp:library TF2_GetRageMeter
+func RageMeter(client int32) float32 { return ubers.RageMeter(client) }
 
 // IsRageDraining says it is already being spent.
 //
-//sp:plugin TF2_IsRageDraining
-func IsRageDraining(client int32) bool {
-	if ubers.IsRageDraining == nil {
-		missing("TF2_IsRageDraining")
-	}
-	return ubers.IsRageDraining(client)
-}
+//sp:library TF2_IsRageDraining
+func IsRageDraining(client int32) bool { return ubers.IsRageDraining(client) }
 
 // PressSpecialFireButton is the third button, which is what puts a shield up.
 //
-//sp:plugin VS_PressSpecialFireButton
-func PressSpecialFireButton(client int32) {
-	if ubers.PressSpecialFireButton == nil {
-		missing("VS_PressSpecialFireButton")
-	}
-	ubers.PressSpecialFireButton(client)
-}
+//sp:library VS_PressSpecialFireButton
+func PressSpecialFireButton(client int32) { ubers.PressSpecialFireButton(client) }
 
 // LogMessage writes a line to the plugin log, which is where a measured
 // behaviour says it fired.
 //
 //sp:native LogMessage
-func LogMessage(format string, args ...any) {
-	if ubers.LogMessage == nil {
-		missing("LogMessage")
-	}
-	ubers.LogMessage(format, args...)
-}
+func LogMessage(format string, args ...any) { ubers.LogMessage(format, args...) }
 
 // WeaponJarGas is TF_WEAPON_JAR_GAS, the Gas Passer.
 //

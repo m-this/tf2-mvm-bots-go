@@ -14,7 +14,7 @@ type SapperCalls struct {
 	SubtractVectors    func(a [3]float32, b [3]float32) [3]float32
 	VectorLength       func(v [3]float32) float32
 	CanWeaponAttack    func(weapon int32) bool
-	AttribByName       func(entity int32, name string) int32
+	AttribByName       func(entity int32, name string) Address
 	AmmoCount          func(client int32, ammo int32) int32
 	RemoveAmmo         func(client int32, count int32, ammo int32)
 	SetEntPropFloat    func(entity int32, propType PropType, prop string, value float32)
@@ -33,6 +33,7 @@ var sappers SapperCalls
 // InstallSappers puts a set of answers behind them.
 func InstallSappers(c SapperCalls) func() {
 	previous := sappers
+	Fill(&c)
 	sappers = c
 	return func() { sappers = previous }
 }
@@ -57,11 +58,6 @@ func AmmoGrenades2() int32 { return 6 }
 //sp:global TF_WEAPON_BUILDER
 func WeaponBuilder() Weapon { return 26 }
 
-// AddressNull is Address_Null, which is what an absent attribute reads as.
-//
-//sp:global Address_Null
-func AddressNull() int32 { return 0 }
-
 // ClassMedic is TFClass_Medic.
 //
 //sp:global TFClass_Medic
@@ -70,80 +66,44 @@ func ClassMedic() Class { return 5 }
 // IsValidClientIndex says whether the number could be a client at all.
 //
 //sp:body IsValidClientIndex
-func IsValidClientIndex(client int32) bool {
-	if sappers.IsValidClientIndex == nil {
-		missing("IsValidClientIndex")
-	}
-	return sappers.IsValidClientIndex(client)
-}
+func IsValidClientIndex(client int32) bool { return sappers.IsValidClientIndex(client) }
 
 // SubtractVectors is a - b, filling the array it is given.
 //
 //sp:native SubtractVectors
 func SubtractVectors(a [3]float32, b [3]float32) (difference [3]float32) {
-	if sappers.SubtractVectors == nil {
-		missing("SubtractVectors")
-	}
 	return sappers.SubtractVectors(a, b)
 }
 
 // VectorLength is how long the vector is.
 //
 //sp:native GetVectorLength
-func VectorLength(v [3]float32) float32 {
-	if sappers.VectorLength == nil {
-		missing("GetVectorLength")
-	}
-	return sappers.VectorLength(v)
-}
+func VectorLength(v [3]float32) float32 { return sappers.VectorLength(v) }
 
 // CanWeaponAttack says whether the weapon is off cooldown.
 //
 //sp:native TF2Util_CanWeaponAttack
-func CanWeaponAttack(weapon int32) bool {
-	if sappers.CanWeaponAttack == nil {
-		missing("TF2Util_CanWeaponAttack")
-	}
-	return sappers.CanWeaponAttack(weapon)
-}
+func CanWeaponAttack(weapon int32) bool { return sappers.CanWeaponAttack(weapon) }
 
 // AttribByName is the attribute's address, and Address_Null when it has none.
 //
 //sp:native TF2Attrib_GetByName
-func AttribByName(entity int32, name string) int32 {
-	if sappers.AttribByName == nil {
-		missing("TF2Attrib_GetByName")
-	}
-	return sappers.AttribByName(entity, name)
-}
+func AttribByName(entity int32, name string) Address { return sappers.AttribByName(entity, name) }
 
 // AmmoCount is how much of that ammo the player is carrying.
 //
 //sp:native BaseCombatCharacter_GetAmmoCount
-func AmmoCount(client int32, ammo int32) int32 {
-	if sappers.AmmoCount == nil {
-		missing("BaseCombatCharacter_GetAmmoCount")
-	}
-	return sappers.AmmoCount(client, ammo)
-}
+func AmmoCount(client int32, ammo int32) int32 { return sappers.AmmoCount(client, ammo) }
 
 // RemoveAmmo takes some away.
 //
 //sp:native BaseCombatCharacter_RemoveAmmo
-func RemoveAmmo(client int32, count int32, ammo int32) {
-	if sappers.RemoveAmmo == nil {
-		missing("BaseCombatCharacter_RemoveAmmo")
-	}
-	sappers.RemoveAmmo(client, count, ammo)
-}
+func RemoveAmmo(client int32, count int32, ammo int32) { sappers.RemoveAmmo(client, count, ammo) }
 
 // SetEntPropFloat writes a float into one of the entity's property tables.
 //
 //sp:native SetEntPropFloat
 func SetEntPropFloat(entity int32, propType PropType, prop string, value float32) {
-	if sappers.SetEntPropFloat == nil {
-		missing("SetEntPropFloat")
-	}
 	sappers.SetEntPropFloat(entity, propType, prop, value)
 }
 
@@ -152,9 +112,6 @@ func SetEntPropFloat(entity int32, propType PropType, prop string, value float32
 //
 //sp:body SpawnSapper
 func SpawnSapper(owner int32, entity int32, weapon int32) int32 {
-	if sappers.SpawnSapper == nil {
-		missing("SpawnSapper")
-	}
 	return sappers.SpawnSapper(owner, entity, weapon)
 }
 
@@ -164,9 +121,6 @@ func SpawnSapper(owner int32, entity int32, weapon int32) int32 {
 //
 //sp:body GetNearestSappablePlayer
 func NearestSappablePlayer(client int32, maxDistance float32, giantsOnly bool, class Class, speedCheck float32) int32 {
-	if sappers.NearestSappablePlayer == nil {
-		missing("GetNearestSappablePlayer")
-	}
 	return sappers.NearestSappablePlayer(client, maxDistance, giantsOnly, class, speedCheck)
 }
 
@@ -174,9 +128,6 @@ func NearestSappablePlayer(client int32, maxDistance float32, giantsOnly bool, c
 //
 //sp:body GetFarthestSappablePlayer
 func FarthestSappablePlayer(client int32, maxDistance float32, giantsOnly bool, class Class, speedCheck float32) int32 {
-	if sappers.FarthestSappablePlayer == nil {
-		missing("GetFarthestSappablePlayer")
-	}
 	return sappers.FarthestSappablePlayer(client, maxDistance, giantsOnly, class, speedCheck)
 }
 
@@ -184,9 +135,6 @@ func FarthestSappablePlayer(client int32, maxDistance float32, giantsOnly bool, 
 //
 //sp:body GetNearestSappablePlayerHealingSomeone
 func NearestSappablePlayerHealingSomeone(client int32, maxDistance float32, giantsOnly bool, class Class, speedCheck float32) int32 {
-	if sappers.NearestSappablePlayerHealingSomeone == nil {
-		missing("GetNearestSappablePlayerHealingSomeone")
-	}
 	return sappers.NearestSappablePlayerHealingSomeone(client, maxDistance, giantsOnly, class, speedCheck)
 }
 
@@ -194,28 +142,15 @@ func NearestSappablePlayerHealingSomeone(client int32, maxDistance float32, gian
 //
 //sp:body GetNearestEnemyCount
 func NearestEnemyCount(client int32, maxDistance float32, ignoreUber bool) int32 {
-	if sappers.NearestEnemyCount == nil {
-		missing("GetNearestEnemyCount")
-	}
 	return sappers.NearestEnemyCount(client, maxDistance, ignoreUber)
 }
 
 // PlayerSappable is util.sp:1437, ported: internal/body/scan generates it.
 //
 //sp:body IsPlayerSappable
-func PlayerSappable(client int32) bool {
-	if sappers.PlayerSappable == nil {
-		missing("IsPlayerSappable")
-	}
-	return sappers.PlayerSappable(client)
-}
+func PlayerSappable(client int32) bool { return sappers.PlayerSappable(client) }
 
 // PlayerEnemyTeam is util.sp:1044, ported: internal/body/scan generates it.
 //
 //sp:body GetPlayerEnemyTeam
-func PlayerEnemyTeam(client int32) Team {
-	if sappers.PlayerEnemyTeam == nil {
-		missing("GetPlayerEnemyTeam")
-	}
-	return sappers.PlayerEnemyTeam(client)
-}
+func PlayerEnemyTeam(client int32) Team { return sappers.PlayerEnemyTeam(client) }
