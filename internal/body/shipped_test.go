@@ -61,6 +61,9 @@ function, and for a while these were emitted and never compared.
 */
 var emittedNames = regexp.MustCompile(`(?m)^(?:stock|public) \w+(?:\[\])? (\w+)\(`)
 
+// dimension is what sits between one pair of brackets.
+var dimension = regexp.MustCompile(`\[[^\]]*\]`)
+
 /*
 	declarationOf is the function itself, not the first mention of its name
 
@@ -142,6 +145,23 @@ func shape(fn string) string {
 		if at := strings.Index(p, "["); at >= 0 && at > strings.LastIndexByte(p, ' ') {
 			dims, p = p[at:], strings.TrimSpace(p[:at])
 		}
+
+		/* A parameter's dimension is documentation, so only the rank counts
+
+		SourcePawn hands an array parameter to the callee by reference and
+		tells it nothing about the length, so char[] and
+		char[PLATFORM_MAX_PATH] are the same contract; sizeof is the one
+		thing that would tell them apart, and
+		TestNoShippedFunctionSizesItsOwnParameter checks that no shipped
+		function does that. What is kept is the number of brackets, which
+		is the rank and is part of the type.
+
+		The one place the spelling does matter is a callback compared
+		against a typedef: AddNormalSoundHook refuses a hook declared
+		int clients[101] where NormalSHook says int clients[MAXPLAYERS].
+		//sp:dim writes it out, and internal/plugin's whole-plugin
+		compile is what catches a missing one. */
+		dims = dimension.ReplaceAllString(dims, "[]")
 		if space := strings.LastIndexByte(p, ' '); space >= 0 {
 			p = p[:space]
 		}
@@ -169,7 +189,7 @@ var reshaped = map[string]string{
 	"CreateDisplayPanelBotPercentages":       "nine blocks of the same four lines, one per class, became one loop: the class names are a table and the shares were already indexed by class. Checked by hand: the same nine names in the same order, the same skip of a class with no share",
 	"CollectUpgrades":                        "the candidate list was a JSONArray of JSONObjects, one handle per row and another per read; it is one ArrayList of five-cell rows. Checked by hand: the same slots are pushed in the same order for the same classes, the same two UI groups are skipped, the same attribute test gates the row, and the five cells hold what the five keys held",
 	"ShowCurrentBotClassChances":             "nine hand-written if (classFlags & PREF_FL_X) classChoiceCount[n]++ became one loop over PrefFlagOf(c) = 1 << c. Checked by hand against the shipped file: the nine flags are 1, 2, 4, ... 256 and the nine indices are 0 through 8, in that order, so class c is counted by bit c either way. The rest of the function is unchanged",
-	"DefenderBot_TouchPost":                  "one branch of the shipped one. The whole body is #if defined TFBOT_CUSTOM_SPY_CONTACT, and that define is commented out at tf2_defenderbots.sp line 33 and written nowhere else, so what compiles is the #else: the single TFBot_NoticeThreat call this port carries. The data-timer branch and Timer_RealizeSpy with it have never run",
+	"DefenderBot_TouchPost":                  "one branch of the shipped one. The whole body is #if defined TFBOT_CUSTOM_SPY_CONTACT, and that define is commented out at tf2_defenderbots.sp line 33 and written nowhere else, so what compiles is the #else: the single TFBot_NoticeThreat call this port carries. The data-timer branch has never run here; Timer_RealizeSpy itself is live, called from SoundHook_General",
 	"OnClientPutInServer":                    "two calls apart from the shipped one, both already settled. m_flLastCommandTime[client] = GetGameTime() is now Go_ResetCommandThrottle(client), which generated/humans.sp shows is that one assignment and nothing else. BotAim(client).Reset() is under #if defined IDLEBOT_AIMING, commented out at tf2_defenderbots.sp line 39 and written nowhere else, so it has never run. Every other line was checked field by field against the snapshot and writes the same value",
 	"Timer_PlayerSpawn":                      "one call short of the shipped one: VS_AddBotAttribute(data, CTFBot_IGNORE_ENEMIES) sits under #if defined IDLEBOT_AIMING, which is defined nowhere in the include tree, so it never ran. The snapshot is the text, guards and all; what compiled is what the port carries",
 	"CTFBotUpgrade_Update":                   "the chooser returns a row index rather than a JSONObject, so the caller reads a cell instead of a key and frees nothing. Same interval, same window test, same refusal path, same medic beam; see CollectUpgrades for the shape",

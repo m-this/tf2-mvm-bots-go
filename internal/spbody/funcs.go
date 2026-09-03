@@ -208,6 +208,34 @@ func writablesOf(d *ast.FuncDecl) map[string]bool {
 }
 
 // lengthDirective names the parameter carrying a buffer parameter's length.
+/*
+	dimDirective spells an array parameter's dimension
+
+SourcePawn compares a callback against its typedef by prototype, dimensions
+included: AddNormalSoundHook takes a NormalSHook and refuses one declared
+int clients[101] where the typedef says int clients[MAXPLAYERS], even though the
+define is 101. Go has to name a number to have a type, so this says what to
+write in its place.
+*/
+const dimDirective = "//sp:dim"
+
+// dimsOf reads //sp:dim <parameter> <spelling> off a declaration.
+func dimsOf(d *ast.FuncDecl) map[string]string {
+	out := map[string]string{}
+	if d.Doc == nil {
+		return out
+	}
+	for _, c := range d.Doc.List {
+		for line := range strings.Lines(c.Text) {
+			fields := strings.Fields(line)
+			if len(fields) == 3 && fields[0] == dimDirective {
+				out[fields[1]] = fields[2]
+			}
+		}
+	}
+	return out
+}
+
 const lengthDirective = "//sp:length"
 
 /*
@@ -371,6 +399,8 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 			}
 		}
 	}
+	spelling := dimsOf(d)
+
 	var names []string
 	for i := range sig.Params().Len() {
 		p := sig.Params().At(i)
@@ -405,6 +435,10 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 			which with //sp:writable, and the comparison against the
 			shipped declaration checks it. */
 			if e.writable[name] {
+				if spelt, given := spelling[name]; given {
+					params = append(params, "char "+e.ident(d.Pos(), name)+"["+spelt+"]")
+					continue
+				}
 				params = append(params, "char[] "+e.ident(d.Pos(), name))
 				continue
 			}
@@ -417,6 +451,12 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 		}
 		names = append(names, name)
 		if tag == "char" && len(dims) == 1 {
+			if spelt, given := spelling[name]; given {
+				// The dimension is written out, because a callback
+				// typedef compares prototypes and not values.
+				params = append(params, "char "+e.ident(d.Pos(), name)+"["+spelt+"]")
+				continue
+			}
 			if _, written := e.lengths[name]; written {
 				// A buffer this function fills, whose length came
 				// with it. Not const: filling it is the point.
@@ -460,6 +500,12 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 			inner := declare(tag, e.ident(d.Pos(), name), dims[1:])
 			at := strings.Index(inner, "[")
 			params = append(params, inner[:at]+"[]"+inner[at:])
+			continue
+		}
+		if spelt, given := spelling[name]; given {
+			// The dimension is written out, because a callback typedef
+			// compares prototypes and not values.
+			params = append(params, tag+" "+e.ident(d.Pos(), name)+"["+spelt+"]")
 			continue
 		}
 		if e.consts[name] {

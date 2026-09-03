@@ -328,6 +328,7 @@ char g_sBotTeamCompositions[][][] =
 #include "redbots3/generated/commands.sp"
 #include "redbots3/generated/readystate.sp"
 #include "redbots3/generated/dumpspot.sp"
+#include "redbots3/generated/soundhook.sp"
 #include "redbots3/generated/teammenu.sp"
 #include "redbots3/generated/prefmenu.sp"
 #include "redbots3/generated/addmenu.sp"
@@ -997,63 +998,6 @@ public void ConVarChanged_ManagerMode(ConVar convar, const char[] oldValue, cons
 	
 	//TODO: really only here for legacy reasons
 	//Catch all cases of everything!
-}
-
-public Action SoundHook_General(int clients[MAXPLAYERS], int &numClients, char sample[PLATFORM_MAX_PATH], int &entity, int &channel, float &volume, int &level, int &pitch, int &flags, char soundEntry[PLATFORM_MAX_PATH], int &seed)
-{
-	if (channel == SNDCHAN_VOICE && volume > 0.0 && BaseEntity_IsPlayer(entity))
-	{
-		if (StrContains(sample, "spy_mvm_LaughShort", false) != -1)
-		{
-			if (TF2_IsPlayerInCondition(entity, TFCond_Disguised) && !TF2_IsStealthed(entity))
-			{
-				/* Robots have robotic voices even when disguised so any
-				defender bot that can see him right now will call him out */
-				for (int i = 1; i <= MaxClients; i++)
-				{
-					if (i == entity)
-						continue;
-					
-					if (!IsClientInGame(i))
-						continue;
-					
-					if (g_bIsDefenderBot[i] == false)
-						continue;
-					
-					if (GetClientTeam(entity) == GetClientTeam(i))
-						continue;
-					
-					if (GetVectorDistance(GetAbsOrigin(i), WorldSpaceCenter(entity)) > redbots_manager_bot_hear_spy_range.FloatValue)
-						continue;
-					
-					if (IsLineOfFireClearEntity(i, GetEyePosition(i), entity))
-					{
-						DataPack pack;
-						CreateDataTimer(redbots_manager_bot_notice_spy_time.FloatValue, Timer_RealizeSpy, pack, TIMER_FLAG_NO_MAPCHANGE);
-						pack.WriteCell(GetClientUserId(i));
-						pack.WriteCell(GetClientUserId(entity));
-						pack.Reset();
-					}
-				}
-			}
-		}
-	}
-	
-	return Plugin_Continue;
-}
-public void Timer_RealizeSpy(Handle timer, DataPack pack)
-{
-	int client = GetClientOfUserId(pack.ReadCell());
-	
-	if (client == 0)
-		return;
-	
-	int threat = GetClientOfUserId(pack.ReadCell());
-	
-	if (threat == 0)
-		return;
-	
-	TFBot_NoticeThreat(client, threat);
 }
 
 void AddBotsWithPresetTeamComp(int count = 6, int teamType = 0)
