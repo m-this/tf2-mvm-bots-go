@@ -171,14 +171,14 @@ bought anything, which skipped the shopping trip and, from the second wave on, s
 rest of the mission. */
 bool g_bShoppedThisBreak[MAXPLAYERS + 1];
 esButtonInput g_arrExtraButtons[MAXPLAYERS + 1];
-static float m_flDeadRethinkTime[MAXPLAYERS + 1];
+float m_flDeadRethinkTime[MAXPLAYERS + 1]; //no longer static: generated/lifecycle.sp clears it, and a file-static is invisible from an included file
 int g_iBuybackNumber[MAXPLAYERS + 1];
 int g_iBuyUpgradesNumber[MAXPLAYERS + 1];
 
 static float m_flNextSnipeFireTime[MAXPLAYERS + 1];
 
 #if defined MOD_ROLL_THE_DICE_REVAMPED
-static float m_flNextRollTime[MAXPLAYERS + 1];
+float m_flNextRollTime[MAXPLAYERS + 1]; //no longer static: generated/lifecycle.sp clears it, and a file-static is invisible from an included file
 #endif
 
 //For other players
@@ -188,7 +188,7 @@ bool g_bChoosingBotClasses[MAXPLAYERS + 1];
 float g_flEnableBotsCooldown[MAXPLAYERS + 1];
 #endif
 
-static float m_flLastReadyInputTime[MAXPLAYERS + 1];
+float m_flLastReadyInputTime[MAXPLAYERS + 1]; //no longer static: generated/lifecycle.sp clears it, and a file-static is invisible from an included file
 
 //Config
 esMapConfiguration g_arrMapConfig;
@@ -626,43 +626,6 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	
 	return APLRes_Success;
 }
-public void OnClientPutInServer(int client)
-{
-	if (!IsFakeClient(client))
-		MakeRoomForHumanPlayer(client);
-
-	
-	//The name is set at tf_bot_add, so one of ours is known here, before it picks its loadout
-	if (IsDefenderBot(client))
-		TakeBotSeat(client);
-
-	g_bHasUpgraded[client] = false;
-	g_bShoppedThisBreak[client] = false;
-	//A slot is reused, and a call left on the clock by whoever had it is not this player's call
-	ForgetMedicCall(client);
-	g_arrExtraButtons[client].Reset();
-	m_flDeadRethinkTime[client] = 0.0;
-	g_iBuybackNumber[client] = 0;
-	g_iBuyUpgradesNumber[client] = 0;
-	
-#if defined MOD_ROLL_THE_DICE_REVAMPED
-	m_flNextRollTime[client] = 0.0;
-#endif
-	
-#if defined CHANGETEAM_RESTRICTIONS
-	g_flEnableBotsCooldown[client] = 0.0;
-#endif
-	
-	Go_ResetCommandThrottle(client);
-	m_flLastReadyInputTime[client] = 0.0;
-	
-	g_bHasBoughtUpgrades[client] = false;
-	
-	ResetNextBot(client);
-	ResetSpawnExitWatch(client);
-	
-}
-
 /* NOTE: This forward is not consistent with nextbot functionalities such as Action::Update
 Nextbot behavior updates are based on the value of convar nb_update_frequency
 This forward is only called every time CBasePlayer::PlayerRunCommand is called, which updates on its own interval

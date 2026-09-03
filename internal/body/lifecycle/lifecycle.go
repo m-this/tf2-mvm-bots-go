@@ -194,3 +194,44 @@ func OnClientDisconnect(client int32) {
 	engine.ForgetBotSeat(client)
 	engine.ForgetBotCosmetics(client)
 }
+
+/*
+	OnClientPutInServer forgets everything the previous occupant of the slot left
+
+The name is set at tf_bot_add, so one of ours is known here, before it picks its
+loadout.
+*/
+//
+//sp:name OnClientPutInServer
+//sp:public
+func OnClientPutInServer(client int32) {
+	if !engine.IsFakeClient(client) {
+		engine.MakeRoomForHumanPlayer(client)
+	}
+
+	if engine.IsDefenderBot(client) {
+		engine.TakeBotSeat(client)
+	}
+
+	engine.SetHasUpgraded(client, false)
+	engine.SetShoppedThisBreak(client, false)
+	// A slot is reused, and a call left on the clock by whoever had it is not
+	// this player's call.
+	engine.ForgetMedicCall(client)
+	engine.ExtraButtons(client).Reset()
+	engine.SetDeadRethinkTime(client, 0.0)
+	engine.SetBuybackNumber(client, 0)
+	engine.SetBuyUpgradesNumber(client, 0)
+
+	engine.SetNextRollTime(client, 0.0)
+
+	engine.SetEnableBotsCooldown(client, 0.0)
+
+	engine.ResetCommandThrottle(client)
+	engine.SetLastReadyInputTime(client, 0.0)
+
+	engine.SetHasBoughtUpgrades(client, false)
+
+	engine.ResetNextBot(client)
+	engine.ResetSpawnExitWatch(client)
+}

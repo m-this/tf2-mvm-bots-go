@@ -122,3 +122,29 @@ public void OnClientDisconnect(int client)
 	ForgetBotCosmetics(client);
 }
 
+public void OnClientPutInServer(int client)
+{
+	if (!IsFakeClient(client))
+	{
+		MakeRoomForHumanPlayer(client);
+	}
+	if (IsDefenderBot(client))
+	{
+		TakeBotSeat(client);
+	}
+	g_bHasUpgraded[client] = false;
+	g_bShoppedThisBreak[client] = false;
+	ForgetMedicCall(client);
+	g_arrExtraButtons[client].Reset();
+	m_flDeadRethinkTime[client] = 0.0;
+	g_iBuybackNumber[client] = 0;
+	g_iBuyUpgradesNumber[client] = 0;
+	m_flNextRollTime[client] = 0.0;
+	g_flEnableBotsCooldown[client] = 0.0;
+	Go_ResetCommandThrottle(client);
+	m_flLastReadyInputTime[client] = 0.0;
+	g_bHasBoughtUpgrades[client] = false;
+	ResetNextBot(client);
+	ResetSpawnExitWatch(client);
+}
+
