@@ -23,6 +23,10 @@ type PutInServerCalls struct {
 	ResetNextBot           func(client int32)
 	TakeBotSeat            func(client int32)
 	MakeRoomForHumanPlayer func(client int32)
+	DefenderBotCount       func(team Team) int32
+	ShouldProcessCommand   func(client int32) bool
+	LastReadyInputTime     func(client int32) float32
+	MissionDifficultyNow   func() MissionDifficulty
 }
 
 var putInServers PutInServerCalls
@@ -149,4 +153,59 @@ func MakeRoomForHumanPlayer(client int32) {
 		missing("MakeRoomForHumanPlayer")
 	}
 	putInServers.MakeRoomForHumanPlayer(client)
+}
+
+/*
+The tournament ready panel's listener reaches these.
+
+Pressing ready is the one input the mod intercepts, so the listener asks about
+the mission, the team and the lineup before it lets one through.
+*/
+
+// DefenderBotCount is how many of ours are on that team, humans excluded.
+// Ported, roster_counts.
+//
+//sp:body GetDefenderBotCount
+func DefenderBotCount(team Team) int32 {
+	if putInServers.DefenderBotCount == nil {
+		missing("GetDefenderBotCount")
+	}
+	return putInServers.DefenderBotCount(team)
+}
+
+// MinPlayers is redbots_manager_min_players, the floor a server owner set, and
+// -1 for no floor at all.
+//
+//sp:global redbots_manager_min_players
+func MinPlayers() ConVar { return 0 }
+
+// ShouldProcessCommand throttles how fast one client may type. Ported, humans.
+//
+//sp:body ShouldProcessCommand
+func ShouldProcessCommand(client int32) bool {
+	if putInServers.ShouldProcessCommand == nil {
+		missing("ShouldProcessCommand")
+	}
+	return putInServers.ShouldProcessCommand(client)
+}
+
+// LastReadyInputTime reads m_flLastReadyInputTime for one client.
+//
+//sp:slot m_flLastReadyInputTime
+func LastReadyInputTime(client int32) float32 {
+	if putInServers.LastReadyInputTime == nil {
+		missing("m_flLastReadyInputTime")
+	}
+	return putInServers.LastReadyInputTime(client)
+}
+
+// MissionDifficultyNow is how hard the popfile being played is. Ported,
+// mapconfig.
+//
+//sp:body GetMissionDifficulty
+func MissionDifficultyNow() MissionDifficulty {
+	if putInServers.MissionDifficultyNow == nil {
+		missing("GetMissionDifficulty")
+	}
+	return putInServers.MissionDifficultyNow()
 }

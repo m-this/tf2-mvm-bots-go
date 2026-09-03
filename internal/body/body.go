@@ -256,6 +256,10 @@ var All = []Body{
 		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
+		Dir: "internal/body/readystate", Out: "sourcepawn/readystate.sp", Prefix: "Go_",
+		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
+	},
+	{
 		Dir: "internal/body/humans", Out: "sourcepawn/humans.sp", Prefix: "Go_",
 		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
