@@ -15,3 +15,4 @@
 {"id":"int-c13e0ad5eaea9346371800faf70cc191","kind":"field_change","created_at":"2026-09-03T18:17:59.835507188Z","actor":"m-this","issue_id":"mvm-z83.86","extra":{"field":"status","new_value":"closed","old_value":"open"}}
 {"id":"int-85afd13b93777adfd04c35d90faaa43b","kind":"field_change","created_at":"2026-09-03T18:24:44.417901876Z","actor":"m-this","issue_id":"mvm-z83.87","extra":{"field":"status","new_value":"closed","old_value":"open"}}
 {"id":"int-67c218540bfbcae4a6fca22760bba275","kind":"field_change","created_at":"2026-09-03T18:27:11.651802006Z","actor":"m-this","issue_id":"mvm-z83.90","extra":{"field":"status","new_value":"closed","old_value":"open"}}
+{"id":"int-fe09d7e01553993734e20b8b3a2397ff","kind":"field_change","created_at":"2026-09-04T22:24:54.923196994Z","actor":"m-this","issue_id":"mvm-x2v","extra":{"field":"priority","new_value":"3","old_value":"2"}}
