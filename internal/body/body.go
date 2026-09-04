@@ -502,9 +502,30 @@ var All = []Body{
 		Dir: "internal/body/stickies", Out: "sourcepawn/demoman_stickies.sp", Prefix: "Go_",
 		Shipped: "source/redbots3/demoman_stickies.sp",
 	},
+	/*
+		No Shipped, and it had one: source/redbots3/blu_assist.sp at
+		b48ad70, which the snapshot still holds.
+
+		The link is cut because the lever is not that lever any more. The
+		shipped one is the scale at one human on RED rising to 1.0 at six,
+		and it refuses anything above 1.0; this one is a straight multiplier
+		from 0.1 to 10.0, so a server can say the team finds the mission easy
+		as well as hard. tf2-archipelago offers 10% to 1000% and the shipped
+		convar silently clamped every value above 1.0 back to 1.0.
+
+		The mechanism went with it. The shipped body wrote "max health
+		additive bonus" and m_iMaxHealth on the frame after the spawn and the
+		robots still came at the popfile's health: TF2 finishes building the
+		robot after that frame, and recomputes the maximum from the
+		attributes afterwards. What holds is answering SDKHook_GetMaxHealth,
+		written a tenth of a second after the spawn.
+
+		Every function the shipped file also holds changed, so what is left
+		to compare would prove nothing. The comparison says exactly that
+		rather than passing on six identical reasons in reshaped.
+	*/
 	{
 		Dir: "internal/body/bluassist", Out: "sourcepawn/blu_assist.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/blu_assist.sp",
 	},
 	{
 		Dir: "internal/body/upgraderules", Out: "sourcepawn/upgrade_rules.sp", Prefix: "Go_",
