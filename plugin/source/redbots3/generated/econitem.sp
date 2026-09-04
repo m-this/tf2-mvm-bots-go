@@ -28,20 +28,20 @@ stock int EconItemCreateNoSpawn(char[] classname, int itemDefIndex, int level, i
 			{
 				SetEntProp(item, Prop_Data, "m_iSubType", 3);
 			}
-			SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", (isSapper ? 0 : 1), 0, _);
-			SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", (isSapper ? 0 : 1), 1, _);
-			SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", (isSapper ? 0 : 1), 2, _);
-			SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", (isSapper ? 1 : 0), 3, _);
+			SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", (isSapper ? 0 : 1), 4, 0);
+			SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", (isSapper ? 0 : 1), 4, 1);
+			SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", (isSapper ? 0 : 1), 4, 2);
+			SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", (isSapper ? 1 : 0), 4, 3);
 		}
 		else
 			if (StrEqual(classname, "tf_weapon_sapper", false))
 			{
 				SetEntProp(item, Prop_Send, "m_iObjectType", 3);
 				SetEntProp(item, Prop_Data, "m_iSubType", 3);
-				SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", 0, 0, _);
-				SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", 0, 1, _);
-				SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", 0, 2, _);
-				SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", 1, 3, _);
+				SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", 0, 4, 0);
+				SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", 0, 4, 1);
+				SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", 0, 4, 2);
+				SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", 1, 4, 3);
 			}
 	}
 	else

@@ -110,14 +110,14 @@ stock int GetAcquiredCreditsOfAllWaves(bool withBonus = true)
 		LogError("GetAcquiredCreditsOfAllWaves: Could not find entity tf_mann_vs_machine_stats!");
 		return 0;
 	}
-	int total = GetEntProp(ent, Prop_Send, "m_runningTotalWaveStats", STATS_CREDITS_ACQUIRED, _);
-	total += GetEntProp(ent, Prop_Send, "m_previousWaveStats", STATS_CREDITS_ACQUIRED, _);
-	total += GetEntProp(ent, Prop_Send, "m_currentWaveStats", STATS_CREDITS_ACQUIRED, _);
+	int total = GetEntProp(ent, Prop_Send, "m_runningTotalWaveStats", 4, STATS_CREDITS_ACQUIRED);
+	total += GetEntProp(ent, Prop_Send, "m_previousWaveStats", 4, STATS_CREDITS_ACQUIRED);
+	total += GetEntProp(ent, Prop_Send, "m_currentWaveStats", 4, STATS_CREDITS_ACQUIRED);
 	if (withBonus)
 	{
-		total += GetEntProp(ent, Prop_Send, "m_runningTotalWaveStats", STATS_CREDITS_BONUS, _);
-		total += GetEntProp(ent, Prop_Send, "m_previousWaveStats", STATS_CREDITS_BONUS, _);
-		total += GetEntProp(ent, Prop_Send, "m_currentWaveStats", STATS_CREDITS_BONUS, _);
+		total += GetEntProp(ent, Prop_Send, "m_runningTotalWaveStats", 4, STATS_CREDITS_BONUS);
+		total += GetEntProp(ent, Prop_Send, "m_previousWaveStats", 4, STATS_CREDITS_BONUS);
+		total += GetEntProp(ent, Prop_Send, "m_currentWaveStats", 4, STATS_CREDITS_BONUS);
 	}
 	return total;
 }

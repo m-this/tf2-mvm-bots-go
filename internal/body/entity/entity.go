@@ -164,14 +164,14 @@ func GetAcquiredCreditsOfAllWaves(withBonus bool) int32 {
 		return 0
 	}
 
-	total := engine.EntPropAt(ent, engine.PropSend(), "m_runningTotalWaveStats", statsCreditsAcquired)
-	total += engine.EntPropAt(ent, engine.PropSend(), "m_previousWaveStats", statsCreditsAcquired)
-	total += engine.EntPropAt(ent, engine.PropSend(), "m_currentWaveStats", statsCreditsAcquired)
+	total := engine.EntPropAt(ent, engine.PropSend(), "m_runningTotalWaveStats", 4, statsCreditsAcquired)
+	total += engine.EntPropAt(ent, engine.PropSend(), "m_previousWaveStats", 4, statsCreditsAcquired)
+	total += engine.EntPropAt(ent, engine.PropSend(), "m_currentWaveStats", 4, statsCreditsAcquired)
 
 	if withBonus {
-		total += engine.EntPropAt(ent, engine.PropSend(), "m_runningTotalWaveStats", statsCreditsBonus)
-		total += engine.EntPropAt(ent, engine.PropSend(), "m_previousWaveStats", statsCreditsBonus)
-		total += engine.EntPropAt(ent, engine.PropSend(), "m_currentWaveStats", statsCreditsBonus)
+		total += engine.EntPropAt(ent, engine.PropSend(), "m_runningTotalWaveStats", 4, statsCreditsBonus)
+		total += engine.EntPropAt(ent, engine.PropSend(), "m_previousWaveStats", 4, statsCreditsBonus)
+		total += engine.EntPropAt(ent, engine.PropSend(), "m_currentWaveStats", 4, statsCreditsBonus)
 	}
 
 	return total

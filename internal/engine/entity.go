@@ -19,7 +19,7 @@ type EntityCalls struct {
 	LoadFromAddress             func(address Address) int32
 	FindSendPropInfo            func(class string, prop string) int32
 	SetEntData                  func(entity int32, offset int32, value int32)
-	SetEntPropAt                func(entity int32, propType PropType, prop string, value int32, element int32)
+	SetEntPropAt                func(entity int32, propType PropType, prop string, value int32, size int32, element int32)
 	IsEntityWearable            func(entity int32) bool
 	EquipPlayerWearable         func(client int32, item int32)
 	EquipPlayerWeapon           func(client int32, item int32)
@@ -27,7 +27,7 @@ type EntityCalls struct {
 	IsItemDefIndexSapper        func(itemDefIndex int32) bool
 	FindDataMapInfo             func(entity int32, prop string) int32
 	EntData                     func(entity int32, offset int32, size int32) int32
-	EntPropAt                   func(entity int32, propType PropType, prop string, element int32) int32
+	EntPropAt                   func(entity int32, propType PropType, prop string, size int32, element int32) int32
 	SetEntPropSend              func(entity int32, propType PropType, prop string, value int32)
 }
 
@@ -75,11 +75,19 @@ func EntData(entity int32, offset int32, size int32) int32 {
 	return entities.EntData(entity, offset, size)
 }
 
-// EntPropAt is one element of an array property, which the wave stats are.
+/*
+EntPropAt is one element of an array property, which the wave stats are.
+
+The size is spelt out because SourcePawn takes it before the element, and a
+directive can only append. The old form wrote the element where the size goes
+and a placeholder where the element goes, so every read landed on element zero
+with a width of however many the caller had asked for: the resource's maximum
+health read as 1 on every robot, and the wave's credit totals were noise.
+*/
 //
-//sp:native GetEntProp after _
-func EntPropAt(entity int32, propType PropType, prop string, element int32) int32 {
-	return entities.EntPropAt(entity, propType, prop, element)
+//sp:native GetEntProp
+func EntPropAt(entity int32, propType PropType, prop string, size int32, element int32) int32 {
+	return entities.EntPropAt(entity, propType, prop, size, element)
 }
 
 // SetEntPropSend writes a networked property.
@@ -185,11 +193,12 @@ func FindSendPropInfo(class string, prop string) int32 { return entities.FindSen
 //sp:native SetEntData
 func SetEntData(entity int32, offset int32, value int32) { entities.SetEntData(entity, offset, value) }
 
-// SetEntPropAt writes one element of an array property.
+// SetEntPropAt writes one element of an array property. The size is spelt out
+// for the reason EntPropAt gives.
 //
-//sp:native SetEntProp after _
-func SetEntPropAt(entity int32, propType PropType, prop string, value int32, element int32) {
-	entities.SetEntPropAt(entity, propType, prop, value, element)
+//sp:native SetEntProp
+func SetEntPropAt(entity int32, propType PropType, prop string, value int32, size int32, element int32) {
+	entities.SetEntPropAt(entity, propType, prop, value, size, element)
 }
 
 // IsEntityWearable says the item is worn rather than held.

@@ -176,5 +176,5 @@ func GetTeamHumanClientCount(team int32) int32 {
 //
 //sp:name TEMP_GetPlayerMaxHealth
 func TEMPGetPlayerMaxHealth(client int32) int32 {
-	return engine.EntPropAt(engine.ResourceEntity(), engine.PropSend(), "m_iMaxHealth", client)
+	return engine.EntPropAt(engine.ResourceEntity(), engine.PropSend(), "m_iMaxHealth", 4, client)
 }

@@ -125,6 +125,6 @@ stock int GetTeamHumanClientCount(int team)
 
 stock int TEMP_GetPlayerMaxHealth(int client)
 {
-	return GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iMaxHealth", client, _);
+	return GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iMaxHealth", 4, client);
 }
 

@@ -54,17 +54,17 @@ func CreateNoSpawn(classname string, itemDefIndex int32, level int32, quality in
 				engine.SetEntPropSend(item, engine.PropData(), "m_iSubType", 3)
 			}
 
-			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", engine.ChooseInt(isSapper, 0, 1), 0) // OBJ_DISPENSER
-			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", engine.ChooseInt(isSapper, 0, 1), 1) // OBJ_TELEPORTER
-			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", engine.ChooseInt(isSapper, 0, 1), 2) // OBJ_SENTRYGUN
-			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", engine.ChooseInt(isSapper, 1, 0), 3) // OBJ_ATTACHMENT_SAPPER
+			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", engine.ChooseInt(isSapper, 0, 1), 4, 0) // OBJ_DISPENSER
+			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", engine.ChooseInt(isSapper, 0, 1), 4, 1) // OBJ_TELEPORTER
+			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", engine.ChooseInt(isSapper, 0, 1), 4, 2) // OBJ_SENTRYGUN
+			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", engine.ChooseInt(isSapper, 1, 0), 4, 3) // OBJ_ATTACHMENT_SAPPER
 		} else if engine.StrEqualLiteral(classname, "tf_weapon_sapper", false) {
 			engine.SetEntPropSend(item, engine.PropSend(), "m_iObjectType", 3)
 			engine.SetEntPropSend(item, engine.PropData(), "m_iSubType", 3)
-			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", 0, 0)
-			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", 0, 1)
-			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", 0, 2)
-			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", 1, 3)
+			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", 0, 4, 0)
+			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", 0, 4, 1)
+			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", 0, 4, 2)
+			engine.SetEntPropAt(item, engine.PropSend(), "m_aBuildableObjectTypes", 1, 4, 3)
 		}
 	} else {
 		engine.LogError("EconItemCreateNoSpawn: Failed to create entity.")
