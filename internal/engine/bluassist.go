@@ -11,6 +11,9 @@ type BluAssistCalls struct {
 	SetEntityHealth    func(entity int32, health int32)
 	SetEntPropData     func(entity int32, propType PropType, prop string, value int32)
 	SetAttribByName    func(entity int32, name string, value float32)
+	HookMaxHealth      func(client int32)
+	UnhookMaxHealth    func(client int32)
+	CreateRobotTimer   func(interval float32, userid int32, flags int32) Timer
 }
 
 var bluAssists BluAssistCalls
@@ -82,4 +85,49 @@ func SetEntPropData(entity int32, propType PropType, prop string, value int32) {
 //sp:native TF2Attrib_SetByName
 func SetAttribByName(entity int32, name string, value float32) {
 	bluAssists.SetAttribByName(entity, name, value)
+}
+
+// FCVarNone is FCVAR_NONE, for a convar nobody has to be told about.
+//
+//sp:global FCVAR_NONE
+func FCVarNone() int32 { return 0 }
+
+// PluginChanged is Plugin_Changed, which is how a hook says it wrote the value
+// it was handed.
+//
+//sp:global Plugin_Changed
+func PluginChanged() Outcome { return 1 }
+
+/*
+HookMaxHealth puts BluAssistGetMaxHealth behind the robot's maximum.
+
+TF2 recomputes a player's maximum from the class and the attributes whenever it
+feels like it, so a number written into m_iMaxHealth does not stay written. The
+hook is the game asking what the maximum is, which is the only answer it does
+not overwrite.
+*/
+//
+//sp:native SDKHook after SDKHook_GetMaxHealth BluAssistGetMaxHealth
+func HookMaxHealth(client int32) { bluAssists.HookMaxHealth(client) }
+
+// UnhookMaxHealth takes it off again, which every spawn does before deciding
+// whether this robot wants it.
+//
+//sp:native SDKUnhook after SDKHook_GetMaxHealth BluAssistGetMaxHealth
+func UnhookMaxHealth(client int32) { bluAssists.UnhookMaxHealth(client) }
+
+/*
+CreateRobotTimer is the delay a robot is measured and written after.
+
+The popfile is still building the robot on the frame it spawns: it gives the
+template's items, fires post_inventory_application, then writes the health the
+mission wants. A frame is not enough, which is what the next-frame version of
+this got wrong.
+*/
+//
+//sp:native CreateTimer
+//
+//nolint:revive // unused-parameter: the callback is a name the emitter writes, not something the Go calls
+func CreateRobotTimer(interval float32, callback func(timer Timer, userid int32) Outcome, userid int32, flags int32) Timer {
+	return bluAssists.CreateRobotTimer(interval, userid, flags)
 }

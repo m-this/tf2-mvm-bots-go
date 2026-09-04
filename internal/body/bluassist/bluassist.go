@@ -1,17 +1,18 @@
 /*
 Package bluassist is source/redbots3/blu_assist.sp.
 
-# Bend a mission when few people turned up, by taking the robots down
+# Bend a mission by what the robots are worth
 
 Valve tunes every wave for six defenders. Fewer than six is a harder mission than
 the one the map was built for, and the answer this mod has had until now is to
 fill the empty seats with bots and hope their AI is good enough. This is the other
-lever: leave the seats empty and make the robots weaker instead.
+lever: leave the seats empty and change what the robots are worth instead.
 
-The convar is the scale at one human, and the scale rises to 1.0 at a full team.
-So 0.7 means a lone player fights robots at seven tenths, three players at about
-six sevenths, and six players fight the mission Valve wrote. Set to 1.0 the lever
-is off, which is the default and what every existing server keeps.
+The convar is a straight multiplier on every BLU robot's maximum health. 0.5 is a
+mission at half, 2.0 is one at double, and 1.0 is the lever off, which is the
+default and what every existing server keeps. It reaches above 1.0 because a team
+that finds the mission easy is as real as one that finds it hard, and a lever with
+only one direction cannot say so.
 
 The convar is the switch, so the two arms of an A/B are the same build with one
 number different. There is no feature flag beside it: 1.0 already means off, and a
@@ -23,90 +24,110 @@ See docs/testbed-metrics.md: none of this ships on until a run says it helped.
 */
 package bluassist
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
-// The team size the scale reaches 1.0 at, which is what Valve tunes a wave for.
+/*
+How close to 1.0 counts as off.
+
+The lever is a float a server operator types, and 1.0 is the only value that means
+"change nothing". Comparing a float for equality would make 0.999999 a mission
+nobody asked to bend, so the test has a width.
+*/
 //
-//sp:name BLU_ASSIST_FULL_TEAM
-const fullTeam = 6.0
+//sp:name BLU_ASSIST_EPSILON
+const epsilon = 0.0001
+
+// The delay a robot is left to finish spawning before its health is written.
+//
+//sp:name BLU_ASSIST_SETTLE
+const settle = 0.10
 
 //sp:name m_iBluAssistSeen
 var seen int32
 
+// The maximum this robot is meant to have, which is what the hook answers with.
+// Zero is a slot the lever is not holding, so the hook says nothing about it.
+//
+//sp:name m_iBluAssistMaxHealth
+//sp:keep only ever read through the hook, and BluAssist_OnRobotSpawn takes the hook off every spawn before deciding whether this robot wants it back
+var wantedMaxHealth [slots.Count]int32
+
+// What the popfile had given the robot before the lever touched it, kept for the
+// line that says what the lever did.
+//
+//sp:name m_iBluAssistWasHealth
+//sp:keep read only beside the entry above, which the same spawn clears
+var healthBefore [slots.Count]int32
+
 //sp:name redbots_manager_blu_health_scale
 var healthScaleConVar engine.ConVar
 
-// Init makes the convar and forgets the last mission's count.
+//sp:name redbots_manager_blu_health_debug
+var healthDebugConVar engine.ConVar
+
+// Init makes the convars and forgets the last mission's count.
 //
 //sp:name BluAssist_Init
 func Init() {
 	seen = 0
 
 	healthScaleConVar = engine.CreateAssistConVar("sm_redbots_manager_blu_health_scale", "1.0",
-		"What a robot's health is multiplied by when one human is on RED. Rises to 1.0 at six. 1.0 is off.",
-		engine.FCVarNotify(), true, 0.1, true, 1.0)
+		"What every BLU robot's maximum health is multiplied by. 1.0 is off.",
+		engine.FCVarNotify(), true, 0.1, true, 10.0)
+
+	healthDebugConVar = engine.CreateAssistConVar("sm_redbots_manager_blu_health_debug", "0",
+		"Log the original, wanted and observed health of every robot the lever bends, rather than one in BLU_ASSIST_SAMPLE.",
+		engine.FCVarNone(), true, 0.0, true, 1.0)
 }
 
-// HumansOnRed is how many people who are not bots are playing on RED right now.
-//
-//sp:name BluAssist_HumansOnRed
-func HumansOnRed() int32 {
-	count := int32(0)
-
-	for i := int32(1); i <= engine.MaxClients(); i++ {
-		if engine.IsClientInGame(i) && !engine.IsFakeClient(i) && !engine.IsClientSourceTV(i) && engine.PlayerTeam(i) == engine.TeamRed() {
-			count++
-		}
-	}
-
-	return count
-}
-
-/*
-Scale is the multiplier one of the three levers is at, for the people currently on RED.
-
-Straight line from the convar at one human to 1.0 at six, so the assist fades as
-the team fills rather than switching off at some threshold nobody can feel. An
-empty RED is treated as one player: a server between rounds is not a reason to make
-the wave hardest.
-
-Returns 1.0 when the convar is 1.0, which is the whole of the switch being off.
-*/
-//
-//sp:name BluAssistScale
-func Scale(convar engine.ConVar) float32 {
-	atOne := convar.Float()
-
-	if atOne >= 1.0 {
-		return 1.0
-	}
-
-	humans := float32(HumansOnRed())
-
-	if humans < 1.0 {
-		humans = 1.0
-	}
-
-	if humans >= fullTeam {
-		return 1.0
-	}
-
-	return atOne + (1.0-atOne)*((humans-1.0)/(fullTeam-1.0))
-}
-
-// HealthScale is what a robot's health is multiplied by.
+// HealthScale is what a robot's maximum health is multiplied by.
 //
 //sp:name BluAssist_HealthScale
 func HealthScale() float32 {
-	return Scale(healthScaleConVar)
+	return healthScaleConVar.Float()
+}
+
+// Off says the scale changes nothing, which is the lever's default and the state
+// every path here returns early on.
+//
+//sp:name BluAssistOff
+func Off(scale float32) bool {
+	return engine.FloatAbs(scale-1.0) < epsilon
 }
 
 /*
-Describe adds what the levers are set to, for the line that says what was
-different about this run.
+GetMaxHealth answers the game's own question about a robot's maximum.
 
-Nothing is added when they are off, which is every run until somebody sets one, so
-the string reads exactly as it did before this existed.
+TF2 recomputes the maximum from the class and the attributes whenever it likes, so
+a number written into m_iMaxHealth does not stay written: the first version of this
+bent an attribute, the second wrote the property, and a robot still spawned with
+what the popfile gave it. This is the game asking, which is the one answer it does
+not go back over.
+*/
+//
+//sp:name BluAssistGetMaxHealth
+//sp:byref maxHealth
+//
+//nolint:revive,ineffassign,staticcheck,wastedassign // the write is the point: SourcePawn passes maxHealth by reference and the hook's answer is what it leaves there
+func GetMaxHealth(entity int32, maxHealth int32) engine.Outcome {
+	if wantedMaxHealth[entity] <= 0 {
+		return engine.PluginContinue()
+	}
+
+	maxHealth = wantedMaxHealth[entity]
+
+	return engine.PluginChanged()
+}
+
+/*
+Describe adds what the lever is set to, for the line that says what was different
+about this run.
+
+Nothing is added when it is off, which is every run until somebody sets it, so the
+string reads exactly as it did before this existed.
 
 //sp:name BluAssist_Describe
 //sp:length buffer maxlength
@@ -114,7 +135,7 @@ the string reads exactly as it did before this existed.
 //
 //nolint:revive,ineffassign,staticcheck,wastedassign // the write is the point: SourcePawn passes the buffer by reference and //sp:length carries its size
 func Describe(buffer engine.Text, maxlength int32) {
-	if healthScaleConVar == engine.NoConVar() || healthScaleConVar.Float() >= 1.0 {
+	if healthScaleConVar == engine.NoConVar() || Off(healthScaleConVar.Float()) {
 		return
 	}
 
@@ -122,78 +143,119 @@ func Describe(buffer engine.Text, maxlength int32) {
 }
 
 /*
-OnRobotSpawn scales a robot's health as it spawns.
+OnRobotSpawn takes the last robot's answer off this slot and asks for the new one.
 
-Applied a frame after player_spawn. The popfile finishes building the robot inside
-the spawn frame: it gives the template's items, fires post_inventory_application,
-then writes the health and the attributes the mission wants. Anything written from
-the event itself is overwritten by that, which is why health did nothing while
-damage, scaled on the hit rather than on the robot, did.
-
-A giant scales the same way a common does. The alternative is a lever per robot
-size, which is more numbers to measure before anybody knows whether the first one
-matters.
+The unhook and the cleared slot come first, whatever the lever is set to: a slot is
+reused by whoever spawns into it next, and a maximum left behind from a robot would
+be answered for a human.
 */
 //
 //sp:name BluAssist_OnRobotSpawn
 func OnRobotSpawn(client int32) {
-	if HealthScale() >= 1.0 {
+	engine.UnhookMaxHealth(client)
+
+	wantedMaxHealth[client] = 0
+	healthBefore[client] = 0
+
+	if Off(HealthScale()) {
 		return
 	}
 
-	engine.ApplyNextFrame(ApplyToRobot, engine.ClientUserID(client))
+	engine.CreateRobotTimer(settle, ApplyToRobot, engine.ClientUserID(client), engine.TimerNoMapChange())
 }
 
 /*
-ApplyToRobot writes the health the lever asks for.
+ApplyToRobot writes the health the lever asks for, once the popfile has finished.
 
-Health goes through "max health additive bonus" as well as m_iMaxHealth, because
-TF2 recomputes the maximum from the attributes and would otherwise put the
-popfile's number back. The delta is added to what the popfile already set, so a
-giant stays a giant, scaled.
+The health it has now is the floor: a giant whose maximum has not been written yet
+reads back the class default, and scaling that would take a 3000 health giant down
+to a heavy's worth of it. Whatever the game already gave it is the number the
+mission meant.
 */
 //
 //sp:name BluAssistApplyToRobot
-//sp:public
-func ApplyToRobot(userid int32) {
+//
+//nolint:revive // unused-parameter: the handle is the timer's own, and the userid is what survives the robot leaving
+func ApplyToRobot(timer engine.Timer, userid int32) engine.Outcome {
 	client := engine.ClientOfUserID(userid)
 
 	if client <= 0 || !engine.IsClientInGame(client) || !engine.IsPlayerAlive(client) {
-		return
+		return engine.PluginStop()
 	}
 
 	if engine.PlayerTeam(client) != engine.TeamBlue() || !engine.IsFakeClient(client) {
-		return
+		return engine.PluginStop()
 	}
 
-	health := HealthScale()
+	scale := HealthScale()
 
-	if health < 1.0 {
-		maxHealth := engine.EntProp(client, engine.PropData(), "m_iMaxHealth")
-		wanted := engine.RoundToCeil(float32(maxHealth) * health)
-
-		if wanted < 1 {
-			wanted = 1
-		}
-
-		BendAttrib(client, "max health additive bonus", 0.0, float32(wanted-maxHealth), 1.0)
-
-		engine.SetEntPropData(client, engine.PropData(), "m_iMaxHealth", wanted)
-		engine.SetEntityHealth(client, wanted)
+	if Off(scale) {
+		return engine.PluginStop()
 	}
 
-	Say(client, health)
+	maxHealth := engine.PlayerMaxHealth(client)
+
+	if maxHealth < engine.ClientHealth(client) {
+		maxHealth = engine.ClientHealth(client)
+	}
+
+	wanted := engine.RoundToCeil(float32(maxHealth) * scale)
+
+	if wanted < 1 {
+		wanted = 1
+	}
+
+	healthBefore[client] = maxHealth
+	wantedMaxHealth[client] = wanted
+
+	engine.HookMaxHealth(client)
+	engine.SetEntPropData(client, engine.PropData(), "m_iMaxHealth", wanted)
+	engine.SetEntityHealth(client, wanted)
+
+	engine.CreateRobotTimer(settle, VerifyRobot, userid, engine.TimerNoMapChange())
+
+	return engine.PluginStop()
+}
+
+/*
+VerifyRobot reads the robot back once the game has had the same delay again.
+
+Written because two versions of this reported success and changed nothing: the
+lever was on, the log said it had been applied, and the robots came at the health
+the popfile gave them. What is worth writing down is what the game says the robot
+is worth now, not what this asked for.
+*/
+//
+//sp:name BluAssistVerifyRobot
+//
+//nolint:revive // unused-parameter: the handle is the timer's own
+func VerifyRobot(timer engine.Timer, userid int32) engine.Outcome {
+	client := engine.ClientOfUserID(userid)
+
+	if client <= 0 || !engine.IsClientInGame(client) || !engine.IsPlayerAlive(client) {
+		return engine.PluginStop()
+	}
+
+	if engine.PlayerTeam(client) != engine.TeamBlue() || !engine.IsFakeClient(client) {
+		return engine.PluginStop()
+	}
+
+	Say(client, engine.PlayerMaxHealth(client))
+
+	return engine.PluginStop()
 }
 
 /*
 How often a bend is written down: one robot in every BLU_ASSIST_SAMPLE.
 
-The levers are read off wave outcomes otherwise, and a wave outcome cannot tell a
+The lever is read off wave outcomes otherwise, and a wave outcome cannot tell a
 lever that did nothing from a lever that did something too small to win with. This
 says what the robot was worth before and after, which is the question.
 
 Sampled rather than every robot: a wave brings them by the hundred and a line per
-robot is a line nobody reads.
+robot is a line nobody reads. A robot the game disagrees about is written down
+whatever the sample says, because one of those is the whole bug this lever has had
+twice.
 */
 //
 //sp:name BLU_ASSIST_SAMPLE
@@ -202,39 +264,28 @@ const sample = 25
 // Say writes down what a bend actually did to one robot.
 //
 //sp:name BluAssistSay
-func Say(client int32, health float32) {
-	if health >= 1.0 {
+func Say(client int32, observed int32) {
+	wanted := wantedMaxHealth[client]
+
+	if wanted <= 0 {
 		return
 	}
 
 	seen++
 
-	if seen%sample != 0 {
+	mismatch := observed != wanted || engine.ClientHealth(client) != wanted
+
+	if !mismatch && !healthDebugConVar.Bool() && seen%sample != 0 {
 		return
 	}
 
-	engine.LogMessage("BluAssist: robot %d of the wave, health %d of %d, wanted x%.2f",
-		seen, engine.ClientHealth(client), engine.EntProp(client, engine.PropData(), "m_iMaxHealth"), health)
-}
+	if mismatch {
+		engine.LogMessage("BluAssist: robot %d of the wave, was %d, wanted %d (x%.2f), game says %d and health %d: MISMATCH",
+			seen, healthBefore[client], wanted, HealthScale(), observed, engine.ClientHealth(client))
 
-/*
-BendAttrib bends an attribute the popfile may already have set, from its neutral
-value when it has not.
-
-Both bends compose with the mission rather than replacing it: the delta for a
-health bonus that is additive, the scale for a speed bonus that is a multiplier.
-*/
-//
-//sp:name BluAssistBendAttrib
-//sp:default scale 1.0
-func BendAttrib(client int32, name string, neutral float32, delta float32, scale float32) {
-	attrib := engine.AttribByName(client, name)
-
-	current := neutral
-
-	if attrib != engine.NoAddress() {
-		current = engine.AttribValueAt(attrib)
+		return
 	}
 
-	engine.SetAttribByName(client, name, current*scale+delta)
+	engine.LogMessage("BluAssist: robot %d of the wave, was %d, wanted %d (x%.2f), game says %d and health %d",
+		seen, healthBefore[client], wanted, HealthScale(), observed, engine.ClientHealth(client))
 }
