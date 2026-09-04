@@ -207,26 +207,32 @@ stock void Event_PlayerTeam(Event event, const char[] name, bool dontBroadcast)
 	TFTeam team = view_as<TFTeam>(event.GetInt("team"));
 	TFTeam oldTeam = view_as<TFTeam>(event.GetInt("oldteam"));
 	bool isDisconnect = event.GetBool("disconnect");
-	if (!IsFakeClient(client))
+	if (IsFakeClient(client))
 	{
-		if ((isDisconnect && (oldTeam == TFTeam_Red)) || (!isDisconnect && ((team == TFTeam_Red) || (oldTeam == TFTeam_Red))))
+		if (!isDisconnect && g_bIsDefenderBot[client] && (oldTeam == TFTeam_Red) && (team != TFTeam_Red))
 		{
-			CreateTimer(0.1, Timer_UpdateChosenBotTeamComposition, _, TIMER_FLAG_NO_MAPCHANGE);
-			if (oldTeam == TFTeam_Red)
-			{
-				HandleTeamPlayerCountChanged(TFTeam_Red, client);
-			}
+			ClearBuildingsBeforeKick(client);
+			KickClient(client, "BotManager3: restoring the RED lineup");
 		}
-		if (!isDisconnect && (team == TFTeam_Red) && (oldTeam == TFTeam_Blue) && !CheckCommandAccess(client, NULL_STRING, ADMFLAG_GENERIC, true))
+		return;
+	}
+	if ((isDisconnect && (oldTeam == TFTeam_Red)) || (!isDisconnect && ((team == TFTeam_Red) || (oldTeam == TFTeam_Red))))
+	{
+		CreateTimer(0.1, Timer_UpdateChosenBotTeamComposition, _, TIMER_FLAG_NO_MAPCHANGE);
+		if (oldTeam == TFTeam_Red)
 		{
-			if (g_flEnableBotsCooldown[client] <= GetGameTime())
-			{
-				g_flEnableBotsCooldown[client] = GetGameTime() + 30.0;
-			}
-			else
-			{
-				g_flEnableBotsCooldown[client] = g_flEnableBotsCooldown[client] + 10.0;
-			}
+			HandleTeamPlayerCountChanged(TFTeam_Red, client);
+		}
+	}
+	if (!isDisconnect && (team == TFTeam_Red) && (oldTeam == TFTeam_Blue) && !CheckCommandAccess(client, NULL_STRING, ADMFLAG_GENERIC, true))
+	{
+		if (g_flEnableBotsCooldown[client] <= GetGameTime())
+		{
+			g_flEnableBotsCooldown[client] = GetGameTime() + 30.0;
+		}
+		else
+		{
+			g_flEnableBotsCooldown[client] = g_flEnableBotsCooldown[client] + 10.0;
 		}
 	}
 }
