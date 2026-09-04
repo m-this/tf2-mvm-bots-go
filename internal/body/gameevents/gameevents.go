@@ -372,31 +372,47 @@ func EventPlayerTeam(event engine.Event, name string, dontBroadcast bool) {
 	oldTeam := engine.Team(event.EventInt("oldteam"))
 	isDisconnect := event.EventBool("disconnect")
 
-	if !engine.IsFakeClient(client) {
-		/* When changing teams, update the bot team composition for a RED
-		player who disconnected, a player who joined RED, and a player who
-		left RED. */
-		if (isDisconnect && oldTeam == engine.TeamRed()) || (!isDisconnect && (team == engine.TeamRed() || oldTeam == engine.TeamRed())) {
-			engine.CreateTimer(0.1, TimerUpdateChosenBotTeamComposition, engine.Default(), engine.TimerNoMapChange())
+	/* A managed defender belongs on RED for its whole connection.
 
-			if oldTeam == engine.TeamRed() {
-				engine.HandleTeamPlayerCountChanged(engine.TeamRed(), client)
-			}
+	If the game moves one elsewhere, RED is one seat short but the misplaced
+	client still occupies a server slot. On a full server the fill timer then
+	requests a replacement it cannot create. Remove only that bot; the normal
+	imbalance path recreates the empty RED seat.
+
+	An intentional kick also reports a team change. Leave disconnects alone so
+	this does not turn every removal into a second kick. */
+	if engine.IsFakeClient(client) {
+		if !isDisconnect && engine.DefenderBotFlag(client) && oldTeam == engine.TeamRed() && team != engine.TeamRed() {
+			engine.ClearBuildingsBeforeKick(client)
+			engine.KickClient(client, "BotManager3: restoring the RED lineup")
 		}
 
-		/* Switching from BLUE to RED bars the player from starting the bots
+		return
+	}
+
+	/* When changing teams, update the bot team composition for a RED
+	player who disconnected, a player who joined RED, and a player who
+	left RED. */
+	if (isDisconnect && oldTeam == engine.TeamRed()) || (!isDisconnect && (team == engine.TeamRed() || oldTeam == engine.TeamRed())) {
+		engine.CreateTimer(0.1, TimerUpdateChosenBotTeamComposition, engine.Default(), engine.TimerNoMapChange())
+
+		if oldTeam == engine.TeamRed() {
+			engine.HandleTeamPlayerCountChanged(engine.TeamRed(), client)
+		}
+	}
+
+	/* Switching from BLUE to RED bars the player from starting the bots
 		for a while
 
-		A player who cannot get the team they want by asking used to get it by
-		joining BLUE, starting the bots and coming back. The cooldown grows
-		each time rather than resetting, so doing it repeatedly costs more
-		each go. */
-		if !isDisconnect && team == engine.TeamRed() && oldTeam == engine.TeamBlue() && !engine.CheckCommandAccess(client, engine.NullString(), engine.AdmFlagGeneric()) {
-			if engine.EnableBotsCooldown(client) <= engine.GameTime() {
-				engine.SetEnableBotsCooldown(client, engine.GameTime()+30.0)
-			} else {
-				engine.SetEnableBotsCooldown(client, engine.EnableBotsCooldown(client)+10.0)
-			}
+	A player who cannot get the team they want by asking used to get it by
+	joining BLUE, starting the bots and coming back. The cooldown grows
+	each time rather than resetting, so doing it repeatedly costs more
+	each go. */
+	if !isDisconnect && team == engine.TeamRed() && oldTeam == engine.TeamBlue() && !engine.CheckCommandAccess(client, engine.NullString(), engine.AdmFlagGeneric()) {
+		if engine.EnableBotsCooldown(client) <= engine.GameTime() {
+			engine.SetEnableBotsCooldown(client, engine.GameTime()+30.0)
+		} else {
+			engine.SetEnableBotsCooldown(client, engine.EnableBotsCooldown(client)+10.0)
 		}
 	}
 }
