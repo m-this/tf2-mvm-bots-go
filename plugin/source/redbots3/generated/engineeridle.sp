@@ -92,6 +92,7 @@ stock CNavArea Go_nestAreaOf(int actor)
 
 static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
+	TopUpUpgrades(actor);
 	int sentry = HasObjectOfType(actor, TFObject_Sentry, TFObjectMode_None);
 	int dispenser = HasObjectOfType(actor, TFObject_Dispenser, TFObjectMode_None);
 	int sentryStanding = GetObjectOfType(actor, TFObject_Sentry);

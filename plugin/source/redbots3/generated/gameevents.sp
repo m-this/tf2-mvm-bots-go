@@ -40,6 +40,7 @@ public void Event_MvmWaveBegin(Event event, const char[] name, bool dontBroadcas
 	DebugFaults_OnWaveStart();
 	DebugFaults_OnWaveStartEmpty();
 	PublishActiveFeatures();
+	ForgetSetupPlans();
 	ThreatPortAudit_Report();
 	EngineerNestRelocation_StopEvaluating();
 	EngineerTeleporter_ForgetGivingUp();

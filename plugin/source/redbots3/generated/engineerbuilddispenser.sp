@@ -57,6 +57,11 @@ public Action CTFBotMvMEngineerBuildDispenser_OnStart(BehaviorAction action, int
 	{
 		NextDispenserStandPoint(actor);
 	}
+	if (Feature(FEATURE_ENGINEER_SETUP_PHASE))
+	{
+		ClaimSetupSpot(actor, 1, m_vDispenserSpot[actor]);
+		SetupJump(actor, m_vDispenserStand[actor]);
+	}
 	m_ctDispenserReachDeadline[actor] = GetGameTime() + BuildReachTime(GetAbsOrigin(actor), m_vDispenserStand[actor]);
 	return action.Continue();
 }
@@ -261,6 +266,10 @@ stock void CollectDispenserSpots(int actor, const char[] wanted, ArrayList free,
 
 stock bool IsDispenserSpotTaken(int actor, float spot[3])
 {
+	if (Feature(FEATURE_ENGINEER_SETUP_PHASE) && IsSetupSpotClaimed(actor, spot))
+	{
+		return true;
+	}
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		if ((i == actor) || !IsClientInGame(i))

@@ -22,6 +22,7 @@ type ResetCalls struct {
 	ResetAttackTank        func(client int32)
 	ResetDestroyTeleporter func(client int32)
 	ResetBuildTeleporter   func(client int32)
+	ResetNestSetup         func(client int32)
 	ResetGuardPoint        func(client int32)
 	ResetAttack            func(client int32)
 	ResetCollectMoney      func(client int32)
@@ -105,6 +106,11 @@ func ResetDestroyTeleporter(client int32) { resets.ResetDestroyTeleporter(client
 //
 //sp:body Go_ResetBuildTeleporter
 func ResetBuildTeleporter(client int32) { resets.ResetBuildTeleporter(client) }
+
+// ResetNestSetup is nestsetup's own: the plan a seat made for this break.
+//
+//sp:body Go_ResetNestSetup
+func ResetNestSetup(client int32) { resets.ResetNestSetup(client) }
 
 // ResetGuardPoint is guardpoint's own. Ported, guardpoint.
 //

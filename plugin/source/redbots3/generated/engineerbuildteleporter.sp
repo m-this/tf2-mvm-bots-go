@@ -79,6 +79,11 @@ public Action CTFBotMvMEngineerBuildTeleporter_OnStart(BehaviorAction action, in
 		TeleporterGiveUp(actor);
 		return TeleporterDone(action, actor, "No route out of spawn to walk");
 	}
+	if (Feature(FEATURE_ENGINEER_SETUP_PHASE))
+	{
+		ClaimSetupSpot(actor, TeleporterClaim(actor), m_vTeleporterSpot[actor]);
+		SetupJump(actor, m_vTeleporterStand[actor]);
+	}
 	UpdateLookAroundForEnemies(actor, true);
 	return action.Continue();
 }
@@ -276,13 +281,27 @@ stock bool TeleporterStandPoint(int actor)
 		m_vTeleporterStand[actor] = stand;
 		return true;
 	}
-	if (attempt >= m_iTeleporterRoutePoints[actor])
+	for (; attempt < m_iTeleporterRoutePoints[actor]; attempt++)
 	{
-		return false;
+		if (Feature(FEATURE_ENGINEER_SETUP_PHASE) && IsSetupSpotClaimed(actor, m_vTeleporterRouteSpot[actor][attempt]))
+		{
+			continue;
+		}
+		m_iTeleporterTry[actor] = attempt;
+		m_vTeleporterSpot[actor] = m_vTeleporterRouteSpot[actor][attempt];
+		m_vTeleporterStand[actor] = m_vTeleporterRouteStand[actor][attempt];
+		return true;
 	}
-	m_vTeleporterSpot[actor] = m_vTeleporterRouteSpot[actor][attempt];
-	m_vTeleporterStand[actor] = m_vTeleporterRouteStand[actor][attempt];
-	return true;
+	return false;
+}
+
+stock int TeleporterClaim(int actor)
+{
+	if (m_nTeleporterMode[actor] == TFObjectMode_Exit)
+	{
+		return 3;
+	}
+	return 2;
 }
 
 stock void TeleporterGiveUp(int actor)
@@ -445,6 +464,10 @@ stock bool NearestFreeExitSpot(int actor, float nest[3], float spot[3])
 	{
 		float candidate[3];
 		spots.GetArray(i, candidate);
+		if (Feature(FEATURE_ENGINEER_SETUP_PHASE) && IsSetupSpotClaimed(actor, candidate))
+		{
+			continue;
+		}
 		if (!IsExitSpotTaken(actor, candidate))
 		{
 			free.PushArray(candidate);

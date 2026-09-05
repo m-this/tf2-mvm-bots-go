@@ -17,6 +17,7 @@ type EngineerCalls struct {
 	IsMiniBuilding         func(building int32) bool
 	IsBuildingUp           func(building int32) bool
 	UpgradeLevel           func(building int32) int32
+	MaxUpgradeLevel        func() int32
 	EntityHealth           func(entity int32) int32
 	EntityMaxHealth        func(entity int32) int32
 	IsRescueRangerEquipped func(client int32) bool
@@ -202,6 +203,11 @@ func IsBuildingUp(building int32) bool { return engineers.IsBuildingUp(building)
 //
 //sp:library TF2_GetUpgradeLevel
 func UpgradeLevel(building int32) int32 { return engineers.UpgradeLevel(building) }
+
+// MaxUpgradeLevel is as far as a building goes, which the game says is three.
+//
+//sp:library TF2_GetMaxUpgradeLevel
+func MaxUpgradeLevel() int32 { return engineers.MaxUpgradeLevel() }
 
 // EntityHealth is what it has left.
 //

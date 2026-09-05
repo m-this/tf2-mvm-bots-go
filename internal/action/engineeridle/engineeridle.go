@@ -15,6 +15,7 @@ it.
 package engineeridle
 
 import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/nestsetup"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
 )
@@ -206,6 +207,9 @@ func nestAreaOf(actor int32) engine.Area {
 
 // Update is the whole of what an engineer does between builds.
 func Update(actor int32) engine.Outcome {
+	// The wrench he was going to swing anyway finishes a level, rather than an eighth of one
+	nestsetup.TopUpUpgrades(actor)
+
 	/* Counting what is in his hands, for both
 
 	A carried building is not a reason to build a second one, and answering that question wrong is

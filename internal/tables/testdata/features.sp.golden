@@ -43,6 +43,7 @@ enum
 	FEATURE_GENERATED_THREAT_PRIORITY,
 	FEATURE_ENGINEER_ENTRANCE_FIRST,
 	FEATURE_BOT_TEST_BY_NEXTBOT,
+	FEATURE_ENGINEER_SETUP_PHASE,
 	FEATURE_COUNT
 }
 
@@ -77,7 +78,8 @@ static const char FEATURE_NAME[FEATURE_COUNT][] =
 	"medic_answers_call",
 	"generated_threat_priority",
 	"engineer_entrance_first",
-	"bot_test_by_nextbot"
+	"bot_test_by_nextbot",
+	"engineer_setup_phase"
 };
 
 static ConVar g_arrFeatureConVars[FEATURE_COUNT];
@@ -231,6 +233,15 @@ void LoadFeatures()
 	moves more than the medic. See mvm-z83.93. */
 	g_arrFeatureConVars[FEATURE_BOT_TEST_BY_NEXTBOT] = MakeFeature(FEATURE_BOT_TEST_BY_NEXTBOT,
 		"A seat is one of the game's own bots when it has a nextbot, rather than whenever it is a fake client.", false);
+
+	/* Off: measured 2026-09-05 on Decoy, two engineers, three attempts each of two waves. The
+	entrance goes up at 21 to 30s of the break against 37 to 45s, the exit at 26 to 38s against
+	50 to 58s, and the walk drops from 13810 and 15544 units to 12877 and 12404. Six of six waves
+	cleared in both arms. Against that the sentry is at level three in 76% of samples rather than
+	85%: the wrench is what applies a level and an engineer who jumps has less time swinging.
+	Asked for by Mathis. See mvm-dn5, and mvm-9nu for upgrading a building outright. */
+	g_arrFeatureConVars[FEATURE_ENGINEER_SETUP_PHASE] = MakeFeature(FEATURE_ENGINEER_SETUP_PHASE,
+		"Between waves the engineer claims his spots, jumps to each of them, and what he builds comes up finished.", false);
 
 	/* What is on, as one string, for whoever reads the results later
 

@@ -19,6 +19,7 @@ top of it.
 package engineerbuildteleporter
 
 import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/nestsetup"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
 )
@@ -227,6 +228,16 @@ func OnStart(actor int32) engine.Outcome {
 		GiveUp(actor)
 
 		return Ended(engine.ThisAction(), actor, "No route out of spawn to walk")
+	}
+
+	/* The half he is about to build is claimed, and the walk to it is a jump
+
+	This is the walk the whole complaint was about: the entrance is at the far end of the map from
+	the nest, so building the pair costs the length of the map twice. The jump refuses itself
+	during a wave, so what a wave sees is the walk. */
+	if engine.Feature(engine.FeatureEngineerSetupPhase()) {
+		nestsetup.ClaimSetupSpot(actor, TeleporterClaim(actor), spotOf[actor])
+		nestsetup.SetupJump(actor, standOf[actor])
 	}
 
 	engine.UpdateLookAroundForEnemies(actor, true)
@@ -557,14 +568,36 @@ func StandPoint(actor int32) bool {
 		return true
 	}
 
-	if attempt >= routePoints[actor] {
-		return false
+	/* Past whatever another engineer has claimed, rather than onto it
+
+	The route out of spawn is the same route for everybody who spawns there, so two engineers
+	reading it pick the same first point and stand in each other. The points are a hundred and
+	fifty apart and there are eight of them, so stepping past a claim costs a step. */
+	for ; attempt < routePoints[actor]; attempt++ {
+		if engine.Feature(engine.FeatureEngineerSetupPhase()) &&
+			nestsetup.IsSetupSpotClaimed(actor, routeSpot[actor][attempt]) {
+			continue
+		}
+
+		tryIndex[actor] = attempt
+		spotOf[actor] = routeSpot[actor][attempt]
+		standOf[actor] = routeStand[actor][attempt]
+
+		return true
 	}
 
-	spotOf[actor] = routeSpot[actor][attempt]
-	standOf[actor] = routeStand[actor][attempt]
+	return false
+}
 
-	return true
+// TeleporterClaim is which of the four setup spots this attempt is for.
+//
+//sp:name TeleporterClaim
+func TeleporterClaim(actor int32) int32 {
+	if mode[actor] == engine.ModeExit() {
+		return nestsetup.SetupExit
+	}
+
+	return nestsetup.SetupEntrance
 }
 
 // GiveUp stops the asking: for the break when the nest stood, for the early
@@ -796,6 +829,10 @@ func NearestFreeExitSpot(actor int32, nest [3]float32) (found bool, spot [3]floa
 
 	for i := int32(0); i < spots.Length(); i++ {
 		candidate := spots.GetArray(i)
+
+		if engine.Feature(engine.FeatureEngineerSetupPhase()) && nestsetup.IsSetupSpotClaimed(actor, candidate) {
+			continue
+		}
 
 		if !IsExitSpotTaken(actor, candidate) {
 			free.PushArray(candidate)

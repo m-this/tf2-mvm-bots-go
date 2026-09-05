@@ -61,6 +61,12 @@ func FeatureEngineerClimbs() int32 { return 16 }
 //sp:global FEATURE_ENGINEER_ENTRANCE_FIRST
 func FeatureEngineerEntranceFirst() int32 { return 22 }
 
+// FeatureEngineerSetupPhase is the switch on the break being planned and jumped
+// rather than walked and wrenched.
+//
+//sp:global FEATURE_ENGINEER_SETUP_PHASE
+func FeatureEngineerSetupPhase() int32 { return 24 }
+
 // InForward is IN_FORWARD.
 //
 //sp:global IN_FORWARD

@@ -26,6 +26,7 @@ engineer being unable to walk there.
 package engineerbuilddispenser
 
 import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/nestsetup"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
 )
@@ -158,6 +159,12 @@ func OnStart(actor int32) engine.Outcome {
 
 	if !ok {
 		NextStandPoint(actor)
+	}
+
+	// Claimed and jumped to, so the walk from the upgrade station is not paid twice
+	if engine.Feature(engine.FeatureEngineerSetupPhase()) {
+		nestsetup.ClaimSetupSpot(actor, nestsetup.SetupDispenser, dispenserSpot[actor])
+		nestsetup.SetupJump(actor, dispenserStand[actor])
 	}
 
 	/* Priced by the walk, because the spot the map names is not always next to the nest
@@ -481,6 +488,11 @@ func CollectSpots(actor int32, wanted engine.Text, free engine.List, refused eng
 //
 //sp:name IsDispenserSpotTaken
 func IsSpotTaken(actor int32, spot [3]float32) bool {
+	// Claimed counts as taken: the point of claiming is to be read before anything stands there
+	if engine.Feature(engine.FeatureEngineerSetupPhase()) && nestsetup.IsSetupSpotClaimed(actor, spot) {
+		return true
+	}
+
 	for i := int32(1); i <= engine.MaxClients(); i++ {
 		if i == actor || !engine.IsClientInGame(i) {
 			continue

@@ -48,6 +48,10 @@ public Action CTFBotMvMEngineerBuildSentrygun_OnStart(BehaviorAction action, int
 			NestBuildPosition(m_aNestArea[actor], vNestPosition);
 			vNestPosition[2] += TFBOT_STEP_HEIGHT;
 			CBaseEntity(actor).SetAbsOrigin(vNestPosition);
+			if (Feature(FEATURE_ENGINEER_SETUP_PHASE))
+			{
+				ClaimSetupSpot(actor, 0, vNestPosition);
+			}
 		}
 	}
 	SentryStandPoint(actor);

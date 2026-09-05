@@ -259,6 +259,9 @@ var All = []Body{
 		Dir: "internal/body/spawnexit", Out: "sourcepawn/spawnexit.sp", Prefix: "Go_",
 	},
 	{
+		Dir: "internal/body/nestsetup", Out: "sourcepawn/nestsetup.sp", Prefix: "Go_",
+	},
+	{
 		Dir: "internal/body/mediccall", Out: "sourcepawn/mediccall.sp", Prefix: "Go_",
 	},
 	{

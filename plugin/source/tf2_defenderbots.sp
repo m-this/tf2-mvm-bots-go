@@ -82,6 +82,7 @@ Author: ★ Officer Spy ★
 #include "redbots3/generated/nestpick.sp"
 #include "redbots3/generated/nesthint.sp"
 #include "redbots3/generated/buildarea.sp"
+#include "redbots3/generated/nestsetup.sp"
 #include "redbots3/generated/nestmove.sp"
 #include "redbots3/generated/bombinfo.sp"
 #include "redbots3/generated/stocks.sp"
@@ -187,7 +188,7 @@ public Plugin myinfo =
 	/* This fork's version, not upstream's. The tags here restarted at v2.0.0 because the fork is
 	far enough from 1.5.5 that the old number said nothing about what is running. Leaving myinfo on
 	1.5.5 meant `sm plugins list` and every play-test report named a build nobody could identify. */
-	version = "2.46.0",
+	version = "2.50.0",
 	url = "https://github.com/OfficerSpy/TF2-MvM-Defender-TFBots"
 };
 

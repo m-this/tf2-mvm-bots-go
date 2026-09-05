@@ -7,7 +7,10 @@ ones whose whole job is on the event.
 */
 package gameevents
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/nestsetup"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 /*
 OpenTheBreak gives everybody a fresh shopping trip.
@@ -98,6 +101,13 @@ func EventMvmWaveBegin(event engine.Event, name string, dontBroadcast bool) {
 	than what the server was asked for. A wave beginning is after everything,
 	every time. */
 	engine.PublishActiveFeatures()
+
+	/* The break is over, so the plans made for it are too
+
+	A claim outlives its usefulness the moment the thing it reserved is
+	standing, and a claim that survives a wave reserves ground against an
+	engineer whose own building was destroyed on it. */
+	nestsetup.ForgetSetupPlans()
 	engine.ThreatPortAuditReport()
 
 	// Whatever the queue has left is about a bomb that is about to move.

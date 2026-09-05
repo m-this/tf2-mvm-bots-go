@@ -32,6 +32,7 @@ stock void ResetNextBot(int client)
 	Go_ResetAttackTank(client);
 	Go_ResetDestroyTeleporter(client);
 	Go_ResetBuildTeleporter(client);
+	Go_ResetNestSetup(client);
 	Go_ResetGuardPoint(client);
 	g_arrPluginBot[client].Reset();
 }

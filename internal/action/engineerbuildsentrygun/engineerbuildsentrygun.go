@@ -25,6 +25,7 @@ which tries again three seconds later with a freshly scored nest.
 package engineerbuildsentrygun
 
 import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/nestsetup"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
 )
@@ -157,6 +158,11 @@ func OnStart(actor int32) engine.Outcome {
 			vNestPosition := engine.NestBuildPosition(engine.NestAreaOf(actor))
 			vNestPosition[2] += engine.StepHeight()
 			engine.EntityOf(actor).SetAbsOrigin(vNestPosition)
+
+			// The nest is the first claim of the break, and the one the other three are placed around
+			if engine.Feature(engine.FeatureEngineerSetupPhase()) {
+				nestsetup.ClaimSetupSpot(actor, nestsetup.SetupSentry, vNestPosition)
+			}
 		}
 	}
 
