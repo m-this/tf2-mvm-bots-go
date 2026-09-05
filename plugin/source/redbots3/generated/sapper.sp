@@ -94,12 +94,3 @@ stock Address DereferencePointer(Address addr)
 	return view_as<Address>(LoadFromAddress(addr, NumberType_Int32));
 }
 
-stock int ReadInt(Address addr)
-{
-	if (addr == Address_Null)
-	{
-		return -1;
-	}
-	return LoadFromAddress(addr, NumberType_Int32);
-}
-

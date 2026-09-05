@@ -114,22 +114,6 @@ func SetPlayerReady(client int32, state bool) {
 	engine.FakeClientCommand(client, "tournament_player_readystate %d", state)
 }
 
-// IsPluginMvMCreditsLoaded says the credits plugin is on this server.
-//
-//sp:name IsPluginMvMCreditsLoaded
-func IsPluginMvMCreditsLoaded() bool {
-	// tf_mvm_credits
-	return engine.FindConVar("sm_mvmcredits_version") != engine.NoConVar()
-}
-
-// IsPluginRTDLoaded says the roll-the-dice plugin is on this server.
-//
-//sp:name IsPluginRTDLoaded
-func IsPluginRTDLoaded() bool {
-	// rtd
-	return engine.FindConVar("sm_rtd2_version") != engine.NoConVar()
-}
-
 // UseActionSlotItem uses the canteen, which the game takes as key values rather
 // than as a command.
 //

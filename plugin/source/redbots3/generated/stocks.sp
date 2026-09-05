@@ -83,16 +83,6 @@ stock void SetPlayerReady(int client, bool state)
 	FakeClientCommand(client, "tournament_player_readystate %d", state);
 }
 
-stock bool IsPluginMvMCreditsLoaded()
-{
-	return FindConVar("sm_mvmcredits_version") != null;
-}
-
-stock bool IsPluginRTDLoaded()
-{
-	return FindConVar("sm_rtd2_version") != null;
-}
-
 stock void UseActionSlotItem(int client)
 {
 	KeyValues kv = new KeyValues("use_action_slot_item_server");

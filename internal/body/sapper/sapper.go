@@ -142,14 +142,3 @@ func DereferencePointer(addr engine.Address) engine.Address {
 	// maybe someday we'll do 64-bit addresses
 	return engine.Address(engine.LoadFromAddress(addr))
 }
-
-// ReadInt is the same read, guarded, which is what every caller wants.
-//
-//sp:name ReadInt
-func ReadInt(addr engine.Address) int32 {
-	if addr == engine.NoAddress() {
-		return -1
-	}
-
-	return engine.LoadFromAddress(addr)
-}
