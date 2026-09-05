@@ -17,3 +17,5 @@
 # in this repository now, and a run is evidence for one afternoon rather than
 # something to carry.
 plugin/results/
+/testbed
+/rc
