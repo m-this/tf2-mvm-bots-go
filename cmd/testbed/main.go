@@ -85,12 +85,22 @@ func run() error {
 		maps     = flag.String("maps", "", "run every map in this list instead of -map, space separated")
 		list     arms
 	)
+	/* The puppets, which is how a fault that needs a person on RED gets measured
+
+	Each one takes a RED seat, so -defenders and -team come down by one for each
+	or the settle refuses the attempt. See mvm-n4s. */
+	puppets := flag.Int("puppets", 0, "bodies to seat on RED standing in for players, each taking a defender's seat")
+	puppetClass := flag.String("puppet-class", "", "the class they join as, empty for the plugin's own (scout)")
+	puppetCalls := flag.Bool("puppet-calls", false, "have them press MEDIC! at every poll while a wave runs")
 	replay := flag.String("replay", "", "a player's server.cfg, from a debug bundle, whose settings this run plays instead of the flags")
 	flag.Var(&list, "arm", "name:cvars, repeatable. Comma separated cvars, key=value")
 	flag.Parse()
 
 	if len(list) == 0 {
 		return errors.New("no arms: give at least one -arm name:cvars")
+	}
+	if *puppetCalls && *puppets == 0 {
+		return errors.New("-puppet-calls with no puppets: nothing would press the call")
 	}
 
 	replayed := map[string]string{}
@@ -137,7 +147,7 @@ func run() error {
 		}
 		say("restarting the server onto it")
 		compose := filepath.Join(root, "testbed", "compose.yml")
-		if err := lab.Compose(ctx, compose, containerEnv(*mapName, *team, *defend, replayed), "up", "-d", "--force-recreate"); err != nil {
+		if err := lab.Compose(ctx, compose, containerEnv(*mapName, *team, *defend, puppet{count: *puppets, class: *puppetClass}, replayed), "up", "-d", "--force-recreate"); err != nil {
 			return err
 		}
 	}
@@ -166,6 +176,7 @@ func run() error {
 			root: root, mapName: name, mission: *mission, waves: *waves,
 			attempts: *attempts, timeout: *timeout, team: *team, defenders: *defend,
 			out: filepath.Join(root, *out), tag: *tag, jump: *jumpTo, say: say,
+			puppets: puppet{count: *puppets, class: *puppetClass, calls: *puppetCalls},
 		})
 		if err != nil {
 			return err
@@ -180,6 +191,20 @@ type options struct {
 	waves, attempts, defenders, jump       int
 	timeout                                time.Duration
 	say                                    func(string, ...any)
+	puppets                                puppet
+}
+
+/*
+puppet is the run's stand-in for a player, in the three things a run decides
+about it: how many, what class, and whether they call for a medic.
+
+Named rather than three ints and a bool at every call site, because count and
+class are both what the seat is and would swap silently.
+*/
+type puppet struct {
+	count int
+	class string
+	calls bool
 }
 
 func report(tag, mapName, mission string, got []wave.Arm) string {
@@ -253,14 +278,21 @@ func sortedPairs(of map[string]string) []string {
 	return out
 }
 
-func containerEnv(mapName, team string, size int, replayed map[string]string) []string {
+func containerEnv(mapName, team string, size int, p puppet, replayed map[string]string) []string {
 	env := map[string]string{
 		"TESTBED_MAP":           mapName,
 		"TESTBED_BOT_TEAM_COMP": team,
 		"TESTBED_BOT_TEAM_SIZE": strconv.Itoa(size),
 		"TESTBED_HOST":          "1",
+		"TESTBED_PUPPETS":       strconv.Itoa(p.count),
 		"TESTBED_PORT":          envOr("TESTBED_PORT", "27025"),
 		"TESTBED_RCONPW":        envOr("TESTBED_RCONPW", "testbed"),
+	}
+
+	// The class only when it was asked for, so an empty flag leaves the
+	// plugin's own default rather than writing an empty joinclass.
+	if p.class != "" {
+		env["TESTBED_PUPPET_CLASS"] = p.class
 	}
 
 	// A replayed server.cfg wins, because the point of naming one is to play

@@ -53,6 +53,11 @@ services:
       BOT_CVARS: ${TESTBED_BOT_CVARS:-}
       STATS_FILE: ${TESTBED_STATS_FILE:-mvmbots_stats.jsonl}
       TESTBED_HOST: ${TESTBED_HOST:-1}
+      # Bodies on RED that stand in for players, for a fault that needs a person
+      # on the team. Each takes a defender's seat, so BOT_TEAM_SIZE comes down
+      # by one for each.
+      TESTBED_PUPPETS: ${TESTBED_PUPPETS:-0}
+      TESTBED_PUPPET_CLASS: ${TESTBED_PUPPET_CLASS:-scout}
       # Comma-separated SteamIDs that get root, for walking a map by hand
       TESTBED_ADMIN_STEAMIDS: ${TESTBED_ADMIN_STEAMIDS:-}
     ports:

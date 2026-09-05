@@ -5,7 +5,15 @@
 
 stock bool IsTFBotPlayer(int client)
 {
-	return IsFakeClient(client);
+	if (!IsFakeClient(client))
+	{
+		return false;
+	}
+	if (!Feature(FEATURE_BOT_TEST_BY_NEXTBOT))
+	{
+		return true;
+	}
+	return view_as<Address>(CBaseNPC_GetNextBotOfEntity(client)) != Address_Null;
 }
 
 stock bool IsFinalWave()

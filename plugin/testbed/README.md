@@ -102,6 +102,62 @@ and its own bots when it decides how many to add, and the host is neither, so
 RED ends up with six real bots plus the host. Every `wave_begin` line records
 how many of RED were bots, so a results file can always say what it measured.
 
+## Standing in for a player
+
+Several faults need somebody on RED and cannot otherwise be measured here: a
+medic that ignores a call, a bot switcher nobody drives, an upgrade station
+nobody stands at. A puppet is a body the runner seats and drives, so the fault
+gets a run instead of waiting for somebody to be free.
+
+```sh
+go run ./cmd/testbed -map mvm_decoy \
+  -team scout,soldier,heavyweapons,engineer,medic -defenders 5 \
+  -puppets 1 -puppet-calls \
+  -arm on:sm_redbots_feature_medic_answers_call=1 \
+  -arm off:sm_redbots_feature_medic_answers_call=0
+```
+
+The lineup has to hold a medic, or there is no beam to measure and the run
+answers a question nobody asked.
+
+**A puppet takes a defender's seat.** RED is six and the host already holds one,
+so `-defenders` and `-team` come down by one for each puppet. Forget it and the
+attempt is refused by name rather than measured short: `checkPuppets` reads the
+roster and says how many arrived.
+
+**The mod has to agree it is a player.** `IsTFBotPlayer` is `IsFakeClient`, and
+every body a plugin can seat is a fake client, so without help a puppet is one
+more bot and `medic_answers_call` is a no-op. `sm_redbots_feature_bot_test_by_nextbot`
+answers the question by the nextbot instead: a `tf_bot_add` defender and a
+popfile robot have one, a `CreateFakeClient` body does not. The runner turns it
+on with the puppets, before the arm cvars, so an arm can still turn it off.
+
+**Scout by default.** A Heavy puppet wins the medic's ranking on its body alone,
+so a beam on it would say nothing about the call. A Scout is the smallest body
+on the team and only takes the beam by being a player or by calling, which is
+the two halves of the ask and nothing else. `-puppet-class` changes it.
+
+**The call rides on the poll.** `-puppet-calls` presses `voicemenu 0 0`, the same
+command a player's key sends, once every twenty seconds while a wave is running.
+The answer time is ten seconds, so half of each gap has no call live: a beam that
+sits on the puppet throughout is the player rule, and one that arrives after a
+press is the call.
+
+What the run says is in the telemetry, in the medic's `beam went to` line: the
+puppet is named after itself, so a beam that moved names it and one that did not
+names whichever bot the medic had. `mvmbots_puppet_status` says the same thing
+while the wave is still running.
+
+The cvars are `mvmbots_puppet_count`, `mvmbots_puppet_name` and
+`mvmbots_puppet_class`; the commands are `mvmbots_puppet_call [n]` and
+`mvmbots_puppet_status`. `mvmbots_roster` counts puppets separately from the
+host, the humans and the mod's own bots, because a puppet read as a defender is
+a run that thinks it measured six bots and measured five.
+
+A puppet reproduces what a player does, not what a player feels. It has no
+input timing, no interpolation and no packet loss, so "the medic feels
+unresponsive" is still a play-test question.
+
 ## What comes out
 
 One JSON object per line, appended as the waves happen. A crashed run still

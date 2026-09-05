@@ -200,4 +200,14 @@ var Features = []Feature{
 			"it, walked to the nest, built there, and walked back to spawn for the entrance. Peppy asked\n" +
 			"for the entrance first and the walk is what the test-bed measures. See mvm-dh8.",
 	},
+	{
+		Name:        "bot_test_by_nextbot",
+		Description: "A seat is one of the game's own bots when it has a nextbot, rather than whenever it is a fake client.",
+		On:          false,
+		Note: "Off until a run says otherwise. IsTFBotPlayer was IsFakeClient, so every body the test-bed\n" +
+			"seats read as a bot: medic_answers_call was a no-op there by construction and no puppet\n" +
+			"could stand in for a player. Defenders come from tf_bot_add and robots from the popfile, so\n" +
+			"both have a nextbot and a CreateFakeClient body has none. It is read in five places, so it\n" +
+			"moves more than the medic. See mvm-z83.93.",
+	},
 }

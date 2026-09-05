@@ -74,6 +74,7 @@ type botRollup struct {
 	actions  map[string]int
 	beaming  int // medic only: samples with the medigun actually on somebody
 	trigger  int // medic only: samples with the trigger held, connected or not
+	patients map[string]int
 	hurt     int // samples below four fifths health
 	stillFor map[string]int
 }
@@ -103,6 +104,7 @@ func rollupBots(samples []botSample) map[string]*botRollup {
 			r = &botRollup{
 				class: s.Class, slots: map[int]int{},
 				actions: map[string]int{}, stillFor: map[string]int{},
+				patients: map[string]int{},
 			}
 			out[s.Who] = r
 		}
@@ -113,6 +115,7 @@ func rollupBots(samples []botSample) map[string]*botRollup {
 
 		if s.Healing != "" {
 			r.beaming++
+			r.patients[s.Healing]++
 		}
 
 		if s.Firing != 0 {
@@ -323,7 +326,7 @@ func printTelemetry(bots []botSample, buildings []buildingSample) {
 		for _, who := range sortedKeys(rolled) {
 			r := rolled[who]
 
-			fmt.Printf("    %-16s %-9s %s\n", who, r.class, topActions(r.actions, r.samples))
+			fmt.Printf("    %-16s %-9s %s\n", who, r.class, topShares(r.actions, r.samples))
 
 			// Holding the trigger and healing somebody are different things. The
 			// medigun reaches about 450 units; a medic aiming at a patient 926
@@ -333,6 +336,18 @@ func printTelemetry(bots []botSample, buildings []buildingSample) {
 				fmt.Printf("    %-16s %-9s beam on somebody %d%% of the time, trigger held %d%% (%s of that connected)\n",
 					"", "", pct(r.beaming, r.samples), pct(r.trigger, r.samples),
 					percent(r.beaming, r.trigger))
+
+				/* Who, and not only how often.
+
+				"Beam on somebody 27% of the time" cannot tell a medic who
+				pocketed one body all wave from one who shared it out, and it
+				cannot say whether a call was answered: both of those are the
+				patient's name and nothing else. A run that seats a puppet reads
+				this line, because the puppet is named after itself. */
+				if len(r.patients) > 0 {
+					fmt.Printf("    %-16s %-9s beam went to %s\n",
+						"", "", topShares(r.patients, r.beaming))
+				}
 			}
 
 			fmt.Printf("    %-16s %-9s %s, hurt %d%% of the time\n", "", "", slotShare(r.slots, r.samples), pct(r.hurt, r.samples))
@@ -370,15 +385,17 @@ func printTelemetry(bots []botSample, buildings []buildingSample) {
 
 // The three actions a bot spent most of its samples in, which is the shape of
 // "he was stood in a house" without anybody having to be in the house.
-func topActions(actions map[string]int, samples int) string {
+// topShares is the three biggest names in a tally, each as a share of the
+// samples it was counted over.
+func topShares(counts map[string]int, samples int) string {
 	type pair struct {
 		name  string
 		count int
 	}
 
-	pairs := make([]pair, 0, len(actions))
+	pairs := make([]pair, 0, len(counts))
 
-	for name, count := range actions {
+	for name, count := range counts {
 		pairs = append(pairs, pair{name, count})
 	}
 

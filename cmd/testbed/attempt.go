@@ -99,6 +99,38 @@ func playInto(ctx context.Context, l lab.Lab, a arm, o options, round int, got *
 	return nil
 }
 
+/*
+checkPuppets refuses an attempt that asked for a player and got none.
+
+RED is six seats and the host already holds one, so a run that forgot to bring
+-defenders down finds the last seat refused, and the seat it loses is the
+puppet: the mod fills its own before this is asked. Nothing else about the file
+would say so, and a full results file with no player in it reads as the medic
+ignoring a call it never received.
+*/
+func checkPuppets(l lab.Lab, o options) error {
+	if o.puppets.count == 0 {
+		return nil
+	}
+
+	roster, err := l.Roster()
+	if err != nil {
+		return err
+	}
+	if roster.Puppets < o.puppets.count {
+		return fmt.Errorf("%w: %d puppets are on RED and the run asked for %d, so drop -defenders and -team by one for each",
+			lab.ErrPrecondition, roster.Puppets, o.puppets.count)
+	}
+
+	status, err := l.PuppetStatus()
+	if err != nil {
+		return err
+	}
+	o.say("%s", status)
+
+	return nil
+}
+
 func cleared(results []wave.Result) int {
 	n := 0
 	for _, r := range results {
@@ -123,6 +155,14 @@ func playOnce(ctx context.Context, l lab.Lab, a arm, o options, path string) ([]
 	if _, err := l.Do("sm_redbots_manager_team_composition \"" + o.team + "\""); err != nil {
 		return nil, false, err
 	}
+
+	/* Before the arm cvars, not after: the arm is what is under test and gets
+	   the last word, so a run comparing the nextbot player test against itself
+	   can still turn it off in one of its arms. */
+	if err := l.SeatPuppets(o.puppets.count); err != nil {
+		return nil, false, err
+	}
+
 	for _, pair := range strings.Split(a.cvars, ",") {
 		if pair = strings.TrimSpace(pair); pair == "" {
 			continue
@@ -137,6 +177,9 @@ func playOnce(ctx context.Context, l lab.Lab, a arm, o options, path string) ([]
 	}
 
 	if err := l.Settle(ctx, o.defenders, 3*time.Minute); err != nil {
+		return nil, false, err
+	}
+	if err := checkPuppets(l, o); err != nil {
 		return nil, false, err
 	}
 	if o.jump > 0 {
@@ -185,6 +228,21 @@ func waitForWaves(ctx context.Context, l lab.Lab, o options) ([]wave.Result, boo
 		lines, results := readStagedWithLines(ctx, o.root, staged)
 		found = results
 		begun := wave.Begun(staged)
+
+		/* The call rides on the poll rather than on a clock of its own.
+
+		Twenty seconds against a ten second answer time is a player who calls,
+		waits, and calls again, which is what a player does when nobody comes.
+		It also leaves half of every gap with no call live, so a beam that sits
+		on the puppet throughout is the player rule and not the call. */
+		if o.puppets.calls && begun {
+			if n, err := l.CallForMedic(); err != nil {
+				o.say("the medic call did not reach a puppet: %v", err)
+			} else if n == 0 {
+				o.say("no puppet was alive to call for a medic")
+			}
+		}
+
 		if len(results) >= o.waves {
 			return lines, len(results), begun
 		}

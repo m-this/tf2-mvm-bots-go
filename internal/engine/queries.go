@@ -299,6 +299,11 @@ func AnyHumanReadyOnRed() bool { return queries.AnyHumanReadyOnRed() }
 //sp:global FEATURE_MEDIC_ANSWERS_CALL
 func FeatureMedicAnswersCall() int32 { return 20 }
 
+// FeatureBotTestByNextbot is FEATURE_BOT_TEST_BY_NEXTBOT.
+//
+//sp:global FEATURE_BOT_TEST_BY_NEXTBOT
+func FeatureBotTestByNextbot() int32 { return 23 }
+
 // IsTFBotPlayer says the slot is one of the game's own bots. Ported, mission.
 //
 //sp:body IsTFBotPlayer

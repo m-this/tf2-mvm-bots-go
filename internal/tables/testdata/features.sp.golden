@@ -42,6 +42,7 @@ enum
 	FEATURE_MEDIC_ANSWERS_CALL,
 	FEATURE_GENERATED_THREAT_PRIORITY,
 	FEATURE_ENGINEER_ENTRANCE_FIRST,
+	FEATURE_BOT_TEST_BY_NEXTBOT,
 	FEATURE_COUNT
 }
 
@@ -75,7 +76,8 @@ static const char FEATURE_NAME[FEATURE_COUNT][] =
 	"ammo_failover",
 	"medic_answers_call",
 	"generated_threat_priority",
-	"engineer_entrance_first"
+	"engineer_entrance_first",
+	"bot_test_by_nextbot"
 };
 
 static ConVar g_arrFeatureConVars[FEATURE_COUNT];
@@ -217,6 +219,14 @@ void LoadFeatures()
 	for the entrance first and the walk is what the test-bed measures. See mvm-dh8. */
 	g_arrFeatureConVars[FEATURE_ENGINEER_ENTRANCE_FIRST] = MakeFeature(FEATURE_ENGINEER_ENTRANCE_FIRST,
 		"The engineer puts his teleporter entrance up in spawn before he walks out to build the nest.", false);
+
+	/* Off until a run says otherwise. IsTFBotPlayer was IsFakeClient, so every body the test-bed
+	seats read as a bot: medic_answers_call was a no-op there by construction and no puppet
+	could stand in for a player. Defenders come from tf_bot_add and robots from the popfile, so
+	both have a nextbot and a CreateFakeClient body has none. It is read in five places, so it
+	moves more than the medic. See mvm-z83.93. */
+	g_arrFeatureConVars[FEATURE_BOT_TEST_BY_NEXTBOT] = MakeFeature(FEATURE_BOT_TEST_BY_NEXTBOT,
+		"A seat is one of the game's own bots when it has a nextbot, rather than whenever it is a fake client.", false);
 
 	/* What is on, as one string, for whoever reads the results later
 

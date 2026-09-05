@@ -35,4 +35,5 @@ var Arms = []Arm{
 	{Name: "medic_answers_call", ConVar: "sm_redbots_feature_medic_answers_call", Default: false, About: "A player who calls for a medic takes the beam, and a player outranks a bot for it either way."},
 	{Name: "generated_threat_priority", ConVar: "sm_redbots_feature_generated_threat_priority", Default: false, About: "Rank threats with the table generated from the Go, rather than with the hand written chain."},
 	{Name: "engineer_entrance_first", ConVar: "sm_redbots_feature_engineer_entrance_first", Default: false, About: "The engineer puts his teleporter entrance up in spawn before he walks out to build the nest."},
+	{Name: "bot_test_by_nextbot", ConVar: "sm_redbots_feature_bot_test_by_nextbot", Default: false, About: "A seat is one of the game's own bots when it has a nextbot, rather than whenever it is a fake client."},
 }

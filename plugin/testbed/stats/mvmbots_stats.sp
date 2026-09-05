@@ -16,6 +16,15 @@
 #include <tf2_stocks>
 #include <sdkhooks>
 #include <tf2utils>
+
+//For the nextbot test in HasBehaviour, which is what decides whether a client has an action stack
+#include <cbasenpc>
+
+/* cbasenpc and actions both declare the behaviour result enums, and spcomp refuses the second
+   spelling. Suppressed the way tf2_defenderbots.sp suppresses them, which is where the order of
+   these three lines comes from: cbasenpc first, then actions without its own copies. */
+#define _disable_actions_query_result_type
+#define _disable_actions_event_result_priority_type
 #include <actions>
 
 #pragma semicolon 1
@@ -1648,23 +1657,17 @@ static void CollectTelemetryActionName(BehaviorAction action)
  * whole callback with it: the seat-holder mvmbots_host puts on RED is an ordinary fake client, so
  * the first sample of every frame died on it and not one telemetry line reached the file.
  *
- * The two plugins ship in the same directory and one exists to keep the other's server running, so
- * asking it what it named its seat is cheaper than guessing at a property that tells NextBots apart
- * from fake clients. */
+ * This asked mvmbots_host what it had named its seat, and compared. That covered the one seat that
+ * existed when it was written and stopped covering them all the moment there was a second: a puppet
+ * is a fake client under a different name, so it walked straight through and threw seven times in
+ * one attempt. A test that has to be told about each new seat is a test that will be wrong again.
+ *
+ * The nextbot is the question itself. A behaviour lives on one, a tf_bot_add defender and a popfile
+ * robot both have one, and a body a plugin seats with CreateFakeClient has none, whatever it is
+ * called. The property this used to say was not worth guessing at turns out to be the cheap one. */
 static bool HasBehaviour(int client)
 {
-	static ConVar hostName;
-
-	if (hostName == null)
-		hostName = FindConVar("mvmbots_host_name");
-
-	if (hostName == null)
-		return true;
-
-	char seat[MAX_NAME_LENGTH]; hostName.GetString(seat, sizeof(seat));
-	char name[MAX_NAME_LENGTH]; GetClientName(client, name, sizeof(name));
-
-	return !StrEqual(name, seat);
+	return CBaseNPC_GetNextBotOfEntity(client) != view_as<INextBot>(Address_Null);
 }
 
 static void TelemetryActionStack(int client, char[] buffer, int maxlength)

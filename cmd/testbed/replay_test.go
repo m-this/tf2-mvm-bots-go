@@ -45,7 +45,7 @@ sm_redbots_manager_use_custom_loadouts 1
 
 // A replayed setting has to beat the flag, or naming a config changes nothing.
 func TestReplayBeatsTheFlags(t *testing.T) {
-	env := containerEnv("mvm_decoy", "scout,scout", 2, map[string]string{
+	env := containerEnv("mvm_decoy", "scout,scout", 2, puppet{}, map[string]string{
 		"TESTBED_BOT_TEAM_COMP": "sniper,sniper",
 	})
 

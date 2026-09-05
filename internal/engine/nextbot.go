@@ -66,6 +66,14 @@ func InstallBots(c BotCalls) func() {
 //sp:native CBaseNPC_GetNextBotOfEntity
 func NextBotOf(entity int32) Bot { return bots.NextBotOf(entity) }
 
+// AddressOfBot is the nextbot read as a memory address, which is how a caller
+// asks whether there is one at all.
+//
+//sp:cast Address
+func AddressOfBot(b Bot) Address {
+	return Address(b)
+}
+
 // Vision is what the bot has noticed.
 //
 //sp:method GetVisionInterface

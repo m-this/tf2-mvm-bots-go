@@ -89,10 +89,11 @@ type Roster struct {
 	Bots      int
 	Robots    int // BLU, which the game names TFBot
 	Defenders int // ours, which the mod gives a name of its own
+	Puppets   int // the bodies a run seats to stand in for players
 	Host      bool
 }
 
-var rosterLine = regexp.MustCompile(`mvmbots_roster red=(\d+) blu=(\d+) humans=(\d+) host=(\d+)`)
+var rosterLine = regexp.MustCompile(`mvmbots_roster red=(\d+) blu=(\d+) humans=(\d+) host=(\d+) puppets=(\d+)`)
 
 /*
 Roster asks the game who is on each team.
@@ -107,6 +108,12 @@ func (l Lab) Roster() (Roster, error) {
 	if err != nil {
 		return Roster{}, err
 	}
+	return readRoster(out)
+}
+
+// readRoster is the line on its own, so who counts as a defender can be tested
+// without a server.
+func readRoster(out string) (Roster, error) {
 	m := rosterLine.FindStringSubmatch(out)
 	if m == nil {
 		return Roster{}, fmt.Errorf("%w: the host plugin did not answer mvmbots_roster, so nobody can say who is on which team", ErrPrecondition)
@@ -117,15 +124,63 @@ func (l Lab) Roster() (Roster, error) {
 	r.Robots, _ = strconv.Atoi(m[2])
 	r.Humans, _ = strconv.Atoi(m[3])
 	host, _ := strconv.Atoi(m[4])
+	r.Puppets, _ = strconv.Atoi(m[5])
 	r.Host = host > 0
 
-	// The host holds a RED seat and plays nothing, so it is not a defender.
-	r.Defenders = red - host - r.Humans
+	// The host and the puppets hold RED seats and neither plays the mission,
+	// so neither is a defender. A puppet counted as one is a run that thinks
+	// it has six bots and has five.
+	r.Defenders = red - host - r.Humans - r.Puppets
 	if r.Defenders < 0 {
 		r.Defenders = 0
 	}
 	r.Bots = red + r.Robots - r.Humans
 	return r, nil
+}
+
+/*
+SeatPuppets asks for that many bodies on RED standing in for players.
+
+The mod is told to answer the player question by the nextbot at the same time,
+because a puppet it reads as one of its own bots is a body with a name and
+nothing else: IsTFBotPlayer is IsFakeClient without that switch, and every seat
+a plugin can create is a fake client. See mvm-z83.93.
+*/
+func (l Lab) SeatPuppets(count int) error {
+	if count > 0 {
+		if _, err := l.Do("sm_redbots_feature_bot_test_by_nextbot 1"); err != nil {
+			return err
+		}
+	}
+	_, err := l.Do("mvmbots_puppet_count " + strconv.Itoa(count))
+	return err
+}
+
+var calledLine = regexp.MustCompile(`mvmbots_puppet_call called=(\d+)`)
+
+// CallForMedic presses MEDIC! on every seated puppet and says how many pressed
+// it. Nought is a run measuring nothing, so the caller is the one to complain.
+func (l Lab) CallForMedic() (int, error) {
+	out, err := l.Do("mvmbots_puppet_call")
+	if err != nil {
+		return 0, err
+	}
+	m := calledLine.FindStringSubmatch(out)
+	if m == nil {
+		return 0, fmt.Errorf("%w: the host plugin did not answer mvmbots_puppet_call, so no puppet is on RED", ErrPrecondition)
+	}
+	n, _ := strconv.Atoi(m[1])
+	return n, nil
+}
+
+// PuppetStatus is what the puppets are doing right now, one line each, which is
+// how a call is watched while the wave runs rather than read afterwards.
+func (l Lab) PuppetStatus() (string, error) {
+	out, err := l.Do("mvmbots_puppet_status")
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(out), nil
 }
 
 // CurrentMap is the map the server is playing, read out of status.

@@ -6,12 +6,31 @@ package mission
 
 import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
 
-// IsTFBotPlayer says the slot is one of the game's own bots.
+/*
+IsTFBotPlayer says the slot is one of the game's own bots.
+
+A fake client is not enough to say so. Defenders come from tf_bot_add and robots
+from the popfile, so both are CTFBot and both have a nextbot; a body a plugin
+seats with CreateFakeClient is a CTFPlayer and has none. That is the reliable
+question, and it is what lets the test-bed seat something that stands where a
+player stands.
+
+Behind bot_test_by_nextbot and off, because five callers read this. The fake
+client test stays in front, so a real player costs one call and nothing asks the
+engine about him.
+*/
 //
 //sp:name IsTFBotPlayer
 func IsTFBotPlayer(client int32) bool {
-	// TODO: change this, as it's not entirely reliable
-	return engine.IsFakeClient(client)
+	if !engine.IsFakeClient(client) {
+		return false
+	}
+
+	if !engine.Feature(engine.FeatureBotTestByNextbot()) {
+		return true
+	}
+
+	return engine.AddressOfBot(engine.NextBotOf(client)) != engine.NoAddress()
 }
 
 // IsFinalWave says this is the last one the mission has.

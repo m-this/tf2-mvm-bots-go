@@ -196,6 +196,13 @@ install_server_cfg() {
 	// pressing F4, and the game will not begin a wave with nobody ready.
 	mvmbots_host_enabled ${TESTBED_HOST:-1}
 
+	// The puppets, which stand where a player stands. Nought unless a run asks,
+	// because each one takes a seat off the lineup being measured. The mod only
+	// reads a puppet as a player under bot_test_by_nextbot, which the runner
+	// turns on with them: see mvm-n4s.
+	mvmbots_puppet_count ${TESTBED_PUPPETS:-0}
+	mvmbots_puppet_class "${TESTBED_PUPPET_CLASS:-scout}"
+
 	// Where the wave results are written. The run script reads this file.
 	mvmbots_stats_path "logs/${STATS_FILE:-mvmbots_stats.jsonl}"
 	CFG
