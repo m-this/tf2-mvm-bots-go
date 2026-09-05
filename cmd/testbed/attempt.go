@@ -87,6 +87,9 @@ func playInto(ctx context.Context, l lab.Lab, a arm, o options, round int, got *
 
 	if crashed {
 		got.Crashes++
+		if words := lastWords(ctx); words != "" {
+			o.say("the server's last words:\n%s", words)
+		}
 	}
 	if len(results) == 0 {
 		got.Empty++
@@ -217,6 +220,13 @@ func playOnce(ctx context.Context, l lab.Lab, a arm, o options, path string) ([]
 	if err := copyStats(ctx, o.root, path); err != nil {
 		return results, crashed, err
 	}
+	if err := writeRunRecord(path, runRecord{
+		Tag: o.tag, Arm: a.name, Cvars: a.cvars, Map: o.mapName, Mission: o.mission,
+		Team: o.team, Defenders: o.defenders, Puppets: o.puppets.count, PuppetCalls: o.puppets.calls,
+		Waves: o.waves, StartWave: max(o.jump, 1), Plugin: o.plugin, At: time.Now().UTC().Format(time.RFC3339),
+	}); err != nil {
+		return results, crashed, err
+	}
 	if len(results) == 0 && reason != "" && !crashed {
 		// A run that produced nothing for a reason the watcher can name is
 		// worth saying out loud, and worth keeping out of the numbers.
@@ -234,7 +244,8 @@ The watcher's reasons name what went wrong, which is worth more than a timeout
 and an empty file.
 */
 func waitForWaves(ctx context.Context, l lab.Lab, o options) ([]wave.Result, bool, string) {
-	staged := filepath.Join(os.TempDir(), "testbed-stats.jsonl")
+	// Named for the bed: two beds staging into one file read each other's waves.
+	staged := filepath.Join(os.TempDir(), bed()+"-stats.jsonl")
 
 	watcher := &lab.Watcher{
 		WantDefenders: o.defenders,

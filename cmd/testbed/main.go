@@ -165,7 +165,8 @@ func run() error {
 	if err := l.WaitForRcon(ctx, 20*time.Minute); err != nil {
 		return err
 	}
-	if err := checkVersion(root, l, say); err != nil {
+	version, err := checkVersion(root, l, say)
+	if err != nil {
 		return err
 	}
 
@@ -201,7 +202,7 @@ func run() error {
 			root: root, mapName: name, mission: *mission, waves: *waves,
 			attempts: *attempts, timeout: *timeout, team: *team, defenders: *defend,
 			out: filepath.Join(root, *out), tag: *tag, jump: *jumpTo, say: say,
-			puppets: seats,
+			puppets: seats, plugin: version,
 		})
 		// Reported whatever happened: what completed is data.
 		fmt.Print(report(*tag, name, *mission, results))
@@ -218,6 +219,8 @@ type options struct {
 	timeout                                time.Duration
 	say                                    func(string, ...any)
 	puppets                                puppet
+	// The plugin version the server has loaded, for the results file
+	plugin string
 }
 
 /*
@@ -262,27 +265,27 @@ var versionInSource = regexp.MustCompile(`version\s*=\s*"([^"]+)"`)
 // checkVersion refuses a run against a plugin the server loaded before the last
 // build. That mistake cost a full A/B: --no-build left a two hour old mod in
 // memory and the run reported the fix doing nothing.
-func checkVersion(root string, l lab.Lab, say func(string, ...any)) error {
+func checkVersion(root string, l lab.Lab, say func(string, ...any)) (string, error) {
 	source, err := os.ReadFile(filepath.Join(root, "source", "tf2_defenderbots.sp"))
 	if err != nil {
-		return err
+		return "", err
 	}
 	m := versionInSource.FindSubmatch(source)
 	if m == nil {
-		return errors.New("cannot find the version in source/tf2_defenderbots.sp")
+		return "", errors.New("cannot find the version in source/tf2_defenderbots.sp")
 	}
 	want := string(m[1])
 
 	got, err := l.PluginVersion()
 	if err != nil {
-		return err
+		return "", err
 	}
 	if got != want {
-		return fmt.Errorf("%w: the server has %s loaded and the source says %s, so build first",
+		return "", fmt.Errorf("%w: the server has %s loaded and the source says %s, so build first",
 			lab.ErrPrecondition, got, want)
 	}
 	say("the server is running %s, which is what the source says", got)
-	return nil
+	return got, nil
 }
 
 /*

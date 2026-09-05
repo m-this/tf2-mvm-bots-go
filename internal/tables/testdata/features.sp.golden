@@ -202,11 +202,13 @@ void LoadFeatures()
 	g_arrFeatureConVars[FEATURE_AMMO_FAILOVER] = MakeFeature(FEATURE_AMMO_FAILOVER,
 		"A bot whose path to the ammo it picked keeps failing takes the next pack, then gives up, rather than walking at a wall.", false);
 
-	/* Off until a run says otherwise. Reported twice, by Cowser and by Peppy: a human presses the
-	medic call and the bot medic carries on healing whichever bot it had picked, which reads as
-	the medic being broken. See mvm-w9b. */
+	/* On, measured 2026-09-05 with a calling puppet on Decoy, three attempts each of two waves: the
+	caller held the beam 26%, 0% and 12% of the time with this on and 2% at most with it
+	off; the beam was on somebody 30 to 44% of the time either way and every wave cleared in both
+	arms. Reported twice, by Cowser and by Peppy: a human presses the medic call and the bot medic
+	carries on healing whichever bot it had picked. See mvm-w9b. */
 	g_arrFeatureConVars[FEATURE_MEDIC_ANSWERS_CALL] = MakeFeature(FEATURE_MEDIC_ANSWERS_CALL,
-		"A player who calls for a medic takes the beam, and a player outranks a bot for it either way.", false);
+		"A player who calls for a medic takes the beam, and a player outranks a bot for it either way.");
 
 	/* Off until a run says otherwise, and this one is meant to change nothing. It is the port in
 	mvm-z83.6 wired up: the two are proved identical over the whole domain under SourcePawn's own
