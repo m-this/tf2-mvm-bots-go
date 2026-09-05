@@ -158,12 +158,6 @@ ConVar tf_bot_health_ok_ratio;
 ConVar tf_bot_ammo_search_range;
 ConVar tf_bot_health_search_far_range;
 ConVar tf_bot_health_search_near_range;
-char g_sBotTeamCompositions[][][] =
-{
-	{"scout", "soldier", "demoman", "heavyweapons", "engineer", "medic"},
-	{"scout", "heavyweapons", "heavyweapons", "heavyweapons", "engineer", "sniper"},
-	{"scout", "heavyweapons", "heavyweapons", "pyro", "engineer", "demoman"},
-};
 Handle m_hPostInventoryApplication;
 Handle m_hSetMission;
 Handle m_hLookupBone;

@@ -352,23 +352,6 @@ var tfBotHealthSearchFarRange engine.ConVar
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
 var tfBotHealthSearchNearRange engine.ConVar
 
-/*
-botTeamCompositions is the three preset lineups AddBotsWithPresetTeamComp draws
-from.
-
-Both are dead: nothing calls that function and nothing else reads this table,
-which is mvm-z83.80. They stayed because a port does not delete what it does not
-understand.
-*/
-//
-//sp:name g_sBotTeamCompositions
-//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
-var botTeamCompositions = [3][6]string{
-	{"scout", "soldier", "demoman", "heavyweapons", "engineer", "medic"},
-	{"scout", "heavyweapons", "heavyweapons", "heavyweapons", "engineer", "sniper"},
-	{"scout", "heavyweapons", "heavyweapons", "pyro", "engineer", "demoman"},
-}
-
 // NestZoneLength is how long a zone name may be.
 //
 //sp:name NEST_ZONE_LENGTH
