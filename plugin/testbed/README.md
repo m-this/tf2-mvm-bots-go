@@ -17,16 +17,16 @@ person and everything is written down.
 
 ## Running it
 
-The runner and the reports are Go, and since `mvm-x2c` they live in the sibling
-checkout: run them from `../tf2-mvm-bots-go`. This repository keeps what is not
-code, which is `build.sh`, the compose files, the popfiles and the map configs,
-and the runner reaches all of it from there.
+The runner and the reports are Go, and they run from the repository root. This
+directory keeps what is not code, which is `build.sh`, the compose files, the
+popfiles and the map configs, and the runner reaches all of it from there.
+
+The image installs community missions and not Valve's: `-mission` names one of
+the popfiles under `scripts/population/`, and leaving it out plays the map's own.
 
 ```sh
-cd ../tf2-mvm-bots-go
-
 go run ./cmd/testbed -arm plain:                  # two waves of Decoy
-go run ./cmd/testbed -mission mvm_decoy_advanced -arm plain:
+go run ./cmd/testbed -mission mvm_decoy_exp_dissolution -arm plain:
 go run ./cmd/testbed -waves 12 -timeout 60m -arm plain:
 go run ./cmd/testbed -maps "mvm_decoy mvm_coaltown" -arm plain:
 ```
@@ -347,7 +347,7 @@ the comparison.
 
 ```
 go run ./cmd/testbed \
-  -map mvm_decoy -mission mvm_decoy_advanced \
+  -map mvm_decoy -mission mvm_decoy_exp_dissolution \
   -arm on:sm_redbots_feature_watch_idle_bots=1 \
   -arm off:sm_redbots_feature_watch_idle_bots=0 \
   -attempts 3 -waves 2 -tag idle
