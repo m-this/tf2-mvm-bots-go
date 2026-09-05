@@ -248,8 +248,8 @@ func GetUpgradePriority(client int32, slot int32, index int32, pclass engine.Cla
 /*
 SortUpgradesHighestFirst orders the candidates, dearest first.
 
-The random cell is written and not read, which is mvm-z83.76: the tie-break it
-was for was never wired up, and the port keeps it that way.
+Equal priorities fall back to the random cell each candidate drew, so two
+upgrades worth the same are not always bought in table order.
 */
 //
 //sp:name SortUpgradesHighestFirst
@@ -260,6 +260,11 @@ func SortUpgradesHighestFirst(index1 int32, index2 int32, array engine.Handle, h
 
 	first := list.GetAt(index1, rowPriority)
 	second := list.GetAt(index2, rowPriority)
+
+	if first == second {
+		first = list.GetAt(index1, rowRandom)
+		second = list.GetAt(index2, rowRandom)
+	}
 
 	if first > second {
 		return -1

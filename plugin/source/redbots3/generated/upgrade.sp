@@ -132,6 +132,11 @@ stock int SortUpgradesHighestFirst(int index1, int index2, Handle array, Handle 
 	ArrayList list = view_as<ArrayList>(array);
 	int first = list.Get(index1, Go_rowPriority);
 	int second = list.Get(index2, Go_rowPriority);
+	if (first == second)
+	{
+		first = list.Get(index1, Go_rowRandom);
+		second = list.Get(index2, Go_rowRandom);
+	}
 	if (first > second)
 	{
 		return -1;
