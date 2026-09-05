@@ -6,6 +6,8 @@
 #define STATS_PLAYER_DEATHS (3)
 #define STATS_BUYBACKS (4)
 
+// GetAbsAngles is which way the entity is facing. Its SourcePawn returns the
+// array.
 stock float[] GetAbsAngles(int entity)
 {
 	float vec[3];
@@ -13,6 +15,8 @@ stock float[] GetAbsAngles(int entity)
 	return vec;
 }
 
+// RemoveEffects clears effect bits, and tells the game when that changed whether
+// the entity draws.
 stock void RemoveEffects(int ent, int effects)
 {
 	SetEntProp(ent, Prop_Send, "m_fEffects", GetEntProp(ent, Prop_Send, "m_fEffects") & ~effects);
@@ -22,8 +26,11 @@ stock void RemoveEffects(int ent, int effects)
 	}
 }
 
+// HasBackstabPotential says the robot can be stabbed from the front, which in
+// this mode is what a stun means.
 stock bool HasBackstabPotential(int client)
 {
+	// These are MvM-specific conditions, where stunned bots are usually allowed to be backstabbed
 	if (TF2_GetClientTeam(client) == TFTeam_Blue)
 	{
 		if (TF2_IsPlayerInCondition(client, TFCond_MVMBotRadiowave))
@@ -38,6 +45,7 @@ stock bool HasBackstabPotential(int client)
 	return false;
 }
 
+// GetControlPointByID is the point entity with that index, and -1 for none.
 stock int GetControlPointByID(int pointID)
 {
 	int ent = -1;
@@ -56,6 +64,8 @@ stock int GetControlPointByID(int pointID)
 	return -1;
 }
 
+// GetNearestReviveMarker is the closest reanimator of the bot's own team within
+// the distance, and -1 for none.
 stock int GetNearestReviveMarker(int client, const float maxDistance)
 {
 	float origin[3];
@@ -84,6 +94,8 @@ stock int GetNearestReviveMarker(int client, const float maxDistance)
 	return bestEntity;
 }
 
+// GetBombHatchPosition is where the robots are taking it. Its SourcePawn returns
+// the array.
 stock float[] GetBombHatchPosition(bool useAbsOrigin = false)
 {
 	float origin[3];
@@ -102,6 +114,8 @@ stock float[] GetBombHatchPosition(bool useAbsOrigin = false)
 	return origin;
 }
 
+// GetAcquiredCreditsOfAllWaves is every credit the team has picked up this
+// mission, optionally with the bonuses.
 stock int GetAcquiredCreditsOfAllWaves(bool withBonus = true)
 {
 	int ent = FindEntityByClassname(MaxClients + 1, "tf_mann_vs_machine_stats");

@@ -2,6 +2,7 @@
 
 char m_sActionStack[512];
 
+// CollectActionName appends one behaviour's name.
 stock void CollectActionName(BehaviorAction action)
 {
 	char name[512];
@@ -13,6 +14,7 @@ stock void CollectActionName(BehaviorAction action)
 	StrCat(m_sActionStack, 512, name);
 }
 
+// ActionStackOf is the chain, newest first, as one line.
 stock void ActionStackOf(int client, char[] buffer, int maxlength)
 {
 	m_sActionStack[0] = 0;

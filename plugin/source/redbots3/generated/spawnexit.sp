@@ -13,6 +13,7 @@ float m_flSpawnExitProgressAt[65];
 float m_flSpawnExitStartedAt[65];
 float m_flSpawnExitWatchAt[65];
 
+// ResetSpawnExitWatch forgets the walk, which a successful exit is.
 stock void ResetSpawnExitWatch(int client)
 {
 	m_vecSpawnExitProgress[client] = NULL_VECTOR;
@@ -21,6 +22,8 @@ stock void ResetSpawnExitWatch(int client)
 	m_flSpawnExitWatchAt[client] = 0.0;
 }
 
+// DistanceFromPointToBounds is how far outside the box the point is, and zero
+// inside it.
 stock float DistanceFromPointToBounds(const float point[3], const float mins[3], const float maxs[3])
 {
 	float squared;
@@ -41,6 +44,8 @@ stock float DistanceFromPointToBounds(const float point[3], const float mins[3],
 	return SquareRoot(squared);
 }
 
+// DistanceToClosestDefenderSpawn walks the respawn rooms and measures to the
+// nearest live one on the bot's team.
 stock float DistanceToClosestDefenderSpawn(int client)
 {
 	float point[3];
@@ -80,6 +85,8 @@ stock float DistanceToClosestDefenderSpawn(int client)
 	return closest;
 }
 
+// IsInOrNearDefenderSpawn says the bot is in a spawn or within the configured
+// radius of one.
 stock bool IsInOrNearDefenderSpawn(int client)
 {
 	if (TF2Util_IsPointInRespawnRoom(WorldSpaceCenter(client)))
@@ -90,6 +97,8 @@ stock bool IsInOrNearDefenderSpawn(int client)
 	return (distance >= 0.0) && (distance <= redbots_manager_spawn_nav_recovery_radius.FloatValue);
 }
 
+// ShouldWatchDefenderSpawnExit says the bot has finished the thing spawn is
+// for, so lingering is a fault and not a shopping trip.
 stock bool ShouldWatchDefenderSpawnExit(int client)
 {
 	int state = GameRules_GetRoundState();
@@ -100,6 +109,8 @@ stock bool ShouldWatchDefenderSpawnExit(int client)
 	return (state == RoundState_BetweenRounds) && (g_bShoppedThisBreak[client] || !redbots_manager_bot_use_upgrades.BoolValue);
 }
 
+// FindNearestRecoveryAreaByClassname is the nav under the closest entity of
+// that class.
 stock CNavArea FindNearestRecoveryAreaByClassname(int client, const char[] classname)
 {
 	float clientPosition[3];
@@ -131,6 +142,9 @@ stock CNavArea FindNearestRecoveryAreaByClassname(int client, const char[] class
 	return best;
 }
 
+// FindSpawnRecoveryArea is ground worth standing on, tried in order of how much it
+// says about the map: the capture trigger, a capture zone, a control point, and
+// failing all three the area with the shortest travel to the bomb target.
 stock CNavArea FindSpawnRecoveryArea(int client, char[] source, int sourceLength)
 {
 	int anchor = GetCapturableAreaTrigger(GetPlayerEnemyTeam(client));
@@ -177,6 +191,9 @@ stock CNavArea FindSpawnRecoveryArea(int client, char[] source, int sourceLength
 	return best;
 }
 
+// IsRoomToStand says a standing player's box fits at the point, against
+// everything that blocks a player. A nav area's random point can sit inside a
+// prop or under a ledge, and a bot put there never finishes its next path search.
 stock bool IsRoomToStand(float point[3])
 {
 	float mins[3];
@@ -191,6 +208,8 @@ stock bool IsRoomToStand(float point[3])
 	return !TR_DidHit();
 }
 
+// RecoveryDestination is a point of the area with room to stand, if a few draws
+// find one.
 stock bool RecoveryDestination(CNavArea area, float destination[3])
 {
 	for (int i = 0; i < 3; i++)
@@ -209,6 +228,8 @@ stock bool RecoveryDestination(CNavArea area, float destination[3])
 	return false;
 }
 
+// MoveDefenderFromSpawnToBattlefield moves the bot to walkable NAV near the
+// final objective, then lets normal class behaviour resume.
 stock bool MoveDefenderFromSpawnToBattlefield(int client, const char[] reason)
 {
 	if ((client < 1) || (client > MaxClients) || !IsClientInGame(client) || !IsPlayerAlive(client) || !g_bIsDefenderBot[client])
@@ -241,6 +262,8 @@ stock bool MoveDefenderFromSpawnToBattlefield(int client, const char[] reason)
 	return true;
 }
 
+// RecoverDefenderFromDisconnectedSpawn moves a bot whose spawn has no route
+// out at all, which a mission with gates produces on purpose.
 stock bool RecoverDefenderFromDisconnectedSpawn(int client)
 {
 	if ((client < 1) || (client > MaxClients) || !IsClientInGame(client) || !IsPlayerAlive(client) || !g_bIsDefenderBot[client])
@@ -266,6 +289,12 @@ stock bool RecoverDefenderFromDisconnectedSpawn(int client)
 	return MoveDefenderFromSpawnToBattlefield(client, "has no route out of spawn");
 }
 
+// WatchDefenderSpawnExit is the watch itself, once a second per bot.
+//
+// Two clocks: the whole stay, against the configured recovery time, and the walk,
+// against six seconds without ninety six units of flat progress. Height is left
+// out of the progress so a bot riding a lift or bobbing on a ramp does not read as
+// walking.
 stock void WatchDefenderSpawnExit(int client)
 {
 	if (!redbots_manager_spawn_nav_recovery.BoolValue || !ShouldWatchDefenderSpawnExit(client) || TF2_IsInUpgradeZone(client) || !IsInOrNearDefenderSpawn(client))
@@ -310,6 +339,10 @@ stock void WatchDefenderSpawnExit(int client)
 	MoveDefenderFromSpawnToBattlefield(client, "made no spawn-exit progress for six seconds");
 }
 
+// CommandDumpSpawnNav says, per bot, everything the watch above is looking at.
+//
+// Four runs were spent guessing why a bot did or did not get recovered; this
+// prints the answer instead. mvm-qhi is why it exists.
 public Action Command_DumpSpawnNav(int client, int args)
 {
 	ReplyToCommand(client, "Spawn NAV recovery: enabled %d, radius %.0f, max time %.1f", redbots_manager_spawn_nav_recovery.BoolValue, redbots_manager_spawn_nav_recovery_radius.FloatValue, redbots_manager_spawn_nav_recovery_time.FloatValue);
@@ -333,6 +366,8 @@ public Action Command_DumpSpawnNav(int client, int args)
 	return Plugin_Handled;
 }
 
+// CommandRecoverSpawnBots moves every stuck defender at once, for an admin who
+// can see the problem and does not want to wait for the watch.
 public Action Command_RecoverSpawnBots(int client, int args)
 {
 	int recovered;

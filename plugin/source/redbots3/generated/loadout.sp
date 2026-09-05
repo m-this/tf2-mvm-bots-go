@@ -7,6 +7,8 @@
 #define TF_ITEMDEF_WIDOWMAKER (527)
 #define TF_ITEMDEF_SHORT_CIRCUIT (528)
 
+// CanUsePrimayWeapon says he has a primary and the mission lets him use it. The
+// name is the shipped one, typo included.
 stock bool CanUsePrimayWeapon(int client)
 {
 	if (TF2_IsPlayerInCondition(client, TFCond_MeleeOnly))
@@ -17,6 +19,8 @@ stock bool CanUsePrimayWeapon(int client)
 	return weapon != -1;
 }
 
+// GetLoadoutSlotItemDefinitionIndex is which item is in that slot, and -1 for an
+// empty slot or one holding something with no definition.
 stock int GetLoadoutSlotItemDefinitionIndex(int client, int slot)
 {
 	int weapon = GetPlayerWeaponSlot(client, slot);
@@ -27,16 +31,20 @@ stock int GetLoadoutSlotItemDefinitionIndex(int client, int slot)
 	return GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
 }
 
+// IsGunslingerEquipped says this engineer builds minis rather than level threes.
 stock bool TF2_IsGunslingerEquipped(int client)
 {
 	return GetLoadoutSlotItemDefinitionIndex(client, TFWeaponSlot_Melee) == TF_ITEMDEF_GUNSLINGER;
 }
 
+// IsRescueRangerEquipped says he can repair from behind cover.
 stock bool TF2_IsRescueRangerEquipped(int client)
 {
 	return GetLoadoutSlotItemDefinitionIndex(client, TFWeaponSlot_Primary) == TF_ITEMDEF_RESCUE_RANGER;
 }
 
+// EngineerGunSpendsMetal says his gun is paid for out of the same supply the
+// sentry is repaired from.
 stock bool EngineerGunSpendsMetal(int client)
 {
 	if (TF2_GetPlayerClass(client) != TFClass_Engineer)

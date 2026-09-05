@@ -22,11 +22,13 @@ int m_iStuckWedgeCount[65];
 float m_ctSniperStallDeadline[65];
 bool m_bSniperStalled[65];
 
+// StuckCountOf is how many times the watchdog has caught this bot.
 stock int StuckCountOf(int client)
 {
 	return m_iStuckCount[client];
 }
 
+// FrameUnstickDefender is the rescue, a frame later than the catch.
 public void Frame_UnstickDefender(any client)
 {
 	if (!IsClientInGame(view_as<int>(client)) || !g_bIsDefenderBot[view_as<int>(client)] || !IsPlayerAlive(view_as<int>(client)))
@@ -36,27 +38,41 @@ public void Frame_UnstickDefender(any client)
 	ResetIntentionInterface(view_as<int>(client));
 }
 
+// IsSniperStalled says this sniper has been caught stalling and should be sent
+// to the front like every other class.
 stock bool IsSniperStalled(int client)
 {
 	return m_bSniperStalled[client];
 }
 
+// ClearSniperStall is the break reading the mark: the bot is being handed an
+// action, so the stall is over.
 stock void ClearSniperStall(int client)
 {
 	m_bSniperStalled[client] = false;
 	m_ctSniperStallDeadline[client] = 0.0;
 }
 
+// IsLurkingNowhere is a sniper who is nowhere near a spot and not on his way to
+// one.
+//
+// The lurk is not required, in either direction: a rifle sniper parked far from
+// every spot is the fault whether ScenarioMonitor gave him a lurk that cannot
+// finish or never gave him one. The reset is what both need. See mvm-bj8.
 stock bool IsLurkingNowhere(int actor, const char[] actions, const float here[3])
 {
 	if ((TF2_GetPlayerClass(actor) != TFClass_Sniper) || !HasSniperRifle(actor))
 	{
 		return false;
 	}
+	// A spot he is walking to is a spot he has not reached, and the walk is
+	// not the fault.
 	if (g_arrPluginBot[actor].bPathing)
 	{
 		return false;
 	}
+	// A lurk on the stack is the game doing its job, however far off he still
+	// is.
 	if (StrContains(actions, "SniperLurk", true) != -1)
 	{
 		return false;
@@ -74,6 +90,21 @@ stock bool IsLurkingNowhere(int actor, const char[] actions, const float here[3]
 	return true;
 }
 
+// UpdateStuckWatchdog is the whole watch, run per bot per think.
+//
+// A bot with nothing on its stack is stuck too: he is not pathing, so nothing else
+// arms, and a bot that has stopped asking to go anywhere is exactly the one nobody
+// is going to rescue.
+//
+// A sniper's stall is timed on its own, because the watchdog's timer can be reset
+// by a shove: teammates walking through a parked sniper push him further than
+// STUCK_RADIUS, so this is timed from the last moment he was doing his job rather
+// than the last moment he moved.
+//
+// Stuck again without having moved is a bot wedged rather than a bot walking
+// slowly: resetting his behaviour does not move him, so he comes back to the same
+// wedge and asks for another path, which is the frame that grows. Past the giveup
+// he is teleported; a bot that cannot be moved is the one that kills the server.
 stock void UpdateStuckWatchdog(int actor)
 {
 	INextBot myBot = CBaseNPC_GetNextBotOfEntity(actor);
@@ -123,6 +154,7 @@ stock void UpdateStuckWatchdog(int actor)
 	myLoco.ClearStuckStatus("Watchdog");
 	g_arrPluginBot[actor].bPathing = false;
 	PrintToServer("[defenderbots] stuck: %N (%s) at %.0f %.0f %.0f for %.0fs, stuck #%d, wedge #%d, %s", actor, g_sRawPlayerClassNames[TF2_GetPlayerClass(actor)], here[0], here[1], here[2], STUCK_TIME, m_iStuckCount[actor], m_iStuckWedgeCount[actor], (actions[0] == 0 ? "no behaviour" : actions));
+	// The same line in the file, so a run can be counted rather than watched.
 	LogMessage("Stuck: %N (%s) at %.0f %.0f %.0f, stuck #%d, wedge #%d, %s", actor, g_sRawPlayerClassNames[TF2_GetPlayerClass(actor)], here[0], here[1], here[2], m_iStuckCount[actor], m_iStuckWedgeCount[actor], (actions[0] == 0 ? "no behaviour" : actions));
 	if ((m_iStuckWedgeCount[actor] >= STUCK_WEDGE_GIVEUP) && MoveWedgedDefender(actor))
 	{
@@ -131,6 +163,8 @@ stock void UpdateStuckWatchdog(int actor)
 	RequestFrame(Frame_UnstickDefender, actor);
 }
 
+// AreaEscapePoint is a point in the area far enough from the wedge to be worth
+// standing on.
 stock bool AreaEscapePoint(CNavArea area, const float here[3], float destination[3])
 {
 	for (int i = 0; i < 3; i++)
@@ -151,6 +185,8 @@ stock bool AreaEscapePoint(CNavArea area, const float here[3], float destination
 	return false;
 }
 
+// WedgeEscapePoint tries the wedge's own area first and then everything
+// touching it.
 stock bool WedgeEscapePoint(CNavArea area, const float here[3], float destination[3])
 {
 	bool found;
@@ -182,6 +218,9 @@ stock bool WedgeEscapePoint(CNavArea area, const float here[3], float destinatio
 	return false;
 }
 
+// MoveWedgedDefender teleports a bot off ground it cannot leave on its own, to a
+// point in its area or a touching one that is far enough away to be different
+// ground.
 stock bool MoveWedgedDefender(int client)
 {
 	float here[3];
@@ -195,6 +234,8 @@ stock bool MoveWedgedDefender(int client)
 	float destination[3];
 	if (DebugFaults_OldWedgeRecovery())
 	{
+		// The pre-2.21.3 behaviour, kept only so a run can measure what
+		// replacing it was worth.
 		CNavArea_GetRandomPoint(area, destination);
 		destination[2] += 10.0;
 		if (GetVectorDistance(here, destination) <= STUCK_RADIUS)

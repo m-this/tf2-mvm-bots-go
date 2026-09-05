@@ -2,16 +2,25 @@
 
 bool g_bArchipelago;
 
+// Init is the map start half: one first look.
 stock void Archipelago_Init()
 {
 	Archipelago_Recheck();
 }
 
+// Recheck is asked again on every library change, because the plugin can be
+// loaded, unloaded or reloaded while this one is running, and a native that was
+// there at map start is not always there now.
 stock void Archipelago_Recheck()
 {
 	g_bArchipelago = GetFeatureStatus(FeatureType_Native, "TF2AP_GetBundleCredits") == FeatureStatus_Available;
 }
 
+// Credits is everything Archipelago has paid this client that the game never
+// recorded, or zero.
+//
+// Zero covers three cases that all mean the same thing here: no plugin, a plugin
+// too old to have the native, and a run that has been given no bundles yet.
 stock int GetArchipelagoCredits(int client)
 {
 	if (!g_bArchipelago)
@@ -21,6 +30,12 @@ stock int GetArchipelagoCredits(int client)
 	return TF2AP_GetBundleCredits(client);
 }
 
+// SetCurrencyWithBundles is the currency a defender bot should hold, bundles
+// included.
+//
+// Every place this mod decides a bot's balance from the game's accounting goes
+// through here rather than through TF2_SetCurrency, so there is one place that
+// knows Archipelago exists and no way to add a second call site that forgets.
 stock void SetCurrencyWithBundles(int client, int earned)
 {
 	TF2_SetCurrency(client, earned + GetArchipelagoCredits(client));

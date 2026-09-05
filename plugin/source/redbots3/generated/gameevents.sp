@@ -2,6 +2,14 @@
 
 int m_iWaveFailCounterTick;
 
+// OpenTheBreak gives everybody a fresh shopping trip.
+//
+// Cleared when a break opens rather than when a wave begins, which is when a break
+// ends. The other way round, every bot that lived through a wave was still marked
+// as having shopped for the whole of the next break, and there is nothing else to
+// offer an engineer or a medic between rounds: they stood where the wave left them
+// until it started again. A bot that died shopped normally, because a spawn clears
+// the same flag, which is what made it look intermittent.
 stock void OpenTheBreak()
 {
 	for (int i = 1; i <= MaxClients; i++)
@@ -10,12 +18,15 @@ stock void OpenTheBreak()
 	}
 }
 
+// EventRevivePlayerNotify notes that somebody attempted a revive on this player.
 public void Event_RevivePlayerNotify(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = event.GetInt("entindex");
 	g_bIsBeingRevived[client] = true;
 }
 
+// EventMvmMissionUpdate blocks the event while a defender spy is dying, because
+// TFBot spies fire it on death.
 public Action Event_MvmMissionUpdate(Event event, const char[] name, bool dontBroadcast)
 {
 	if (g_bSpyKilled)
@@ -25,9 +36,14 @@ public Action Event_MvmMissionUpdate(Event event, const char[] name, bool dontBr
 	return Plugin_Continue;
 }
 
+// EventTeamplayRoundStart forgets the last wave's spies, and reads the map again
+// when the map itself was reset.
 public void Event_TeamplayRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
+	// A new wave has its own Spies, and the last wave's paranoia is not
+	// evidence about this one.
 	ResetSpyIntel();
+	// Was the map reset?
 	if (event.GetBool("full_reset"))
 	{
 		SetupSniperSpotHints();
@@ -35,25 +51,58 @@ public void Event_TeamplayRoundStart(Event event, const char[] name, bool dontBr
 	}
 }
 
+// EventMvmWaveBegin is everything that has to happen on the frame a wave starts,
+// and one thing that deliberately does not.
+//
+// Resetting an intention throws away a bot's behaviour and has it rebuilt on its
+// next update, and rebuilding runs the OnStart of whatever it picks. Several of
+// those are not cheap. Doing it for six bots inside the wave_begin frame puts all
+// of it on the one frame of a mission that is already the most expensive: every
+// robot spawns there and starts pathing at the same moment. Three runs of an A/B
+// died on exactly that frame, so the resets are a queue drained a bot a tick.
 public void Event_MvmWaveBegin(Event event, const char[] name, bool dontBroadcast)
 {
+	// Nothing unless a debug convar is set, which is never on a real server.
 	DebugFaults_OnWaveStart();
 	DebugFaults_OnWaveStartEmpty();
+	//  Published here rather than only on a timer after the map loads
+	//
+	// 	server.cfg runs at its own pace and a late-loaded plugin misses it
+	// 	entirely, so a list published once on map start can be the defaults rather
+	// 	than what the server was asked for. A wave beginning is after everything,
+	// 	every time.
 	PublishActiveFeatures();
+	//  The break is over, so the plans made for it are too
+	//
+	// 	A claim outlives its usefulness the moment the thing it reserved is
+	// 	standing, and a claim that survives a wave reserves ground against an
+	// 	engineer whose own building was destroyed on it.
 	ForgetSetupPlans();
 	ThreatPortAudit_Report();
+	// Whatever the queue has left is about a bomb that is about to move.
 	EngineerNestRelocation_StopEvaluating();
+	// A new wave is a new chance at a spot that refused him last time.
 	EngineerTeleporter_ForgetGivingUp();
 	EngineerDisposable_ForgetGivingUp();
+	// One a tick, because the frame this runs on is the one the server dies on.
 	QueueBehaviourReset();
+	// A hat the game refused is an edict nobody will ever free, and there is
+	// one per refusal.
 	RemoveOrphanedWearables();
 	if (redbots_manager_mode.IntValue == MANAGER_MODE_AUTO_BOTS)
 	{
 		ManageDefenderBots(true);
 	}
+	// At this point the bots should already be here, so clear up the lineup
+	// that was used.
 	FreeChosenBotTeam();
 }
 
+// TimerWaveFailure hands the bots' upgrades back after a wave they lost.
+//
+// Not necessary in itself: the point is that the population manager forgets what
+// they bought, so they go and buy again in their upgrade behaviour. It is really
+// for the bots that failed a wave and were not kicked.
 public Action Timer_WaveFailure(Handle timer)
 {
 	m_iWaveFailCounterTick = 0;
@@ -61,6 +110,7 @@ public Action Timer_WaveFailure(Handle timer)
 	{
 		return Plugin_Stop;
 	}
+	// Don't refund if we wanna keep them.
 	if (redbots_manager_keep_bot_upgrades.BoolValue)
 	{
 		return Plugin_Stop;
@@ -80,8 +130,11 @@ public Action Timer_WaveFailure(Handle timer)
 	return Plugin_Stop;
 }
 
+// TimerUpdateChosenBotTeamComposition works out the next lineup, unless the
+// players are picking it themselves.
 public Action Timer_UpdateChosenBotTeamComposition(Handle timer)
 {
+	// These modes use their own way of composing a bot team.
 	if (redbots_manager_bot_lineup_mode.IntValue == BOT_LINEUP_MODE_CHOOSE)
 	{
 		return Plugin_Stop;
@@ -90,9 +143,14 @@ public Action Timer_UpdateChosenBotTeamComposition(Handle timer)
 	return Plugin_Stop;
 }
 
+// EventMvmWaveFailed is the break that opens when the players lose a wave.
+//
+// The same wave comes back down the same route, so there is nothing new to say
+// about the nests.
 public void Event_MvmWaveFailed(Event event, const char[] name, bool dontBroadcast)
 {
 	OpenTheBreak();
+	// A lineup retyped mid-wave was held until now.
 	Reseat_OnBreak();
 	m_iWaveFailCounterTick++;
 	EngineerNestRelocation_ResetAll();
@@ -105,19 +163,26 @@ public void Event_MvmWaveFailed(Event event, const char[] name, bool dontBroadca
 	}
 	if (redbots_manager_mode.IntValue == MANAGER_MODE_READY_BOTS)
 	{
+		// Global cooldown before players can ready up again.
 		g_flNextReadyTime = GetGameTime() + redbots_manager_ready_cooldown.FloatValue;
 		if (m_iWaveFailCounterTick > 3)
 		{
+			// Mission restarted or changed, don't have a cooldown here.
 			g_flNextReadyTime = 0.0;
 		}
 	}
 	if (redbots_manager_bot_lineup_mode.IntValue == BOT_LINEUP_MODE_CHOOSE)
 	{
+		// In case the mission changed, let players pick the bot team.
 		FreeChosenBotTeam();
 	}
 	CreateTimer(0.1, Timer_WaveFailure, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
+// InitGameEventHooks is every game event the mod listens for.
+//
+// The mission update is hooked Pre because it is the one the mod changes rather
+// than only reads.
 stock void InitGameEventHooks()
 {
 	HookEvent("player_spawn", Event_PlayerSpawn);
@@ -131,6 +196,10 @@ stock void InitGameEventHooks()
 	HookEvent("player_death", Event_PlayerDeath);
 }
 
+// ListenerVoiceMenu hears a player press the medic call.
+//
+// The first entry of the first menu is "MEDIC!", and it is the only one worth
+// reading: everything else on the wheel is a bot saying something to nobody.
 stock Action Listener_VoiceMenu(int client, const char[] command, int argc)
 {
 	if ((client < 1) || (client > MaxClients) || !IsClientInGame(client))
@@ -152,6 +221,12 @@ stock Action Listener_VoiceMenu(int client, const char[] command, int argc)
 	return Plugin_Continue;
 }
 
+// EventPlayerSpawn is where a bot is recognised, dressed and given its shopping
+// budget.
+//
+// The identification runs a fifth of a second later because the popfile is still
+// building the robot when this fires, and a bend applied to a half-built robot is
+// a bend the game overwrites.
 stock void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
@@ -159,6 +234,7 @@ stock void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 	{
 		CreateTimer(0.2, Timer_PlayerSpawn, client, TIMER_FLAG_NO_MAPCHANGE);
 	}
+	// The popfile is still building this robot, so the bend waits a frame.
 	if ((TF2_GetClientTeam(client) == TFTeam_Blue) && IsFakeClient(client))
 	{
 		BluAssist_OnRobotSpawn(client);
@@ -175,9 +251,15 @@ stock void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 	}
 }
 
+// EventMvmWaveComplete opens the break.
+//
+// The nest relocation is asked before anything sends the engineers off to shop:
+// the shopping trip is what tears their buildings down, and it needs this answer
+// to know whether it should.
 stock void Event_MvmWaveComplete(Event event, const char[] name, bool dontBroadcast)
 {
 	OpenTheBreak();
+	// A lineup retyped mid-wave was held until now.
 	Reseat_OnBreak();
 	EngineerNestRelocation_OnWaveComplete();
 	bool bRequestCredits = redbots_manager_bot_request_credits.BoolValue;
@@ -192,6 +274,7 @@ stock void Event_MvmWaveComplete(Event event, const char[] name, bool dontBroadc
 	{
 		if (IsClientInGame(i) && g_bIsDefenderBot[i])
 		{
+			// Wave complete, rethink what we should do.
 			ClearSniperStall(i);
 			ResetIntentionInterface(i);
 			if (bRequestCredits)
@@ -202,12 +285,25 @@ stock void Event_MvmWaveComplete(Event event, const char[] name, bool dontBroadc
 	}
 }
 
+// EventPlayerTeam keeps the lineup in step with who is actually playing.
+//
+// Only for people: a bot joining RED is the mod's own doing and does not change
+// what the lineup should be.
 stock void Event_PlayerTeam(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	TFTeam team = view_as<TFTeam>(event.GetInt("team"));
 	TFTeam oldTeam = view_as<TFTeam>(event.GetInt("oldteam"));
 	bool isDisconnect = event.GetBool("disconnect");
+	//  A managed defender belongs on RED for its whole connection.
+	//
+	// 	If the game moves one elsewhere, RED is one seat short but the misplaced
+	// 	client still occupies a server slot. On a full server the fill timer then
+	// 	requests a replacement it cannot create. Remove only that bot; the normal
+	// 	imbalance path recreates the empty RED seat.
+	//
+	// 	An intentional kick also reports a team change. Leave disconnects alone so
+	// 	this does not turn every removal into a second kick.
 	if (IsFakeClient(client))
 	{
 		if (!isDisconnect && g_bIsDefenderBot[client] && (oldTeam == TFTeam_Red) && (team != TFTeam_Red))
@@ -217,6 +313,9 @@ stock void Event_PlayerTeam(Event event, const char[] name, bool dontBroadcast)
 		}
 		return;
 	}
+	//  When changing teams, update the bot team composition for a RED
+	// 	player who disconnected, a player who joined RED, and a player who
+	// 	left RED.
 	if ((isDisconnect && (oldTeam == TFTeam_Red)) || (!isDisconnect && ((team == TFTeam_Red) || (oldTeam == TFTeam_Red))))
 	{
 		CreateTimer(0.1, Timer_UpdateChosenBotTeamComposition, _, TIMER_FLAG_NO_MAPCHANGE);
@@ -225,6 +324,13 @@ stock void Event_PlayerTeam(Event event, const char[] name, bool dontBroadcast)
 			HandleTeamPlayerCountChanged(TFTeam_Red, client);
 		}
 	}
+	//  Switching from BLUE to RED bars the player from starting the bots
+	// 		for a while
+	//
+	// 	A player who cannot get the team they want by asking used to get it by
+	// 	joining BLUE, starting the bots and coming back. The cooldown grows
+	// 	each time rather than resetting, so doing it repeatedly costs more
+	// 	each go.
 	if (!isDisconnect && (team == TFTeam_Red) && (oldTeam == TFTeam_Blue) && !CheckCommandAccess(client, NULL_STRING, ADMFLAG_GENERIC, true))
 	{
 		if (g_flEnableBotsCooldown[client] <= GetGameTime())
@@ -238,6 +344,17 @@ stock void Event_PlayerTeam(Event event, const char[] name, bool dontBroadcast)
 	}
 }
 
+// EventPlayerDeath puts the team on alert when a robot spy stabs somebody.
+//
+// A robot's Spy, and not the team's own. The rule was "a Spy killed somebody on
+// another team", which a defending Spy satisfies every time he stabs a robot, so
+// the team's own Spy put everybody on alert and the bots then frisked each other
+// and him. Reported from play by somebody trying to play Spy: "your teammates keep
+// trying to call you out as an enemy spy".
+//
+// Measured before the fix: a lineup with a friendly Spy in it spent 5.4 per cent
+// of its samples spy checking, and two lineups without one spent none at all
+// across eight thousand samples.
 stock void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
@@ -259,6 +376,17 @@ stock void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 	NoteSpySighting(origin);
 }
 
+// TimerPlayerSpawn is where a bot the server made becomes one of ours.
+//
+// A fifth of a second after the spawn, because the popfile is still building the
+// robot when the event fires. The identity name is what says a bot is ours: the
+// server makes it and the mod recognises it afterwards.
+//
+// The credits are set by hand because CTFGameRules::GetTeamAssignmentOverride
+// ignores bot players, so a bot joining RED gets none of what the wave has paid.
+// The third term is Archipelago's, and zero on a server without that plugin: the
+// game's own record never saw a Cash Bundle, so without it a bot that rejoins or
+// changes class comes back with every bundle it was paid missing.
 public Action Timer_PlayerSpawn(Handle timer, int data)
 {
 	if (!IsClientInGame(data) || !IsTFBotPlayer(data) || (TF2_GetClientTeam(data) != TFTeam_Red))
@@ -267,6 +395,7 @@ public Action Timer_PlayerSpawn(Handle timer, int data)
 	}
 	if (g_bIsDefenderBot[data])
 	{
+		// Mainly for wave failures, try to request credits again.
 		if (redbots_manager_bot_request_credits.BoolValue && (GameRules_GetRoundState() == RoundState_BetweenRounds))
 		{
 			FakeClientCommand(data, "sm_requestcredits");
@@ -275,29 +404,39 @@ public Action Timer_PlayerSpawn(Handle timer, int data)
 		{
 			PrintToChatAll("[Timer_PlayerSpawn] %N's currency: %d", data, TF2_GetCurrency(data));
 		}
+		// We already made this one into our bot, so do nothing.
 		return Plugin_Stop;
 	}
 	char clientName[512];
 	GetClientName(data, clientName, 512);
+	// Identify if the bot is ours.
 	if (StrContains(clientName, TFBOT_IDENTITY_NAME, true) != -1)
 	{
 		g_bIsDefenderBot[data] = true;
 		g_bHasBoughtUpgrades[data] = false;
+		// The spawn that identified this bot ran before the flag above was
+		// set, so its cosmetics were skipped.
 		GiveBotCosmeticsSoon(data);
 		if (redbots_manager_use_custom_loadouts.BoolValue)
 		{
+			// Custom weapons are not given unless the player respawns again.
 			TF2_RespawnPlayer(data);
 		}
 		else
 		{
+			// Without custom loadouts the sniper only ever uses a rifle, and
+			// the custom path runs its own check for that.
 			if (TF2_GetPlayerClass(data) == TFClass_Sniper)
 			{
 				SetMission(data, CTFBot_MISSION_SNIPER);
 			}
 		}
+		// Let medic bots use their shields.
 		VS_AddBotAttribute(data, CTFBot_PROJECTILE_SHIELD);
 		BaseEntity_MarkNeedsNamePurge(data);
 		SetCurrencyWithBundles(data, GetStartingCurrency(g_iPopulationManager) + GetAcquiredCreditsOfAllWaves());
+		// Field of view of 90. The vision FOV updates in
+		// CTFBotMainAction::Update from m_iFOV.
 		SetFakeClientConVar(data, "fov_desired", "90");
 		SDKHook(data, SDKHook_TouchPost, DefenderBot_TouchPost);
 		DHooks_DefenderBot(data);

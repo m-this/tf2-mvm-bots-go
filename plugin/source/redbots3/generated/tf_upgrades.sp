@@ -68,6 +68,10 @@ methodmap CMannVsMachineUpgradeManager < CMannVsMachineUpgrades
 	}
 }
 
+// 	AttributeDefinitionByName is the schema's record for an attribute, by name
+//
+// Null when the schema itself is not up, which is what a server that has not
+// loaded an MvM map looks like.
 public CEconItemAttributeDefinition CEIAD_GetAttributeDefinitionByName(const char[] szAttribute)
 {
 	Address CEconItemSchema = GEconItemSchema();
@@ -78,6 +82,8 @@ public CEconItemAttributeDefinition CEIAD_GetAttributeDefinitionByName(const cha
 	return view_as<CEconItemAttributeDefinition>(GetAttributeDefinitionByName(CEconItemSchema, szAttribute));
 }
 
+// UpgradeCount is how many upgrades the game holds, asked of the game rather
+// than counted in a text file.
 stock int UpgradeCount()
 {
 	int count = CMannVsMachineUpgradeManager().Count();
@@ -88,6 +94,7 @@ stock int UpgradeCount()
 	return count;
 }
 
+// InitMvMUpgrades reads the offsets one row of the table is laid out by.
 stock void InitMvMUpgrades(GameData hGamedata)
 {
 	offset_flCap = hGamedata.GetOffset("CMannVsMachineUpgrades::flCap");
@@ -96,11 +103,13 @@ stock void InitMvMUpgrades(GameData hGamedata)
 	CMannVsMachineUpgrades_Size = offset_nTier + 4;
 }
 
+// UpgradeUIGroupOf is which part of the station shows that upgrade.
 stock int UpgradeUIGroupOf(Address upgrade)
 {
 	return view_as<CMannVsMachineUpgrades>(upgrade).m_iUIGroup();
 }
 
+// UpgradeAttributeOf is the attribute name it grants.
 stock char[] UpgradeAttributeOf(Address upgrade)
 {
 	char attribute[128];
@@ -108,21 +117,30 @@ stock char[] UpgradeAttributeOf(Address upgrade)
 	return attribute;
 }
 
+// UpgradeAddressByIndex is the row at that index.
 stock Address UpgradeAddressByIndex(int index)
 {
 	return view_as<Address>(view_as<CMannVsMachineUpgradeManager>(CMannVsMachineUpgradeManager()).GetUpgradeByIndex(index));
 }
 
+// IsUpgradeManagerUp says the game has one, which it has not until an MvM map
+// has loaded.
 stock bool IsUpgradeManagerUp()
 {
 	return CMannVsMachineUpgradeManager() != Address_Null;
 }
 
+// 	UpgradeCountRaw is the count the manager itself gives, unclamped
+//
+// UpgradeCount above falls back to UPGRADE_COUNT_MEASURED when the answer is not
+// believable, which is what the shopping code wants and what sm_dump_upgrades is
+// for reporting.
 stock int UpgradeCountRaw()
 {
 	return CMannVsMachineUpgradeManager().Count();
 }
 
+// AttributeDefinitionIndexOf is the schema index of that attribute record.
 stock int AttributeDefinitionIndexOf(Address attr)
 {
 	return view_as<CEconItemAttributeDefinition>(attr).GetIndex();

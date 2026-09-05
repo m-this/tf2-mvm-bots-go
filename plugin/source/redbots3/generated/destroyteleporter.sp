@@ -11,6 +11,7 @@ BehaviorAction CTFBotDestroyTeleporter()
 
 int m_iTeleporterTarget[65];
 
+// OnStart aims the path and makes the bot swear at what it is about to hit.
 public Action CTFBotDestroyTeleporter_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
@@ -18,6 +19,7 @@ public Action CTFBotDestroyTeleporter_OnStart(BehaviorAction action, int actor, 
 	return action.Continue();
 }
 
+// Update walks to it, and gives up when it is gone or already sapped.
 public Action CTFBotDestroyTeleporter_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
 	if (!IsValidEntity(m_iTeleporterTarget[actor]) || !BaseEntity_IsBaseObject(m_iTeleporterTarget[actor]) || TF2_HasSapper(m_iTeleporterTarget[actor]))
@@ -34,6 +36,7 @@ public Action CTFBotDestroyTeleporter_Update(BehaviorAction action, int actor, f
 	return action.Continue();
 }
 
+// SelectMoreDangerousThreat answers which of two things to worry about.
 public Action CTFBotDestroyTeleporter_SelectMoreDangerousThreat(BehaviorAction action, INextBot nextbot, int entity, CKnownEntity threat1, CKnownEntity threat2, CKnownEntity& knownEntity)
 {
 	knownEntity = view_as<CKnownEntity>(0);
@@ -43,9 +46,11 @@ public Action CTFBotDestroyTeleporter_SelectMoreDangerousThreat(BehaviorAction a
 	int myWeapon = BaseCombatCharacter_GetActiveWeapon(me);
 	if ((myWeapon != -1) && ((TF2Util_GetWeaponID(myWeapon) == TF_WEAPON_FLAMETHROWER) || IsMeleeWeapon(myWeapon)))
 	{
+		// We can only get the nearest threat
 		knownEntity = SelectCloserThreat(nextbot, threat1, threat2);
 		return Plugin_Changed;
 	}
+	// Any sentry nearby becomes a high priority threat because it can stop us from reaching our target
 	if (nextbot.IsRangeLessThan(iThreat1, SENTRY_MAX_RANGE) && BaseEntity_IsBaseObject(iThreat1) && (TF2_GetObjectType(iThreat1) == TFObject_Sentry))
 	{
 		knownEntity = threat1;
@@ -56,6 +61,7 @@ public Action CTFBotDestroyTeleporter_SelectMoreDangerousThreat(BehaviorAction a
 		knownEntity = threat2;
 		return Plugin_Changed;
 	}
+	// Our most dangerous threat should be the teleporter
 	if ((iThreat1 == m_iTeleporterTarget[me]) && IsLineOfFireClearEntity(me, GetEyePosition(me), iThreat1))
 	{
 		knownEntity = threat1;
@@ -66,10 +72,12 @@ public Action CTFBotDestroyTeleporter_SelectMoreDangerousThreat(BehaviorAction a
 		knownEntity = threat2;
 		return Plugin_Changed;
 	}
+	// We probably can't see it right now
 	knownEntity = NULL_KNOWN_ENTITY;
 	return Plugin_Changed;
 }
 
+// SelectTarget picks a teleporter, and only if nobody else is already on one.
 stock bool CTFBotDestroyTeleporter_SelectTarget(int actor)
 {
 	if (GetCountOfBotsWithNamedAction("DefenderKillTeleporter") > 0)
@@ -80,6 +88,10 @@ stock bool CTFBotDestroyTeleporter_SelectTarget(int actor)
 	return m_iTeleporterTarget[actor] != -1;
 }
 
+// ResetDestroyTeleporter forgets the teleporter this bot was breaking.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
 stock void Go_ResetDestroyTeleporter(int client)
 {
 	m_iTeleporterTarget[client] = -1;

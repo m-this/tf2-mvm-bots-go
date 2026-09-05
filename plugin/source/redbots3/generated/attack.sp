@@ -17,19 +17,24 @@ float m_flRevalidateTarget[65];
 float m_ctAttackStrafeFlip[65];
 bool m_bAttackStrafeRight[65];
 
+// OnStart aims the path. The target is usually chosen before this action starts.
 static Action CTFBotDefenderAttack_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
+	// NOTE: the attack target is usually chosen before we enter this action with CTFBotDefenderAttack_SelectTarget
 	m_flRevalidateTarget[actor] = GetGameTime() + 3.0;
 	return action.Continue();
 }
 
+// Update keeps the target honest, hands off to whatever outranks fighting, and
+// otherwise walks at the robot and shoots it.
 static Action CTFBotDefenderAttack_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
 	if ((TF2_GetPlayerClass(actor) == TFClass_Sniper) && (GetTFBotMission(actor) == CTFBot_MISSION_SNIPER))
 	{
 		if (CanUsePrimayWeapon(actor))
 		{
+			// We can snipe again
 			return action.Done("I have gun");
 		}
 	}
@@ -55,6 +60,7 @@ static Action CTFBotDefenderAttack_Update(BehaviorAction action, int actor, floa
 	if (m_flRevalidateTarget[actor] <= GetGameTime())
 	{
 		m_flRevalidateTarget[actor] = GetGameTime() + 2.0;
+		// Need new target.
 		if (!IsTargetEntityReachable(actor, m_iAttackTarget[actor]))
 		{
 			if (!CTFBotDefenderAttack_SelectTarget(actor, false))
@@ -67,6 +73,7 @@ static Action CTFBotDefenderAttack_Update(BehaviorAction action, int actor, floa
 	{
 		case TFClass_Scout:
 		{
+			// Scouts primarily prefer to get money
 			if (CTFBotCollectMoney_IsPossible(actor))
 			{
 				return action.ChangeTo(CTFBotCollectMoney(), "Collectinh money");
@@ -74,6 +81,7 @@ static Action CTFBotDefenderAttack_Update(BehaviorAction action, int actor, floa
 		}
 		case TFClass_Soldier, TFClass_Pyro, TFClass_DemoMan:
 		{
+			// These classes prefer priortizing the tank more than anything
 			if (CTFBotAttackTank_SelectTarget(actor))
 			{
 				return action.ChangeTo(CTFBotAttackTank(), "Changing threat to tank");
@@ -81,6 +89,7 @@ static Action CTFBotDefenderAttack_Update(BehaviorAction action, int actor, floa
 		}
 		case TFClass_Medic:
 		{
+			// Make sure we have our medigun before we even think about leaving this action
 			int secondary = GetPlayerWeaponSlot(actor, TFWeaponSlot_Secondary);
 			if (secondary != -1)
 			{
@@ -91,6 +100,7 @@ static Action CTFBotDefenderAttack_Update(BehaviorAction action, int actor, floa
 						TFClassType class = TF2_GetPlayerClass(i);
 						if ((class != TFClass_Medic) && (class != TFClass_Sniper) && (class != TFClass_Engineer) && (class != TFClass_Spy))
 						{
+							// We have someone we'd prefer to heal
 							return action.Done("I have patient");
 						}
 					}
@@ -98,12 +108,14 @@ static Action CTFBotDefenderAttack_Update(BehaviorAction action, int actor, floa
 			}
 		}
 	}
+	// TODO: Other classes should go for money, but only when there isn't a threat around
 	CTFBotDefenderAttack_SelectTarget(actor, true);
 	INextBot myBot = CBaseNPC_GetNextBotOfEntity(actor);
 	float targetOrigin[3];
 	GetClientAbsOrigin(m_iAttackTarget[actor], targetOrigin);
 	float myEyePos[3];
 	GetClientEyePosition(actor, myEyePos);
+	// Path if out of range or cannot see target
 	if (myBot.IsRangeGreaterThanEx(targetOrigin, GetDesiredAttackRange(actor)) || !IsLineOfFireClearPosition(actor, myEyePos, targetOrigin))
 	{
 		if (m_flRepathTime[actor] <= GetGameTime())
@@ -111,6 +123,16 @@ static Action CTFBotDefenderAttack_Update(BehaviorAction action, int actor, floa
 			m_flRepathTime[actor] = GetGameTime() + GetRandomFloat(0.3, 0.4);
 			RepathToTarget(actor, myBot, m_iAttackTarget[actor]);
 		}
+		//  Walked, and not stepped toward when the mesh refuses: measured, and a fighter is not a medic
+		//
+		// 		The same nudge in PluginBot_SimulateFrame took the medic from four percent of a wave with
+		// 		his beam connected to thirty, because a path that fails on the way to a teammate is a bot
+		// 		standing still for nothing. Here it was worth twenty three percent more damage out of the
+		// 		Soldier and the Demoman over twelve waves, and cost the team thirty seven percent more
+		// 		deaths, flat total damage and a wave.
+		//
+		// 		Reaching a friend is safe and reaching a robot is not, and where the mesh will not path is
+		// 		often ground worth not standing on.
 		m_pPath[actor].Update(myBot);
 	}
 	else
@@ -122,13 +144,16 @@ static Action CTFBotDefenderAttack_Update(BehaviorAction action, int actor, floa
 	CKnownEntity threat = myVision.GetPrimaryKnownThreat(false);
 	if (threat != 0)
 	{
+		// We have a threat, prepare to fight it
 		EquipBestWeaponForThreat(actor, threat);
 	}
 	return action.Continue();
 }
 
+// StrafeWhileFighting takes one step to the side, tested before it is taken.
 stock void StrafeWhileFighting(int actor, INextBot myBot, float targetOrigin[3])
 {
+	// A Sniper is aiming down a scope and wants his feet exactly where they are
 	if (TF2_GetPlayerClass(actor) == TFClass_Sniper)
 	{
 		return;
@@ -153,6 +178,7 @@ stock void StrafeWhileFighting(int actor, INextBot myBot, float targetOrigin[3])
 	{
 		return;
 	}
+	// Square to the way it is facing, in the plane it walks on
 	float side[3];
 	side[0] = toTarget[1];
 	side[1] = -toTarget[0];
@@ -167,6 +193,7 @@ stock void StrafeWhileFighting(int actor, INextBot myBot, float targetOrigin[3])
 	{
 		step[axis] = myOrigin[axis] + (side[axis] * ATTACK_STRAFE_REACH);
 	}
+	// Turn round early rather than walk into whatever is there, or off it
 	if (!myLoco.IsPotentiallyTraversable(myOrigin, step, IMMEDIATELY) || myLoco.HasPotentialGap(myOrigin, step))
 	{
 		m_ctAttackStrafeFlip[actor] = GetGameTime();
@@ -175,15 +202,21 @@ stock void StrafeWhileFighting(int actor, INextBot myBot, float targetOrigin[3])
 	myLoco.Approach(step);
 }
 
+// SelectTarget picks the robot worth shooting: the one nearest the bomb, then
+// whoever is healing it.
 stock bool CTFBotDefenderAttack_SelectTarget(int actor, bool bBombCarrierOnly = false)
 {
+	// Always go after the bot closest to the bomb, if possible
 	int target = FindBotNearestToBombNearestToHatch(actor);
+	// No bomb in play, just find random target
 	if (!bBombCarrierOnly && (target == -1))
 	{
 		target = SelectRandomReachableEnemy(actor);
 	}
+	// Found a valid target, update
 	if (target != -1)
 	{
+		// Go after the healer first
 		int healer = GetHealerOfPlayer(target, true);
 		if (healer != -1)
 		{
@@ -195,6 +228,8 @@ stock bool CTFBotDefenderAttack_SelectTarget(int actor, bool bBombCarrierOnly = 
 	return false;
 }
 
+// TargetEntityReachable says the bot could actually get to him, which mostly
+// means he is not standing in his own spawn.
 stock bool IsTargetEntityReachable(int client, int target)
 {
 	CTFNavArea area = CBaseCombatCharacter(target).GetLastKnownArea();
@@ -204,11 +239,16 @@ stock bool IsTargetEntityReachable(int client, int target)
 	}
 	if (((TF2_GetClientTeam(client) == TFTeam_Red) && area.HasAttributeTF(BLUE_SPAWN_ROOM)) || ((TF2_GetClientTeam(client) == TFTeam_Blue) && area.HasAttributeTF(RED_SPAWN_ROOM)))
 	{
+		// Usually cannot enter enemy spawns
 		return false;
 	}
 	return true;
 }
 
+// ResetAttack forgets the robot this bot was shooting.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
 stock void Go_ResetAttack(int client)
 {
 	m_iAttackTarget[client] = -1;

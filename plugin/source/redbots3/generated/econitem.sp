@@ -3,6 +3,8 @@
 int iOffsetEntityQuality = -1;
 int iOffsetEntityLevel = -1;
 
+// CreateNoSpawn makes the item without bringing it into the world, so the
+// caller can finish it first.
 stock int EconItemCreateNoSpawn(char[] classname, int itemDefIndex, int level, int quality)
 {
 	int item = CreateEntityByName(classname);
@@ -10,6 +12,7 @@ stock int EconItemCreateNoSpawn(char[] classname, int itemDefIndex, int level, i
 	{
 		SetEntProp(item, Prop_Send, "m_iItemDefinitionIndex", itemDefIndex);
 		SetEntProp(item, Prop_Send, "m_bInitialized", 1);
+		// SetEntProp doesn't work here...
 		if (iOffsetEntityQuality == -1)
 		{
 			iOffsetEntityQuality = FindSendPropInfo("CEconEntity", "m_iEntityQuality");
@@ -22,16 +25,24 @@ stock int EconItemCreateNoSpawn(char[] classname, int itemDefIndex, int level, i
 		SetEntData(item, iOffsetEntityLevel, level);
 		if (StrEqual(classname, "tf_weapon_builder", false))
 		{
+			//  NOTE: After the 2023-10-09 update, not setting netprop m_iObjectType
+			// 			will crash all client games (but the server will remain fine)
+			// 			I suspect the client's game code change and not setting it cause it to read garbage
 			SetEntProp(item, Prop_Send, "m_iObjectType", 3);
+			// Set to OBJ_ATTACHMENT_SAPPER?
 			bool isSapper = IsItemDefIndexSapper(itemDefIndex);
 			if (isSapper)
 			{
 				SetEntProp(item, Prop_Data, "m_iSubType", 3);
 			}
 			SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", (isSapper ? 0 : 1), 4, 0);
+			// OBJ_DISPENSER
 			SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", (isSapper ? 0 : 1), 4, 1);
+			// OBJ_TELEPORTER
 			SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", (isSapper ? 0 : 1), 4, 2);
+			// OBJ_SENTRYGUN
 			SetEntProp(item, Prop_Send, "m_aBuildableObjectTypes", (isSapper ? 1 : 0), 4, 3);
+			// OBJ_ATTACHMENT_SAPPER
 		}
 		else
 			if (StrEqual(classname, "tf_weapon_sapper", false))
@@ -51,6 +62,8 @@ stock int EconItemCreateNoSpawn(char[] classname, int itemDefIndex, int level, i
 	return item;
 }
 
+// SpawnGiveTo brings it into the world and equips it. Call this when you
+// are ready to spawn it.
 stock void EconItemSpawnGiveTo(int item, int client)
 {
 	DispatchSpawn(item);
@@ -64,6 +77,7 @@ stock void EconItemSpawnGiveTo(int item, int client)
 	}
 }
 
+// GiveItemToPlayer is both halves at once, which is what every caller wants.
 stock int GiveItemToPlayer(int client, char[] classname, int itemDefIndex, int level, int quality)
 {
 	int item = EconItemCreateNoSpawn(classname, itemDefIndex, level, quality);

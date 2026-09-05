@@ -313,6 +313,9 @@ func (e *emitter) funcDecl(d *ast.FuncDecl) {
 		Exported: d.Name.IsExported(),
 		Optional: optionalParams(sig, e.defaultsOf(d), e.byrefs, e.mutates, e.lengths),
 	})
+	if d.Doc != nil {
+		e.comment(d.Doc)
+	}
 	switch decl, given := e.cfg.Declare[d.Name.Name]; {
 	case given:
 		e.line("%s", decl)

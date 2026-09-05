@@ -5,6 +5,8 @@
 #define DISPENSER_GUARD_RANGE (600.0)
 #define DISPENSER_GUARD_HEALTH_RATIO (0.8)
 
+// MedicHasPatient says the medic is healing somebody, or is close enough to
+// somebody that he is about to be.
 stock bool MedicHasPatient(int client, int medigun)
 {
 	if (GetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget") != -1)
@@ -29,6 +31,8 @@ stock bool MedicHasPatient(int client, int medigun)
 	return false;
 }
 
+// FindFriendlyDispenserNear is the nearest finished dispenser of the bot's own
+// team, and -1 for none in range.
 stock int FindFriendlyDispenserNear(int client, const float origin[3], float maxRange = DISPENSER_GUARD_RANGE)
 {
 	float bestDistance = maxRange;
@@ -59,6 +63,8 @@ stock int FindFriendlyDispenserNear(int client, const float origin[3], float max
 	return best;
 }
 
+// WantsDispenser says the bot is hurt or low on ammo, which are the two reasons
+// to stand at one.
 stock bool WantsDispenser(int client)
 {
 	if (float(GetClientHealth(client)) < (float(TF2Util_GetEntityMaxHealth(client)) * DISPENSER_GUARD_HEALTH_RATIO))
@@ -68,6 +74,8 @@ stock bool WantsDispenser(int client)
 	return IsAmmoLow(client);
 }
 
+// FindSentryBusterNear is the nearest buster of the other team that has left its
+// spawn, and -1 for none in range.
 stock int FindSentryBusterNear(const float origin[3], TFTeam enemyTeam, float maxRange)
 {
 	float bestDistance = maxRange;
@@ -100,11 +108,13 @@ stock int FindSentryBusterNear(const float origin[3], TFTeam enemyTeam, float ma
 	return best;
 }
 
+// IsHealedByMedic says a person rather than a dispenser is healing this bot.
 stock bool IsHealedByMedic(int client)
 {
 	for (int i = 0; i < TF2_GetNumHealers(client); i++)
 	{
 		int healerIndex = TF2Util_GetPlayerHealer(client, i);
+		// Not a player.
 		if (!BaseEntity_IsPlayer(healerIndex))
 		{
 			continue;
@@ -114,6 +124,8 @@ stock bool IsHealedByMedic(int client)
 	return false;
 }
 
+// FindBombNearestToHatch is the bomb closest to where the robots are taking it,
+// and -1 when every bomb is still on its stand.
 stock int FindBombNearestToHatch()
 {
 	float origin[3];
@@ -142,6 +154,8 @@ stock int FindBombNearestToHatch()
 	return bestEntity;
 }
 
+// FindBotNearestToBombNearestToHatch is the robot standing closest to the bomb
+// that is furthest along, which is the one worth shooting.
 stock int FindBotNearestToBombNearestToHatch(int client)
 {
 	int bomb = FindBombNearestToHatch();
@@ -189,6 +203,8 @@ stock int FindBotNearestToBombNearestToHatch(int client)
 	return bestEntity;
 }
 
+// GerNearestTeammate is the closest player on the bot's own team within the
+// distance, and -1 for nobody. The name is the shipped one, typo included.
 stock int GerNearestTeammate(int client, const float maxDistance)
 {
 	float origin[3];

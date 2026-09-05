@@ -17,6 +17,7 @@ int m_iHealthPack[65];
 float m_ctHealthAsk[65];
 bool m_bHealthPossible[65];
 
+// OnStart picks the nearest health of what is in range.
 public Action CTFBotGetHealth_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	float healthRatio = float(GetClientHealth(actor)) / float(TEMP_GetPlayerMaxHealth(actor));
@@ -60,6 +61,7 @@ public Action CTFBotGetHealth_OnStart(BehaviorAction action, int actor, Behavior
 	return action.Done("Could not find health");
 }
 
+// Update walks to it, and stands still while a dispenser is doing the work.
 public Action CTFBotGetHealth_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
 	if (!IsValidHealth(m_iHealthPack[actor]))
@@ -76,6 +78,7 @@ public Action CTFBotGetHealth_Update(BehaviorAction action, int actor, float int
 	}
 	if (TF2_IsCarryingObject(actor))
 	{
+		// Drop our building or we cant defend ourselves
 		VS_PressFireButton(actor);
 	}
 	INextBot myBot = CBaseNPC_GetNextBotOfEntity(actor);
@@ -84,11 +87,13 @@ public Action CTFBotGetHealth_Update(BehaviorAction action, int actor, float int
 		int myWeapon = BaseCombatCharacter_GetActiveWeapon(actor);
 		if ((myWeapon != -1) && WeaponID_IsSniperRifle(TF2Util_GetWeaponID(myWeapon)) && !TF2_IsPlayerInCondition(actor, TFCond_Zoomed))
 		{
+			// Aim while healed by dispenser
 			VS_PressAltFireButton(actor);
 		}
 	}
 	else
 	{
+		// Path if not currently healed by dispenser
 		if (m_flRepathTime[actor] <= GetGameTime())
 		{
 			m_flRepathTime[actor] = GetGameTime() + GetRandomFloat(0.9, 1.0);
@@ -104,11 +109,13 @@ public Action CTFBotGetHealth_Update(BehaviorAction action, int actor, float int
 	return action.Continue();
 }
 
+// OnEnd forgets the pack.
 public void CTFBotGetHealth_OnEnd(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_iHealthPack[actor] = -1;
 }
 
+// ShouldHurry says yes: a bot walking for health is not sightseeing.
 public Action CTFBotGetHealth_ShouldHurry(BehaviorAction action, INextBot nextbot, QueryResultType& result)
 {
 	result = view_as<QueryResultType>(0);
@@ -116,6 +123,7 @@ public Action CTFBotGetHealth_ShouldHurry(BehaviorAction action, INextBot nextbo
 	return Plugin_Changed;
 }
 
+// ShouldAttack keeps a hurt spy from picking a fight it cannot win.
 public Action CTFBotGetHealth_ShouldAttack(BehaviorAction action, INextBot nextbot, CKnownEntity knownEntity, QueryResultType& result)
 {
 	result = view_as<QueryResultType>(0);
@@ -125,12 +133,14 @@ public Action CTFBotGetHealth_ShouldAttack(BehaviorAction action, INextBot nextb
 		int iThreat = knownEntity.GetEntity();
 		if (BaseEntity_IsPlayer(iThreat) && (GetClientHealth(iThreat) > 360) && !TF2_IsCritBoosted(me))
 		{
+			// Don't attack if we can't possibly kill them with our revolver (360 from 6 shots with max damage)
 			result = ANSWER_NO;
 			return Plugin_Changed;
 		}
 		else
 			if (GetNearestEnemyCount(me, 1000.0, false) > 1)
 			{
+				// There's too many enemies nearby, it'd be better to redisguise so they'll forget about us
 				result = ANSWER_NO;
 				return Plugin_Changed;
 			}
@@ -139,6 +149,7 @@ public Action CTFBotGetHealth_ShouldAttack(BehaviorAction action, INextBot nextb
 	return Plugin_Changed;
 }
 
+// IsValidHealth says the entity is health the bot could still take.
 stock bool IsValidHealth(int pack)
 {
 	if (!IsValidEntity(pack))
@@ -149,6 +160,7 @@ stock bool IsValidHealth(int pack)
 	{
 		return false;
 	}
+	// It has been taken.
 	if (GetEntProp(pack, Prop_Send, "m_fEffects") != 0)
 	{
 		return false;
@@ -166,6 +178,8 @@ stock bool IsValidHealth(int pack)
 	return true;
 }
 
+// IsPossible says whether there is health worth walking to, kept for a moment
+// after it is worked out.
 stock bool CTFBotGetHealth_IsPossible(int actor)
 {
 	if (IsHealedByMedic(actor) || TF2_IsInvulnerable(actor))
@@ -177,6 +191,7 @@ stock bool CTFBotGetHealth_IsPossible(int actor)
 	float farRange = tf_bot_health_search_far_range.FloatValue;
 	float maxRange = ratio * (tf_bot_health_search_near_range.FloatValue - farRange);
 	maxRange += farRange;
+	// Skip lag.
 	if ((m_iHealthPack[actor] != -1) && IsValidHealth(m_iHealthPack[actor]))
 	{
 		return true;
@@ -207,6 +222,10 @@ stock bool CTFBotGetHealth_IsPossible(int actor)
 	return bPossible;
 }
 
+// ResetGetHealth forgets the health pack this bot was walking to.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
 stock void Go_ResetGetHealth(int client)
 {
 	m_iHealthPack[client] = -1;

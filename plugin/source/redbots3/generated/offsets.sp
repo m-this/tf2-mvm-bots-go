@@ -2,6 +2,7 @@
 
 StringMap m_adtOffsets;
 
+// InitOffsets reads every offset the mod needs, once.
 stock void InitOffsets(GameData hGamedata)
 {
 	m_adtOffsets = new StringMap();
@@ -17,12 +18,18 @@ stock void InitOffsets(GameData hGamedata)
 	SetOffset(hGamedata, "CTFNavArea", "m_distanceToBombTarget");
 }
 
+// 	SetOffset works out one offset and remembers it
+//
+// A class whose gamedata names a base prop is read as that prop's offset plus the
+// one the file gives, because the field sits inside a structure the game does name.
+// CTFBot is looked up on CTFPlayer: the game declares the send table there.
 stock void SetOffset(GameData hGamedata, const char[] cls, const char[] prop)
 {
 	char key[512];
 	Format(key, 512, "%s::%s", cls, prop);
 	char baseKey[512];
 	Format(baseKey, 512, "%s_BaseOffset", cls);
+	// The actual offset, calculated using a base offset if present.
 	char baseProp[512];
 	bool found = hGamedata.GetKeyValue(baseKey, baseProp, 512);
 	if (found)
@@ -34,6 +41,7 @@ stock void SetOffset(GameData hGamedata, const char[] cls, const char[] prop)
 		}
 		if (baseOffset == -1)
 		{
+			// Nothing found, so search on CBaseEntity instead.
 			baseOffset = FindSendPropInfo("CBaseEntity", baseProp);
 			if (baseOffset == -1)
 			{
@@ -54,6 +62,7 @@ stock void SetOffset(GameData hGamedata, const char[] cls, const char[] prop)
 	}
 }
 
+// GetOffset is the offset that was worked out at load.
 stock int GetOffset(const char[] cls, const char[] prop)
 {
 	char key[512];
@@ -67,16 +76,19 @@ stock int GetOffset(const char[] cls, const char[] prop)
 	return offset;
 }
 
+// GetLastDamageType is how the player was last hurt.
 stock int GetLastDamageType(int client)
 {
 	return GetEntData(client, GetOffset("CTFPlayer", "m_LastDamageType"));
 }
 
+// IsPlacementOK says the sentry blueprint is somewhere it could be built.
 stock bool IsPlacementOK(int iObject)
 {
 	return GetEntData(iObject, GetOffset("CObjectSentrygun", "m_bPlacementOK"), 1) != 0;
 }
 
+// GetTurretAngles is where the sentry is currently pointing.
 stock void GetTurretAngles(int sentry, float buffer[3])
 {
 	for (int i = 0; i < 3; i++)
@@ -87,6 +99,12 @@ stock void GetTurretAngles(int sentry, float buffer[3])
 	return;
 }
 
+// 	SetLookingAroundForEnemies tells the game's own bot code to stop scanning
+//
+// Guarded, because an action's OnEnd runs after its actor may already be gone. The
+// server hibernates at the end of a mission and punts every bot on the way, and
+// the engineer's build actions end after that: three exceptions a map, all of them
+// this, writing into an entity index that is nobody.
 stock void SetLookingAroundForEnemies(int client, bool shouldLook)
 {
 	if ((client < 1) || (client > MaxClients) || !IsClientInGame(client))
@@ -96,31 +114,41 @@ stock void SetLookingAroundForEnemies(int client, bool shouldLook)
 	SetEntData(client, GetOffset("CTFBot", "m_isLookingAroundForEnemies"), shouldLook, 1);
 }
 
+// GetTFBotMission is what the game's own bot code was told to do.
 stock int GetTFBotMission(int client)
 {
 	return GetEntData(client, GetOffset("CTFBot", "m_mission"));
 }
 
+// GetOpportunisticTimer is the timer the game uses to decide when a bot may
+// take a free shot at something it passed.
 stock Address GetOpportunisticTimer(int client)
 {
 	return GetEntityAddress(client) + view_as<Address>(GetOffset("CTFBot", "m_opportunisticTimer"));
 }
 
+// GetStartingCurrency is what the mission handed out before the first wave. The
+// real figure is two variables and the other one has never mattered.
 stock int GetStartingCurrency(int populator)
 {
 	return GetEntData(populator, GetOffset("CPopulationManager", "m_nStartingCurrency"));
 }
 
+// IsPlayingHorn says the buff banner is mid-blow.
 stock bool IsPlayingHorn(int weapon)
 {
 	return GetEntData(weapon, GetOffset("CTFBuffItem", "m_bPlayingHorn"), 1) != 0;
 }
 
+// GetLastAccuracyCheck is when the revolver last decided its shot was accurate.
 stock float GetLastAccuracyCheck(int weapon)
 {
 	return GetEntDataFloat(weapon, GetOffset("CTFRevolver", "m_flLastAccuracyCheck"));
 }
 
+// GetTravelDistanceToBombTarget is how far this area is from the hatch along
+// the path the robots walk, which is the number the whole nest search is scored
+// on.
 stock float GetTravelDistanceToBombTarget(CTFNavArea area)
 {
 	return LoadFromAddress(view_as<Address>(area) + view_as<Address>(GetOffset("CTFNavArea", "m_distanceToBombTarget")), NumberType_Int32);

@@ -4,6 +4,7 @@
 #define BUILD_WALK_TIME_MIN (12.0)
 #define BUILD_WALK_TIME_MAX (40.0)
 
+// GetCurrentCharge is how far a chargeable weapon has wound up, from zero to one.
 stock float GetCurrentCharge(int weapon)
 {
 	if (!HasEntProp(weapon, Prop_Send, "m_flChargeBeginTime"))
@@ -19,13 +20,23 @@ stock float GetCurrentCharge(int weapon)
 	return charge;
 }
 
+// TFBotNoticeThreat makes the game's own bot notice something now.
+//
+// UpdateDelayedThreatNotices is called in CTFBotTacticalMonitor::Update, but that
+// behaviour can be interrupted, so it is called here to make sure he has noticed.
 stock void TFBot_NoticeThreat(int tfbot, int threat)
 {
 	OSLib_RunScriptCode(tfbot, _, _, "self.DelayedThreatNotice(EntIndexToHScript(%d),0);self.UpdateDelayedThreatNotices()", threat);
 }
 
+// MovePlayerTowardsGoal is the WASD a bot is pushed with, as the two axes the game
+// reads rather than as a direction.
+//
+// The forward vector is flattened and the goal is taken relative to it, so what comes
+// out is the four keys a person would be holding.
 stock void MovePlayerTowardsGoal(int client, const float vGoal[3], float vVel[3])
 {
+	// WASD Movement
 	float forward3D[3];
 	BasePlayer_EyeVectors(client, forward3D);
 	float vForward[3];
@@ -35,6 +46,7 @@ stock void MovePlayerTowardsGoal(int client, const float vGoal[3], float vVel[3]
 	float right[3];
 	right[0] = vForward[1];
 	right[1] = -vForward[0];
+	// PlayerLocomotion::GetFeet
 	float vFeet[3];
 	GetClientAbsOrigin(client, vFeet);
 	float to[3];
@@ -63,6 +75,8 @@ stock void MovePlayerTowardsGoal(int client, const float vGoal[3], float vVel[3]
 		}
 }
 
+// BuildReachTime is how long a walk to a build spot is worth waiting for, priced
+// by its length rather than by a flat clock.
 stock float BuildReachTime(const float from[3], const float to[3])
 {
 	float seconds = BUILD_WALK_TIME_MIN + (GetVectorDistance(from, to) / BUILD_WALK_SPEED);

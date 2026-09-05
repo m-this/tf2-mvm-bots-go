@@ -6,6 +6,12 @@
 
 int m_iBotsLeftToChoose;
 
+// ShowDefenderBotTeamSetupMenu puts the class list up, once per seat left to
+// fill.
+//
+// Initialising is a separate flag rather than a count of zero: the menu is redrawn
+// after every choice with the same function, and a redraw must not clear what has
+// been chosen so far.
 stock void ShowDefenderBotTeamSetupMenu(int client, int itemPosition = 0, bool bInitialize = false, int numBotsToAdd = 0)
 {
 	if (bInitialize)
@@ -31,6 +37,11 @@ stock void ShowDefenderBotTeamSetupMenu(int client, int itemPosition = 0, bool b
 	}
 }
 
+// MenuHandlerDefenderBotTeamSetup hears one choice, then either asks for the next
+// seat or moves to the confirmation.
+//
+// The menu deletes itself on End rather than in the builder: SourceMod keeps it
+// alive until the player is done with it, so the builder does not own it.
 stock int MenuHandler_DefenderBotTeamSetup(Menu menu, MenuAction action, int param1, int param2)
 {
 	switch (action)
@@ -107,6 +118,7 @@ stock int MenuHandler_DefenderBotTeamSetup(Menu menu, MenuAction action, int par
 	return 0;
 }
 
+// ShowDefenderBotTeamConfirmationMenu reads the lineup back and asks for a yes.
 stock void ShowDefenderBotTeamConfirmationMenu(int client)
 {
 	Menu hMenu = new Menu(MenuHandler_DefenderBotTeamConfirmation);
@@ -115,10 +127,12 @@ stock void ShowDefenderBotTeamConfirmationMenu(int client)
 	{
 		if (i == 0)
 		{
+			// First one is just set as the name directly.
 			g_adtChosenBotClasses.GetString(i, botClassesList, 512);
 		}
 		else
 		{
+			// Append to it on the others after the first element.
 			char className[512];
 			g_adtChosenBotClasses.GetString(i, className, 512);
 			StrCat(botClassesList, 512, ", ");
@@ -131,6 +145,11 @@ stock void ShowDefenderBotTeamConfirmationMenu(int client)
 	hMenu.Display(client, CHOOSE_BOT_CLASSES_TIME_SHORT);
 }
 
+// MenuHandlerDefenderBotTeamConfirmation locks the lineup in, or sends the player
+// back to pick again.
+//
+// Picking again asks for the seats RED is short of rather than the number first
+// asked for: the team may have filled while the menu was up.
 stock int MenuHandler_DefenderBotTeamConfirmation(Menu menu, MenuAction action, int param1, int param2)
 {
 	switch (action)

@@ -5,6 +5,7 @@ bool m_bHumansOnRed;
 bool m_bAnyHumanReadyOnRed;
 float m_flLastCommandTime[65];
 
+// RefreshHumanReadiness walks the slots once a frame and remembers what it saw.
 stock void RefreshHumanReadiness()
 {
 	if (m_flHumanReadinessTime == GetGameTime())
@@ -29,23 +30,29 @@ stock void RefreshHumanReadiness()
 	}
 }
 
+// AnyHumanOnRed says a person is on the defending team.
 stock bool AnyHumanOnRed()
 {
 	RefreshHumanReadiness();
 	return m_bHumansOnRed;
 }
 
+// AnyHumanReadyOnRed says one of them has pressed ready.
 stock bool AnyHumanReadyOnRed()
 {
 	RefreshHumanReadiness();
 	return m_bAnyHumanReadyOnRed;
 }
 
+// ResetCommandThrottle starts a seat's clock, which the plugin does as a player
+// is put in the server.
 stock void Go_ResetCommandThrottle(int client)
 {
 	m_flLastCommandTime[client] = GetGameTime();
 }
 
+// FakeClientCommandThrottled sends the command unless one went out too
+// recently, and says whether it went.
 stock bool FakeClientCommandThrottled(int client, const char[] command)
 {
 	if (m_flLastCommandTime[client] > GetGameTime())
@@ -57,6 +64,8 @@ stock bool FakeClientCommandThrottled(int client, const char[] command)
 	return true;
 }
 
+// ShouldProcessCommand is the same gate for a command the plugin runs itself
+// rather than sends.
 stock bool ShouldProcessCommand(int client)
 {
 	if (m_flLastCommandTime[client] > GetGameTime())

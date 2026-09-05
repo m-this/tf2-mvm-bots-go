@@ -5,12 +5,16 @@
 #define BUILD_STAND_SEARCH (120.0)
 #define BUILD_STAND_STOREY (100.0)
 
+// NestBuildPosition is where a nest area's building actually goes: the coordinate
+// somebody walked the map to find when there is one, and the area's own centre when
+// there is not.
 stock void NestBuildPosition(CNavArea area, float out[3])
 {
 	for (int i = 0; i < 3; i++)
 	{
 		out[i] = 0.0;
 	}
+	// Before the GetCenter, not after it: reading the centre of a null area reads through a null
 	if (area == NULL_AREA)
 	{
 		out[0] = 0.0;
@@ -20,6 +24,12 @@ stock void NestBuildPosition(CNavArea area, float out[3])
 	}
 	area.GetCenter(out);
 	float best = 400.0;
+	//  A fresh destination each time, because the same array cannot be both
+	//
+	// 	SourcePawn passes an array by reference and a generated function zeroes its
+	// 	out-parameters at entry, so passing one variable as both the candidate and
+	// 	the answer zeroes the candidate before it is read. The emitter refuses that
+	// 	shape now; this is what it looks like written safely.
 	float closest;
 	float nearest[3];
 	NestSpotFromList(g_arrMapConfig.adtEngineerNestLocation, out, best, nearest, closest);
@@ -28,11 +38,18 @@ stock void NestBuildPosition(CNavArea area, float out[3])
 	NestSpotFromList(g_arrMapConfig.adtNestTankOnlyLocation, out, best, nearest, closest);
 	out = nearest;
 	best = closest;
+	//  The third distance is written and never read again
+	//
+	// 	The shipped code threads one best through all three lists and the last one
+	// 	goes out of scope with the function. SourcePawn writes it through a
+	// 	parameter, so it needs a name here whether or not anything reads it.
 	NestSpotFromList(g_arrMapConfig.adtNestNoTankLocation, out, best, nearest, closest);
 	out = nearest;
 	return;
 }
 
+// FromList takes the nearest authored spot in one list, when it beats what the
+// caller already had.
 stock void NestSpotFromList(ArrayList spots, float inout[3], float best, float out[3], float &closest)
 {
 	for (int i = 0; i < 3; i++)
@@ -58,6 +75,11 @@ stock void NestSpotFromList(ArrayList spots, float inout[3], float best, float o
 	return;
 }
 
+// NestZoneOf is the zone a nest area belongs to, and empty when the map names none.
+//
+// Coaltown is why zones exist at all: the ground behind the wall on the right is eight
+// hundred units from the nest it serves and two hundred from a different one, so
+// nearest is the wrong answer and no distance rule fixes that.
 stock void NestZoneOf(CNavArea area, char[] zone, int maxlength)
 {
 	zone[0] = 0;
@@ -83,6 +105,11 @@ stock void NestZoneOf(CNavArea area, char[] zone, int maxlength)
 	}
 }
 
+// BuildStandPoint is where the man stands to put a building on a spot: a build's reach
+// away, on the side this attempt asks for, and on ground the nav mesh admits.
+//
+// False when there is nothing walkable there, which is the caller's cue to go round to
+// the next side rather than to walk at thin air.
 stock bool BuildStandPoint(const float spot[3], const float from[3], int attempt, int attempts, float reach, float stand[3])
 {
 	for (int i = 0; i < 3; i++)
@@ -92,6 +119,7 @@ stock bool BuildStandPoint(const float spot[3], const float from[3], int attempt
 	float away[3];
 	SubtractVectors(from, spot, away);
 	away[2] = 0.0;
+	// He is standing on it, so any side will do to start from
 	float length = NormalizeVector(away, away);
 	if (length < 1.0)
 	{
@@ -117,6 +145,8 @@ stock bool BuildStandPoint(const float spot[3], const float from[3], int attempt
 	return true;
 }
 
+// RandomPointIn is somewhere inside the area, on its own surface rather than
+// inside the box that bounds it.
 stock void CNavArea_GetRandomPoint(CNavArea area, float buffer[3])
 {
 	for (int i = 0; i < 3; i++)

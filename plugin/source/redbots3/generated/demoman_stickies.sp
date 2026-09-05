@@ -11,6 +11,13 @@
 
 #define STICKY_MAX_BOMBS (8)
 
+// ShouldDetonateStickies is whether to press the detonator, and it is only ever
+// pressed for damage.
+//
+// The cluster is whatever bombs happen to be on the ground, not a trap that was laid,
+// so the question is the same one asked of a rocket at somebody's feet: is there more
+// than one robot standing in the blast, or one robot big enough that the blast is
+// worth it on its own.
 stock bool ShouldDetonateStickies(int client)
 {
 	if (TF2_GetPlayerClass(client) != TFClass_DemoMan)
@@ -22,6 +29,7 @@ stock bool ShouldDetonateStickies(int client)
 	{
 		return false;
 	}
+	// Nothing to blow up
 	if (GetEntProp(launcher, Prop_Send, "m_iPipebombCount") <= 0)
 	{
 		return false;
@@ -31,6 +39,11 @@ stock bool ShouldDetonateStickies(int client)
 	TFTeam enemyTeam = GetPlayerEnemyTeam(client);
 	int examined = 0;
 	int sticky = -1;
+	//  Counted across the whole cluster rather than answered by the first bomb that qualifies
+	//
+	// 	Alt-fire blows all of them, so the question is what the cluster catches, not what one bomb
+	// 	catches. Asking it a bomb at a time meant two robots on two different bombs read as two bombs
+	// 	with one robot each and the button was never pressed.
 	int caughtTotal = 0;
 	int bombsWithEnemies = 0;
 	bool worthItAlone = false;
@@ -41,10 +54,12 @@ stock bool ShouldDetonateStickies(int client)
 		{
 			break;
 		}
+		// Somebody else's bombs, and blowing those up is not a button this bot has
 		if (BaseEntity_GetOwnerEntity(sticky) != client)
 		{
 			continue;
 		}
+		// The count above is the bot's own, so this is the same bound read from the other side
 		examined++;
 		if (examined > STICKY_MAX_BOMBS)
 		{
@@ -52,6 +67,16 @@ stock bool ShouldDetonateStickies(int client)
 		}
 		float stickyOrigin[3];
 		stickyOrigin = GetAbsOrigin(sticky);
+		//  One bomb of his own on top of him and the button is not worth pressing at all
+		//
+		// 		This used to skip the bomb and carry on, which reads as a safety rule and is not one. The
+		// 		detonator is one button for every bomb he owns: skipping a close one only stops it counting
+		// 		towards whether to press, it does not stop it going off when he does. So a Demoman with six
+		// 		on a tank hull and two down the corridor scored the two, pressed, and took all eight.
+		//
+		// 		He is the worst self-harmer on the team by an order of magnitude and this is the mechanism.
+		// 		Vetoing outright rather than pricing it: the cluster he gives up is one press, the health he
+		// 		gives up is the rest of the wave.
 		if (GetVectorDistance(myOrigin, stickyOrigin) < STICKY_SELF_SAFE_RANGE)
 		{
 			if (Feature(FEATURE_DEMO_STICKY_SELF_VETO))
@@ -76,6 +101,11 @@ stock bool ShouldDetonateStickies(int client)
 				continue;
 			}
 			caught++;
+			//  A giant, the bomb carrier, or a Medic is worth the cluster by itself
+			//
+			// 			The Medic is the addition and it is the whole job on a wave that has them: a giant
+			// 			with one attached cannot be killed by anybody until the Medic is, and a Demoman is
+			// 			one of the two classes that can reach it.
 			if (TF2_IsMiniBoss(i) || TF2_HasTheFlag(i) || (TF2_GetPlayerClass(i) == TFClass_Medic))
 			{
 				worthItAlone = true;
@@ -86,6 +116,9 @@ stock bool ShouldDetonateStickies(int client)
 			bombsWithEnemies++;
 		}
 		caughtTotal += caught;
+		//  A tank is not a player, so none of the counting above sees one
+		// 		Without this a bot puts a clip into the hull and never presses the button, which is the
+		// 		same weapon doing nothing that this file exists to fix
 		if (IsStickyOnTank(stickyOrigin))
 		{
 			worthItAlone = true;
@@ -94,6 +127,8 @@ stock bool ShouldDetonateStickies(int client)
 	return worthItAlone || (caughtTotal >= STICKY_DETONATE_ENEMIES) || (bombsWithEnemies >= STICKY_DETONATE_BOMBS);
 }
 
+// IsStickyOnTank says a bomb at this position is stuck to a tank, or close enough
+// to hurt one.
 stock bool IsStickyOnTank(const float stickyOrigin[3])
 {
 	int tank = -1;
@@ -116,6 +151,30 @@ stock bool IsStickyOnTank(const float stickyOrigin[3])
 	return false;
 }
 
+// ShouldUseStickyLauncher is whether this Demoman should be holding the sticky
+// launcher rather than the pipes.
+//
+// Both are the same arc and the same splash, so this is not about which does more
+// damage. It is about which one lands. A pipe has to be timed onto a moving robot; a
+// sticky sticks where it hits and waits for the bot to decide, which is a decision a
+// bot makes better than a lead.
+//
+// That reasoning is why the launcher was tried as the default weapon, and it was
+// measured and it was wrong. Six waves of Coaltown either way, one build, one switch
+// between them:
+//
+// 	pipes first    1821 damage a wave, 27 kills, five waves of six cleared
+// 	stickies first  880 damage a wave, 11 kills, four waves of six cleared
+//
+// Half the damage. The hole in the argument is that the bot fires at where a robot is
+// rather than where it is going, and a sticky thrown at a walking robot lands behind
+// it and catches nobody. The clip and the reload are spent for nothing, where a pipe
+// at least does its damage when it connects. Sticky spam is a human laying bombs on
+// ground the robots have not reached yet, and none of that is what this does.
+//
+// So: stickies at the things worth a cluster, pipes at everything else. Close in it is
+// pipes whatever the target, because a sticky under the bot's own feet is a bot
+// blowing itself up.
 stock bool ShouldUseStickyLauncher(int client, int launcher, int threat, float threatRange)
 {
 	if ((launcher == -1) || (TF2Util_GetWeaponID(launcher) != TF_WEAPON_PIPEBOMBLAUNCHER))
@@ -130,6 +189,7 @@ stock bool ShouldUseStickyLauncher(int client, int launcher, int threat, float t
 	{
 		return false;
 	}
+	// Out past this the arc is guesswork the bot does not charge the shot for
 	if (threatRange > 1200.0)
 	{
 		return false;
@@ -142,10 +202,12 @@ stock bool ShouldUseStickyLauncher(int client, int launcher, int threat, float t
 	{
 		return true;
 	}
+	// A Medic is the one robot the rest of the team cannot finish around, so it is worth the switch
 	if (TF2_GetPlayerClass(threat) == TFClass_Medic)
 	{
 		return true;
 	}
+	// A crowd, counted where it stands rather than where the bombs would land
 	return CountEnemiesNearPosition(client, WorldSpaceCenter(threat), STICKY_BLAST_RANGE) >= STICKY_DETONATE_ENEMIES;
 }
 

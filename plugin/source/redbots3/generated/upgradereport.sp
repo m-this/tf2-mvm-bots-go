@@ -2,6 +2,7 @@
 
 #define Go_Attributes (20)
 
+// ShowUpgradesOn prints every attribute on one entity, named.
 stock void ShowUpgradesOn(int client, int entity, const char[] what)
 {
 	int attribIndexes[20];
@@ -21,6 +22,7 @@ stock void ShowUpgradesOn(int client, int entity, const char[] what)
 	}
 }
 
+// ShowPlayerUpgrades prints one player's, either the player itself or one slot.
 stock void ShowPlayerUpgrades(int client, int target, int slot)
 {
 	char who[512];

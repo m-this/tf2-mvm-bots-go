@@ -12,6 +12,7 @@ int m_iBluAssistWasHealth[65];
 ConVar redbots_manager_blu_health_scale;
 ConVar redbots_manager_blu_health_debug;
 
+// Init makes the convars and forgets the last mission's count.
 stock void BluAssist_Init()
 {
 	m_iBluAssistSeen = 0;
@@ -19,16 +20,26 @@ stock void BluAssist_Init()
 	redbots_manager_blu_health_debug = CreateConVar("sm_redbots_manager_blu_health_debug", "0", "Log the original, wanted and observed health of every robot the lever bends, rather than one in BLU_ASSIST_SAMPLE.", FCVAR_NONE, true, 0.0, true, 1.0);
 }
 
+// HealthScale is what a robot's maximum health is multiplied by.
 stock float BluAssist_HealthScale()
 {
 	return redbots_manager_blu_health_scale.FloatValue;
 }
 
+// Off says the scale changes nothing, which is the lever's default and the state
+// every path here returns early on.
 stock bool BluAssistOff(float scale)
 {
 	return FloatAbs(scale - 1.0) < BLU_ASSIST_EPSILON;
 }
 
+// GetMaxHealth answers the game's own question about a robot's maximum.
+//
+// TF2 recomputes the maximum from the class and the attributes whenever it likes, so
+// a number written into m_iMaxHealth does not stay written: the first version of this
+// bent an attribute, the second wrote the property, and a robot still spawned with
+// what the popfile gave it. This is the game asking, which is the one answer it does
+// not go back over.
 stock Action BluAssistGetMaxHealth(int entity, int &maxHealth)
 {
 	if (m_iBluAssistMaxHealth[entity] <= 0)
@@ -39,6 +50,14 @@ stock Action BluAssistGetMaxHealth(int entity, int &maxHealth)
 	return Plugin_Changed;
 }
 
+// Describe adds what the lever is set to, for the line that says what was different
+// about this run.
+//
+// Nothing is added when it is off, which is every run until somebody sets it, so the
+// string reads exactly as it did before this existed.
+//
+// //sp:name BluAssist_Describe
+// //sp:length buffer maxlength
 stock void BluAssist_Describe(char[] buffer, int maxlength)
 {
 	if ((redbots_manager_blu_health_scale == null) || BluAssistOff(redbots_manager_blu_health_scale.FloatValue))
@@ -48,6 +67,11 @@ stock void BluAssist_Describe(char[] buffer, int maxlength)
 	Format(buffer, maxlength, "blu_health=%.2f", redbots_manager_blu_health_scale.FloatValue);
 }
 
+// OnRobotSpawn takes the last robot's answer off this slot and asks for the new one.
+//
+// The unhook and the cleared slot come first, whatever the lever is set to: a slot is
+// reused by whoever spawns into it next, and a maximum left behind from a robot would
+// be answered for a human.
 stock void BluAssist_OnRobotSpawn(int client)
 {
 	SDKUnhook(client, SDKHook_GetMaxHealth, BluAssistGetMaxHealth);
@@ -60,6 +84,12 @@ stock void BluAssist_OnRobotSpawn(int client)
 	CreateTimer(BLU_ASSIST_SETTLE, BluAssistApplyToRobot, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
 }
 
+// ApplyToRobot writes the health the lever asks for, once the popfile has finished.
+//
+// The health it has now is the floor: a giant whose maximum has not been written yet
+// reads back the class default, and scaling that would take a 3000 health giant down
+// to a heavy's worth of it. Whatever the game already gave it is the number the
+// mission meant.
 stock Action BluAssistApplyToRobot(Handle timer, int userid)
 {
 	int client = GetClientOfUserId(userid);
@@ -95,6 +125,12 @@ stock Action BluAssistApplyToRobot(Handle timer, int userid)
 	return Plugin_Stop;
 }
 
+// VerifyRobot reads the robot back once the game has had the same delay again.
+//
+// Written because two versions of this reported success and changed nothing: the
+// lever was on, the log said it had been applied, and the robots came at the health
+// the popfile gave them. What is worth writing down is what the game says the robot
+// is worth now, not what this asked for.
 stock Action BluAssistVerifyRobot(Handle timer, int userid)
 {
 	int client = GetClientOfUserId(userid);
@@ -110,6 +146,7 @@ stock Action BluAssistVerifyRobot(Handle timer, int userid)
 	return Plugin_Stop;
 }
 
+// Say writes down what a bend actually did to one robot.
 stock void BluAssistSay(int client, int observed)
 {
 	int wanted = m_iBluAssistMaxHealth[client];

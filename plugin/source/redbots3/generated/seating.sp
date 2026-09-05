@@ -5,6 +5,11 @@
 bool m_bReseatPending;
 bool m_bRecyclePending;
 
+// 	ReseatOnBreak spends a lineup change that arrived while the wave was running
+//
+// Recycling wins over reseating, and clears both flags: it is the cheaper of the
+// two, because it reclasses the bots that are already there rather than kicking
+// them, and a reseat asked for on top of it would undo that.
 stock void Reseat_OnBreak()
 {
 	if (m_bRecyclePending)
@@ -22,12 +27,20 @@ stock void Reseat_OnBreak()
 	ReseatDefenderBots();
 }
 
+// 	ReseatOnMapStart drops a pending change
+//
+// The round it was waiting on ended with the map, and the bots it meant are gone.
 stock void Reseat_OnMapStart()
 {
 	m_bReseatPending = false;
 	m_bRecyclePending = false;
 }
 
+// 	SetupSniperSpotHints puts a hint entity at every sniper spot the map names
+//
+// A map with no spots in its config keeps whatever hints the mapper placed, but
+// they are set to team 0 so both teams may use them: an official hint is aimed at
+// the attackers and standing on it as a defender is usually worse than nothing.
 stock void SetupSniperSpotHints()
 {
 	if (g_arrMapConfig.adtSniperSpot.Length > 0)
@@ -62,6 +75,10 @@ stock void SetupSniperSpotHints()
 	}
 }
 
+// 	HavePlayersChosenBotTeam says the lineup is settled enough to seat bots on
+//
+// A full RED is always settled, whatever anybody picked: there is no seat left to
+// argue about.
 stock bool HavePlayersChosenBotTeam()
 {
 	if (GetCountOfPlayersChoosingBotClasses() > 0)
@@ -72,9 +89,12 @@ stock bool HavePlayersChosenBotTeam()
 	{
 		return true;
 	}
+	//  Strictly requiring a chosen lineup means the list only ever holds classes
+	// 	a player picked, so an empty list is nobody having chosen yet.
 	return g_adtChosenBotClasses.Length > 0;
 }
 
+// FreeChosenBotTeam drops the held lineup so it can be picked again.
 stock void FreeChosenBotTeam(bool bAnnounce = false)
 {
 	g_adtChosenBotClasses.Clear();
@@ -86,6 +106,10 @@ stock void FreeChosenBotTeam(bool bAnnounce = false)
 	}
 }
 
+// 	FindGameConsoleVariables looks up the game's own convars once
+//
+// They belong to the bot code the game ships, not to this mod, so they exist
+// whether or not this plugin does and there is nothing to create.
 stock void FindGameConsoleVariables()
 {
 	nb_blind = FindConVar("nb_blind");
@@ -97,6 +121,12 @@ stock void FindGameConsoleVariables()
 	tf_bot_health_search_near_range = FindConVar("tf_bot_health_search_near_range");
 }
 
+// 	UpdateChosenBotTeamComposition decides the lineup the next fill will use
+//
+// The named team is decided here, where every lineup is decided, and not where the
+// bots are added. The wave begins by adding this list and nothing else, so a team
+// named in the convar that only the top-up timer ever read was a team that never
+// played.
 stock void UpdateChosenBotTeamComposition(int caller = -1)
 {
 	if (g_bBotClassesLocked)
@@ -123,6 +153,7 @@ stock void UpdateChosenBotTeamComposition(int caller = -1)
 		return;
 	}
 	newBotsToAdd -= CollectMissingTeamComposition(g_adtChosenBotClasses, g_adtChosenBotSeats, newBotsToAdd);
+	// Whatever seats the named team left over are the lineup mode's to fill.
 	if (newBotsToAdd > 0)
 	{
 		ChooseBotClassesFromLineupMode(newBotsToAdd);
@@ -137,6 +168,8 @@ stock void UpdateChosenBotTeamComposition(int caller = -1)
 	}
 }
 
+// ChooseBotClassesFromLineupMode names count more classes for the chosen
+// lineup, the way the lineup mode says to.
 stock void ChooseBotClassesFromLineupMode(int count)
 {
 	switch (redbots_manager_bot_lineup_mode.IntValue)
@@ -177,8 +210,14 @@ stock void ChooseBotClassesFromLineupMode(int count)
 	}
 }
 
+// 	AddBotsFromChosenTeamComposition seats the lineup that was chosen
+//
+// The bots already on RED are counted against the list first, so a top-up in the
+// middle of a wave converges on the same team as the first fill. A bot that is on
+// the team but has not spawned yet has no class, and only the seat count sees it.
 stock void AddBotsFromChosenTeamComposition()
 {
+	// Once we add them it is not locked any more.
 	g_bBotClassesLocked = false;
 	int seats = redbots_manager_defender_team_size.IntValue - GetHumanAndDefenderBotCount(TFTeam_Red);
 	if (seats < 1)
@@ -208,6 +247,8 @@ stock void AddBotsFromChosenTeamComposition()
 			held[classType]--;
 			continue;
 		}
+		// The seat belongs to the entry, so an entry that was skipped does
+		// not spend one.
 		NoteBotSeatPending((i < g_adtChosenBotSeats.Length ? g_adtChosenBotSeats.Get(i) : 0));
 		AddDefenderTFBot(1, class, "red", "expert");
 		added++;

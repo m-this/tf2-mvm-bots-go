@@ -19,8 +19,13 @@ func (e *emitter) block(b *ast.BlockStmt) {
 }
 
 func (e *emitter) stmt(s ast.Stmt) {
+	if s == nil {
+		return
+	}
+	e.leading(s)
+	defer e.trailing(s)
 	switch n := s.(type) {
-	case nil, *ast.EmptyStmt:
+	case *ast.EmptyStmt:
 	case *ast.BlockStmt:
 		e.block(n)
 	case *ast.DeclStmt:

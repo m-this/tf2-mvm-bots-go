@@ -42,9 +42,16 @@ int g_iBotHat[65] = {INVALID_ENT_REFERENCE, ...};
 bool g_bCosmeticsPending[65];
 int g_iEquipping[65];
 
+// DrawWardrobe is what this bot is going to wear for the rest of the mission.
 stock void DrawWardrobe(int client)
 {
 	TFClassType playerClass = TF2_GetPlayerClass(client);
+	//  An item still written here is one the game refused, not one with no model
+	//
+	// 	Both reasons end in DropHatFromPool and it logs the same line for each, so
+	// 	the log could not tell a hat the schema has no model for from one the game
+	// 	would not attach. Only the second throws, and only the second is mvm-6gi.
+	// 	Named here because this is the one place that knows which it was.
 	if (g_iEquipping[client] != 0)
 	{
 		LogMessage("Item %d passed the schema and the game refused to attach it to class %d, which is mvm-6gi", g_iEquipping[client], g_wardrobe[client].PlayerClass);
@@ -81,6 +88,11 @@ stock void DrawWardrobe(int client)
 	}
 }
 
+// WearHat puts the drawn hat back on.
+//
+// The game clears a player's wearables every time it gives it its items, which is
+// every respawn, so the same hat has to be handed back rather than merely
+// remembered.
 stock bool WearHat(int client)
 {
 	RemoveBotHat(client);
@@ -90,7 +102,14 @@ stock bool WearHat(int client)
 	{
 		return false;
 	}
+	//  Cleared here rather than trusted to have been cleared
+	//
+	// 	TF2Util_EquipPlayerWearable throws when the game refuses the item, and the
+	// 	throw unwinds this function and the timer above it, so the line that clears
+	// 	this after the equip never runs. Clearing on the way in is the one place the
+	// 	throw cannot skip.
 	g_iEquipping[client] = 0;
+	// The quality decides whether a client draws the effect at all.
 	int quality = 6;
 	if (effect > 0)
 	{
@@ -106,6 +125,11 @@ stock bool WearHat(int client)
 	SetEntProp(hat, Prop_Send, "m_iEntityQuality", quality);
 	SetEntProp(hat, Prop_Send, "m_iEntityLevel", 1);
 	SetEntProp(hat, Prop_Send, "m_iTeamNum", GetClientTeam(client));
+	//  The model, which the game does not work out for a wearable made by hand
+	//
+	// 	Without it the hat is an entity with no shape: the unusual effect drew,
+	// 	attached to nothing. A hat with no model in the schema cannot be worn at all,
+	// 	so it goes the same way as one the game refuses.
 	char model[512];
 	if (!HatModel(itemDefinition, TF2_GetPlayerClass(client), model, 512))
 	{
@@ -121,7 +145,14 @@ stock bool WearHat(int client)
 	{
 		TF2Attrib_SetByDefIndex(hat, ATTRIB_ATTACH_PARTICLE, float(effect));
 	}
+	// The game throws out a wearable whose item it thinks the wearer does not
+	// own, and a bot owns nothing.
 	TF2Util_SetWearableAlwaysValid(hat, true);
+	//  Written down before the equip and not after, both of them
+	//
+	// 	The entity so that a refused one is taken away on the next spawn rather than
+	// 	standing in the world with nobody wearing it, and the item so that the
+	// 	refusal is noticed at all.
 	g_iBotHat[client] = EntIndexToEntRef(hat);
 	g_iEquipping[client] = itemDefinition;
 	TF2Util_EquipPlayerWearable(client, hat);
@@ -133,6 +164,14 @@ stock bool WearHat(int client)
 	return true;
 }
 
+// RemoveOrphanedWearables sweeps up the wearables the game refused, which stand in
+// the world with nobody wearing them.
+//
+// The equip cannot be tested in advance, so the leak is swept rather than
+// prevented. Anything of ours whose owner is not a player in the game is nobody's
+// hat. Collected first and removed afterwards: FindEntityByClassname takes the
+// previous entity as its cursor, and a cursor that has just been deleted restarts
+// the walk from the beginning.
 stock void RemoveOrphanedWearables()
 {
 	int found[64];
@@ -148,6 +187,7 @@ stock void RemoveOrphanedWearables()
 			break;
 		}
 		int owner = GetEntPropEnt(hat, Prop_Send, "m_hOwnerEntity");
+		// Somebody is wearing it, or it is still being handed out this frame.
 		if (owner > 0)
 		{
 			continue;
@@ -172,6 +212,11 @@ stock void RemoveOrphanedWearables()
 	}
 }
 
+// RemoveBotHat takes the hat off the way the game does it.
+//
+// Deleting the entity is not the same thing: the player holds a handle to every
+// wearable it is wearing, and an entity removed out from under that list leaves the
+// game following a pointer to something that is not there any more.
 stock void RemoveBotHat(int client)
 {
 	int hat = EntRefToEntIndex(g_iBotHat[client]);
@@ -182,6 +227,15 @@ stock void RemoveBotHat(int client)
 	}
 }
 
+// HatModel is the model this class wears this hat with.
+//
+// Per class first, because a hat that fits nine heads is nine models and the wrong
+// one is a Scout wearing a Heavy's hat at a Heavy's height.
+//
+// A loadout slot of -1 is the schema saying this class does not wear this item, and
+// it is asked before the model is looked up: a hat with a generic model_player
+// passes the lookup for every class and the game then refuses the equip, which
+// throws and takes the rest of that bot's cosmetics with it.
 stock bool HatModel(int itemDefinition, TFClassType playerClass, char[] model, int maxlength)
 {
 	if (TF2Econ_GetItemLoadoutSlot(itemDefinition, playerClass) == -1)
@@ -205,6 +259,8 @@ stock bool HatModel(int itemDefinition, TFClassType playerClass, char[] model, i
 	return false;
 }
 
+// PrecacheHatModel adds a model the map did not load to the table, which
+// anything has to be in before it can be worn.
 stock bool PrecacheHatModel(const char[] model)
 {
 	if (!IsModelPrecached(model))
@@ -214,6 +270,8 @@ stock bool PrecacheHatModel(const char[] model)
 	return true;
 }
 
+// DropHatFromPool takes an item the game will not attach out for the rest of the
+// map, so nobody draws it twice.
 stock void DropHatFromPool(TFClassType playerClass, int itemDefinition)
 {
 	ArrayList pool = HatPoolForClass(playerClass);
@@ -229,14 +287,20 @@ stock void DropHatFromPool(TFClassType playerClass, int itemDefinition)
 	LogMessage("Item %d cannot be worn by class %d and has been dropped from the hat pool", itemDefinition, playerClass);
 }
 
+// ForgetBotCosmetics drops what is remembered about a bot that has left.
+//
+// Nothing to remove: the game clears a player's wearables when the player goes, and
+// a reference to an entity that is gone reads as no entity.
 stock void ForgetBotCosmetics(int client)
 {
 	g_iBotHat[client] = INVALID_ENT_REFERENCE;
 	g_bCosmeticsPending[client] = false;
 	g_iEquipping[client] = 0;
+	// The next bot in this seat is a different bot, and dresses itself.
 	g_wardrobe[client].Drawn = false;
 }
 
+// RandomHatEffect is one of the game's own unusual effects.
 stock int RandomHatEffect()
 {
 	if (g_adtHatEffects == null)
@@ -250,6 +314,7 @@ stock int RandomHatEffect()
 	return g_adtHatEffects.Get(GetRandomInt(0, g_adtHatEffects.Length - 1));
 }
 
+// HatPoolForClass is what that class may wear, built the first time it is asked.
 stock ArrayList HatPoolForClass(TFClassType playerClass)
 {
 	int index = view_as<int>(playerClass);
@@ -264,6 +329,17 @@ stock ArrayList HatPoolForClass(TFClassType playerClass)
 	return g_adtHats[index];
 }
 
+// BuildHatPool is every cosmetic this class may wear, asked of the schema once.
+//
+// Not the medals. What the bots drew almost every time was a tournament medal: a
+// postage stamp on the chest that reads in game as a bot wearing nothing at all.
+// There are far more medals in the schema than cosmetics, so drawing uniformly from
+// the slot is drawing a medal.
+//
+// Filed by equip region rather than by slot, because the slot cannot tell them
+// apart: no modern item reports the old head slot, so cosmetics and medals alike
+// come back as misc. The class filter is the schema's own, and the classname filter
+// keeps out the wearables that are really weapons.
 stock ArrayList BuildHatPool(TFClassType playerClass)
 {
 	ArrayList pool;
@@ -303,6 +379,18 @@ stock ArrayList BuildHatPool(TFClassType playerClass)
 	return pool;
 }
 
+// GiveBotCosmeticsSoon dresses the bot half a second after it spawns, not the
+// moment it does.
+//
+// The game gives its own items on spawn and the custom loadout replaces them a
+// tenth of a second later, and a hat handed to a bot in the middle of that is a hat
+// the game throws away. Once per spawn, however many times it is asked: a bot's
+// first spawn asks twice.
+//
+// Spread across a second rather than all landing on the same frame. A team spawns
+// together, and dressing a bot creates an entity and precaches a model, which is
+// not a thing to do six times inside one tick of a server that is also starting a
+// wave.
 stock void GiveBotCosmeticsSoon(int client)
 {
 	if (!redbots_manager_bot_hats.BoolValue)
@@ -318,6 +406,13 @@ stock void GiveBotCosmeticsSoon(int client)
 	CreateTimer(when, Timer_GiveBotCosmetics, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
 }
 
+// TimerGiveBotCosmetics is the dressing itself, once the spawn has settled.
+//
+// Draw again when what the bot drew turns out not to be wearable, up to a few
+// times. A hat the schema has no model for is dropped from the pool and the bot was
+// left bare until its next respawn, which for a defender that does not die is the
+// rest of the mission. Every failure takes that item out of the pool, so the tries
+// cannot chase the same bad one twice.
 public Action Timer_GiveBotCosmetics(Handle timer, int userid)
 {
 	int client = GetClientOfUserId(userid);
@@ -341,6 +436,12 @@ public Action Timer_GiveBotCosmetics(Handle timer, int userid)
 	return Plugin_Stop;
 }
 
+// CommandDumpHats says what every defender bot is actually wearing, entity by
+// entity.
+//
+// A hat that does not show up is one of four things and they look the same from
+// outside: never drawn, drawn and refused a model, worn by an entity the game
+// threw away, or worn by an entity with no model index on it. This says which.
 public Action Command_DumpHats(int client, int args)
 {
 	for (int playerClass = 1; playerClass < Go_Classes; playerClass++)

@@ -17,6 +17,7 @@ int m_iEmptiedBot = -1;
 float m_flEmptiedUntil;
 float m_flEmptiedSaid;
 
+// Init makes the convars, the command and the trace timer.
 stock void DebugFaults_Init()
 {
 	redbots_debug_wedge_seconds = CreateConVar("sm_redbots_debug_wedge_seconds", "0", "Hold one defender in place for this many seconds after a wave starts, to exercise the stuck watchdog. 0 is off.", FCVAR_NOTIFY, true, 0.0, true, 300.0);
@@ -30,6 +31,14 @@ stock void DebugFaults_Init()
 	CreateTimer(0.1, Timer_TraceSnipers, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 }
 
+// TraceSnipers says what each sniper was doing, tick by tick, so the frame that
+// hangs can be read back.
+//
+// Three fixes for the sniper crash were written from the core alone and all three
+// failed a measurement, the last one still tripping the watchdog with
+// CTFBotSniperLurk refused outright. So the search that runs away is not the one the
+// core's top frame suggested. The last line printed before WatchDog! names the action
+// that was actually running. See mvm-bj8.
 public Action Timer_TraceSnipers(Handle timer)
 {
 	if ((redbots_debug_trace_snipers == null) || !redbots_debug_trace_snipers.BoolValue)
@@ -55,11 +64,16 @@ public Action Timer_TraceSnipers(Handle timer)
 	return Plugin_Continue;
 }
 
+// OnAmmoWalkStart starts the count again, or one bot spends the whole wave refused.
 stock void DebugFaults_OnAmmoWalkStart(int client)
 {
 	m_iAmmoRefusalsLeft[client] = redbots_debug_refuse_ammo_paths.IntValue;
 }
 
+// RefuseAmmoPath is whether this path answer should be a refusal.
+//
+// Sits in front of PathFailedFor rather than replacing it, so a route that really
+// failed still reads as failed once the owed refusals run out.
 stock bool DebugFaults_RefuseAmmoPath(int client)
 {
 	if (m_iAmmoRefusalsLeft[client] <= 0)
@@ -70,6 +84,7 @@ stock bool DebugFaults_RefuseAmmoPath(int client)
 	return true;
 }
 
+// OnWaveStart picks somebody to hold. Nothing happens while the convar is zero.
 stock void DebugFaults_OnWaveStart()
 {
 	m_iWedgedBot = -1;
@@ -99,6 +114,11 @@ stock void DebugFaults_OnWaveStart()
 	LogMessage("DebugFaults: no %s on RED to hold", wanted);
 }
 
+// OnGameFrame puts the held bot back, once a frame.
+//
+// Stops on its own at the deadline, and stops early if the bot died, left, or was
+// moved a long way: a teleport out of the hold is the watchdog's recovery working,
+// and continuing to drag him back would be measuring this file rather than the fix.
 stock void DebugFaults_OnGameFrame()
 {
 	if (m_iWedgedBot <= 0)
@@ -122,6 +142,7 @@ stock void DebugFaults_OnGameFrame()
 	TeleportEntity(m_iWedgedBot, m_vWedgedAt, NULL_VECTOR, still);
 }
 
+// OnWaveStartEmpty picks somebody to empty.
 stock void DebugFaults_OnWaveStartEmpty()
 {
 	m_iEmptiedBot = -1;
@@ -150,6 +171,8 @@ stock void DebugFaults_OnWaveStartEmpty()
 	LogMessage("DebugFaults: no %s on RED to empty", wanted);
 }
 
+// ShouldEmpty is whether this bot's behaviour should be ended now, checked from
+// MainAction's update.
 stock bool DebugFaults_ShouldEmpty(int client)
 {
 	if (m_iEmptiedBot != client)
@@ -158,6 +181,11 @@ stock bool DebugFaults_ShouldEmpty(int client)
 	}
 	if ((GetGameTime() <= m_flEmptiedUntil) && IsPlayerAlive(client))
 	{
+		//  Say what the stack looks like while it is being emptied
+		//
+		// 		Ending MainAction lets the intention build it again, so the stack a watchdog sampling once a
+		// 		second sees may never be the empty one. Without this line, a rescue that does not fire and a
+		// 		fault that is not there read the same.
 		if (m_flEmptiedSaid <= GetGameTime())
 		{
 			m_flEmptiedSaid = GetGameTime() + 1.0;
@@ -172,11 +200,24 @@ stock bool DebugFaults_ShouldEmpty(int client)
 	return false;
 }
 
+// OldWedgeRecovery is whether to use the recovery as it was before v2.21.3.
+//
+// The old one asked TheNavMesh for the nearest area and took a random point in it.
+// For a bot wedged in geometry while standing on valid nav that area is the one under
+// his feet, so the point landed back on him and the move was thrown away. That is the
+// defect, and this convar is how the arms of an A/B differ: measuring what a fix is
+// worth needs the fault available, not only its absence.
 stock bool DebugFaults_OldWedgeRecovery()
 {
 	return (redbots_debug_old_wedge_recovery != null) && redbots_debug_old_wedge_recovery.BoolValue;
 }
 
+// UnreachableGoal is where to send the held bot so that no path exists.
+//
+// Far above the map, which is off every nav area there is. The search has to walk the
+// mesh to establish that, which is the frame the watchdog kills the server on, and the
+// whole point of this convar is to make that frame happen rather than wait for a map
+// to arrange it.
 stock bool DebugFaults_UnreachableGoal(int client, float goal[3])
 {
 	for (int i = 0; i < 3; i++)
@@ -196,6 +237,13 @@ stock bool DebugFaults_UnreachableGoal(int client, float goal[3])
 	return true;
 }
 
+// ReportSniperSpots says whether each sniper spot can be walked to, from each sniper
+// standing now.
+//
+// The stock sniper is handed to the game's CTFBotSniperLurk, which computes its own
+// path and hangs the frame the watchdog kills the server on. Whether the spots are
+// reachable at all decides the fix: an unreachable spot means filtering them before
+// committing, a reachable one means the lurk never starts. See mvm-bj8.
 stock void DebugFaults_ReportSniperSpots()
 {
 	ArrayList spots = g_arrMapConfig.adtSniperSpot;
@@ -221,6 +269,7 @@ stock void DebugFaults_ReportSniperSpots()
 	}
 }
 
+// CommandSniperSpots is the console command that asks for it.
 public Action Command_SniperSpots(int args)
 {
 	DebugFaults_ReportSniperSpots();

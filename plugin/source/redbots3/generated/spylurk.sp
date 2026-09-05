@@ -14,14 +14,18 @@ BehaviorAction CTFBotSpyLurkMvM()
 
 #define Go_circleStrafeRange (250.0)
 
+// OnStart aims both paths and forgets whoever the last target was.
 static Action CTFBotSpyLurkMvM_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
 	m_pChasePath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
+	// Track current target for IsHindrance
 	m_iAttackTarget[actor] = -1;
 	return action.Continue();
 }
 
+// Update is the whole behaviour: sap if there is anything to sap, otherwise
+// circle and stab, otherwise wander around the bomb.
 static Action CTFBotSpyLurkMvM_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
 	if (CTFBotSpySapPlayers_SelectTarget(actor))
@@ -62,6 +66,7 @@ static Action CTFBotSpyLurkMvM_Update(BehaviorAction action, int actor, float in
 				AimHeadTowards(myBot.GetBodyInterface(), WorldSpaceCenter(target), MANDATORY, 0.1, Address_Null, "Aim stab");
 				if (!isBehindVictim)
 				{
+					// Try to circle around the enemy
 					float myForward[3];
 					BasePlayer_EyeVectors(actor, myForward);
 					float cross[3];
@@ -74,6 +79,7 @@ static Action CTFBotSpyLurkMvM_Update(BehaviorAction action, int actor, float in
 					{
 						g_arrExtraButtons[actor].PressButtons(IN_MOVELEFT, 0.1);
 					}
+					// Don't bump into them unless we're going for the stab
 					if ((threatRange < 100.0) && !HasBackstabPotential(target))
 					{
 						isMovingTowardsVictim = false;
@@ -86,6 +92,7 @@ static Action CTFBotSpyLurkMvM_Update(BehaviorAction action, int actor, float in
 				{
 					if (redbots_manager_bot_backstab_skill.IntValue == 1)
 					{
+						// Attack if we know we can land a backstab
 						if (GetEntProp(melee, Prop_Send, "m_bReadyToBackstab") != 0)
 						{
 							VS_PressFireButton(actor);
@@ -93,6 +100,7 @@ static Action CTFBotSpyLurkMvM_Update(BehaviorAction action, int actor, float in
 					}
 					else
 					{
+						// Attack if we think we can land a backstab
 						if (isBehindVictim || HasBackstabPotential(target))
 						{
 							VS_PressFireButton(actor);
@@ -101,6 +109,7 @@ static Action CTFBotSpyLurkMvM_Update(BehaviorAction action, int actor, float in
 				}
 				else
 				{
+					// We're exposed anyways, attack!
 					VS_PressFireButton(actor);
 				}
 			}
@@ -112,6 +121,7 @@ static Action CTFBotSpyLurkMvM_Update(BehaviorAction action, int actor, float in
 	}
 	else
 	{
+		// Can't find anyone near me, just wander around the bomb
 		int flag = FindBombNearestToHatch();
 		if (flag != -1)
 		{
@@ -132,19 +142,23 @@ static Action CTFBotSpyLurkMvM_Update(BehaviorAction action, int actor, float in
 	return action.Continue();
 }
 
+// ShouldAttack says no: a spy that opens fire has stopped being a spy.
 static Action CTFBotSpyLurkMvM_ShouldAttack(BehaviorAction action, INextBot nextbot, CKnownEntity knownEntity, QueryResultType& result)
 {
 	result = view_as<QueryResultType>(0);
+	// Don't as we will just make ourselves look stupid
 	result = ANSWER_NO;
 	return Plugin_Changed;
 }
 
+// IsHindrance stops the spy avoiding people once it is closing on its target.
 static Action CTFBotSpyLurkMvM_IsHindrance(BehaviorAction action, INextBot nextbot, int entity, QueryResultType& result)
 {
 	result = view_as<QueryResultType>(0);
 	int me = action.Actor;
 	if ((m_iAttackTarget[me] != -1) && nextbot.IsRangeLessThan(m_iAttackTarget[me], 300.0))
 	{
+		// Don't avoid anyone as we get closer to our target
 		result = ANSWER_NO;
 		return Plugin_Changed;
 	}
@@ -152,6 +166,7 @@ static Action CTFBotSpyLurkMvM_IsHindrance(BehaviorAction action, INextBot nextb
 	return Plugin_Changed;
 }
 
+// StabRangeForTarget is longer for a giant, because the model is bigger.
 stock float GetStabRangeForTarget(int target)
 {
 	return 75.0 * BaseAnimating_GetModelScale(target);

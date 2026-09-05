@@ -3,6 +3,17 @@
 #define MVM_WAVE_CLASS_ICONS_MAX (12)
 #define MVM_TANK_CLASS_ICON ("tank")
 
+// IsTFBotPlayer says the slot is one of the game's own bots.
+//
+// A fake client is not enough to say so. Defenders come from tf_bot_add and robots
+// from the popfile, so both are CTFBot and both have a nextbot; a body a plugin
+// seats with CreateFakeClient is a CTFPlayer and has none. That is the reliable
+// question, and it is what lets the test-bed seat something that stands where a
+// player stands.
+//
+// Behind bot_test_by_nextbot and off, because five callers read this. The fake
+// client test stays in front, so a real player costs one call and nothing asks the
+// engine about him.
 stock bool IsTFBotPlayer(int client)
 {
 	if (!IsFakeClient(client))
@@ -16,6 +27,7 @@ stock bool IsTFBotPlayer(int client)
 	return view_as<Address>(CBaseNPC_GetNextBotOfEntity(client)) != Address_Null;
 }
 
+// IsFinalWave says this is the last one the mission has.
 stock bool IsFinalWave()
 {
 	int rsrc = FindEntityByClassname(MaxClients + 1, "tf_objective_resource");
@@ -33,6 +45,8 @@ stock bool IsFinalWave()
 	return false;
 }
 
+// IsSentryBusterRobot says the robot is the one whose whole job is to walk into
+// a nest and detonate.
 stock bool IsSentryBusterRobot(int client)
 {
 	if (IsTFBotPlayer(client))
@@ -44,6 +58,8 @@ stock bool IsSentryBusterRobot(int client)
 	return StrEqual(model, "models/bots/demo/bot_sentry_buster.mdl");
 }
 
+// SelectRandomReachableEnemy is one of the robots out of their spawn, chosen at
+// random, and -1 when there are none.
 stock int SelectRandomReachableEnemy(int actor)
 {
 	TFTeam opposingTeam = GetPlayerEnemyTeam(actor);
@@ -85,6 +101,11 @@ stock int SelectRandomReachableEnemy(int actor)
 	return -1;
 }
 
+// WaveHasClassIcon says the coming wave has that kind of robot in it.
+//
+// The wave bar is what a player reads before the wave starts, and it is the only
+// thing that says what is coming: tf_objective_resource carries it, and a question
+// asked before the game has filled it in sees an empty wave.
 stock bool WaveHasClassIcon(const char[] needle)
 {
 	int rsrc = FindEntityByClassname(MaxClients + 1, "tf_objective_resource");
@@ -104,21 +125,25 @@ stock bool WaveHasClassIcon(const char[] needle)
 	return false;
 }
 
+// IsTankWave says a tank is coming.
 stock bool IsTankWave()
 {
 	return WaveHasClassIcon(MVM_TANK_CLASS_ICON);
 }
 
+// WaveHasExplosiveRobots is what blast resistance is priced against.
 stock bool WaveHasExplosiveRobots()
 {
 	return WaveHasClassIcon("demo") || WaveHasClassIcon("soldier") || IsTankWave();
 }
 
+// WaveHasBulletRobots is what bullet resistance is priced against.
 stock bool WaveHasBulletRobots()
 {
 	return WaveHasClassIcon("heavy") || WaveHasClassIcon("scout") || WaveHasClassIcon("sniper");
 }
 
+// WaveHasFireRobots is what fire resistance is priced against.
 stock bool WaveHasFireRobots()
 {
 	return WaveHasClassIcon("pyro");

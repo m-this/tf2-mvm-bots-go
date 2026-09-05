@@ -12,12 +12,15 @@ BehaviorAction CTFBotGotoUpgrade()
 
 int m_iStation[65];
 
+// OnStart picks a station, and pretends the bot is at one when there is none it
+// could reach.
 public Action CTFBotGotoUpgrade_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
 	m_iStation[actor] = FindClosestUpgradeStation(actor);
 	if ((m_iStation[actor] <= MaxClients) || !IsValidEntity(m_iStation[actor]))
 	{
+		// We couldn't find an upgrade station to path to, so let's just pretend we're at one
 		TF2_SetInUpgradeZone(actor, true);
 	}
 	else
@@ -25,6 +28,7 @@ public Action CTFBotGotoUpgrade_OnStart(BehaviorAction action, int actor, Behavi
 		{
 			float myOrigin[3];
 			GetClientAbsOrigin(actor, myOrigin);
+			// The closest station is so far away, pretend we're in it
 			if (GetVectorDistance(myOrigin, WorldSpaceCenter(m_iStation[actor])) >= 1000.0)
 			{
 				TF2_SetInUpgradeZone(actor, true);
@@ -33,6 +37,7 @@ public Action CTFBotGotoUpgrade_OnStart(BehaviorAction action, int actor, Behavi
 	return action.Continue();
 }
 
+// Update walks there, tracing for ground the bot can stand on in front of it.
 public Action CTFBotGotoUpgrade_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
 	if (TF2_IsInUpgradeZone(actor))
@@ -40,6 +45,7 @@ public Action CTFBotGotoUpgrade_Update(BehaviorAction action, int actor, float i
 		return action.ChangeTo(CTFBotUpgrade(), "Reached upgrade station; buying upgrades");
 	}
 	int theStation = m_iStation[actor];
+	// Moved from OnStart for technical reasons
 	float center[3];
 	bool hasGoal = GetMapUpgradeStationGoal(center);
 	if (!hasGoal)
@@ -75,13 +81,16 @@ public Action CTFBotGotoUpgrade_Update(BehaviorAction action, int actor, float i
 	return action.Continue();
 }
 
+// OnEnd forgets the station.
 public void CTFBotGotoUpgrade_OnEnd(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_iStation[actor] = -1;
 }
 
+// OnNavAreaChanged bails out if the bot has wandered out of spawn mid-wave.
 public Action CTFBotGotoUpgrade_OnNavAreaChanged(BehaviorAction action, int actor, CTFNavArea newArea, CTFNavArea oldArea, ActionDesiredResult result)
 {
+	// If we are for some reason not in our spawn room during an active game, just bail out
 	if ((newArea != 0) && (GameRules_GetRoundState() == RoundState_RoundRunning))
 	{
 		int spawnRoomFlag = BLUE_SPAWN_ROOM;
@@ -97,6 +106,8 @@ public Action CTFBotGotoUpgrade_OnNavAreaChanged(BehaviorAction action, int acto
 	return action.TryContinue();
 }
 
+// FindClosestUpgradeStation picks one of the stations a bot can actually walk
+// to, at random.
 stock int FindClosestUpgradeStation(int actor)
 {
 	int stations[65];
@@ -137,6 +148,10 @@ stock int FindClosestUpgradeStation(int actor)
 	return stations[GetRandomInt(0, stationcount - 1)];
 }
 
+// MapUpgradeStationGoal is the hard coded spot for the six maps whose station
+// the nav mesh cannot get a bot to.
+//
+// switch over which prefix a map name contains is not one SourcePawn can write
 stock bool GetMapUpgradeStationGoal(float buffer[3])
 {
 	for (int i = 0; i < 3; i++)
@@ -183,6 +198,10 @@ stock bool GetMapUpgradeStationGoal(float buffer[3])
 	return false;
 }
 
+// ResetGotoUpgrade forgets the station this bot walked to.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
 stock void Go_ResetGotoUpgrade(int client)
 {
 	m_iStation[client] = -1;

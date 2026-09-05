@@ -14,6 +14,7 @@ BehaviorAction CTFBotMarkGiant()
 int m_iTarget[65];
 float m_flNextMarkTime[65];
 
+// OnStart picks a giant at random out of the ones worth marking.
 public Action CTFBotMarkGiant_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
@@ -50,6 +51,8 @@ public Action CTFBotMarkGiant_OnStart(BehaviorAction action, int actor, Behavior
 	return action.Continue();
 }
 
+// Update walks at the giant, and takes the game's own idea of what the bot has
+// noticed away for a moment so it looks at the right one.
 public Action CTFBotMarkGiant_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
 	if (!IsValidClientIndex(m_iTarget[actor]) || !IsPlayerAlive(m_iTarget[actor]))
@@ -70,6 +73,7 @@ public Action CTFBotMarkGiant_Update(BehaviorAction action, int actor, float int
 	INextBot myBot = CBaseNPC_GetNextBotOfEntity(actor);
 	if (distToTarget < 512.0)
 	{
+		// TODO: aim directly on target instead of doing this dumb shit
 		IVision myVision = myBot.GetVisionInterface();
 		if ((myVision.GetKnownCount(TFTeam_Blue) > 1) || (myVision.GetKnown(m_iTarget[actor]) == NULL_KNOWN_ENTITY))
 		{
@@ -77,6 +81,7 @@ public Action CTFBotMarkGiant_Update(BehaviorAction action, int actor, float int
 			myVision.AddKnownEntity(m_iTarget[actor]);
 		}
 	}
+	// TODO: stop pathing once we reached the desired attack range
 	if (m_flRepathTime[actor] <= GetGameTime())
 	{
 		m_flRepathTime[actor] = GetGameTime() + GetRandomFloat(1.0, 2.0);
@@ -86,12 +91,14 @@ public Action CTFBotMarkGiant_Update(BehaviorAction action, int actor, float int
 	return action.Continue();
 }
 
+// OnEnd puts the mark on a cooldown so a scout does not spend the wave doing it.
 public void CTFBotMarkGiant_OnEnd(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_flNextMarkTime[actor] = GetGameTime() + 30.0;
 	m_iTarget[actor] = -1;
 }
 
+// MarkForDeathWeapon is the Fan O'War, if the bot has one.
 stock int GetMarkForDeathWeapon(int player)
 {
 	for (int i = 0; i < 8; i++)
@@ -110,6 +117,7 @@ stock int GetMarkForDeathWeapon(int player)
 	return INVALID_ENT_REFERENCE;
 }
 
+// PlayerMarkable is the seven questions asked of a possible victim.
 stock bool IsPlayerMarkable(int bot, int victim)
 {
 	if (m_flNextMarkTime[bot] < GetGameTime())
@@ -147,6 +155,7 @@ stock bool IsPlayerMarkable(int bot, int victim)
 	return true;
 }
 
+// IsPossible says whether there is a giant worth marking.
 stock bool CTFBotMarkGiant_IsPossible(int actor)
 {
 	if (GetMarkForDeathWeapon(actor) == INVALID_ENT_REFERENCE)
@@ -172,6 +181,10 @@ stock bool CTFBotMarkGiant_IsPossible(int actor)
 	return victimExists;
 }
 
+// ResetMarkGiant forgets the giant this bot marked, and when it may mark again.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
 stock void Go_ResetMarkGiant(int client)
 {
 	m_iTarget[client] = -1;

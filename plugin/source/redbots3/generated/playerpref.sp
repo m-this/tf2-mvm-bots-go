@@ -24,11 +24,18 @@ KeyValues m_kvPlayerPrefData;
 int g_iPlayerForcedPref = -1;
 char g_sPlayerPrefPath[256];
 
+// IsValidLoadoutSeat says the file named a seat a bot can actually fill.
 stock bool IsValidLoadoutSeat(int seat)
 {
 	return (seat >= 1) && (seat <= MAXPLAYERS);
 }
 
+// WarnAboutInvalidLoadoutSeats complains about the seats the file names that no bot
+// can ever fill.
+//
+// A seat out of range is a typo, and nothing else says so: the bot wears the
+// loadout of its class instead, which reads as the mod ignoring the file rather
+// than the file asking for seat 0.
 stock void WarnAboutInvalidLoadoutSeats()
 {
 	m_kvServerLoadout.Rewind();
@@ -53,6 +60,12 @@ stock void WarnAboutInvalidLoadoutSeats()
 	m_kvServerLoadout.Rewind();
 }
 
+// JumpToServerLoadoutSeat stands on the block the file writes for one seat, when it
+// writes one this bot may wear.
+//
+// A seat answers only for the class it names. The composition gets retyped between
+// waves, so the seat that was an engineer's is now a medic's, and that medic is
+// better off with the medic block than with an engineer's wrangler.
 stock bool JumpToServerLoadoutSeat(int seat, const char[] class)
 {
 	if (!IsValidLoadoutSeat(seat))
@@ -76,6 +89,12 @@ stock bool JumpToServerLoadoutSeat(int seat, const char[] class)
 	return false;
 }
 
+// GetServerLoadoutWeapon is what the file says this bot carries in that slot.
+//
+// The seat decides the whole loadout when it names this bot, and the class decides
+// it otherwise. The seat is the more specific of the two, so it answers for every
+// slot the way the file itself does: a slot it leaves out is the stock weapon, not
+// the class block's answer.
 stock int GetServerLoadoutWeapon(int seat, const char[] class, const char[] slot)
 {
 	m_kvServerLoadout.Rewind();
@@ -88,6 +107,12 @@ stock int GetServerLoadoutWeapon(int seat, const char[] class, const char[] slot
 	return weaponIndex;
 }
 
+// NoteBotSeatPending remembers a seat asked for, waiting for the bot the server has
+// not created yet.
+//
+// tf_bot_add is a console command, so the bot does not exist when its seat is
+// decided. Nobody came for the oldest one when the list is full, which means that
+// tf_bot_add was refused: one wrong loadout beats a list that only grows.
 stock void NoteBotSeatPending(int seat)
 {
 	if (m_adtPendingBotSeats == null)
@@ -101,6 +126,7 @@ stock void NoteBotSeatPending(int seat)
 	m_adtPendingBotSeats.Push(seat);
 }
 
+// TakeBotSeat gives the bot that just entered the seat at the front.
 stock void TakeBotSeat(int client)
 {
 	m_iBotSeat[client] = 0;
@@ -112,11 +138,13 @@ stock void TakeBotSeat(int client)
 	m_adtPendingBotSeats.Erase(0);
 }
 
+// ForgetBotSeat drops it: whoever holds this client index next is another bot.
 stock void ForgetBotSeat(int client)
 {
 	m_iBotSeat[client] = 0;
 }
 
+// GetClassPreferencesFlags is every class this player will take a bot as.
 stock int GetClassPreferencesFlags(int client)
 {
 	char steamID[512];
@@ -169,6 +197,7 @@ stock int GetClassPreferencesFlags(int client)
 	return flags;
 }
 
+// SetClassPreferences writes one class answer down.
 stock void SetClassPreferences(int client, const char[] class, int value)
 {
 	char steamID[512];
@@ -184,6 +213,8 @@ stock void SetClassPreferences(int client, const char[] class, int value)
 	m_kvPlayerPrefData.Rewind();
 }
 
+// GetWeaponPreference is the item definition index this player wants in that
+// slot.
 stock int GetWeaponPreference(int client, const char[] class, const char[] slot)
 {
 	char steamID[512];
@@ -202,6 +233,11 @@ stock int GetWeaponPreference(int client, const char[] class, const char[] slot)
 	return weaponIndex;
 }
 
+// GetPreferredWeaponForClass is the weapon a bot of that class carries in that slot.
+//
+// The server's own loadout answers first when there is one. Otherwise the players
+// who are in and on red have a say each, and one of their answers is drawn: drawing
+// rather than counting makes the choice proportional instead of majority.
 stock int GetPreferredWeaponForClass(const char[] class, const char[] slot, int client)
 {
 	if (m_kvServerLoadout != null)
@@ -210,6 +246,8 @@ stock int GetPreferredWeaponForClass(const char[] class, const char[] slot, int 
 	}
 	if (g_iPlayerForcedPref != -1)
 	{
+		// Preference forced by admin, probably wants to use his or
+		// someone else's.
 		return GetWeaponPreference(g_iPlayerForcedPref, class, slot);
 	}
 	ArrayList weaponPref = new ArrayList();
@@ -224,6 +262,7 @@ stock int GetPreferredWeaponForClass(const char[] class, const char[] slot, int 
 			}
 		}
 	}
+	// No preferences found, probably no human red players.
 	if (weaponPref.Length < 1)
 	{
 		weaponPref.Close();
@@ -234,6 +273,7 @@ stock int GetPreferredWeaponForClass(const char[] class, const char[] slot, int 
 	return itemDefIndex;
 }
 
+// SetWeaponPreference writes one weapon answer down.
 stock void SetWeaponPreference(int client, const char[] class, const char[] slot, int value)
 {
 	char steamID[512];
@@ -245,11 +285,15 @@ stock void SetWeaponPreference(int client, const char[] class, const char[] slot
 	m_kvPlayerPrefData.Rewind();
 }
 
+// IsValidForBotPreferences says this player has an influence on what the bots
+// are.
 stock bool IsValidForBotPreferences(int client)
 {
 	return !IsFakeClient(client) && (TF2_GetClientTeam(client) == TFTeam_Red);
 }
 
+// CollectPlayerBotClassPreferences is every class every player asked for, one
+// entry per player per class, which is what makes the draw proportional.
 stock void CollectPlayerBotClassPreferences(ArrayList stringList)
 {
 	for (int i = 1; i <= MaxClients; i++)
@@ -297,8 +341,11 @@ stock void CollectPlayerBotClassPreferences(ArrayList stringList)
 	}
 }
 
+// AddBotsBasedOnPreferences adds that many bots, drawing each one's class from
+// what the players asked for.
 stock void AddBotsBasedOnPreferences(int amount)
 {
+	// Can't add any more if the server is full.
 	if (IsServerFull())
 	{
 		return;
@@ -309,11 +356,14 @@ stock void AddBotsBasedOnPreferences(int amount)
 		return;
 	}
 	ArrayList classPref = new ArrayList(TF2_CLASS_MAX_NAME_LENGTH);
+	// Get the players' class preferences.
 	CollectPlayerBotClassPreferences(classPref);
 	if (classPref.Length > 0)
 	{
 		for (int i = 1; i <= amount; i++)
 		{
+			// Now pick a random class from preferences. This makes
+			// class choice proportional, rather than majority.
 			char class[512];
 			classPref.GetString(GetRandomInt(0, classPref.Length - 1), class, 512);
 			AddDefenderTFBot(1, class, "red", "expert");
@@ -321,11 +371,16 @@ stock void AddBotsBasedOnPreferences(int amount)
 	}
 	else
 	{
+		// Nobody had preferences, just add random bots.
 		AddRandomDefenderBots(amount);
 	}
 	classPref.Close();
 }
 
+// ConfigLoadServerLoadout reads the server's own loadout file, if it wrote one.
+//
+// The pending seats go with it: a map change means the seats the last map asked
+// for belong to bots that will never enter.
 stock void Config_LoadServerLoadout()
 {
 	m_kvServerLoadout.Close();
@@ -346,6 +401,8 @@ stock void Config_LoadServerLoadout()
 	WarnAboutInvalidLoadoutSeats();
 }
 
+// TimerSavePrefData writes the preferences to disk every twenty seconds, so a
+// crash costs at most that.
 public Action Timer_SavePrefData(Handle timer)
 {
 	if (!m_kvPlayerPrefData.ExportToFile(g_sPlayerPrefPath))
@@ -361,6 +418,7 @@ public Action Timer_SavePrefData(Handle timer)
 	return Plugin_Continue;
 }
 
+// LoadPreferencesData reads them back at load and starts the save timer.
 stock void LoadPreferencesData()
 {
 	m_kvPlayerPrefData = new KeyValues("PlayerBotPreferences");
@@ -368,8 +426,15 @@ stock void LoadPreferencesData()
 	CreateTimer(20.0, Timer_SavePrefData, _, TIMER_REPEAT);
 }
 
+// ShowCurrentBotClassChances is each class's share of the draw, as a panel.
+//
+// A share rather than a count, because what a player wants to know is how likely
+// a class is, and that depends on what everybody else asked for as much as on
+// what they did.
 stock void ShowCurrentBotClassChances(int client = -1)
 {
+	// Each index is a class, 0 = scout, 1 = soldier, and so on. Float because
+	// the percentage below divides by the total.
 	float classChoiceCount[9];
 	for (int i = 1; i <= MaxClients; i++)
 	{
@@ -402,6 +467,8 @@ stock void ShowCurrentBotClassChances(int client = -1)
 		}
 		return;
 	}
+	// Like before, each index is a class. The share is the times that class
+	// was chosen over the total of every choice.
 	float classPercents[9];
 	for (int i = 0; i < 9; i++)
 	{
@@ -423,6 +490,9 @@ stock void ShowCurrentBotClassChances(int client = -1)
 	}
 }
 
+// PrefFlagOf is the preference bit for one class, indexed the way the panel
+// counts them: 0 is the scout. The shipped file wrote nine ifs; the bits are
+// consecutive powers of two, so one shift is the same nine answers.
 stock int Go_PrefFlagOf(int index)
 {
 	return 1 << index;

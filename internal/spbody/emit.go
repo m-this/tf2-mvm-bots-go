@@ -30,11 +30,14 @@ type emitter struct {
 	info *types.Info
 	pkg  *types.Package
 
-	b      strings.Builder
-	hooks  strings.Builder
-	inHook bool
-	errs   []error
-	indent int
+	b     strings.Builder
+	hooks strings.Builder
+	// comments is the current file's, so a statement can carry the comment
+	// written above it into the SourcePawn.
+	comments ast.CommentMap
+	inHook   bool
+	errs     []error
+	indent   int
 
 	// outParams are the results after the first, which SourcePawn takes as
 	// by-reference parameters. Set for the function being emitted.
@@ -266,6 +269,7 @@ func (e *emitter) prologue() string {
 // written, so a reordering here never reorders two things of the same kind.
 func (e *emitter) eachDecl(files []*ast.File, want func(ast.Decl) bool) {
 	for _, f := range files {
+		e.comments = ast.NewCommentMap(e.fset, f, f.Comments)
 		if isGenerated(f) {
 			continue
 		}

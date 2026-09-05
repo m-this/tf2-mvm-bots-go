@@ -41,6 +41,7 @@ func Note(slot int32, p Priority) Priority {
 // Rank folds the sample into a priority, and shows the switch, the tagged
 // return and the float comparison in one place.
 func Rank(s Sample, threshold float32) Priority {
+	// Off the scale is urgent, whoever it is.
 	if s.Score > threshold {
 		return PriorityUrgent
 	}

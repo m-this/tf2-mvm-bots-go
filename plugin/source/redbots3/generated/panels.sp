@@ -13,16 +13,30 @@ char PANEL_CLASS_NAMES[][] =
 	"Spy",
 };
 
+// MenuHandlerShowBotChances hears nothing: the panel it belongs to is a
+// readout, and there is nothing to press.
 stock int MenuHandler_ShowBotChances(Menu menu, MenuAction action, int param1, int param2)
 {
+	// Do nothing.
 	return 0;
 }
 
+// MenuHandlerShowBotTeamComposition is the same for the lineup readout.
 stock int MenuHandler_ShowBotTeamComposition(Menu menu, MenuAction action, int param1, int param2)
 {
+	// Do nothing.
 	return 0;
 }
 
+// CreateDisplayPanelBotPercentages shows each class's share of the draw.
+//
+// A class with no share is left off rather than shown as zero: the panel is meant
+// to say what could turn up, and a list of nine with six zeroes in it says that
+// worse than a list of three.
+//
+// The shipped file wrote this as nine blocks of the same four lines. The names are
+// a table here and the shares are already indexed by class, so it is one loop over
+// both.
 stock void CreateDisplayPanelBotPercentages(int client, const float classPercents[9], const int duration = 30)
 {
 	if (IsFakeClient(client))
@@ -44,6 +58,8 @@ stock void CreateDisplayPanelBotPercentages(int client, const float classPercent
 	delete hPanel;
 }
 
+// CreateDisplayPanelBotTeamComposition shows the lineup as it stands, and says
+// whether there was one to show.
 stock bool CreateDisplayPanelBotTeamComposition(int client, const int duration = 30)
 {
 	if (g_adtChosenBotClasses.Length == 0)

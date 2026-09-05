@@ -4,6 +4,14 @@
 
 float m_ctNextPatientNudge[65];
 
+// PointMedicAtBiggestBody writes the patient handle from inside the action's own
+// callback.
+//
+// An earlier attempt at writing this field segfaulted the server, and this is
+// deliberately narrower: it runs only from CTFBotMedicHeal_UpdatePost, so the
+// action being written is the action the game is running; the same offset is read
+// in the same callback every frame and has never faulted; and it is only written
+// when it differs from what is already there.
 stock void PointMedicAtBiggestBody(BehaviorAction action, int actor)
 {
 	if (m_ctNextPatientNudge[actor] > GetGameTime())
@@ -24,6 +32,11 @@ stock void PointMedicAtBiggestBody(BehaviorAction action, int actor)
 	action.SetHandleEntity(ACTION_HEAL_PATIENT_OFFSET, want);
 }
 
+// MedicUberAndResist deploys the charge and turns the vaccinator to whatever last
+// hurt the patient.
+//
+// The resistance is reloaded rather than chosen: the vaccinator cycles, so asking
+// for the wrong one is a press that lands on the right one soon enough.
 stock void MedicUberAndResist(int actor, int medigun, int patient)
 {
 	MedicProjectileShield(actor, patient);

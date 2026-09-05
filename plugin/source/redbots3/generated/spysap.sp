@@ -17,6 +17,7 @@ BehaviorAction CTFBotSpySap()
 
 int m_iSapTarget[65];
 
+// OnStart aims the path and stops the bot looking around for itself.
 public Action CTFBotSpySap_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
@@ -24,6 +25,7 @@ public Action CTFBotSpySap_OnStart(BehaviorAction action, int actor, BehaviorAct
 	return action.Continue();
 }
 
+// Update walks to the target and saps it.
 public Action CTFBotSpySap_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
 	if (!IsValidEntity(m_iSapTarget[actor]) || !BaseEntity_IsBaseObject(m_iSapTarget[actor]) || TF2_HasSapper(m_iSapTarget[actor]))
@@ -58,29 +60,36 @@ public Action CTFBotSpySap_Update(BehaviorAction action, int actor, float interv
 	return action.Continue();
 }
 
+// OnEnd gives the looking back to the game.
 public void CTFBotSpySap_OnEnd(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	UpdateLookAroundForEnemies(actor, true);
 }
 
+// OnSuspend gives it back while something else runs.
 public Action CTFBotSpySap_OnSuspend(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	UpdateLookAroundForEnemies(actor, true);
 	return action.Continue();
 }
 
+// OnResume takes it again.
 public Action CTFBotSpySap_OnResume(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	UpdateLookAroundForEnemies(actor, false);
 	return action.Continue();
 }
 
+// SelectTarget picks the nearest building worth sapping.
 stock bool CTFBotSpySap_SelectTarget(int actor)
 {
 	m_iSapTarget[actor] = GetNearestSappableObject(actor, 2000.0);
 	return m_iSapTarget[actor] != -1;
 }
 
+// ShouldAttack says no: the spy is going for the sapper, not the fight. It does
+// not read who is being asked about, and the parameters stay because the engine
+// passes them and the emitted declaration is the engine's.
 public Action CTFBotSpySap_ShouldAttack(BehaviorAction action, INextBot nextbot, CKnownEntity knownEntity, QueryResultType& result)
 {
 	result = view_as<QueryResultType>(0);
@@ -88,6 +97,7 @@ public Action CTFBotSpySap_ShouldAttack(BehaviorAction action, INextBot nextbot,
 	return Plugin_Changed;
 }
 
+// IsHindrance says the target is not in the way, once the spy is close to it.
 public Action CTFBotSpySap_IsHindrance(BehaviorAction action, INextBot nextbot, int entity, QueryResultType& result)
 {
 	result = view_as<QueryResultType>(0);
@@ -101,6 +111,10 @@ public Action CTFBotSpySap_IsHindrance(BehaviorAction action, INextBot nextbot, 
 	return Plugin_Changed;
 }
 
+// ResetSpySap forgets the building this spy was sapping.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
 stock void Go_ResetSpySap(int client)
 {
 	m_iSapTarget[client] = -1;

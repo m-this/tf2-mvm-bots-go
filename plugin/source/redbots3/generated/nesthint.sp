@@ -7,6 +7,7 @@
 ArrayList g_adtMapHintNests;
 bool g_bMapHintNestsLoaded;
 
+// ResetMapHintNests forgets them, which a map change has to do.
 stock void ResetMapHintNests()
 {
 	g_bMapHintNestsLoaded = false;
@@ -16,6 +17,7 @@ stock void ResetMapHintNests()
 	}
 }
 
+// CollectMapHintNests adds every entity of that class the map placed.
 stock void CollectMapHintNests(const char[] classname)
 {
 	int entity = -1;
@@ -40,6 +42,7 @@ stock void CollectMapHintNests(const char[] classname)
 	}
 }
 
+// MapHintNests is the list, collected on the first ask and kept after that.
 stock ArrayList MapHintNests()
 {
 	if (g_adtMapHintNests == null)
@@ -60,6 +63,7 @@ stock ArrayList MapHintNests()
 	return g_adtMapHintNests;
 }
 
+// PickMapHintNestArea is the best of the ground the map's own entities name.
 stock CNavArea PickMapHintNestArea(int client, const float target[3], float sentryRange)
 {
 	ArrayList spots = MapHintNests();
@@ -78,6 +82,7 @@ stock CNavArea PickMapHintNestArea(int client, const float target[3], float sent
 			continue;
 		}
 		CTFNavArea tfArea = view_as<CTFNavArea>(area);
+		// A spot inside either spawn room is one the engineer cannot hold, whoever it was put there for
 		if (tfArea.HasAttributeTF(BLUE_SPAWN_ROOM) || tfArea.HasAttributeTF(RED_SPAWN_ROOM))
 		{
 			continue;
@@ -89,11 +94,15 @@ stock CNavArea PickMapHintNestArea(int client, const float target[3], float sent
 	return best;
 }
 
+// IsNestRangeSane says the ground is far enough from the bomb to shoot at it and
+// near enough to reach it.
 stock bool IsNestRangeSane(float rangeToBomb, float sentryRange)
 {
 	return (rangeToBomb >= (sentryRange * NEST_MIN_BOMB_RANGE_FRACTION)) && (rangeToBomb < sentryRange);
 }
 
+// BombPathLength is the longest route to the bomb's target anywhere on the mesh,
+// which is what a nest's depth is measured against.
 stock float BombPathLength()
 {
 	int areaCount = TheNavAreas.Count;
@@ -114,6 +123,7 @@ stock float BombPathLength()
 	return longest;
 }
 
+// NestDistanceLimit is how far along that route an engineer may hold ground.
 stock float NestDistanceLimit()
 {
 	float length = BombPathLength();

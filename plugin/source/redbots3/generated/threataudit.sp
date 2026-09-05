@@ -3,12 +3,22 @@
 int g_iThreatSplits;
 int g_iThreatCompared;
 
+// ThreatPriority is what a robot is worth killing first, as the chain that
+// shipped.
+//
+// Every guide written about this mode says the same order and none of it was here:
+// the Medic first because a giant being healed cannot be killed at all, then the
+// Sniper and the Engineer because they are the two the rest of the team cannot
+// reach, then giants, then whoever is holding the bomb. A robot close enough to be
+// killing the bot outranks all of it, because a priority target is worth nothing
+// to a corpse.
 stock int ThreatPriority(int threat, float rangeSq)
 {
 	if (rangeSq < (THREAT_URGENT_RANGE * THREAT_URGENT_RANGE))
 	{
 		return THREAT_PRIORITY_URGENT;
 	}
+	// Too far to be worth walking the aim across the map for.
 	if (rangeSq > (THREAT_PRIORITY_RANGE * THREAT_PRIORITY_RANGE))
 	{
 		return THREAT_PRIORITY_NONE;
@@ -30,6 +40,8 @@ stock int ThreatPriority(int threat, float rangeSq)
 	}
 	bool giant = TF2_IsMiniBoss(threat);
 	bool carrier = TF2_HasTheFlag(threat);
+	// Carrying the bomb halves a robot's speed, except a giant's, so that one
+	// is still running.
 	if (giant && carrier)
 	{
 		return THREAT_PRIORITY_GIANT_BOMB;
@@ -45,6 +57,19 @@ stock int ThreatPriority(int threat, float rangeSq)
 	return THREAT_PRIORITY_NONE;
 }
 
+// ThreatPriorityGenerated is the same question, asked of the generated table.
+//
+// The record is what the move in mvm-z83.6 was for: the decision takes what is
+// known about a threat rather than an entity index, so something that occupies no
+// player slot can still be ranked. Every threat scan in this mod walks player slots
+// and a tank occupies none, which is mvm-ds3, and this does not fix it. It makes
+// fixing it possible.
+//
+// Every field after isPlayer is filled behind it, not beside it, and the first
+// version of this was not: all three throw when asked about something that is not
+// a player. Measured, TF2_HasTheFlag threw 3933 times over four waves on tank_boss
+// and obj_attachment_sapper, and each one aborted the whole threat choice for that
+// tick. See mvm-z83.46.
 stock int ThreatPriorityGenerated(int threat, float rangeSq)
 {
 	bool isPlayer = BaseEntity_IsPlayer(threat);
@@ -56,6 +81,11 @@ stock int ThreatPriorityGenerated(int threat, float rangeSq)
 	return ThreatPriorityOf(rangeSq, isPlayer, true, TF2_GetPlayerClass(threat), TF2_IsMiniBoss(threat), TF2_HasTheFlag(threat));
 }
 
+// ThreatPortAuditReport says how much was compared, not only what disagreed.
+//
+// Zero disagreements and never having run look identical in a log that only writes
+// on a disagreement, and reading the first as the second is the fault mvm-z83.23 is
+// about.
 stock void ThreatPortAudit_Report()
 {
 	if (g_iThreatCompared == 0)
@@ -66,6 +96,16 @@ stock void ThreatPortAudit_Report()
 	g_iThreatCompared = 0;
 }
 
+// ThreatPortAudit is where the generated answer and the shipped chain part company.
+//
+// The differential test proves the decision and the table agree on every
+// combination it can be asked about. It cannot prove the edge fills the record the
+// way the chain reads it, because it drives both sides from the same record. Only
+// a running game can answer that.
+//
+// It runs on the armed side only, so the other arm pays nothing, and it stops
+// writing after twenty lines because a disagreement that happens at all is the
+// finding and a log full of them is not more of one.
 stock void ThreatPortAudit(int threat, float rangeSq)
 {
 	g_iThreatCompared++;

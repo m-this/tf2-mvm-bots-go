@@ -14,6 +14,12 @@ float m_flNextJumpTime[65];
 float m_flScoutDoubleJumpTime[65];
 int m_iScoutDoubleJumpSide[65];
 
+// UpdateScoutCombatJump is the whole dodge, run per think.
+//
+// The second half of a double jump happens off the ground by definition, so it is
+// handled before every check that wants the bot standing on something. The beat is
+// irregular on purpose: a jump on a fixed rhythm is as easy to lead as no jump at
+// all, and the air jump goes the other way from the first strafe.
 stock void UpdateScoutCombatJump(int client)
 {
 	if (TF2_GetPlayerClass(client) != TFClass_Scout)
@@ -27,6 +33,8 @@ stock void UpdateScoutCombatJump(int client)
 			return;
 		}
 		m_flScoutDoubleJumpTime[client] = 0.0;
+		// Landed early. The air jump is gone and pressing it again only
+		// queues the next ground one.
 		if ((GetEntityFlags(client) & FL_ONGROUND) != 0)
 		{
 			return;
@@ -38,6 +46,8 @@ stock void UpdateScoutCombatJump(int client)
 	{
 		return;
 	}
+	// Already in the air, or held down by something that a jump will not get
+	// it out of.
 	if ((GetEntityFlags(client) & FL_ONGROUND) == 0)
 	{
 		return;
@@ -64,6 +74,8 @@ stock void UpdateScoutCombatJump(int client)
 	{
 		return;
 	}
+	// Irregular on purpose: a jump on a fixed beat is as easy to lead as no
+	// jump at all.
 	m_flNextJumpTime[client] = GetGameTime() + GetRandomFloat(0.5, 1.2);
 	int side = IN_MOVELEFT;
 	if (GetRandomInt(0, 1) == 0)
@@ -86,6 +98,10 @@ stock void UpdateScoutCombatJump(int client)
 	}
 }
 
+// ResetScoutJump forgets this scout's jump beat.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
 stock void Go_ResetScoutJump(int client)
 {
 	m_flNextJumpTime[client] = 0.0;

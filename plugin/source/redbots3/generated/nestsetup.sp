@@ -16,6 +16,10 @@ float m_vSetupClaim[65][4][3];
 bool m_bSetupClaimed[65][4];
 int m_iSetupJumps[65];
 
+// ResetNestSetup forgets a seat's plan, which the next bot in it did not make.
+//
+// Also the whole of what a new wave does to a plan: the spots were claimed against
+// a break that is over, and the buildings that stand are claim enough on their own.
 stock void Go_ResetNestSetup(int client)
 {
 	for (int what = 0; what < SETUP_SPOTS; what++)
@@ -25,6 +29,7 @@ stock void Go_ResetNestSetup(int client)
 	m_iSetupJumps[client] = 0;
 }
 
+// ForgetSetupPlans is every seat's plan at once, for the start of a wave.
 stock void ForgetSetupPlans()
 {
 	for (int i = 1; i <= MaxClients; i++)
@@ -33,6 +38,11 @@ stock void ForgetSetupPlans()
 	}
 }
 
+// ClaimSetupSpot says this engineer means to build there, before he has.
+//
+// The claim is what another engineer reads. A building that already stands says the
+// same thing and says it better, so claims are not kept once the thing is up: they
+// are cleared with the plan at the start of the wave.
 stock void ClaimSetupSpot(int client, int what, const float spot[3])
 {
 	if ((what < 0) || (what >= SETUP_SPOTS))
@@ -43,6 +53,11 @@ stock void ClaimSetupSpot(int client, int what, const float spot[3])
 	m_bSetupClaimed[client][what] = true;
 }
 
+// IsSetupSpotClaimed says another engineer got there first.
+//
+// Only another engineer's claims, and only the ones he has not built yet: what is
+// standing is already refused by the checks each building has of its own, and
+// counting it twice would refuse an engineer the ground he is himself standing on.
 stock bool IsSetupSpotClaimed(int client, const float spot[3])
 {
 	for (int i = 1; i <= MaxClients; i++)
@@ -66,6 +81,15 @@ stock bool IsSetupSpotClaimed(int client, const float spot[3])
 	return false;
 }
 
+// SetupJump puts the engineer at a spot he would otherwise walk to.
+//
+// Every bound is here rather than at the call sites: between rounds, alive, a
+// defender engineer, a destination with room to stand, and a fixed number of them
+// per break. The destination is traced because the nest and the route out of spawn
+// are both points on a nav mesh, and a nav mesh says ground is connected without
+// promising a body fits there. That is how mvm-qhi hung a server.
+//
+// False means he walks, which is what he did before this existed.
 stock bool SetupJump(int client, const float spot[3])
 {
 	if (GameRules_GetRoundState() != RoundState_BetweenRounds)
@@ -96,6 +120,17 @@ stock bool SetupJump(int client, const float spot[3])
 	return true;
 }
 
+// TopUpUpgrades pays for the levels the engineer is about to swing for.
+//
+// The wrench is what upgrades a building and nothing else does: writing the level
+// is a number with a level one model, a level one health pool and a level one
+// firing rate behind it, and writing m_iHighestUpgradeLevel does nothing at all,
+// which two runs on Decoy said plainly. So the meter is filled instead and the
+// swing he was going to make anyway finishes the level.
+//
+// Between rounds only, and the round state is checked here so the caller can be a
+// single line in the idle behaviour. During a wave a building is upgraded the way
+// it always was.
 stock void TopUpUpgrades(int client)
 {
 	if (!Feature(FEATURE_ENGINEER_SETUP_PHASE))
@@ -116,6 +151,10 @@ stock void TopUpUpgrades(int client)
 	TopUpBuilding(GetObjectOfType(client, TFObject_Teleporter, TFObjectMode_Exit));
 }
 
+// TopUpBuilding fills one building's upgrade meter.
+//
+// A mini has no upgrade path and one that is still going up has not got a meter to
+// fill yet: the game clears it when the construction finishes.
 stock void TopUpBuilding(int building)
 {
 	if ((building == INVALID_ENT_REFERENCE) || !IsValidEntity(building))

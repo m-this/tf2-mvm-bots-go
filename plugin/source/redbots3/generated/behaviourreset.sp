@@ -5,6 +5,7 @@
 int m_iBehaviourResetNext;
 Handle m_hBehaviourResetTimer;
 
+// QueueBehaviourReset starts the drain at the first client.
 stock void QueueBehaviourReset()
 {
 	StopBehaviourReset();
@@ -12,6 +13,8 @@ stock void QueueBehaviourReset()
 	m_hBehaviourResetTimer = CreateTimer(BEHAVIOUR_RESET_INTERVAL, Timer_ResetOneBehaviour, _, TIMER_REPEAT);
 }
 
+// StopBehaviourReset ends it. Killed by handle rather than deleted, because a
+// map change closes it and leaves this one stale.
 stock void StopBehaviourReset()
 {
 	if (m_hBehaviourResetTimer != null)
@@ -21,6 +24,10 @@ stock void StopBehaviourReset()
 	m_hBehaviourResetTimer = null;
 }
 
+// TimerResetOneBehaviour rethinks one bot and comes back for the next.
+//
+// Walked once, forwards, so a bot that joins mid-drain is not reset twice and none
+// is skipped.
 public Action Timer_ResetOneBehaviour(Handle timer)
 {
 	while (m_iBehaviourResetNext <= MaxClients)
@@ -35,6 +42,7 @@ public Action Timer_ResetOneBehaviour(Handle timer)
 		{
 			continue;
 		}
+		// Rethink what we're supposed to do.
 		ResetIntentionInterface(client);
 		return Plugin_Continue;
 	}
@@ -42,16 +50,21 @@ public Action Timer_ResetOneBehaviour(Handle timer)
 	return Plugin_Stop;
 }
 
+// ShouldResetBehavior says this bot is not in the middle of something worth
+// leaving alone.
 stock bool ShouldResetBehavior(int client)
 {
+	// Looking for sniping spots, don't disturb.
 	if (ActionsManager.LookupEntityActionByName(client, "SniperLurk") != INVALID_ACTION)
 	{
 		return false;
 	}
+	// I'm healing people.
 	if (ActionsManager.LookupEntityActionByName(client, "Heal") != INVALID_ACTION)
 	{
 		return false;
 	}
+	// I am building shit.
 	if (ActionsManager.LookupEntityActionByName(client, "DefenderEngineerIdle") != INVALID_ACTION)
 	{
 		return false;

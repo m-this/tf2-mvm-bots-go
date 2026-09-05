@@ -4,6 +4,16 @@
 
 #define Go_Seats (65)
 
+// 	GetWantedTeamComposition is the lineup to fill RED with, or an empty string
+//
+// The convar wins over the map. Somebody who typed a team into the console is
+// answering a question the map file guessed at, and the map is a default rather
+// than an instruction.
+//
+// The map's own answer exists because the right team is not the same on every map:
+// Mannworks is full of deflector Heavies, which eat a Soldier's rockets and do
+// nothing to a second Heavy, and Coal Town is one long bottleneck full of Spies,
+// where a Pyro is worth more than the reach.
 stock void GetWantedTeamComposition(char[] out, int maxlen)
 {
 	redbots_manager_team_composition.GetString(out, maxlen);
@@ -14,6 +24,8 @@ stock void GetWantedTeamComposition(char[] out, int maxlen)
 	strcopy(out, maxlen, g_arrMapConfig.strComposition);
 }
 
+// IsClassInTeamComposition asks whether the named team wants that class
+// anywhere in the team it names.
 stock bool IsClassInTeamComposition(const char[] class, bool bTypedTeamOnly = false)
 {
 	char list[512];
@@ -47,6 +59,13 @@ stock bool IsClassInTeamComposition(const char[] class, bool bTypedTeamOnly = fa
 	return false;
 }
 
+// 	IsBotClassBlacklisted says the server was told never to play that class
+//
+// A team somebody typed out is more specific than the blacklist, so what it asks
+// for is never blacklisted. The map config's own composition is not that: it is
+// this mod's guess at a good team for the map, and a guess does not get to
+// overrule a class the server was told never to play. Reported from a play-test as
+// seats set to "Let the mod pick" drawing unticked classes.
 stock bool IsBotClassBlacklisted(const char[] class)
 {
 	if (IsClassInTeamComposition(class, true))
@@ -77,6 +96,8 @@ stock bool IsBotClassBlacklisted(const char[] class)
 	return false;
 }
 
+// PickAllowedBotClass keeps the wanted class unless it is blacklisted, and
+// otherwise draws from the classes that are not.
 stock void PickAllowedBotClass(const char[] wanted, char[] buffer, int maxlen)
 {
 	strcopy(buffer, maxlen, wanted);
@@ -94,6 +115,7 @@ stock void PickAllowedBotClass(const char[] wanted, char[] buffer, int maxlen)
 			total++;
 		}
 	}
+	// Everything is blacklisted, which cannot be meant: the list is ignored.
 	if (total == 0)
 	{
 		return;
@@ -101,6 +123,17 @@ stock void PickAllowedBotClass(const char[] wanted, char[] buffer, int maxlen)
 	strcopy(buffer, maxlen, candidates[GetRandomInt(0, total - 1)]);
 }
 
+// 	CollectMissingTeamComposition names the seats the lineup still wants filled
+//
+// The list is what the team should look like, not what to add: every call counts
+// the bots already on RED against it first and names only what is missing. So a
+// top-up in the middle of a wave converges on the same team as the first fill,
+// whatever order the seats emptied in. A list shorter than the seats leaves the
+// rest to the lineup mode.
+//
+// A seat is where a class sits in that list, counted from 1, and it comes out
+// alongside the class name because the loadout file can name one seat rather than
+// every engineer at once.
 stock int CollectMissingTeamComposition(ArrayList classes, ArrayList seats, int count)
 {
 	char list[512];
@@ -111,6 +144,7 @@ stock int CollectMissingTeamComposition(ArrayList classes, ArrayList seats, int 
 	}
 	char wanted[65][512];
 	int total = ExplodeString(list, ",", wanted, Go_Seats, 512);
+	// How many bots of each class already hold a seat.
 	int held[10];
 	for (int i = 1; i <= MaxClients; i++)
 	{
@@ -140,6 +174,10 @@ stock int CollectMissingTeamComposition(ArrayList classes, ArrayList seats, int 
 	return collected;
 }
 
+// 	AddBotsFromTeamComposition fills the empty seats from the named team
+//
+// Zero when the convar named nothing to add, and the caller asks the lineup mode
+// for the rest.
 stock int AddBotsFromTeamComposition(int count)
 {
 	ArrayList classes = new ArrayList(TF2_CLASS_MAX_NAME_LENGTH);
@@ -162,6 +200,11 @@ stock int AddBotsFromTeamComposition(int count)
 	return added;
 }
 
+// 	ReseatDefenderBots kicks the bots the lineup no longer asks for
+//
+// Only as many as there are seats nobody holds, so a lineup that matches the team
+// kicks nobody. The bots are collected before the first kick and rechecked after
+// it, because kicking one changes who is in the game.
 stock int ReseatDefenderBots()
 {
 	char list[512];
@@ -172,6 +215,7 @@ stock int ReseatDefenderBots()
 	}
 	char wanted[65][512];
 	int total = ExplodeString(list, ",", wanted, Go_Seats, 512);
+	// Bots of a class the list no longer asks for, and the clients holding them.
 	int spare[10];
 	ArrayList bots = new ArrayList();
 	for (int i = 1; i <= MaxClients; i++)
@@ -182,11 +226,14 @@ stock int ReseatDefenderBots()
 			bots.Push(i);
 		}
 	}
+	// Seats the list names that nobody holds, which is what there is room to kick.
 	int missing = 0;
 	for (int i = 0; i < total; i++)
 	{
 		TrimString(wanted[i]);
 		TFClassType class = TF2_GetClassIndexFromString(wanted[i]);
+		// A blank or a typo leaves the seat to the lineup mode, so it asks
+		// for nobody in particular.
 		if (class == TFClass_Unknown)
 		{
 			continue;
@@ -204,6 +251,7 @@ stock int ReseatDefenderBots()
 	for (int i = 0; (i < bots.Length) && (kicked < missing); i++)
 	{
 		int client = bots.Get(i);
+		// Rechecked rather than trusted: the list was taken before the first kick.
 		if (!IsClientInGame(client))
 		{
 			continue;

@@ -13,6 +13,8 @@ BehaviorAction CTFBotGuardPoint()
 
 float m_vecPointDefendArea[65][3];
 
+// OnStart finds a piece of ground near the point that the bot can actually
+// reach, and gives up on the whole idea if there is none.
 public Action CTFBotGuardPoint_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
@@ -25,6 +27,7 @@ public Action CTFBotGuardPoint_OnStart(BehaviorAction action, int actor, Behavio
 	for (int i = 0; i < hAreas.Count(); i++)
 	{
 		CTFNavArea area = hAreas.Get(i);
+		// Don't go in spawn room
 		if (area.HasAttributeTF(RED_SPAWN_ROOM) || area.HasAttributeTF(BLUE_SPAWN_ROOM))
 		{
 			continue;
@@ -48,6 +51,8 @@ public Action CTFBotGuardPoint_OnStart(BehaviorAction action, int actor, Behavio
 	return action.Continue();
 }
 
+// Update holds the ground, and gives it up for a tank or for anything worth
+// shooting.
 public Action CTFBotGuardPoint_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
 	switch (TF2_GetPlayerClass(actor))
@@ -60,6 +65,10 @@ public Action CTFBotGuardPoint_Update(BehaviorAction action, int actor, float in
 			}
 		}
 	}
+	//  Something to shoot ends this, because holding ground is what a bot does instead of fighting
+	//
+	// 	This action had no way out but a tank. Wired in as the thing a defender does when it has
+	// 	nothing to do, that would be a bot which guards the hatch once and never fights again.
 	if (CTFBotDefenderAttack_SelectTarget(actor))
 	{
 		return action.ChangeTo(CTFBotDefenderAttack(), "Something to fight");
@@ -71,6 +80,7 @@ public Action CTFBotGuardPoint_Update(BehaviorAction action, int actor, float in
 		EquipBestWeaponForThreat(actor, threat);
 	}
 	int myWeapon = BaseCombatCharacter_GetActiveWeapon(actor);
+	// If we're close-range only, chase after them to defend the point
 	if ((myWeapon != -1) && ((TF2Util_GetWeaponID(myWeapon) == TF_WEAPON_FLAMETHROWER) || IsMeleeWeapon(myWeapon)))
 	{
 		int nearest = GetEnemyPlayerNearestToPosition(actor, m_vecPointDefendArea[actor], 1000.0);
@@ -85,6 +95,7 @@ public Action CTFBotGuardPoint_Update(BehaviorAction action, int actor, float in
 			return action.Continue();
 		}
 	}
+	// Stay near the point to defend it
 	if (myBot.IsRangeGreaterThanEx(m_vecPointDefendArea[actor], 200.0))
 	{
 		if (m_flRepathTime[actor] <= GetGameTime())
@@ -97,43 +108,54 @@ public Action CTFBotGuardPoint_Update(BehaviorAction action, int actor, float in
 	return action.Continue();
 }
 
+// OnEnd forgets the ground.
 public void CTFBotGuardPoint_OnEnd(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_vecPointDefendArea[actor] = NULL_VECTOR;
 }
 
+// OnTerritoryContested keeps holding: somebody trying to take it is the reason
+// the bot is standing there.
 public Action CTFBotGuardPoint_OnTerritoryContested(BehaviorAction action, int actor, int territory)
 {
 	if (redbots_manager_debug_actions.BoolValue)
 	{
 		PrintToChatAll("[OnTerritoryContested] Losing CP %d", GetControlPointByID(territory));
 	}
+	// Someone tried to capture it, keep defending
 	return action.TryToSustain();
 }
 
+// OnTerritoryLost gives up.
 public Action CTFBotGuardPoint_OnTerritoryLost(BehaviorAction action, int actor, int territory)
 {
 	if (redbots_manager_debug_actions.BoolValue)
 	{
 		PrintToChatAll("[OnTerritoryLost] Lost CP %d!", GetControlPointByID(territory));
 	}
+	// We lost the point, give up
 	return action.TryChangeTo(CTFBotDefenderAttack(), RESULT_CRITICAL, "Point lost");
 }
 
+// IsPossible says whether holding a point is worth doing at all.
 stock bool CTFBotGuardPoint_IsPossible(int client)
 {
+	// There are better things for scout to do than this
 	if (TF2_GetPlayerClass(client) == TFClass_Scout)
 	{
 		return false;
 	}
+	// One of us is already watching the point
 	if (GetCountOfBotsWithNamedAction("DefenderGuardPoint") > 0)
 	{
 		return false;
 	}
+	// Nothing to defend
 	if (GetCapturableAreaTrigger(GetPlayerEnemyTeam(client)) == -1)
 	{
 		return false;
 	}
+	// I'd rather lose the point than lose the wave!
 	if (IsFailureImminent(client))
 	{
 		return false;
@@ -141,6 +163,10 @@ stock bool CTFBotGuardPoint_IsPossible(int client)
 	return true;
 }
 
+// ResetGuardPoint forgets the ground this bot was holding.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
 stock void Go_ResetGuardPoint(int client)
 {
 	m_vecPointDefendArea[client] = NULL_VECTOR;

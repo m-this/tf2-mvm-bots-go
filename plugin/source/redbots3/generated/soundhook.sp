@@ -2,6 +2,10 @@
 
 #define Go_Players (101)
 
+// 	TimerRealizeSpy is the delay between hearing the laugh and acting on it
+//
+// Both sides are userids rather than client indices, because either can have left
+// in the meantime and a userid that no longer maps to anybody answers zero.
 public void Timer_RealizeSpy(Handle timer, DataPack pack)
 {
 	int client = GetClientOfUserId(pack.ReadCell());
@@ -17,6 +21,7 @@ public void Timer_RealizeSpy(Handle timer, DataPack pack)
 	TFBot_NoticeThreat(client, threat);
 }
 
+// SoundHookGeneral watches every sound the server plays for a spy's laugh.
 public Action SoundHook_General(int clients[MAXPLAYERS], int &numClients, char sample[PLATFORM_MAX_PATH], int &entity, int &channel, float &volume, int &level, int &pitch, int &flags, char soundEntry[PLATFORM_MAX_PATH], int &seed)
 {
 	if ((channel == SNDCHAN_VOICE) && (volume > 0.0) && BaseEntity_IsPlayer(entity))
@@ -25,6 +30,8 @@ public Action SoundHook_General(int clients[MAXPLAYERS], int &numClients, char s
 		{
 			if (TF2_IsPlayerInCondition(entity, TFCond_Disguised) && !TF2_IsStealthed(entity))
 			{
+				//  Robots have robotic voices even when disguised so any
+				// 				defender bot that can see him right now will call him out
 				for (int i = 1; i <= MaxClients; i++)
 				{
 					if (i == entity)

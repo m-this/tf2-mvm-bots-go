@@ -16,12 +16,15 @@ BehaviorAction CTFBotMedicRevive()
 float m_ctReviveAsk[65];
 bool m_bRevivePossible[65];
 
+// OnStart aims the path.
 public Action CTFBotMedicRevive_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
 	return action.Continue();
 }
 
+// Update holds the beam on the marker, and pulls the primary out on the way
+// there so the medic is not defenceless.
 public Action CTFBotMedicRevive_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
 	int secondary = GetPlayerWeaponSlot(actor, TFWeaponSlot_Secondary);
@@ -40,6 +43,10 @@ public Action CTFBotMedicRevive_Update(BehaviorAction action, int actor, float i
 	if (myBot.IsRangeLessThanEx(markerPos, WEAPON_MEDIGUN_RANGE))
 	{
 		int healTarget = GetEntPropEnt(secondary, Prop_Send, "m_hHealingTarget");
+		// The empty branch is the shipped file's, and it is the point: a
+		// medic already beaming something else stops pressing fire, and
+		// writing that as a negated condition would read as a different
+		// decision to anybody diffing the two.
 		if ((healTarget != -1) && (healTarget != marker))
 		{
 		}
@@ -49,6 +56,7 @@ public Action CTFBotMedicRevive_Update(BehaviorAction action, int actor, float i
 			SnapViewToPosition(actor, markerPos);
 			VS_PressFireButton(actor);
 		}
+		// Do not path if we are healing our target
 		if (healTarget == marker)
 		{
 			return action.Continue();
@@ -56,6 +64,7 @@ public Action CTFBotMedicRevive_Update(BehaviorAction action, int actor, float i
 	}
 	else
 	{
+		// Fend off from enemies
 		int primary = GetPlayerWeaponSlot(actor, TFWeaponSlot_Primary);
 		if (primary != -1)
 		{
@@ -71,12 +80,14 @@ public Action CTFBotMedicRevive_Update(BehaviorAction action, int actor, float i
 	return action.Continue();
 }
 
+// OnInjured pops the uber when something hits the medic mid-revive.
 public Action CTFBotMedicRevive_OnInjured(BehaviorAction action, int actor, Address takedamageinfo, ActionDesiredResult result)
 {
 	CTakeDamageInfo info = CTakeDamageInfo(takedamageinfo);
 	if (info.GetDamage() > 0.0)
 	{
 		int weapon = BaseCombatCharacter_GetActiveWeapon(actor);
+		// Someone hit me while I'm trying to revive someone, let's pop uber now if possible
 		if ((weapon != -1) && (TF2Util_GetWeaponID(weapon) == TF_WEAPON_MEDIGUN))
 		{
 			VS_PressAltFireButton(actor);
@@ -85,6 +96,7 @@ public Action CTFBotMedicRevive_OnInjured(BehaviorAction action, int actor, Addr
 	return action.Continue();
 }
 
+// IsPossible answers whether there is anybody to revive, held for askInterval.
 stock bool CTFBotMedicRevive_IsPossible(int client)
 {
 	if (m_ctReviveAsk[client] > GetGameTime())

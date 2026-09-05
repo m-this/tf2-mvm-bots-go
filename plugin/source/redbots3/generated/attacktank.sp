@@ -17,12 +17,17 @@ BehaviorAction CTFBotAttackTank()
 
 int m_iTankTarget[65];
 
+// OnStart only sets the look-ahead: the target was chosen before the action
+// started.
 public Action CTFBotAttackTank_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
+	// NOTE: CTFBotAttackTank_SelectTarget chooses a tank threat beforehand
 	return action.Continue();
 }
 
+// Update closes to the range the weapon wants, and backs off a hull it would
+// blow itself up on.
 public Action CTFBotAttackTank_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
 	if (!IsValidEntity(m_iTankTarget[actor]))
@@ -36,6 +41,7 @@ public Action CTFBotAttackTank_Update(BehaviorAction action, int actor, float in
 	{
 		case TFClass_Scout:
 		{
+			// We still prefer money
 			if (CTFBotCollectMoney_IsPossible(actor))
 			{
 				return action.ChangeTo(CTFBotCollectMoney(), "Get credits");
@@ -43,6 +49,7 @@ public Action CTFBotAttackTank_Update(BehaviorAction action, int actor, float in
 		}
 		case TFClass_Heavy, TFClass_Sniper:
 		{
+			// We're more useful against the robots than the tank
 			if (CTFBotDefenderAttack_SelectTarget(actor))
 			{
 				return action.ChangeTo(CTFBotDefenderAttack(), "Robot priority");
@@ -57,6 +64,16 @@ public Action CTFBotAttackTank_Update(BehaviorAction action, int actor, float in
 	float distToTank = GetVectorDistance(myEyePos, targetOrigin);
 	INextBot myBot = CBaseNPC_GetNextBotOfEntity(actor);
 	float attackRange = GetIdealTankAttackRange(actor);
+	//  Backing off a tank he is already inside the blast radius of
+	//
+	// 	Every range here is measured to the middle of the tank, and a tank is a large box: the hull he
+	// 	actually detonates a rocket against is half a tank nearer than that. So a standoff that reads
+	// 	as safe from the centre is not one from the front, and what that produced is soldiers killing
+	// 	themselves on tanks, reported from play.
+	//
+	// 	Measured off the collision box rather than by making the centre distance bigger, because the
+	// 	box is the thing the rocket hits and it is the same answer whichever end of the tank he is
+	// 	standing at.
 	if (IsBlastWeapon(BaseCombatCharacter_GetActiveWeapon(actor)) && (RangeToTankHull(myEyePos, m_iTankTarget[actor]) < TANK_BLAST_SAFE_RANGE))
 	{
 		float away[3];
@@ -76,6 +93,7 @@ public Action CTFBotAttackTank_Update(BehaviorAction action, int actor, float in
 		if (m_flRepathTime[actor] <= GetGameTime())
 		{
 			m_flRepathTime[actor] = GetGameTime() + GetRandomFloat(0.5, 1.0);
+			// Its own arguments: a tank is a moving hull, and the goal is wanted even when the path fails
 			m_pPath[actor].ComputeToPos(myBot, GetAbsOrigin(m_iTankTarget[actor]), 0.0, true);
 		}
 		m_pPath[actor].Update(myBot);
@@ -83,6 +101,8 @@ public Action CTFBotAttackTank_Update(BehaviorAction action, int actor, float in
 	return action.Continue();
 }
 
+// SelectMoreDangerousThreat keeps the tank the threat unless something nearer is
+// shooting at him.
 public Action CTFBotAttackTank_SelectMoreDangerousThreat(BehaviorAction action, INextBot nextbot, int entity, CKnownEntity threat1, CKnownEntity threat2, CKnownEntity& knownEntity)
 {
 	knownEntity = view_as<CKnownEntity>(0);
@@ -92,9 +112,11 @@ public Action CTFBotAttackTank_SelectMoreDangerousThreat(BehaviorAction action, 
 	int myWeapon = BaseCombatCharacter_GetActiveWeapon(me);
 	if ((myWeapon != -1) && IsMeleeWeapon(myWeapon))
 	{
+		// Close range weapons only target the closest threat
 		knownEntity = SelectCloserThreat(nextbot, threat1, threat2);
 		return Plugin_Changed;
 	}
+	// Nearby enemies might try to kill us
 	float notSafeRange = FLAMETHROWER_REACH_RANGE;
 	if (BaseEntity_IsPlayer(iThreat1))
 	{
@@ -112,6 +134,7 @@ public Action CTFBotAttackTank_SelectMoreDangerousThreat(BehaviorAction action, 
 			return Plugin_Changed;
 		}
 	}
+	// Our most dangerous threat should be the tank
 	if (iThreat1 == m_iTankTarget[me])
 	{
 		knownEntity = threat1;
@@ -122,10 +145,12 @@ public Action CTFBotAttackTank_SelectMoreDangerousThreat(BehaviorAction action, 
 		knownEntity = threat2;
 		return Plugin_Changed;
 	}
+	// We probably can't see it right now
 	knownEntity = NULL_KNOWN_ENTITY;
 	return Plugin_Changed;
 }
 
+// SelectTarget picks a tank, unless enough bots are already on one.
 stock bool CTFBotAttackTank_SelectTarget(int actor)
 {
 	if (GetCountOfBotsWithNamedAction("DefenderAttackTank", actor) >= redbots_manager_bot_max_tank_attackers.IntValue)
@@ -136,12 +161,17 @@ stock bool CTFBotAttackTank_SelectTarget(int actor)
 	return m_iTankTarget[actor] != -1;
 }
 
+// TankToTarget is the nearest tank on the other team.
 stock int GetTankToTarget(int actor, float maxDistance = 999999.0)
 {
+	// TODO: We should be targetting the closest tank that has the farthest progress
+	// to the hatch instead of going for the closest one to us
 	float origin[3];
 	GetClientAbsOrigin(actor, origin);
 	int myTeam = GetClientTeam(actor);
 	int primary = GetPlayerWeaponSlot(actor, TFWeaponSlot_Primary);
+	// int rather than the weapon tag: TF2Util_GetWeaponID answers a plain
+	// cell here and the plugin's includes have no TFWeaponType to hold it in.
 	int primaryID = -1;
 	if (primary != -1)
 	{
@@ -157,12 +187,14 @@ stock int GetTankToTarget(int actor, float maxDistance = 999999.0)
 		{
 			break;
 		}
+		// Ignore tanks on our team
 		if (myTeam == BaseEntity_GetTeamNumber(ent))
 		{
 			continue;
 		}
 		if (primaryID == TF_WEAPON_FLAMETHROWER)
 		{
+			// Somehow this tank is in the air, we can't reach it with this weapon
 			if ((GetEntityFlags(ent) & FL_ONGROUND) == 0)
 			{
 				continue;
@@ -178,6 +210,7 @@ stock int GetTankToTarget(int actor, float maxDistance = 999999.0)
 	return bestEntity;
 }
 
+// IdealAttackRange is how close the weapon in his hands wants to be.
 stock float GetIdealTankAttackRange(int client)
 {
 	int weapon = BaseCombatCharacter_GetActiveWeapon(client);
@@ -185,6 +218,10 @@ stock float GetIdealTankAttackRange(int client)
 	{
 		if (IsMeleeWeapon(weapon))
 		{
+			// TODO: factor in other factors for melee
+			// GetSwingRange
+			// melee_bounds_multiplier
+			// melee_range_multiplier
 			return TANK_ATTACK_RANGE_MELEE;
 		}
 		switch (TF2Util_GetWeaponID(weapon))
@@ -198,6 +235,8 @@ stock float GetIdealTankAttackRange(int client)
 	return TANK_ATTACK_RANGE_DEFAULT;
 }
 
+// IsBlastWeapon says whether firing this at something touching the man would hurt
+// him as well as it.
 stock bool IsBlastWeapon(int weapon)
 {
 	if (weapon < 1)
@@ -214,6 +253,12 @@ stock bool IsBlastWeapon(int weapon)
 	return false;
 }
 
+// RangeToHull is how far the nearest corner of the tank is, rather than how far its
+// middle is.
+//
+// The collision box is what a rocket goes off against. Yaw is ignored: the box is
+// axis aligned and a tank driving a diagonal is a few units of error in something
+// that already carries a rocket of margin.
 stock float RangeToTankHull(float from[3], int tank)
 {
 	float origin[3];
@@ -234,6 +279,8 @@ stock float RangeToTankHull(float from[3], int tank)
 	return GetVectorDistance(from, closest);
 }
 
+// EquipBestWeapon uses a score-based system to determine what weapon the bot
+// should be using against a tank boss.
 stock void EquipBestTankWeapon(int client)
 {
 	int bestWeapon = -1;
@@ -299,6 +346,7 @@ stock void EquipBestTankWeapon(int client)
 	TF2Util_SetPlayerActiveWeapon(client, bestWeapon);
 }
 
+// EvalScout scores a weapon for the scout against a tank.
 stock int EvalTankWeapon_Scout(int slot, int weapon)
 {
 	switch (TF2Util_GetWeaponID(weapon))
@@ -345,6 +393,7 @@ stock int EvalTankWeapon_Scout(int slot, int weapon)
 	}
 }
 
+// EvalSoldier scores a weapon for the soldier against a tank.
 stock int EvalTankWeapon_Soldier(int slot, int weapon)
 {
 	switch (TF2Util_GetWeaponID(weapon))
@@ -387,6 +436,7 @@ stock int EvalTankWeapon_Soldier(int slot, int weapon)
 	}
 }
 
+// EvalPyro scores a weapon for the pyro against a tank.
 stock int EvalTankWeapon_Pyro(int slot, int weapon)
 {
 	switch (TF2Util_GetWeaponID(weapon))
@@ -429,6 +479,7 @@ stock int EvalTankWeapon_Pyro(int slot, int weapon)
 	}
 }
 
+// EvalDemo scores a weapon for the demo against a tank.
 stock int EvalTankWeapon_Demo(int slot, int weapon)
 {
 	switch (TF2Util_GetWeaponID(weapon))
@@ -475,6 +526,7 @@ stock int EvalTankWeapon_Demo(int slot, int weapon)
 	}
 }
 
+// EvalHeavy scores a weapon for the heavy against a tank.
 stock int EvalTankWeapon_Heavy(int slot, int weapon)
 {
 	switch (TF2Util_GetWeaponID(weapon))
@@ -517,6 +569,7 @@ stock int EvalTankWeapon_Heavy(int slot, int weapon)
 	}
 }
 
+// EvalEngie scores a weapon for the engie against a tank.
 stock int EvalTankWeapon_Engie(int slot, int weapon)
 {
 	switch (TF2Util_GetWeaponID(weapon))
@@ -563,6 +616,7 @@ stock int EvalTankWeapon_Engie(int slot, int weapon)
 	}
 }
 
+// EvalMedic scores a weapon for the medic against a tank.
 stock int EvalTankWeapon_Medic(int slot, int weapon)
 {
 	switch (TF2Util_GetWeaponID(weapon))
@@ -605,6 +659,7 @@ stock int EvalTankWeapon_Medic(int slot, int weapon)
 	}
 }
 
+// EvalSniper scores a weapon for the sniper against a tank.
 stock int EvalTankWeapon_Sniper(int slot, int weapon)
 {
 	switch (TF2Util_GetWeaponID(weapon))
@@ -651,6 +706,7 @@ stock int EvalTankWeapon_Sniper(int slot, int weapon)
 	}
 }
 
+// EvalSpy scores a weapon for the spy against a tank.
 stock int EvalTankWeapon_Spy(int slot, int weapon)
 {
 	switch (TF2Util_GetWeaponID(weapon))
@@ -689,6 +745,10 @@ stock int EvalTankWeapon_Spy(int slot, int weapon)
 	}
 }
 
+// ResetAttackTank forgets the tank this bot was shooting.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
 stock void Go_ResetAttackTank(int client)
 {
 	m_iTankTarget[client] = -1;

@@ -14,6 +14,7 @@ BehaviorAction CTFBotAttackUber()
 
 float m_vecStartArea[65][3];
 
+// OnStart aims the path and remembers where the medic is.
 public Action CTFBotAttackUber_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
@@ -21,6 +22,8 @@ public Action CTFBotAttackUber_OnStart(BehaviorAction action, int actor, Behavio
 	return action.Continue();
 }
 
+// Update finds something to hit and hits it, and gives up on any of the six
+// reasons this stops being a good idea.
 public Action CTFBotAttackUber_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
 	if ((GetClientHealth(actor) < MEDIC_ATTACK_UBER_LOW_HEALTH) && !TF2_IsInvulnerable(actor))
@@ -44,6 +47,7 @@ public Action CTFBotAttackUber_Update(BehaviorAction action, int actor, float in
 	}
 	TF2Util_SetPlayerActiveWeapon(actor, melee);
 	INextBot myBot = CBaseNPC_GetNextBotOfEntity(actor);
+	// Let's not stray too far from the patient
 	if (myBot.IsRangeGreaterThanEx(m_vecStartArea[actor], MEDIC_ATTACK_UBER_SEEK_RANGE))
 	{
 		return action.Done("Too far from home");
@@ -58,6 +62,7 @@ public Action CTFBotAttackUber_Update(BehaviorAction action, int actor, float in
 		SnapViewToPosition(actor, WorldSpaceCenter(target));
 		if ((myChargeLevel < 0.5) && myBot.IsRangeLessThan(target, 100.0) && !IsPlayerMoving(target))
 		{
+			// Attempt to do a taunt kill on them for the full uber
 			if (!TF2_IsTaunting(actor))
 			{
 				VS_PressAltFireButton(actor);
@@ -81,26 +86,32 @@ public Action CTFBotAttackUber_Update(BehaviorAction action, int actor, float in
 	return action.Continue();
 }
 
+// OnEnd forgets where he started.
 public void CTFBotAttackUber_OnEnd(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_vecStartArea[actor] = NULL_VECTOR;
 }
 
+// IsPossible is the eight questions asked before this is worth starting.
 stock bool CTFBotAttackUber_IsPossible(int client, int medigun)
 {
 	bool isUbered = TF2_IsInvulnerable(client);
+	// Health is too low
 	if (!isUbered && (GetClientHealth(client) < MEDIC_ATTACK_UBER_LOW_HEALTH))
 	{
 		return false;
 	}
+	// I should be healing someone first
 	if (GetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget") == -1)
 	{
 		return false;
 	}
+	// It's already full
 	if (GetEntPropFloat(medigun, Prop_Send, "m_flChargeLevel") >= 1.0)
 	{
 		return false;
 	}
+	// We are already using ubercharge
 	if (GetEntProp(medigun, Prop_Send, "m_bChargeRelease") == 1)
 	{
 		return false;
@@ -114,6 +125,7 @@ stock bool CTFBotAttackUber_IsPossible(int client, int medigun)
 	{
 		return false;
 	}
+	// Too dangerous
 	if (!isUbered && (GetNearestEnemyCount(client, 1000.0, false) > 2))
 	{
 		return false;
@@ -125,6 +137,10 @@ stock bool CTFBotAttackUber_IsPossible(int client, int medigun)
 	return true;
 }
 
+// ResetAttackForUber forgets where this bot started its push.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
 stock void Go_ResetAttackForUber(int client)
 {
 	m_vecStartArea[client] = NULL_VECTOR;

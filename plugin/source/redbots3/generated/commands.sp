@@ -4,6 +4,7 @@
 
 #define Go_Targets (101)
 
+// CommandRerollNewBotTeamComposition picks the lineup again and shows it.
 public Action Command_RerollNewBotTeamComposition(int client, int args)
 {
 	if (TF2_GetClientTeam(client) != TFTeam_Red)
@@ -24,6 +25,9 @@ public Action Command_RerollNewBotTeamComposition(int client, int args)
 	return Plugin_Handled;
 }
 
+// 	CommandForcePlayerPreference makes one player's preferences stand for everybody's
+//
+// Only @me is wired up. The admin form, forcing somebody else's, is not written.
 public Action Command_ForcePlayerPreference(int client, int args)
 {
 	if (args < 1)
@@ -33,6 +37,7 @@ public Action Command_ForcePlayerPreference(int client, int args)
 	}
 	char arg[512];
 	GetCmdArg(1, arg, 512);
+	// We only want one target at a time here.
 	if (strcmp(arg, "@me") == 0)
 	{
 		g_iPlayerForcedPref = client;
@@ -41,6 +46,8 @@ public Action Command_ForcePlayerPreference(int client, int args)
 	return Plugin_Handled;
 }
 
+// CommandDumpCredits prints what everybody on RED is holding, and what the
+// mission has paid out so far.
 public Action Command_DumpCredits(int client, int args)
 {
 	int earned = GetStartingCurrency(g_iPopulationManager) + GetAcquiredCreditsOfAllWaves();
@@ -58,6 +65,10 @@ public Action Command_DumpCredits(int client, int args)
 	return Plugin_Handled;
 }
 
+// 	CommandReseatBots rebuilds the team from the loadout file
+//
+// A recycle asked for mid-wave is held until the break: kicking a bot in the
+// middle of one loses whatever it was doing and drops its buildings.
 public Action Command_ReseatBots(int client, int args)
 {
 	Config_LoadServerLoadout();
@@ -78,6 +89,8 @@ public Action Command_ReseatBots(int client, int args)
 	return Plugin_Handled;
 }
 
+// CommandJoinBluePlayWithBots puts the caller on BLU and fills RED with bots,
+// which is the one-player-against-the-mod game.
 public Action Command_JoinBluePlayWithBots(int client, int args)
 {
 	if (redbots_manager_mode.IntValue < MANAGER_MODE_MANUAL_BOTS)
@@ -106,6 +119,10 @@ public Action Command_JoinBluePlayWithBots(int client, int args)
 	return Plugin_Handled;
 }
 
+// 	CommandChooseBotClasses opens the lineup menu for a solo player
+//
+// Only between waves and only while solo, so the current team count is always one
+// and the menu asks for the rest of the seats.
 public Action Command_ChooseBotClasses(int client, int args)
 {
 	if (g_bBotsEnabled)
@@ -155,6 +172,7 @@ public Action Command_ChooseBotClasses(int client, int args)
 	return Plugin_Handled;
 }
 
+// CommandRedoBotTeamLineup throws the current bots away and picks again.
 public Action Command_RedoBotTeamLineup(int client, int args)
 {
 	if (!g_bBotsEnabled)
@@ -213,12 +231,18 @@ public Action Command_RedoBotTeamLineup(int client, int args)
 			UpdateChosenBotTeamComposition();
 		}
 	}
+	// Solo players are always allowed to repick their bot lineup.
 	g_bAllowBotTeamRedo = GetTeamHumanClientCount(TFTeam_Red) == 1;
 	PrintToChatAll("%s %N has decided to repick the bot team lineup.", PLUGIN_PREFIX, client);
 	LogAction(client, -1, "%L triggered defender bot redo", client);
 	return Plugin_Handled;
 }
 
+// 	CommandVotebots asks the server to vote the bots in
+//
+// Manual mode only, and only from RED between waves. The lineup has to be settled
+// first when the mode says a player picks it, because a vote that passes on an
+// empty lineup would seat nobody.
 public Action Command_Votebots(int client, int args)
 {
 	if (g_bBotsEnabled)
@@ -296,6 +320,10 @@ public Action Command_Votebots(int client, int args)
 	}
 }
 
+// 	CommandRequestExtraBot adds one bot over the team size
+//
+// The named class is checked before anything is added, so a typo says so rather
+// than quietly seating a random one.
 public Action Command_RequestExtraBot(int client, int args)
 {
 	if (!g_bBotsEnabled)
@@ -348,6 +376,11 @@ public Action Command_RequestExtraBot(int client, int args)
 	return Plugin_Handled;
 }
 
+// 	CommandDumpUpgrades prints the game's own upgrade list, by the index it uses
+//
+// The count is the manager's raw one rather than UpgradeCount's: this command
+// exists to say when the game gives an answer that is not believable, and
+// UpgradeCount is the place that hides it.
 public Action Command_DumpUpgrades(int client, int args)
 {
 	if (!IsUpgradeManagerUp())
@@ -377,6 +410,10 @@ public Action Command_DumpUpgrades(int client, int args)
 	return Plugin_Handled;
 }
 
+// 	CommandViewBotUpgrades prints what one or more players are carrying
+//
+// The pattern is SourceMod's, so @all and #userid work, and the answer is filtered
+// to the living: an upgrade on a corpse is not what anybody is asking about.
 public Action Command_ViewBotUpgrades(int client, int args)
 {
 	if (args < 1)

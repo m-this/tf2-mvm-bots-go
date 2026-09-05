@@ -18,13 +18,35 @@ float m_ctMoveTimeout[65];
 int m_iMoveToFrontTry[65];
 bool m_bAtTheFront[65];
 
+// IsWaitingAtTheFront says whether this bot has finished taking up its position
+// for the coming wave.
+//
+// Standing where he meant to stand and giving up short of it are the same answer
+// here: both mean he has stopped walking and is not going to move again before the
+// wave.
 stock bool IsWaitingAtTheFront(int client)
 {
 	return m_bAtTheFront[client];
 }
 
+// PickTheFront is where the robots come out, which is where the team should be
+// waiting for them.
+//
+// The holograms are the markers the game puts at the robot spawns, so the one
+// nearest the enemy spawn room is the start of the bomb's path. Standing on the
+// ground beside it is the difference between opening fire as the gate drops and
+// meeting the wave halfway up the map.
 stock bool PickTheFront(int actor)
 {
+	//  The classes that shoot from a distance wait at the nest, the rest at the gate
+	//
+	// 	The gate is where the robots come out, and standing on it is how a defender meets a giant with
+	// 	nothing behind him. Waiting beside the sentry instead starts the wave with a sentry, a dispenser
+	// 	and the rest of the team in reach, and it is worth nothing to a Scout who has money to collect
+	// 	or a Pyro who has to be within a few metres to do anything at all.
+	//
+	// 	Holding the nest with the whole team was measured first and could not be told apart from the
+	// 	gate: four waves an arm, and the difference sat inside each arm's own spread.
 	if (Feature(FEATURE_HOLD_THE_NEST) && FightsAtRange(actor) && PickTheNest(actor))
 	{
 		return true;
@@ -88,10 +110,22 @@ stock bool PickTheFront(int actor)
 		return false;
 	}
 	CNavArea_GetRandomPoint(area, m_vecGoalArea[actor]);
+	// A new goal is worth a path this frame rather than at the end of the old one's interval
 	m_flRepathTime[actor] = 0.0;
 	return true;
 }
 
+// FightsAtRange says whether this one does its damage from where the nest is, or
+// has to walk into the wave.
+//
+// Asked for from play: the classes that fight at range belong around the
+// engineer's nest, and the ones that have to close belong at the gate. The Scout
+// collects money and the Pyro and the Spy work at arm's length, so all three are
+// wasted standing behind a sentry. Everybody else shoots across the same ground the
+// sentry covers.
+//
+// This replaced holding the nest with the whole team, which was measured and could
+// not be told apart from the gate at four waves an arm.
 stock bool FightsAtRange(int actor)
 {
 	switch (TF2_GetPlayerClass(actor))
@@ -104,6 +138,11 @@ stock bool FightsAtRange(int actor)
 	return true;
 }
 
+// PickTheNest is ground beside a teammate's sentry, or false when the team has
+// none up yet.
+//
+// The nearest one, because two engineers are two nests and the one to stand at is
+// the one on the way to where this bot already is.
 stock bool PickTheNest(int actor)
 {
 	int best = -1;
@@ -147,6 +186,7 @@ stock bool PickTheNest(int actor)
 	return true;
 }
 
+// OnStart picks the front and gives up at once when there is none to pick.
 public Action CTFBotMoveToFront_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_iMoveToFrontTry[actor] = 0;
@@ -161,12 +201,21 @@ public Action CTFBotMoveToFront_OnStart(BehaviorAction action, int actor, Behavi
 	return action.Continue();
 }
 
+// Update walks there, and stops when the wave starts rather than when it
+// arrives.
 public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
+	//  The wave is what ends this, not arriving
+	//
+	// 	Arriving used to end it, and what happened next was nothing at all: the between-rounds branch
+	// 	of GetDesiredBotAction had no answer for a bot that had already shopped, so the game got the
+	// 	bot back and roamed it around the map. Reported as the Heavy, the Medic and the Pyro wandering
+	// 	off before the wave and turning up inside the middle house on Coaltown.
 	if (GameRules_GetRoundState() != RoundState_BetweenRounds)
 	{
 		return action.Done("The wave has started");
 	}
+	// Credits on the floor are still worth the walk while we wait
 	if (CTFBotCollectMoney_IsPossible(actor))
 	{
 		return action.SuspendFor(CTFBotCollectMoney(), "Money on the floor");
@@ -183,6 +232,15 @@ public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float i
 	}
 	INextBot myBot = CBaseNPC_GetNextBotOfEntity(actor);
 	ILocomotion myLoco = myBot.GetLocomotionInterface();
+	//  Walking into the corner of a building is what spends an attempt
+	//
+	// 	The locomotion already knows the difference between walking and walking on the spot, and
+	// 	nothing outside the engineer has ever asked it. A fresh random point in the same area is a
+	// 	different approach to the same place, and three of them is a bound rather than a bot that
+	// 	repaths for ever.
+	//
+	// 	Out of attempts, or out of clock, he stands where he is: short of the front is a bot in the
+	// 	wrong place, and handed back to the game is a bot in the middle house.
 	if (myLoco.IsStuck())
 	{
 		myLoco.ClearStuckStatus("Wedged on the way to the front");
@@ -218,6 +276,7 @@ public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float i
 	return action.Continue();
 }
 
+// OnEnd forgets the goal.
 public void CTFBotMoveToFront_OnEnd(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_vecGoalArea[actor] = NULL_VECTOR;
@@ -225,6 +284,7 @@ public void CTFBotMoveToFront_OnEnd(BehaviorAction action, int actor, BehaviorAc
 	m_iMoveToFrontTry[actor] = 0;
 }
 
+// DumpFront prints where each bot is and what it is waiting on.
 public Action Command_DumpFront(int client, int args)
 {
 	BombInfo_t bomb;
@@ -239,6 +299,7 @@ public Action Command_DumpFront(int client, int args)
 		mine = GetAbsOrigin(i);
 		char action[512];
 		strcopy(action, 512, "no waiting action");
+		// four lookups by name, and SourcePawn has no switch over one
 		if (ActionsManager.LookupEntityActionByName(i, "DefenderMoveToFront") != INVALID_ACTION)
 		{
 			Format(action, 512, "walking to the front");
@@ -289,6 +350,10 @@ public Action Command_DumpFront(int client, int args)
 	return Plugin_Handled;
 }
 
+// ResetMoveToFront forgets where this bot was walking, and how long it had.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
 stock void Go_ResetMoveToFront(int client)
 {
 	m_vecGoalArea[client] = NULL_VECTOR;

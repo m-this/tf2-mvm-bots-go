@@ -4,6 +4,8 @@ int m_hPowerupBottle[65] = {INVALID_ENT_REFERENCE, ...};
 float m_ctPowerupBottleLook[65];
 float m_flNextBottleUseTime[65];
 
+// PowerupBottleOf is the canteen, at the cost of one entity walk a second at
+// most.
 stock int PowerupBottleOf(int client)
 {
 	int bottle = EntRefToEntIndex(m_hPowerupBottle[client]);
@@ -11,6 +13,8 @@ stock int PowerupBottleOf(int client)
 	{
 		return bottle;
 	}
+	// A bot with no bottle is the normal case now, and it should not cost an
+	// entity walk a frame.
 	if (m_ctPowerupBottleLook[client] > GetGameTime())
 	{
 		return -1;
@@ -24,6 +28,10 @@ stock int PowerupBottleOf(int client)
 	return bottle;
 }
 
+// OpportunisticallyUsePowerupBottle drinks the canteen when the moment fits what
+// it does: crits want a threat in reach of the weapon in hand, an uber wants the
+// bot about to die in front of somebody, a recall wants a bomb at the hatch the
+// bot cannot reach in time, and ammo wants an empty primary.
 stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INextBot bot, const CKnownEntity threat)
 {
 	if (m_flNextBottleUseTime[client] > GetGameTime())
@@ -43,18 +51,22 @@ stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INext
 	{
 		case POWERUP_BOTTLE_CRITBOOST:
 		{
+			// Can't do anything useful without a weapon.
 			if (activeWeapon == -1)
 			{
 				return false;
 			}
+			// No threat to actually use it against.
 			if (threat == NULL_KNOWN_ENTITY)
 			{
 				return false;
 			}
+			// Medic would rather share this than use it for himself.
 			if (TF2_GetPlayerClass(client) == TFClass_Medic)
 			{
 				return false;
 			}
+			// Already have crits.
 			if (TF2_IsCritBoosted(client) || TF2_IsPlayerInCondition(client, TFCond_CritMmmph))
 			{
 				return false;
@@ -79,6 +91,9 @@ stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INext
 			}
 			if (BaseEntity_IsPlayer(iThreat))
 			{
+				//  A giant with a lot of health is probably a boss, and a boss
+				// 			near a failing wave wants killing fast. This wants doing better
+				// 			by somebody who knows what the optimal use of this canteen is.
 				if ((TF2_IsMiniBoss(iThreat) && (GetClientHealth(iThreat) > 5000)) || (IsFailureImminent(client) && (GetClientHealth(iThreat) > 2000)))
 				{
 					UseActionSlotItem(client);
@@ -88,16 +103,20 @@ stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INext
 			else
 				if (IsBaseBoss(iThreat) && (BaseEntity_GetHealth(iThreat) > 1000))
 				{
+					// Crit against the tank.
 					UseActionSlotItem(client);
 					return true;
 				}
 		}
 		case POWERUP_BOTTLE_UBERCHARGE:
 		{
+			// I'm invincible already.
 			if (TF2_IsInvulnerable(client))
 			{
 				return false;
 			}
+			// Only when there's a threat nearby, otherwise we could just go heal
+			// ourselves.
 			if ((threat == NULL_KNOWN_ENTITY) || !threat.IsVisibleRecently())
 			{
 				return false;
@@ -105,12 +124,14 @@ stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INext
 			float healthRatio = float(GetClientHealth(client)) / float(TEMP_GetPlayerMaxHealth(client));
 			if (healthRatio < tf_bot_health_critical_ratio.FloatValue)
 			{
+				// I'm about to die.
 				UseActionSlotItem(client);
 				m_flNextBottleUseTime[client] = GetGameTime() + GetRandomFloat(10.0, 30.0);
 				return true;
 			}
 			if (TF2_IsPlayerInCondition(client, TFCond_Gas))
 			{
+				// This gas might be explosive.
 				UseActionSlotItem(client);
 				m_flNextBottleUseTime[client] = GetGameTime() + GetRandomFloat(20.0, 30.0);
 				return true;
@@ -118,6 +139,8 @@ stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INext
 		}
 		case POWERUP_BOTTLE_RECALL:
 		{
+			// The medic can't share this, and the engineer should probably only
+			// use it if his sentry was destroyed; neither is written yet.
 			if (TF2_GetPlayerClass(client) == TFClass_Medic)
 			{
 				return false;
@@ -126,44 +149,52 @@ stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INext
 			{
 				return false;
 			}
+			// We're busy going for the tank.
 			if (ActionsManager.LookupEntityActionByName(client, "DefenderAttackTank") != INVALID_ACTION)
 			{
 				return false;
 			}
 			float myPosition[3];
 			myPosition = WorldSpaceCenter(client);
+			// I'm already in my spawn room.
 			if (TF2Util_IsPointInRespawnRoom(myPosition, client, true))
 			{
 				return false;
 			}
 			float hatchPosition[3];
 			hatchPosition = GetBombHatchPosition();
+			// We're already close enough to the hatch.
 			if (GetVectorDistance(myPosition, hatchPosition) <= 1000.0)
 			{
 				return false;
 			}
 			int flag = FindBombNearestToHatch();
+			// No bomb active.
 			if (flag == -1)
 			{
 				return false;
 			}
 			float bombPosition[3];
 			bombPosition = WorldSpaceCenter(flag);
+			// Bomb is far and not a threat.
 			if (GetVectorDistance(bombPosition, hatchPosition) > BOMB_HATCH_RANGE_CRITICAL)
 			{
 				return false;
 			}
 			int closestToHatch = FindBotNearestToBombNearestToHatch(client);
+			// No robot near the bomb close to the hatch.
 			if (closestToHatch == -1)
 			{
 				return false;
 			}
 			float threatPosition[3];
 			GetClientAbsOrigin(closestToHatch, threatPosition);
+			// Nearest robot isn't that close to the bomb.
 			if (GetVectorDistance(threatPosition, bombPosition) > 800.0)
 			{
 				return false;
 			}
+			// We are already close enough to deal with it.
 			if (GetVectorDistance(myPosition, threatPosition) <= 500.0)
 			{
 				return false;
@@ -176,6 +207,7 @@ stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INext
 			int primary = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
 			if ((primary != -1) && !HasAmmo(primary))
 			{
+				// I got no ammo.
 				UseActionSlotItem(client);
 				return true;
 			}
@@ -187,6 +219,10 @@ stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INext
 	return false;
 }
 
+// ResetBottle forgets the canteen this bot was wearing, and when it may drink again.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
 stock void Go_ResetBottle(int client)
 {
 	m_hPowerupBottle[client] = INVALID_ENT_REFERENCE;

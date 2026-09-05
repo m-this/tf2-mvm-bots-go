@@ -2,6 +2,11 @@
 
 #define BUY_UPGRADES_MAX_TIME (30.0)
 
+// IsDefenderBot says the slot holds one of ours.
+//
+// The flag is the answer whenever it has been set. It has not been for a bot the
+// server made before the mod noticed it, and the name is what is left to go on:
+// every bot this mod adds carries the identity name.
 stock bool IsDefenderBot(int client)
 {
 	if (g_bIsDefenderBot[client])
@@ -17,6 +22,7 @@ stock bool IsDefenderBot(int client)
 	return StrContains(clientName, TFBOT_IDENTITY_NAME, true) != -1;
 }
 
+// GetDefenderBotCount is how many of ours are on that team.
 stock int GetDefenderBotCount(TFTeam team)
 {
 	int count = 0;
@@ -30,6 +36,8 @@ stock int GetDefenderBotCount(TFTeam team)
 	return count;
 }
 
+// GetHumanAndDefenderBotCount is everybody on that team who is not somebody
+// else's bot.
 stock int GetHumanAndDefenderBotCount(TFTeam team)
 {
 	int count = 0;
@@ -43,6 +51,7 @@ stock int GetHumanAndDefenderBotCount(TFTeam team)
 	return count;
 }
 
+// GetRealPlayerCount is how many people are on the server.
 stock int GetRealPlayerCount()
 {
 	int count = 0;
@@ -56,6 +65,8 @@ stock int GetRealPlayerCount()
 	return count;
 }
 
+// GetCountOfPlayersChoosingBotClasses is how many have the lineup menu open,
+// which the vote waits on.
 stock int GetCountOfPlayersChoosingBotClasses()
 {
 	int count = 0;
@@ -69,6 +80,12 @@ stock int GetCountOfPlayersChoosingBotClasses()
 	return count;
 }
 
+// ExtendUpgradeTimeForNewBots gives a bot that joined late enough of the break to
+// shop in.
+//
+// Only when there is little left: a bot added with twenty seconds on the clock
+// cannot buy anything and starts the wave stock, which is a seat wasted for the
+// whole wave rather than a break made slightly longer.
 stock void ExtendUpgradeTimeForNewBots()
 {
 	float restartRoundTime = GameRules_GetPropFloat("m_flRestartRoundTime");
@@ -78,10 +95,16 @@ stock void ExtendUpgradeTimeForNewBots()
 	}
 	if ((restartRoundTime - GetGameTime()) <= BUY_UPGRADES_MAX_TIME)
 	{
+		// Add a little more time for the new bot to ready.
 		GameRules_SetPropFloat("m_flRestartRoundTime", restartRoundTime + BUY_UPGRADES_MAX_TIME);
 	}
 }
 
+// ClearBuildingsBeforeKick takes an engineer's nest down with him.
+//
+// A sentry whose owner has left is somebody else's problem: it keeps shooting, it
+// cannot be upgraded or repaired, and nothing will ever remove it. Walked
+// backwards because removing one shortens the list.
 stock void ClearBuildingsBeforeKick(int client)
 {
 	for (int i = PlayerObjectCount(client) - 1; i >= 0; i--)
@@ -92,6 +115,8 @@ stock void ClearBuildingsBeforeKick(int client)
 			RemoveEntity(building);
 		}
 	}
+	// The one the game already took out of that list, because he was carrying
+	// it.
 	int carried = TF2_GetCarriedObject(client);
 	if ((carried != -1) && IsValidEntity(carried))
 	{
@@ -99,6 +124,8 @@ stock void ClearBuildingsBeforeKick(int client)
 	}
 }
 
+// RecycleDefenderBots clears the team out so a new lineup can be seated, and
+// says how many seats it freed.
 stock int RecycleDefenderBots()
 {
 	int kicked = 0;

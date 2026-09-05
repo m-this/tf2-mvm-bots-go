@@ -9,6 +9,11 @@ char g_sPlayerUseMyNameResponse[][] =
 };
 int m_iFindNameTries[65];
 
+// SetRandomNameOnBot names the bot, and mocks whoever is already using the name
+// it drew before drawing again.
+//
+// Bounded: a server full of players who each took a name from the list would
+// otherwise draw for ever.
 stock void SetRandomNameOnBot(int client)
 {
 	char newName[512];
@@ -16,6 +21,7 @@ stock void SetRandomNameOnBot(int client)
 	if ((m_adtBotNames.Length > 0) && DoesAnyPlayerUseThisName(newName) && (m_iFindNameTries[client] < Go_MaxTries))
 	{
 		m_iFindNameTries[client]++;
+		// Someone's already using my name, mock them for it and try again.
 		PrintToChatAll("%s : %s", newName, g_sPlayerUseMyNameResponse[GetRandomInt(0, 1)]);
 		SetRandomNameOnBot(client);
 		return;
@@ -24,6 +30,8 @@ stock void SetRandomNameOnBot(int client)
 	SetClientName(client, newName);
 }
 
+// GetRandomDefenderBotName draws one from the list, or says so when the list
+// is empty.
 stock void GetRandomDefenderBotName(char[] buffer, int maxlen)
 {
 	if (m_adtBotNames.Length == 0)

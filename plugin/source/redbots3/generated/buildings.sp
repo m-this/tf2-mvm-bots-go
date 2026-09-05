@@ -2,6 +2,19 @@
 
 #define MAX_PLAYER_OBJECTS (8)
 
+// IsBuilderSetTo is whether the toolbox in his hands is set to build the thing this
+// action came here to build.
+//
+// Every build action used to ask only whether he was holding the toolbox at all, and
+// the toolbox remembers what it was last told to make. So an engineer walking from one
+// build straight into the next never re-issued the command, and pressed fire on a
+// toolbox still set to the last job.
+//
+// Measured on Coaltown: he finishes the dispenser at his nest, walks to the spawn to
+// put down the teleporter entrance, and the entrance never happens because the toolbox
+// is still set to dispenser. What goes down at the spawn is a second dispenser, which
+// is both the "dispenser right beside the teleporter entrance" and the "two dispensers
+// for one engineer" from play.
 stock bool IsBuilderSetTo(int client, TFObjectType objectType, TFObjectMode mode = TFObjectMode_None)
 {
 	int weapon = BaseCombatCharacter_GetActiveWeapon(client);
@@ -13,6 +26,7 @@ stock bool IsBuilderSetTo(int client, TFObjectType objectType, TFObjectMode mode
 	{
 		return false;
 	}
+	// Only the teleporter has two of them, and putting an entrance down for an exit is the same bug
 	if ((objectType == TFObject_Teleporter) && (GetEntProp(weapon, Prop_Send, "m_iObjectMode") != view_as<int>(mode)))
 	{
 		return false;
@@ -20,6 +34,17 @@ stock bool IsBuilderSetTo(int client, TFObjectType objectType, TFObjectMode mode
 	return true;
 }
 
+// PlayerObjectCount is how many buildings this player owns, and none for a player who
+// has left.
+//
+// TF2Util_GetPlayerObjectCount throws on a client that is not in game, and a thrown
+// native takes the whole callback with it. An action's OnEnd is the one place that
+// reliably asks about a bot after he has gone: the seat refill kicks bots between
+// waves, which ends their actions, and k-kaneta's log of 2026-08-27 has the trace
+// twice on Mannworks with the engineer's sentry action named in it.
+//
+// Zero rather than a refusal, because every caller loops over the answer and a player
+// with no buildings is the truth about a player who is not there.
 stock int PlayerObjectCount(int client)
 {
 	if ((client <= 0) || (client > MaxClients) || !IsClientInGame(client))
@@ -29,6 +54,17 @@ stock int PlayerObjectCount(int client)
 	return TF2Util_GetPlayerObjectCount(client);
 }
 
+// DetonateObjectOfType takes down every building of the type, not the first one found.
+//
+// An engineer is not meant to be able to hold two dispensers, and one was measured
+// holding two on Coaltown: the working one at his nest, and a second at the spawn a
+// teleporter's width from his entrance. Taking down "the" dispenser between waves took
+// down whichever came first in his object list, so the other one outlived it, and then
+// outlived every wave after that. The nest was rebuilt each break and the stray never
+// was. Reported as two dispensers for one engineer.
+//
+// Collected before any of them is detonated, because detonating edits the list being
+// walked.
 stock void DetonateObjectOfType(int client, TFObjectType objectType, TFObjectMode mode = TFObjectMode_None, bool ignoreSapperState = false)
 {
 	int found[8];
@@ -75,6 +111,16 @@ stock void DetonateObjectOfType(int client, TFObjectType objectType, TFObjectMod
 	}
 }
 
+// HasObjectOfType is a building of this type he owns, counting the one in his hands.
+//
+// The game takes a building out of the player's object list the moment he picks it up,
+// so every question the mod asks about what an engineer has answered no while he was
+// carrying it. What follows from that is a second one: the dispenser gate sees none,
+// sends him to build, and when he finally puts the carried one down there are two
+// dispensers and one engineer. Reported from play with a photograph.
+//
+// The carried one is his by any reading of the question, so it is counted here rather
+// than at each of the twenty call sites that ask.
 stock int HasObjectOfType(int client, TFObjectType objectType, TFObjectMode mode = TFObjectMode_None)
 {
 	int standing = GetObjectOfType(client, objectType, mode);
@@ -98,6 +144,8 @@ stock int HasObjectOfType(int client, TFObjectType objectType, TFObjectMode mode
 	return carried;
 }
 
+// GetObjectOfType is the first building of that type standing, walking past the
+// disposable ones on purpose.
 stock int GetObjectOfType(int client, TFObjectType objectType, TFObjectMode mode = TFObjectMode_None)
 {
 	int numObjects = PlayerObjectCount(client);
@@ -121,6 +169,15 @@ stock int GetObjectOfType(int client, TFObjectType objectType, TFObjectMode mode
 	return -1;
 }
 
+// LogBuildFailure says why a build ended without a building, out loud.
+//
+// A nest that is standing for two fifths of a wave is the engineer's whole problem,
+// and it was invisible: every build action has half a dozen ways to end and none of
+// them left a trace, so "he never built one" and "he built three and lost three" and
+// "he gave up after twelve seconds" all looked the same from a results file.
+//
+// Printed rather than counted, because the interesting thing is the sequence: which
+// reason, in which order, at what point in the wave.
 stock void LogBuildFailure(int actor, const char[] what, const char[] why)
 {
 	if ((actor < 1) || (actor > MaxClients) || !IsClientInGame(actor))
@@ -128,6 +185,7 @@ stock void LogBuildFailure(int actor, const char[] what, const char[] why)
 		return;
 	}
 	PrintToServer("[defenderbots] %s failed for %N at %.1f: %s", what, actor, GetGameTime(), why);
+	// The console is a stream nobody can count per run; the log is a file with the run in it
 	LogMessage("Build: %s for %N at %.1f: %s", what, actor, GetGameTime(), why);
 }
 

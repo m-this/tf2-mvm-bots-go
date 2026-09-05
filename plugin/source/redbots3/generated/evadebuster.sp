@@ -16,6 +16,7 @@ BehaviorAction CTFBotEvadeBuster()
 
 float m_ctEvadeBusterGiveUp[65];
 
+// OnStart starts the clock and tells the team what is coming.
 public Action CTFBotEvadeBuster_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
@@ -24,6 +25,7 @@ public Action CTFBotEvadeBuster_OnStart(BehaviorAction action, int actor, Behavi
 	return action.Continue();
 }
 
+// Update runs, until the clock runs out or there is nothing to run from.
 public Action CTFBotEvadeBuster_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
 	if (m_ctEvadeBusterGiveUp[actor] < GetGameTime())
@@ -53,6 +55,17 @@ public Action CTFBotEvadeBuster_Update(BehaviorAction action, int actor, float i
 	return action.Continue();
 }
 
+// FindEscape is the ground furthest from the blast, of what the bot can see a way
+// to from here.
+//
+// Furthest rather than first past a threshold, which is what this used to take: a
+// buster standing in a corridor makes most of the areas within a radius worse than
+// the one the bot is on, and the first one the collector happens to hand back is as
+// likely to be the far side of the buster as the near side of the exit.
+//
+// No path is computed per candidate. One path query per area, at four a second,
+// for every bot near a buster, costs more than picking a spot the bot cannot quite
+// reach and being handed the next one a tenth of a second later.
 stock bool CTFBotEvadeBuster_FindEscape(int actor, float busterOrigin[3], float escape[3])
 {
 	bool found;
@@ -63,8 +76,10 @@ stock bool CTFBotEvadeBuster_FindEscape(int actor, float busterOrigin[3], float 
 	float myOrigin[3];
 	GetClientAbsOrigin(actor, myOrigin);
 	AreasCollector hAreas = TheNavMesh.CollectAreasInRadius(myOrigin, BUSTER_ESCAPE_SEARCH_RANGE);
+	// The ground the bot is standing on, so that a bot with nowhere better still has an answer
 	float bestDistance = GetVectorDistance(myOrigin, busterOrigin);
 	int count = hAreas.Count();
+	// Every wave has one buster and every bot near it runs this. The count is the map's, so cap it
 	if (count > Go_maxAreas)
 	{
 		count = Go_maxAreas;
@@ -87,6 +102,12 @@ stock bool CTFBotEvadeBuster_FindEscape(int actor, float busterOrigin[3], float 
 	return found;
 }
 
+// Threat is the buster this bot has to get away from, or -1.
+//
+// A buster that has started its detonation is a threat at blast range whatever it
+// is doing. One that has not is a threat only when it is close enough that it
+// could arrive before the bot is gone, which is what keeps a team from spending
+// the wave backing away from a robot walking the length of the map.
 stock int CTFBotEvadeBuster_Threat(int client)
 {
 	float myOrigin[3];
@@ -104,12 +125,15 @@ stock int CTFBotEvadeBuster_Threat(int client)
 	return FindSentryBusterNear(myOrigin, enemyTeam, BUSTER_FLEE_RANGE);
 }
 
+// IsPossible says whether running is worth doing.
 stock bool CTFBotEvadeBuster_IsPossible(int client)
 {
 	if (!IsPlayerAlive(client))
 	{
 		return false;
 	}
+	//  A bot at the upgrade station is between waves and there is no buster walking towards it.
+	// 	Leaving the station mid-purchase is also how a bot ends up owing the wave a ready-up
 	if (TF2_IsInUpgradeZone(client))
 	{
 		return false;

@@ -37,6 +37,8 @@ enum struct Go_Sample
 int Go_seen[4] = {1, 2};
 Go_Priority Go_worst = Go_PriorityIdle;
 
+// Note records a client and returns what the highest priority seen so far is,
+// which is the read-and-write a state emission has to get right.
 stock Go_Priority Go_Note(int slot, Go_Priority p)
 {
 	Go_seen[slot]++;
@@ -47,8 +49,11 @@ stock Go_Priority Go_Note(int slot, Go_Priority p)
 	return Go_worst;
 }
 
+// Rank folds the sample into a priority, and shows the switch, the tagged
+// return and the float comparison in one place.
 stock Go_Priority Go_Rank(Go_Sample s, float threshold)
 {
+	// Off the scale is urgent, whoever it is.
 	if (s.Score > threshold)
 	{
 		return Go_PriorityUrgent;
@@ -67,6 +72,8 @@ stock Go_Priority Go_Rank(Go_Sample s, float threshold)
 	return Go_PriorityIdle;
 }
 
+// SumRecent shows the range loop, the array index and the conversion the
+// generator has to spell as a call.
 stock int Go_SumRecent(Go_Sample s, float &average)
 {
 	int total;
@@ -80,6 +87,8 @@ stock int Go_SumRecent(Go_Sample s, float &average)
 	return total;
 }
 
+// Centre is the vector shape: SourcePawn returns a cell, so an array result
+// becomes the parameter the caller supplies and this fills.
 stock void Go_Centre(Go_Sample s, float centre[3])
 {
 	for (int i = 0; i < 3; i++)
@@ -92,6 +101,7 @@ stock void Go_Centre(Go_Sample s, float centre[3])
 	return;
 }
 
+// Offset shows the call site: a declaration and a call, never an expression.
 stock float Go_Offset(Go_Sample s)
 {
 	float centre[3];
@@ -99,6 +109,8 @@ stock float Go_Offset(Go_Sample s)
 	return centre[0] + centre[1];
 }
 
+// Clamp shows min and max, the local declaration with no initialiser, and the
+// defaults the SourcePawn callers of the ported functions rely on.
 stock int Go_Clamp(int v, int low = 0, int high = 100)
 {
 	int out;
@@ -106,6 +118,8 @@ stock int Go_Clamp(int v, int low = 0, int high = 100)
 	return out;
 }
 
+// Middle is the other vector shape: SourcePawn returns the array, which is what
+// util.sp's WorldSpaceCenter does and what its callers use inline.
 stock float[] Go_Middle(Go_Sample s)
 {
 	float middle[3];
@@ -115,6 +129,8 @@ stock float[] Go_Middle(Go_Sample s)
 	return middle;
 }
 
+// Reach shows the call site: assigned, never used to initialise, because spcomp
+// takes one and not the other.
 stock float Go_Reach(Go_Sample s)
 {
 	float middle[3];

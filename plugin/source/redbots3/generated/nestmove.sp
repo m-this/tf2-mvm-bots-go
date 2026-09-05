@@ -2,16 +2,22 @@
 
 #define SENTRY_HAUL_SEARCH_RANGE (1200.0)
 
+// PickBusterRetreatArea is ground to carry the sentry to, away from a buster.
+//
+// Anywhere it ends up has to beat where it stands now by a blast, or it was not
+// worth moving.
 stock CNavArea PickBusterRetreatArea(int sentry, int buster)
 {
 	float sentryOrigin[3];
 	sentryOrigin = GetAbsOrigin(sentry);
 	float busterOrigin[3];
 	busterOrigin = WorldSpaceCenter(buster);
+	// Anywhere the sentry ends up has to beat where it stands now by a blast, or it was not worth moving
 	float bestDistance = GetVectorDistance(sentryOrigin, busterOrigin) + BUSTER_BLAST_RANGE;
 	CNavArea best = NULL_AREA;
 	AreasCollector areas = TheNavMesh.CollectAreasInRadius(sentryOrigin, SENTRY_HAUL_SEARCH_RANGE);
 	int count = areas.Count();
+	// One engineer, once per buster, but the count belongs to the map rather than to this
 	if (count > 256)
 	{
 		count = 256;
@@ -37,11 +43,17 @@ stock CNavArea PickBusterRetreatArea(int sentry, int buster)
 	return best;
 }
 
+// ShouldRelocateNest is whether better ground is worth the walk, asked once per wave.
+//
+// The gain is the difference between what the candidate scores and what the ground he
+// holds scores, both against the same sampled approach, so the two numbers are
+// comparable. A small gain is not worth a sentry in a toolbox.
 stock bool ShouldRelocateNest(int client, CNavArea &destination, float sentryRange = 1300.0)
 {
 	destination = view_as<CNavArea>(0);
 	destination = NULL_AREA;
 	CNavArea current = m_aNestArea[client];
+	// No nest yet, so there is nothing to compare against and the ordinary picker will build one
 	if (current == NULL_AREA)
 	{
 		return false;

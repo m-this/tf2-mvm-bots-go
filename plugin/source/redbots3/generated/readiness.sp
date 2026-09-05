@@ -6,6 +6,7 @@
 
 float m_ctReadyDeadline[65];
 
+// IsBuildingFinished says the building is standing, built and at level three.
 stock bool IsBuildingFinished(int building)
 {
 	if (building == INVALID_ENT_REFERENCE)
@@ -19,13 +20,28 @@ stock bool IsBuildingFinished(int building)
 	return GetEntProp(building, Prop_Send, "m_iUpgradeLevel") >= BUILDING_MAX_LEVEL;
 }
 
+// IsEngineerNestFinished is the sentry and the dispenser both done.
 stock bool IsEngineerNestFinished(int client)
 {
 	return IsBuildingFinished(GetObjectOfType(client, TFObject_Sentry)) && IsBuildingFinished(GetObjectOfType(client, TFObject_Dispenser));
 }
 
+// IsDefenderPrepared says this bot has done the thing its seat exists for, before
+// the wave starts.
+//
+// Whoever walks to the front is prepared once he is stood there: without that the
+// last bot to finish shopping starts the wave, and the walk to the front is
+// whatever fits in the time nobody is waiting for, which on Coaltown was never the
+// whole walk.
+//
+// The engineer's teleporter counts only while nobody is being made to wait for it.
+// On a team of nothing but bots the between-rounds time left after the nest is
+// nothing at all, so requiring the teleporter meant no engineer ever finished one;
+// with a player on the server their shopping is already the time he needs.
 stock bool IsDefenderPrepared(int client)
 {
+	// Credits in a pocket are worth nothing, and the whole break exists for
+	// spending them.
 	if (redbots_manager_bot_use_upgrades.BoolValue && !g_bShoppedThisBreak[client])
 	{
 		return false;
@@ -49,6 +65,12 @@ stock bool IsDefenderPrepared(int client)
 	return !ShouldBuildTeleporter(client);
 }
 
+// ReadyDefender readies a bot, and ends whatever is stopping it saying so.
+//
+// A taunt holds the ready. The command goes out every frame while the flag
+// disagrees, so a short taunt only delays it, but a looping taunt never ends on
+// its own and the wave waits on a bot doing a dance. Between rounds a taunt is
+// worth nothing to anybody, so it loses.
 stock void ReadyDefender(int actor, bool state)
 {
 	if (state && TF2_IsPlayerInCondition(actor, TFCond_Taunting))
@@ -58,6 +80,17 @@ stock void ReadyDefender(int actor, bool state)
 	SetPlayerReady(actor, state);
 }
 
+// UpdateDefenderReadiness is the bots' half of the ready screen.
+//
+// With a person on the team the bots are a mirror of what the people have said:
+// one person saying ready readies the bots, and the last person taking it back
+// takes theirs back too, so somebody who changes his mind gets his upgrade time
+// and does not have to fight six bots for it.
+//
+// Past the grace a bot says it is ready rather than merely stopping being made
+// unready. Nothing else says it for him: an engineer whose nest will not finish
+// never leaves the station or moves to the front, and letting go of the ready is
+// not the same as pressing it, so the wave waited for him for the whole round.
 stock void UpdateDefenderReadiness(int actor)
 {
 	if (!Feature(FEATURE_READY_WHEN_PREPARED))
@@ -94,6 +127,14 @@ stock void UpdateDefenderReadiness(int actor)
 	ReadyDefender(actor, false);
 }
 
+// ShouldLeaveToBePatchedUp is whether leaving the fight to find a pack is worth
+// what the walk costs the team.
+//
+// For everybody it is. For a medic it almost never is: he heals himself, so the
+// pack buys him what standing still would have bought him anyway, and what it
+// costs is the medigun for the length of the trip. Below the critical ratio he
+// goes anyway: a medic who dies takes the medigun with him for the rest of the
+// wave, which is worse than any trip.
 stock bool ShouldLeaveToBePatchedUp(int client, float healthRatio)
 {
 	if (TF2_GetPlayerClass(client) != TFClass_Medic)

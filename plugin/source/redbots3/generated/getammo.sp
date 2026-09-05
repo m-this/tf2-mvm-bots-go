@@ -36,9 +36,11 @@ char g_strHealthAndAmmoEntities[][] =
 	"tf_ammo_pack",
 };
 
+// OnStart ranks the packs in range and takes the nearest.
 public Action CTFBotGetAmmo_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
+	// Nothing unless a debug convar is set, which is never on a real server
 	DebugFaults_OnAmmoWalkStart(actor);
 	ArrayList ammo = new ArrayList(2);
 	ComputeHealthAndAmmoVectors(actor, ammo, tf_bot_ammo_search_range.FloatValue);
@@ -46,6 +48,7 @@ public Action CTFBotGetAmmo_OnStart(BehaviorAction action, int actor, BehaviorAc
 	m_iAmmoCandidateCount[actor] = 0;
 	m_iAmmoCandidate[actor] = 0;
 	m_iAmmoRepathFails[actor] = 0;
+	// Shortest travel first, so a failover walks outwards rather than anywhere
 	while (m_iAmmoCandidateCount[actor] < AMMO_CANDIDATES_MAX)
 	{
 		int best = -1;
@@ -87,6 +90,8 @@ public Action CTFBotGetAmmo_OnStart(BehaviorAction action, int actor, BehaviorAc
 	return action.Done("Could not find ammo");
 }
 
+// Update walks to the pack, and to the next one along when the route to this one
+// stops existing.
 public Action CTFBotGetAmmo_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
 	if (!IsValidAmmo(m_iAmmoPack[actor]))
@@ -104,6 +109,7 @@ public Action CTFBotGetAmmo_Update(BehaviorAction action, int actor, float inter
 		RepathToPos(actor, myBot, WorldSpaceCenter(m_iAmmoPack[actor]));
 		if (Feature(FEATURE_AMMO_FAILOVER))
 		{
+			// The return value is the only thing that says the route failed. The length lies.
 			if (!DebugFaults_RefuseAmmoPath(actor) && !PathFailedFor(actor))
 			{
 				m_iAmmoRepathFails[actor] = 0;
@@ -133,6 +139,7 @@ public Action CTFBotGetAmmo_Update(BehaviorAction action, int actor, float inter
 	return action.Continue();
 }
 
+// OnEnd forgets the pack and the ranking behind it.
 public void CTFBotGetAmmo_OnEnd(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_iAmmoPack[actor] = -1;
@@ -141,6 +148,8 @@ public void CTFBotGetAmmo_OnEnd(BehaviorAction action, int actor, BehaviorAction
 	m_iAmmoRepathFails[actor] = 0;
 }
 
+// NextCandidate is the next pack he was ranked onto, skipping any taken while he
+// walked. Bounded by the list.
 stock bool NextAmmoCandidate(int actor)
 {
 	for (m_iAmmoCandidate[actor]++; m_iAmmoCandidate[actor] < m_iAmmoCandidateCount[actor]; m_iAmmoCandidate[actor]++)
@@ -156,6 +165,8 @@ stock bool NextAmmoCandidate(int actor)
 	return false;
 }
 
+// ShouldHurry disables dodging, and keeps the minigun unspun after recently
+// seeing threats.
 public Action CTFBotGetAmmo_ShouldHurry(BehaviorAction action, INextBot nextbot, QueryResultType& result)
 {
 	result = view_as<QueryResultType>(0);
@@ -163,6 +174,7 @@ public Action CTFBotGetAmmo_ShouldHurry(BehaviorAction action, INextBot nextbot,
 	return Plugin_Handled;
 }
 
+// ShouldAttack keeps a spy walking for ammo out of a fight it cannot win.
 public Action CTFBotGetAmmo_ShouldAttack(BehaviorAction action, INextBot nextbot, CKnownEntity knownEntity, QueryResultType& result)
 {
 	result = view_as<QueryResultType>(0);
@@ -172,12 +184,14 @@ public Action CTFBotGetAmmo_ShouldAttack(BehaviorAction action, INextBot nextbot
 		int iThreat = knownEntity.GetEntity();
 		if (BaseEntity_IsPlayer(iThreat) && (GetClientHealth(iThreat) > 360) && !TF2_IsCritBoosted(me))
 		{
+			// Don't attack if we can't possibly kill them with our revolver (360 from 6 shots with max damage)
 			result = ANSWER_NO;
 			return Plugin_Changed;
 		}
 		else
 			if (GetNearestEnemyCount(me, 1000.0, false) > 1)
 			{
+				// There's too many enemies nearby, it'd be better to redisguise so they'll forget about us
 				result = ANSWER_NO;
 				return Plugin_Changed;
 			}
@@ -186,6 +200,7 @@ public Action CTFBotGetAmmo_ShouldAttack(BehaviorAction action, INextBot nextbot
 	return Plugin_Changed;
 }
 
+// IsValidAmmo says the entity is ammo the bot could still take.
 stock bool IsValidAmmo(int pack)
 {
 	if (!IsValidEntity(pack))
@@ -196,6 +211,7 @@ stock bool IsValidAmmo(int pack)
 	{
 		return false;
 	}
+	// It has been taken.
 	if (GetEntProp(pack, Prop_Send, "m_fEffects") != 0)
 	{
 		return false;
@@ -206,6 +222,7 @@ stock bool IsValidAmmo(int pack)
 	{
 		return false;
 	}
+	// Can't use a disabled dispenser
 	if ((StrContains(class, "obj_dispenser", false) != -1) && TF2_HasSapper(pack))
 	{
 		return false;
@@ -213,14 +230,21 @@ stock bool IsValidAmmo(int pack)
 	return true;
 }
 
+// HoldOff keeps the gate shut after a walk that ran out of reachable packs.
+//
+// The cache answers from a nav search that said yes, and the walk that followed
+// said no. Without this the monitor re-enters the action on the next frame with the
+// same candidates and the bot spends the wave starting and abandoning it.
 stock void HoldOffAmmo(int actor)
 {
 	m_ctAmmoAsk[actor] = GetGameTime() + AMMO_GIVEUP_TIME;
 	m_bAmmoPossible[actor] = false;
 }
 
+// IsPossible says whether there is ammo worth walking to.
 stock bool CTFBotGetAmmo_IsPossible(int actor)
 {
+	// Skip lag.
 	if ((m_iAmmoPack[actor] != -1) && IsValidAmmo(m_iAmmoPack[actor]))
 	{
 		return true;
@@ -247,6 +271,7 @@ stock bool CTFBotGetAmmo_IsPossible(int actor)
 	return bPossible;
 }
 
+// ComputeVectors fills the list with what is in range, nearest first.
 stock void ComputeHealthAndAmmoVectors(int client, ArrayList found, float maxRange)
 {
 	ArrayList nearby = new ArrayList(2);
@@ -262,6 +287,7 @@ stock void ComputeHealthAndAmmoVectors(int client, ArrayList found, float maxRan
 			{
 				break;
 			}
+			// A wave leaves more of these on the floor than anybody is going to walk to
 			if (nearby.Length >= HEALTH_CANDIDATES_MAX)
 			{
 				break;
@@ -277,10 +303,12 @@ stock void ComputeHealthAndAmmoVectors(int client, ArrayList found, float maxRan
 			}
 			if (BaseEntity_IsBaseObject(ammo))
 			{
+				// Can't get anything from still building buildings.
 				if (TF2_IsBuilding(ammo))
 				{
 					continue;
 				}
+				// Skip empty dispenser.
 				if ((TF2_GetObjectType(ammo) == TFObject_Dispenser) && (GetEntProp(ammo, Prop_Send, "m_iAmmoMetal") <= 0))
 				{
 					continue;
@@ -312,6 +340,8 @@ stock void ComputeHealthAndAmmoVectors(int client, ArrayList found, float maxRan
 	delete nearby;
 }
 
+// SortByStraightLineRange is the cheap ordering the search runs before it spends
+// a nav mesh query on anything.
 stock int SortByStraightLineRange(int index1, int index2, Handle array, Handle hndl)
 {
 	ArrayList list = view_as<ArrayList>(array);
@@ -324,6 +354,10 @@ stock int SortByStraightLineRange(int index1, int index2, Handle array, Handle h
 	return (first > second ? 1 : 0);
 }
 
+// ResetGetAmmo forgets the ammo pack this bot was walking to.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
 stock void Go_ResetGetAmmo(int client)
 {
 	m_iAmmoPack[client] = -1;

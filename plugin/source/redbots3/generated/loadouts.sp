@@ -45,6 +45,7 @@ int WEAPONS_SPY_BUILDING[7] = {Go_ItemDefDefault, 736, 810, 831, 933, 1080, 1102
 int WEAPONS_SPY_MELEE[29] = {Go_ItemDefDefault, 194, 225, 356, 423, 461, 574, 638, 649, 665, 727, 794, 803, 883, 892, 901, 910, 959, 968, 1071, 15080, 15094, 15095, 15096, 15118, 15119, 15143, 15144, 30758};
 int WEAPONS_SPY_PDA2[7] = {Go_ItemDefDefault, 212, 59, 60, 297, 947, 1205};
 
+// ClearSavedAttributes forgets what the last weapon carried.
 stock void ClearSavedAttributes(int client)
 {
 	for (int i = 0; i < MAX_RUNTIME_ATTRIBUTES; i++)
@@ -58,6 +59,13 @@ stock void ClearSavedAttributes(int client)
 	}
 }
 
+// PrepareCustomLoadout decides what this bot will carry, per class and slot.
+//
+// The sniper block is mvm-bj8: a stock primary leaves the definition index at
+// TF_ITEMDEF_DEFAULT, the classname lookup then fails on an item definition that is
+// not one, and the mission was skipped entirely, so the sniper stood where he
+// shopped for the rest of the mission. A sniper carrying the default primary is
+// carrying the stock rifle: there is nothing to look up and no lookup that can fail.
 stock void PrepareCustomLoadout(int client)
 {
 	switch (TF2_GetPlayerClass(client))
@@ -135,6 +143,7 @@ stock void PrepareCustomLoadout(int client)
 	g_bHasCustomLoadout[client] = true;
 }
 
+// ResetLoadouts puts the seat back to the stock items.
 stock void ResetLoadouts(int client)
 {
 	g_bHasCustomLoadout[client] = false;
@@ -144,6 +153,11 @@ stock void ResetLoadouts(int client)
 	m_iWeaponPDA2[client] = Go_ItemDefDefault;
 }
 
+// ReapplyItemUpgrades puts back what the bot bought, weapon by weapon.
+//
+// The game hands a bot new weapons on every respawn and they come back stock, so
+// what the upgrade station wrote has to be written again. A zero index is the end
+// of the list: the rest of the array is the same.
 stock void ReapplyItemUpgrades(int client, int primary, int secondary, int melee)
 {
 	int i;
@@ -182,8 +196,10 @@ stock void ReapplyItemUpgrades(int client, int primary, int secondary, int melee
 	}
 }
 
+// GiveGoldPanStats puts a killstreak on a weapon, drawn rather than chosen.
 stock void GiveGoldPanStats(int weapon)
 {
+	// These may need to become arrays if the effect indexes update in the future.
 	int sheen = GetRandomInt(1, 7);
 	int killstreaker = GetRandomInt(2002, 2008);
 	TF2Attrib_SetByName(weapon, "item style override", 0.0);
@@ -192,6 +208,11 @@ stock void GiveGoldPanStats(int weapon)
 	TF2Attrib_SetByName(weapon, "killstreak effect", float(killstreaker));
 }
 
+// GetRandomWeaponForClass draws one item out of the pool for that class and slot.
+//
+// The pools are the plugin's own lists, index for index. The spy's are filed one
+// slot along from where they are asked for, which is how the plugin has always read
+// them.
 stock int GetRandomWeaponForClass(const char[] class, const char[] slot)
 {
 	if (StrEqual(class, "scout", false))
@@ -349,17 +370,27 @@ stock int GetRandomWeaponForClass(const char[] class, const char[] slot)
 	return -1;
 }
 
+// LoadLoadoutFunctions puts the command the bots use on the console.
 stock void LoadLoadoutFunctions()
 {
 	RegConsoleCmd("sm_redbot_upgraded", Command_BoughtUpgrades);
 }
 
+// CommandBoughtUpgrades remembers what the upgrade station wrote on this bot's
+// weapons.
+//
+// The bot says so itself: the station is a menu the bot walks through, and this is
+// the line it types when it comes out. Only worth remembering with custom loadouts
+// on, because that is the only case where the weapons are handed back rather than
+// kept.
 public Action Command_BoughtUpgrades(int client, int args)
 {
+	// Only need to remember upgrades if using custom loadouts.
 	if (!redbots_manager_use_custom_loadouts.BoolValue)
 	{
 		return Plugin_Handled;
 	}
+	// Only our bots should execute this command.
 	if (!IsFakeClient(client))
 	{
 		return Plugin_Handled;
@@ -414,6 +445,12 @@ public Action Command_BoughtUpgrades(int client, int args)
 	return Plugin_Handled;
 }
 
+// WeaponPoolCount is how many items the pool for that class and slot holds.
+//
+// It and WeaponPoolAt exist so the loadout menu can walk a pool without repeating
+// the class-and-slot chain a third time. The menu used to carry its own copy of
+// it, twenty seven blocks of the same four lines; the pools live here, so the way
+// into them does too.
 stock int WeaponPoolCount(const char[] class, const char[] slot)
 {
 	if (StrEqual(class, "scout", false))
@@ -566,6 +603,7 @@ stock int WeaponPoolCount(const char[] class, const char[] slot)
 	return 0;
 }
 
+// WeaponPoolAt is one item out of that pool.
 stock int WeaponPoolAt(const char[] class, const char[] slot, int index)
 {
 	if (StrEqual(class, "scout", false))
@@ -718,12 +756,25 @@ stock int WeaponPoolAt(const char[] class, const char[] slot, int index)
 	return 0;
 }
 
+// TimerGiveCustomLoadout puts the chosen weapons in a bot's hands.
+//
+// A tenth of a second after the spawn rather than on it: the game hands out its
+// own items on spawn, and anything given before that is thrown away.
+//
+// The three weapon entities are kept because the upgrades have to be put back onto
+// them afterwards. PDA2 is left out of that: it does not take upgrades.
+//
+// The attribute fixes are only applied on a bot that has not shopped yet, because
+// the upgrade station rewrites them anyway and doing it every spawn is work for
+// nothing.
 public Action Timer_GiveCustomLoadout(Handle timer, int client)
 {
 	if (!IsClientInGame(client))
 	{
 		return Plugin_Stop;
 	}
+	// These store weapon entity indexes so we can pass them later. PDA2 is
+	// excluded as it does not currently get upgrades.
 	int primary = -1;
 	int secondary = -1;
 	int melee = -1;
@@ -742,10 +793,12 @@ public Action Timer_GiveCustomLoadout(Handle timer, int client)
 				{
 					case 730:
 					{
+						// Beggar's Bazooka: prevent overloading.
 						TF2Attrib_SetByName(primary, "auto fires when full", 1.0);
 					}
 					case 996:
 					{
+						// Loose Cannon: prevent charging.
 						TF2Attrib_SetByName(primary, "grenade launcher mortar mode", 0.0);
 					}
 				}
@@ -767,6 +820,7 @@ public Action Timer_GiveCustomLoadout(Handle timer, int client)
 			secondary = GiveItemToPlayer(client, itemClassname, m_iWeaponSecondary[client], 1, 6);
 			if (!g_bHasBoughtUpgrades[client] && StrEqual(itemClassname, "tf_weapon_pipebomblauncher"))
 			{
+				// Instant fire stickies.
 				TF2Attrib_SetByName(secondary, "stickybomb charge rate", 0.0);
 			}
 		}
@@ -788,6 +842,8 @@ public Action Timer_GiveCustomLoadout(Handle timer, int client)
 			{
 				case 1071:
 				{
+					// A blunt way to check, but these attributes should not be
+					// written every spawn.
 					if (!g_bHasBoughtUpgrades[client])
 					{
 						GiveGoldPanStats(melee);
@@ -818,10 +874,15 @@ public Action Timer_GiveCustomLoadout(Handle timer, int client)
 	{
 		ReapplyItemUpgrades(client, primary, secondary, melee);
 	}
+	//  Certain weapons or upgrades may have changed the health and the ammo
+	//
+	// 	So both are refilled completely, though the health may end up lower than it
+	// 	was if a weapon's attribute lowered the maximum.
 	for (int i = TF_AMMO_PRIMARY; i < TF_AMMO_COUNT; i++)
 	{
 		GivePlayerAmmo(client, 1000, i, true);
 	}
+	// For players, this is calculated max health.
 	int maxHealth = TF2Util_GetEntityMaxHealth(client);
 	if (GetClientHealth(client) != maxHealth)
 	{

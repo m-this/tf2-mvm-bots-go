@@ -13,12 +13,18 @@
 
 #define SHIELD_FIGHT_RANGE (1200.0)
 
+// ShouldDeployUber is whether to fire the charge now.
+//
+// Every branch wants a patient. A medic with nobody to heal has nothing to spend a
+// charge on, and the one who should be saving himself is running, not ubering into an
+// empty corridor.
 stock bool ShouldDeployUber(int client, int medigun, int patient)
 {
 	if ((medigun == -1) || (TF2Util_GetWeaponID(medigun) != TF_WEAPON_MEDIGUN))
 	{
 		return false;
 	}
+	// Already spending it
 	if (GetEntProp(medigun, Prop_Send, "m_bChargeRelease") != 0)
 	{
 		return false;
@@ -33,6 +39,7 @@ stock bool ShouldDeployUber(int client, int medigun, int patient)
 	{
 		return false;
 	}
+	// A charge spent on a patient the medic is not connected to is a charge spent on the medic alone
 	if (GetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget") != patient)
 	{
 		return false;
@@ -40,6 +47,7 @@ stock bool ShouldDeployUber(int client, int medigun, int patient)
 	float patientOrigin[3];
 	patientOrigin = WorldSpaceCenter(patient);
 	int enemies = CountEnemiesNearPosition(client, patientOrigin, UBER_FIGHT_RANGE);
+	// Nothing to spend it on, whatever the medigun is
 	if (enemies < 1)
 	{
 		return false;
@@ -48,6 +56,8 @@ stock bool ShouldDeployUber(int client, int medigun, int patient)
 	{
 		case MEDIGUN_CRITBOOST:
 		{
+			//  Crits are damage the patient has to deliver himself, so the patient has to be
+			// 		shooting. A giant counts for the crowd on its own: it is what the crits are for
 			if (GetTimeSinceWeaponFired(patient) > UBER_PATIENT_FIRING_TIME)
 			{
 				return false;
@@ -60,16 +70,23 @@ stock bool ShouldDeployUber(int client, int medigun, int patient)
 		}
 		case MEDIGUN_MEGAHEAL:
 		{
+			// It heals rather than saves, so it is spent on damage taken rather than on death
 			return (HealthRatio(patient) < UBER_MEGAHEAL_HEALTH_RATIO) || (HealthRatio(client) < UBER_MEGAHEAL_HEALTH_RATIO);
 		}
 		case MEDIGUN_RESIST:
 		{
+			// A quarter of a meter is cheap enough to spend on anybody taking fire
 			return (HealthRatio(patient) < 1.0) || (HealthRatio(client) < 1.0);
 		}
 	}
+	//  Stock, and the one case where the game's own rule is nearly right. It is kept, and moved
+	// 	off the floor: waiting for the last of the patient's health spends the charge on the retreat
+	// 	rather than on the fight it was built for
 	return (HealthRatio(patient) < UBER_PANIC_HEALTH_RATIO) || (HealthRatio(client) < UBER_PANIC_HEALTH_RATIO);
 }
 
+// MedicProjectileShield puts it up when it is full and there is something to put
+// it in front of.
 stock void MedicProjectileShield(int actor, int patient)
 {
 	if (!Feature(FEATURE_MEDIC_SHIELD))
@@ -80,6 +97,7 @@ stock void MedicProjectileShield(int actor, int patient)
 	{
 		return;
 	}
+	// Somewhere worth putting it: the fight the patient is in, or the one the medic is in himself
 	float where[3];
 	where = WorldSpaceCenter(actor);
 	if (IsValidClientIndex(patient) && IsPlayerAlive(patient))
@@ -90,10 +108,16 @@ stock void MedicProjectileShield(int actor, int patient)
 	{
 		return;
 	}
+	//  Said out loud, because a behaviour nobody can see fire is a behaviour nobody can measure
+	//
+	// 	The first arm of this could not be read: every number sat inside the baseline's spread, which
+	// 	means either the shield does nothing or it never went up, and there was no way to tell those
+	// 	apart.
 	LogMessage("Shield: %N puts it up, rage %.0f", actor, TF2_GetRageMeter(actor));
 	VS_PressSpecialFireButton(actor);
 }
 
+// HealthRatio is how much of his health the client has left.
 stock float HealthRatio(int client)
 {
 	int maxHealth = TEMP_GetPlayerMaxHealth(client);

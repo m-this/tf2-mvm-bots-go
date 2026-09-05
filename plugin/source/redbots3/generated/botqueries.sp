@@ -4,11 +4,14 @@
 
 int s_iMaxEntCount = -1;
 
+// GetDesiredPathLookAheadRange is how far along the path a bot of that size
+// aims.
 stock float GetDesiredPathLookAheadRange(int client)
 {
 	return tf_bot_path_lookahead_range.FloatValue * BaseAnimating_GetModelScale(client);
 }
 
+// IsAmmoLow says the bot is worth sending to a resupply.
 stock bool IsAmmoLow(int client)
 {
 	int primary = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
@@ -29,27 +32,33 @@ stock bool IsAmmoLow(int client)
 	return BaseCombatCharacter_GetAmmoCount(client, TF_AMMO_METAL) <= 0;
 }
 
+// IsAmmoFull says a resupply has nothing left to give.
 stock bool IsAmmoFull(int client)
 {
 	bool isPrimaryFull = BaseCombatCharacter_GetAmmoCount(client, TF_AMMO_PRIMARY) >= TF2Util_GetPlayerMaxAmmo(client, TF_AMMO_PRIMARY);
 	bool isSecondaryFull = BaseCombatCharacter_GetAmmoCount(client, TF_AMMO_SECONDARY) >= TF2Util_GetPlayerMaxAmmo(client, TF_AMMO_SECONDARY);
 	if (TF2_GetPlayerClass(client) == TFClass_Engineer)
 	{
+		// In addition, I want some metal as well.
 		return (BaseCombatCharacter_GetAmmoCount(client, TF_AMMO_METAL) >= 200) && isPrimaryFull && isSecondaryFull;
 	}
 	return isPrimaryFull && isSecondaryFull;
 }
 
+// ResetIntentionInterface makes the bot decide again from the top.
 stock void ResetIntentionInterface(int botEntidx)
 {
 	CBaseNPC_GetNextBotOfEntity(botEntidx).GetIntentionInterface().Reset();
 }
 
+// UpdateLookAroundForEnemies turns the bot's own looking on or off, so a
+// behaviour that aims for itself is not fought by the game.
 stock void UpdateLookAroundForEnemies(int client, bool bVal)
 {
 	SetLookingAroundForEnemies(client, bVal);
 }
 
+// IsCombatWeapon says the thing in hand can hurt somebody.
 stock bool IsCombatWeapon(int client, int weapon)
 {
 	if (!IsValidEntity(weapon))
@@ -69,6 +78,16 @@ stock bool IsCombatWeapon(int client, int weapon)
 	return true;
 }
 
+// GetDesiredAttackRange is the distance the bot closes to before it settles.
+//
+// The Pyro closes whatever is in his hands, because the flamethrower is the only
+// reason he is here. The weapon is chosen by range and the range he closes to is
+// chosen by the weapon, and letting those two answer separately parked him between
+// the two distances holding the wrong gun.
+//
+// The rocket's twelve fifty is how far out a rocket is worth firing, which is not
+// as far as it will travel: everything a defender shoots at is walking, and past
+// that range it has left the splash before the rocket arrives.
 stock float GetDesiredAttackRange(int client)
 {
 	int weapon = BaseCombatCharacter_GetActiveWeapon(client);
@@ -76,6 +95,7 @@ stock float GetDesiredAttackRange(int client)
 	{
 		return 0.0;
 	}
+	// The loadout the server handed out is more specific than the weapon's ID.
 	float tunedDesired;
 	float tunedMax;
 	bool found = GetTunedWeaponRanges(weapon, tunedDesired, tunedMax);
@@ -112,6 +132,8 @@ stock float GetDesiredAttackRange(int client)
 		}
 		return 1250.0;
 	}
+	// The same answer as the Iron Bomber, which is the launcher this loadout
+	// actually hands out.
 	if (weaponID == TF_WEAPON_GRENADELAUNCHER)
 	{
 		return DEMO_PIPE_SETTLE;
@@ -119,36 +141,46 @@ stock float GetDesiredAttackRange(int client)
 	return 500.0;
 }
 
+// ShouldBuybackIntoGame is the buyback decision, rolled once per death.
 stock bool ShouldBuybackIntoGame(int client)
 {
+	// Scouts respawn very quickly.
 	if (TF2_GetPlayerClass(client) == TFClass_Scout)
 	{
 		return false;
 	}
+	// Can't afford a buyback.
 	if (TF2_GetCurrency(client) < MVM_BUYBACK_COST_PER_SEC)
 	{
 		return false;
 	}
+	// Not opportunistic if we're about to fail.
 	if (IsFailureImminent(client))
 	{
 		return true;
 	}
+	// We're being revived.
 	if (g_bIsBeingRevived[client])
 	{
 		return false;
 	}
+	// Based on our rolled number, decide to buyback.
 	return g_iBuybackNumber[client] <= redbots_manager_bot_buyback_chance.IntValue;
 }
 
+// ShouldUpgradeMidRound says the bot spawned into a wave and should shop first.
 stock bool ShouldUpgradeMidRound(int client)
 {
+	// If we were revived, we should not bother.
 	if (!TF2Util_IsPointInRespawnRoom(WorldSpaceCenter(client)))
 	{
 		return false;
 	}
+	// Based on our rolled number from spawn, decide to buy upgrades now.
 	return (g_iBuyUpgradesNumber[client] > 0) && (g_iBuyUpgradesNumber[client] <= redbots_manager_bot_buy_upgrades_chance.IntValue);
 }
 
+// CanBuyUpgradesNow says shopping is affordable and not suicidal.
 stock bool CanBuyUpgradesNow(int client)
 {
 	if (TF2_GetCurrency(client) < 25)
@@ -162,6 +194,8 @@ stock bool CanBuyUpgradesNow(int client)
 	return true;
 }
 
+// TransientlyConsistentRandomValue is the game's own trick: a number that is
+// random across bots and stable for a period, so a decision does not flicker.
 stock float TransientlyConsistentRandomValue(int client, float period = 10.0, int seedValue = 0)
 {
 	CTFNavArea area = CBaseCombatCharacter(client).GetLastKnownArea();
@@ -173,8 +207,10 @@ stock float TransientlyConsistentRandomValue(int client, float period = 10.0, in
 	return FloatAbs(Cosine(float(seedValue + (client * area.GetID() * timeMod))));
 }
 
+// IsFailureImminent says a robot is about to pick up a bomb next to the hatch.
 stock bool IsFailureImminent(int client)
 {
+	// TODO: factor in tank closest to hatch for certain classes
 	int flag = FindBombNearestToHatch();
 	if (flag == -1)
 	{
@@ -182,20 +218,25 @@ stock bool IsFailureImminent(int client)
 	}
 	float bombPosition[3];
 	bombPosition = WorldSpaceCenter(flag);
+	// Bomb is far and not a threat.
 	if (GetVectorDistance(bombPosition, GetBombHatchPosition()) > BOMB_HATCH_RANGE_CRITICAL)
 	{
 		return false;
 	}
 	int closestToHatch = FindBotNearestToBombNearestToHatch(client);
+	// No robot near the bomb close to the hatch, we're probably okay for now.
 	if (closestToHatch == -1)
 	{
 		return false;
 	}
 	float threatOrigin[3];
 	GetClientAbsOrigin(closestToHatch, threatOrigin);
+	// Robot about to pick up a bomb very close to the hatch, we're in danger!
 	return GetVectorDistance(threatOrigin, bombPosition) <= 800.0;
 }
 
+// GetFlameThrowerAimForTank aims a bit high: since the March 28 2018 update
+// flamethrower damage is calculated on the oldest particles.
 stock void GetFlameThrowerAimForTank(int tank, float aimPos[3])
 {
 	for (int i = 0; i < 3; i++)
@@ -207,8 +248,11 @@ stock void GetFlameThrowerAimForTank(int tank, float aimPos[3])
 	return;
 }
 
+// ShouldUseTeleporter says the ride beats the walk by enough to bother.
 stock bool ShouldUseTeleporter(int client)
 {
+	// No bomb in play, so there is no fight to be late for and no reason to
+	// leave the ground.
 	BombInfo_t bombinfo;
 	bool found = GetBombInfo(bombinfo);
 	if (!found)
@@ -228,6 +272,7 @@ stock bool ShouldUseTeleporter(int client)
 	return (GetTravelDistanceToBombTarget(myArea) + TELEPORTER_WORTH_RIDING) < GetTravelDistanceToBombTarget(view_as<CTFNavArea>(bombArea));
 }
 
+// GetCountOfBotsWithNamedAction is how many defenders are doing that right now.
 stock int GetCountOfBotsWithNamedAction(const char[] name, int ignore = -1)
 {
 	int count = 0;
@@ -241,6 +286,8 @@ stock int GetCountOfBotsWithNamedAction(const char[] name, int ignore = -1)
 	return count;
 }
 
+// HealerOrThreat swaps a player threat for whoever is healing it, when the bot
+// can see the healer.
 stock CKnownEntity HealerOrThreat(INextBot bot, const CKnownEntity threat)
 {
 	if ((threat == NULL_KNOWN_ENTITY) || !BaseEntity_IsPlayer(threat.GetEntity()))
@@ -250,6 +297,7 @@ stock CKnownEntity HealerOrThreat(INextBot bot, const CKnownEntity threat)
 	return GetHealerOfThreat(bot, threat);
 }
 
+// GetHealerOfThreat is the first visible medic on the threat, or the threat.
 stock CKnownEntity GetHealerOfThreat(INextBot bot, const CKnownEntity threat)
 {
 	if (threat == NULL_KNOWN_ENTITY)
@@ -272,6 +320,7 @@ stock CKnownEntity GetHealerOfThreat(INextBot bot, const CKnownEntity threat)
 	return threat;
 }
 
+// SelectCloserThreat is whichever of the two the bot could touch first.
 stock CKnownEntity SelectCloserThreat(INextBot bot, const CKnownEntity threat1, const CKnownEntity threat2)
 {
 	float rangeSq1 = bot.GetRangeSquaredTo(threat1.GetEntity());
@@ -283,6 +332,10 @@ stock CKnownEntity SelectCloserThreat(INextBot bot, const CKnownEntity threat1, 
 	return threat2;
 }
 
+// OpportunisticallyUseWeaponAbilities fires the weapon's own gimmick when the
+// moment fits: the Heatmaker's focus while scoped on a visible threat, the
+// Phlogistinator's Mmmph in reach, and the minigun's rage on a flag carrier at
+// the hatch.
 stock bool OpportunisticallyUseWeaponAbilities(int client, int activeWeapon, INextBot bot, const CKnownEntity threat)
 {
 	if (threat == NULL_KNOWN_ENTITY)
@@ -294,6 +347,7 @@ stock bool OpportunisticallyUseWeaponAbilities(int client, int activeWeapon, INe
 		return false;
 	}
 	int weaponID = TF2Util_GetWeaponID(activeWeapon);
+	// Hitmans Heatmaker.
 	if ((weaponID == TF_WEAPON_SNIPERRIFLE) && TF2_IsPlayerInCondition(client, TFCond_Slowed) && threat.IsVisibleRecently())
 	{
 		if ((TF2_GetRageMeter(client) >= 0.0) && !TF2_IsRageDraining(client))
@@ -303,6 +357,7 @@ stock bool OpportunisticallyUseWeaponAbilities(int client, int activeWeapon, INe
 		}
 	}
 	int iThreat = threat.GetEntity();
+	// Phlogistinator.
 	if ((weaponID == TF_WEAPON_FLAMETHROWER) && bot.IsRangeLessThan(iThreat, FLAMETHROWER_REACH_RANGE) && !TF2_IsCritBoosted(client))
 	{
 		if ((TF2_GetRageMeter(client) >= 100.0) && !TF2_IsRageDraining(client))
@@ -327,6 +382,12 @@ stock bool OpportunisticallyUseWeaponAbilities(int client, int activeWeapon, INe
 	return false;
 }
 
+// MonitorKnownEntities widens the game's own vision with a plain line-of-sight
+// check.
+//
+// IVision::UpdateKnownEntities only collects entities in the bot's FOV, so a known
+// entity that leaves it goes obsolete after ten seconds and is dropped. This keeps
+// everything the bot could actually see on the list.
 stock void MonitorKnownEntities(int client, IVision vision)
 {
 	if (nb_blind.BoolValue)
@@ -365,16 +426,21 @@ stock void MonitorKnownEntities(int client, IVision vision)
 			CKnownEntity known = vision.GetKnown(i);
 			if (known != NULL_KNOWN_ENTITY)
 			{
+				// We already know about this entity and we can currently
+				// see it.
 				known.UpdatePosition();
 			}
 			else
 			{
+				// We didn't know about it but we can see it now,
+				// recognize it.
 				vision.AddKnownEntity(i);
 			}
 		}
 	}
 }
 
+// IsThrowableReady says the jar or cleaver has recharged.
 stock bool IsThrowableReady(int client, int weapon)
 {
 	switch (TF2Util_GetWeaponID(weapon))
@@ -391,8 +457,18 @@ stock bool IsThrowableReady(int client, int weapon)
 	return HasAmmo(weapon);
 }
 
+// EquipBestWeaponForThreat is the whole weapon choice, class by class.
+//
+// The default is the biggest gun that still fires; the classes then correct it:
+// the Demoman's launcher rule and the reload trap of eight spent bombs, the
+// medigun that is the weapon while the syringe gun is only what he holds, the
+// Scout's milk, the Soldier's shotgun that lost the A/B (damage 16890 to 10886
+// over six waves on Decoy, so the rocket stays), the Sniper's bow and pee, the
+// Pyro closing on soldiers and demomen whatever else says. The last block is the
+// one place that asks whether the choice can still shoot.
 stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 {
+	// Don't care about any weapon restrictions here.
 	int primary = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
 	if (!IsCombatWeapon(client, primary))
 	{
@@ -403,6 +479,7 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 	{
 		secondary = -1;
 	}
+	// Don't care about mvm-specific rules here.
 	int melee = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
 	if (!IsCombatWeapon(client, melee))
 	{
@@ -434,6 +511,9 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 	{
 		primary = -1;
 	}
+	//  TFWeaponSlot_Secondary is 1 and TF_AMMO_SECONDARY is 2, so this once
+	// 	read primary ammo and retired the secondary along with the primary. A
+	// 	Heavy whose minigun ran dry was left with no shotgun.
 	if (BaseCombatCharacter_GetAmmoCount(client, TF_AMMO_SECONDARY) <= 0)
 	{
 		secondary = -1;
@@ -444,12 +524,19 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 	{
 		case TFClass_DemoMan:
 		{
+			//  The stickybomb launcher, which this switch used to pass over in
+			// 		silence: the Demoman was listed with the classes that only ever want
+			// 		their primary.
 			float threatOrigin[3];
 			threat.GetLastKnownPosition(threatOrigin);
 			float myOrigin[3];
 			GetClientAbsOrigin(client, myOrigin);
 			float threatRange = GetVectorDistance(myOrigin, threatOrigin);
 			bool wantSticky = (secondary != -1) && ShouldUseStickyLauncher(client, secondary, threatEnt, threatRange);
+			//  An empty launcher is not the weapon that lands, whatever the rule
+			// 		above says: holding eight spent bombs through the reload is a second
+			// 		and a half of nothing with a loaded grenade launcher in the other
+			// 		hand.
 			if (wantSticky && (Clip1(secondary) > 0))
 			{
 				gun = secondary;
@@ -465,6 +552,9 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 		}
 		case TFClass_Medic:
 		{
+			//  The medigun is the weapon, and the syringe gun is what he holds
+			// 		when there is nobody to point it at. Reported after the 1.3
+			// 		play-test: "the Medics always keep using their Syringe Guns".
 			if ((secondary != -1) && MedicHasPatient(client, secondary))
 			{
 				gun = secondary;
@@ -477,6 +567,7 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 				int weaponID = TF2Util_GetWeaponID(secondary);
 				if (((weaponID == TF_WEAPON_JAR_MILK) || (weaponID == TF_WEAPON_CLEAVER)) && IsThrowableReady(client, secondary) && BaseEntity_IsPlayer(threatEnt) && !TF2_IsInvulnerable(threatEnt))
 				{
+					// Always throw milk at them if we can.
 					gun = secondary;
 				}
 				else
@@ -488,6 +579,12 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 		}
 		case TFClass_Soldier:
 		{
+			//  Handing him the shotgun inside his own blast was tried, with the
+			// 		aim change in botaim, and the pair lost. A rocket that hurts him also
+			// 		kills what is standing on him, and a shotgun does not.
+			//
+			// 		Not against uber threats, or the detour at
+			// 		DHookCallback_IsIgnored_Pre would flick them ignored and back.
 			if ((gun != -1) && (Clip1(gun) == 0))
 			{
 				if ((secondary != -1) && (Clip1(secondary) != 0) && (!BaseEntity_IsPlayer(threatEnt) || !TF2_IsInvulnerable(threatEnt)))
@@ -506,11 +603,13 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 		{
 			if ((secondary != -1) && (TF2Util_GetWeaponID(secondary) == TF_WEAPON_JAR) && IsThrowableReady(client, secondary) && BaseEntity_IsPlayer(threatEnt) && !TF2_IsInvulnerable(threatEnt))
 			{
+				// Always throw pee at them if we can.
 				gun = secondary;
 			}
 			else
 				if ((primary != -1) && (TF2Util_GetWeaponID(primary) == TF_WEAPON_COMPOUND_BOW))
 				{
+					// Always use the bow, unless it has no ammo.
 					gun = primary;
 				}
 				else
@@ -528,6 +627,7 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 		{
 			if ((secondary != -1) && (TF2Util_GetWeaponID(secondary) == TF_WEAPON_JAR_GAS) && IsThrowableReady(client, secondary) && BaseEntity_IsPlayer(threatEnt) && !TF2_IsInvulnerable(threatEnt))
 			{
+				// Always throw gas.
 				gun = secondary;
 			}
 			else
@@ -550,6 +650,10 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 			}
 		}
 	}
+	//  Whatever the rules above picked, never walk at a robot holding
+	// 	something that cannot fire. The per class cases only ever choose between
+	// 	weapons; this is the one place that asks whether the choice can still
+	// 	shoot. Melee always can.
 	if ((gun != -1) && !IsMeleeWeapon(gun) && !HasAmmo(gun))
 	{
 		if ((primary != -1) && HasAmmo(primary))
@@ -573,6 +677,15 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 	}
 }
 
+// UtilizeCompressionBlast is the pyro's airblast, in two skill steps.
+//
+// Step one shoves what is worth shoving: an uber that cannot be shot, a demoman
+// mid-charge, and the bomb carrier standing on the hatch. Step two is the
+// projectile reflect, gated by a chance the transient draw keeps stable for a
+// second so the decision does not flicker inside one approach.
+//
+// The attack button is released before every blast: holding fire and pressing
+// altfire in the same frame is a flamethrower that does neither.
 stock void UtilizeCompressionBlast(int client, INextBot bot, const CKnownEntity threat, int enhancedStage = 0)
 {
 	if (threat == NULL_KNOWN_ENTITY)
@@ -588,22 +701,26 @@ stock void UtilizeCompressionBlast(int client, INextBot bot, const CKnownEntity 
 	{
 		float threatOrigin[3];
 		GetClientAbsOrigin(iThreat, threatOrigin);
+		// Make sure we're close enough to actually airblast them.
 		if (bot.IsRangeLessThanEx(threatOrigin, 250.0))
 		{
 			if (TF2_IsInvulnerable(iThreat))
 			{
+				// Shove ubers away from us.
 				g_arrExtraButtons[client].ReleaseButtons(IN_ATTACK);
 				VS_PressAltFireButton(client);
 				return;
 			}
 			if (TF2_IsPlayerInCondition(iThreat, TFCond_Charging))
 			{
+				// Shove chargers away from us.
 				g_arrExtraButtons[client].ReleaseButtons(IN_ATTACK);
 				VS_PressAltFireButton(client);
 				return;
 			}
 			if (TF2_HasTheFlag(iThreat) && (GetVectorDistance(threatOrigin, GetBombHatchPosition()) <= 100.0))
 			{
+				// Shove the bomb carrier off the hatch.
 				g_arrExtraButtons[client].ReleaseButtons(IN_ATTACK);
 				VS_PressAltFireButton(client);
 				return;
@@ -618,6 +735,7 @@ stock void UtilizeCompressionBlast(int client, INextBot bot, const CKnownEntity 
 	{
 		return;
 	}
+	// Enhanced projectile airblast.
 	int myTeam = GetClientTeam(client);
 	float myEyePos[3];
 	GetClientEyePosition(client, myEyePos);
@@ -641,6 +759,7 @@ stock void UtilizeCompressionBlast(int client, INextBot bot, const CKnownEntity 
 		BaseEntity_GetLocalOrigin(ent, origin);
 		float vec[3];
 		MakeVectorFromPoints(origin, myEyePos, vec);
+		// Airblast the projectile if we are actually facing towards it.
 		if (GetVectorLength(vec) < 150.0)
 		{
 			g_arrExtraButtons[client].ReleaseButtons(IN_ATTACK);

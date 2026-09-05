@@ -5,6 +5,12 @@
 #define MAX_APPROACH_SAMPLES (24)
 #define NEST_SIGHT_SCORE (80.0)
 
+// CollectBombApproachAreas is the ground the robots cross to reach the target,
+// sampled rather than walked.
+//
+// The mesh around a nest holds hundreds of areas and the sight test is a trace per
+// pair, so the whole list is a frame the watchdog kills. A stride over it is the same
+// shape of answer for a fixed price.
 stock void CollectBombApproachAreas(const float target[3], float sentryRange, ArrayList out)
 {
 	AreasCollector areas = TheNavMesh.CollectAreasInRadius(target, sentryRange);
@@ -30,6 +36,8 @@ stock void CollectBombApproachAreas(const float target[3], float sentryRange, Ar
 	delete areas;
 }
 
+// NestSightScore is how much of the sampled approach this area can see, as a
+// share of the whole.
 stock float NestSightScore(CTFNavArea area, ArrayList approach)
 {
 	if ((approach == null) || (approach.Length == 0))
@@ -47,6 +55,11 @@ stock float NestSightScore(CTFNavArea area, ArrayList approach)
 	return (float(seen) / float(approach.Length)) * NEST_SIGHT_SCORE;
 }
 
+// ScoreNestArea is what one piece of ground is worth to this engineer.
+//
+// The range term is a distance from ideal rather than a distance: a sentry too close
+// to the bomb is as wrong as one too far, and the ideal is nearer for a Gunslinger,
+// whose mini is cheap enough to put in the fight.
 stock float ScoreNestArea(int client, CTFNavArea area, const float target[3], float sentryRange, ArrayList approach = null)
 {
 	bool disposable = TF2_IsGunslingerEquipped(client);
@@ -74,6 +87,7 @@ stock float ScoreNestArea(int client, CTFNavArea area, const float target[3], fl
 	return score;
 }
 
+// NestCrowdingPenalty is what another engineer already standing here costs.
 stock float NestCrowdingPenalty(int client, CTFNavArea area, const float center[3])
 {
 	float penalty = 0.0;
@@ -106,10 +120,13 @@ stock float NestCrowdingPenalty(int client, CTFNavArea area, const float center[
 	return penalty;
 }
 
+// BestNestArea is the highest scoring of the areas offered, with the approach
+// sampled once for the whole list rather than per area.
 stock CNavArea BestNestArea(int client, ArrayList areas, const float target[3], float sentryRange)
 {
 	CNavArea best = NULL_AREA;
 	float bestScore = 0.0;
+	// The ground the robots cross to reach the target, sampled once for the whole list
 	ArrayList approach = new ArrayList();
 	CollectBombApproachAreas(target, sentryRange, approach);
 	for (int i = 0; i < areas.Length; i++)

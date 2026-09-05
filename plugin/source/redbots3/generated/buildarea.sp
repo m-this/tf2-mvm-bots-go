@@ -2,6 +2,7 @@
 
 #define NEST_HATCH_CLEARANCE (180.0)
 
+// PickBuildArea is the ground this engineer should hold.
 stock CNavArea PickBuildArea(int client, float sentryRange = 1300.0)
 {
 	int areaCount = TheNavAreas.Count;
@@ -38,10 +39,15 @@ stock CNavArea PickBuildArea(int client, float sentryRange = 1300.0)
 	{
 		return NULL_AREA;
 	}
+	// Areas forward of the bomb within some distance and visible to bomb.
 	ArrayList forwardVisibleAreas = new ArrayList();
+	// Areas forward of the bomb but not necessarily visible.
 	ArrayList forwardAreas = new ArrayList();
+	// Areas visible to the bomb but not nescessarily forward of it.
 	ArrayList visibleAreasAround = new ArrayList();
+	// Any of the above, but further up the path than an engineer should nest.
 	ArrayList areasTooFarUp = new ArrayList();
+	// On top of the bomb, which is a nest only when the map offers nothing else.
 	ArrayList areasTooClose = new ArrayList();
 	float limit = NestDistanceLimit();
 	for (int i = 0; i < areaCount; i++)
@@ -51,14 +57,21 @@ stock CNavArea PickBuildArea(int client, float sentryRange = 1300.0)
 		{
 			continue;
 		}
+		// Area in spawn
 		if (area.HasAttributeTF(BLUE_SPAWN_ROOM) || area.HasAttributeTF(RED_SPAWN_ROOM))
 		{
 			continue;
 		}
+		//  BLOCKED is the one nav attribute that changes during a mission: gates and
+		// 		func_nav_blocker set it. PickBuildAreaPreRound has always checked it and this one never
+		// 		did, so a nest picked after a gate closed could sit on ground the mesh calls unreachable
 		if (area.HasAttributeTF(BLOCKED))
 		{
 			continue;
 		}
+		// TODO
+		// Better solution because this will break on all non mvm maps.
+		// Most likely areachable area
 		if (!area.HasAttributeTF(BOMB_DROP))
 		{
 			continue;
@@ -69,6 +82,9 @@ stock CNavArea PickBuildArea(int client, float sentryRange = 1300.0)
 		{
 			continue;
 		}
+		//  Further up the path than an engineer nests. Kept, because the bomb spends the start of
+		// 		every wave up there and this is where the forward lists would otherwise be empty: better a
+		// 		nest too far forward than an engineer that never builds one
 		if ((limit > 0.0) && (bombTargetDistanceAtArea > limit))
 		{
 			areasTooFarUp.Push(view_as<int>(area));
@@ -82,6 +98,10 @@ stock CNavArea PickBuildArea(int client, float sentryRange = 1300.0)
 		{
 			continue;
 		}
+		//  Close enough to the bomb that the sentry never uses its range
+		// 		Kept rather than dropped, and kept last: a nest on top of the bomb is bad and no nest at
+		// 		all is worse, and a map whose every area near the bomb is this close is a map where the
+		// 		engineer would otherwise stand around with 300 metal
 		if (!IsNestRangeSane(areaDistanceToBomb, sentryRange))
 		{
 			areasTooClose.Push(view_as<int>(area));
@@ -138,6 +158,12 @@ stock CNavArea PickBuildArea(int client, float sentryRange = 1300.0)
 	return randomArea;
 }
 
+// PickBuildAreaPreRound is the same question before a wave starts, when there is no
+// bomb to measure from.
+//
+// The hatch stands in for it: that is where the bomb ends up, so ground that covers
+// the hatch is ground that will matter. The tiers are one shorter than the wave-time
+// ones, because "forward of the bomb" has no meaning yet.
 stock CNavArea PickBuildAreaPreRound(int client, float sentryRange = 1300.0)
 {
 	int areaCount = TheNavAreas.Count;
@@ -159,9 +185,13 @@ stock CNavArea PickBuildAreaPreRound(int client, float sentryRange = 1300.0)
 	{
 		return hinted;
 	}
+	// Near enough to the hatch to nest, and with a line to it
 	ArrayList coveringAreas = new ArrayList();
+	// Near enough to nest, seeing the hatch or not
 	ArrayList nestingAreas = new ArrayList();
+	// On the path, but further up it than an engineer should nest
 	ArrayList areasTooFarUp = new ArrayList();
+	// On top of the hatch, which is a nest only when the map offers nothing else
 	ArrayList areasTooClose = new ArrayList();
 	for (int i = 0; i < areaCount; i++)
 	{
@@ -178,6 +208,8 @@ stock CNavArea PickBuildAreaPreRound(int client, float sentryRange = 1300.0)
 		{
 			continue;
 		}
+		// TODO
+		// Better solution because this will break on all non mvm maps.
 		if (!area.HasAttributeTF(BOMB_DROP))
 		{
 			continue;
@@ -195,6 +227,9 @@ stock CNavArea PickBuildAreaPreRound(int client, float sentryRange = 1300.0)
 		float center[3];
 		area.GetCenter(center);
 		center[2] += 50.0;
+		//  Sitting on the hatch is not nesting, whichever tier the area would have landed in
+		// 		The clearance above is a travel distance along the bomb path and says nothing about a
+		// 		ledge directly over the hatch, which is a short walk and no distance at all
 		if (!IsNestRangeSane(GetVectorDistance(center, hatch), sentryRange))
 		{
 			areasTooClose.Push(view_as<int>(area));

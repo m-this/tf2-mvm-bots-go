@@ -6,21 +6,45 @@
 
 float m_ctMedicCalled[65];
 
+// NoteMedicCall starts the clock a call runs down.
 stock void NoteMedicCall(int client)
 {
 	m_ctMedicCalled[client] = GetGameTime() + MEDIC_CALL_ANSWER_TIME;
 }
 
+// ForgetMedicCall ends it, which a death does.
 stock void ForgetMedicCall(int client)
 {
 	m_ctMedicCalled[client] = 0.0;
 }
 
+// IsCallingForMedic says the call is still running.
 stock bool IsCallingForMedic(int client)
 {
 	return m_ctMedicCalled[client] > GetGameTime();
 }
 
+// BiggestBody is which teammate a medigun is worth the most on.
+//
+// A medigun is worth what the body in front of it is worth, so it belongs on the
+// biggest one: the Heavy, and failing that whoever has the most health to work
+// with. Maximum health rather than a class table, because that follows the health
+// upgrades the team buys without anybody keeping a list up to date.
+//
+// A player outranks every body, and a player who called outranks a player who did
+// not; ranked rather than special-cased, so the tie-break at the bottom still
+// applies and the beam does not flicker between two players who both called. See
+// mvm-w9b.
+//
+// Where anybody is standing is deliberately not in this: the last ranking had a
+// "nearby wins outright" bucket and that bucket was a fixed point. The walking is
+// the game's job again. This only has to answer who.
+//
+// A patient he already has keeps the beam unless somebody is plainly worth more:
+// a switch costs the walk to the new one and the healing that is not happening
+// during it, so a tie keeps the man he has, and neither half of the ask can churn.
+// Whether somebody is a player does not flip, and a call runs down a clock and
+// does not come back on its own.
 stock int BiggestBody(int medic, int current = -1)
 {
 	int best = -1;
@@ -43,6 +67,7 @@ stock int BiggestBody(int medic, int current = -1)
 		{
 			continue;
 		}
+		// A medic healing a medic is two classes doing nothing.
 		if (TF2_GetPlayerClass(i) == TFClass_Medic)
 		{
 			continue;

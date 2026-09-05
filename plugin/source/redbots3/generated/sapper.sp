@@ -2,6 +2,10 @@
 
 int iOffsetIsEnabled = -1;
 
+// ParentEntity hangs one entity off another.
+//
+// The shipped declaration says bool and the body never returns one, so nothing can
+// read the answer and nothing does: the port says void, which is what it is.
 stock void ParentEntity(int parent, int attachment, const char[] attachPoint = "", bool maintainOffset = false)
 {
 	SetVariantString("!activator");
@@ -13,6 +17,8 @@ stock void ParentEntity(int parent, int attachment, const char[] attachPoint = "
 	}
 }
 
+// SpawnSapper puts one on a building or a player, which is how a spy's sapper is
+// made to exist without him placing it.
 stock int SpawnSapper(int owner, int entity, int weapon = -1)
 {
 	int sapper = CreateEntityByName("obj_attachment_sapper");
@@ -32,6 +38,8 @@ stock int SpawnSapper(int owner, int entity, int weapon = -1)
 	return sapper;
 }
 
+// GetCapturableAreaTrigger is the capture trigger this team may still take, and
+// -1 when there is none.
 stock int GetCapturableAreaTrigger(TFTeam team)
 {
 	int trigger = -1;
@@ -42,20 +50,25 @@ stock int GetCapturableAreaTrigger(TFTeam team)
 		{
 			break;
 		}
+		// Only want capture areas
 		if (!HasEntProp(trigger, Prop_Data, "CTriggerAreaCaptureCaptureThink"))
 		{
 			continue;
 		}
+		// Ignore disabled triggers
 		if (GetEntProp(trigger, Prop_Data, "m_bDisabled") != 0)
 		{
 			continue;
 		}
+		// Apparently some community maps don't disable the trigger when capped
 		char capPointName[512];
 		GetEntPropString(trigger, Prop_Data, "m_iszCapPointName", capPointName, 512);
+		// Trigger has no point associated with it
 		if (strlen(capPointName) < 3)
 		{
 			continue;
 		}
+		// Now find the matching control point
 		int point = -1;
 		for (;;)
 		{
@@ -80,8 +93,13 @@ stock int GetCapturableAreaTrigger(TFTeam team)
 	return -1;
 }
 
+// IsUpgradeStationEnabled says the station is switched on.
+//
+// By offset, because m_bIsEnabled has no name in the datamap: it sits a fixed
+// distance after one that does, and the offset is found once and kept.
 stock bool IsUpgradeStationEnabled(int station)
 {
+	// m_bIsEnabled
 	if (iOffsetIsEnabled == -1)
 	{
 		iOffsetIsEnabled = FindDataMapInfo(station, "m_nStartDisabled") + 28;
@@ -89,8 +107,10 @@ stock bool IsUpgradeStationEnabled(int station)
 	return GetEntData(station, iOffsetIsEnabled, 1) != 0;
 }
 
+// DereferencePointer follows a pointer one step.
 stock Address DereferencePointer(Address addr)
 {
+	// maybe someday we'll do 64-bit addresses
 	return view_as<Address>(LoadFromAddress(addr, NumberType_Int32));
 }
 

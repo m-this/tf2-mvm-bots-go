@@ -2,11 +2,15 @@
 
 #define DUMP_SPOT_AIM_RANGE (8192.0)
 
+// TraceFilterIgnorePlayers lets the ray through everybody, so the answer is a
+// point on the map and not on whoever was standing in the way.
 stock bool TraceFilter_IgnorePlayers(int entity, int mask, any data)
 {
 	return entity > MaxClients;
 }
 
+// TraceAimToWorld is where the crosshair lands, and whether it lands anywhere
+// near enough to be meant.
 stock bool TraceAimToWorld(int client, float result[3])
 {
 	bool hit;
@@ -33,6 +37,11 @@ stock bool TraceAimToWorld(int client, float result[3])
 	return true;
 }
 
+// 	CommandDumpSpot prints coordinates for a map config block
+//
+// Either the caller's feet or, with "aim" as the second argument, wherever their
+// crosshair lands. The line is printed and logged in the exact shape the config
+// file wants, so it can be pasted straight in.
 public Action Command_DumpSpot(int client, int args)
 {
 	if ((client < 1) || !IsClientInGame(client))

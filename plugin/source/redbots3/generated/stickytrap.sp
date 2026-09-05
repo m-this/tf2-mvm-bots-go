@@ -33,6 +33,7 @@ int m_iStickyTrapBombsLeft[65];
 float m_vStickyTrapSpot[65][3];
 float m_vStickyTrapPoint[65][3];
 
+// OnStart picks the ground and counts the bombs.
 public Action CTFBotStickyTrap_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
@@ -61,6 +62,7 @@ public Action CTFBotStickyTrap_OnStart(BehaviorAction action, int actor, Behavio
 	return action.Continue();
 }
 
+// Update walks in, aims at the floor and fires one bomb at a time.
 public Action CTFBotStickyTrap_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
 	m_ctStickyTrapAgain[actor] = GetGameTime() + STICKY_TRAP_COOLDOWN;
@@ -78,6 +80,9 @@ public Action CTFBotStickyTrap_Update(BehaviorAction action, int actor, float in
 		return action.Done("Nothing to lay it with");
 	}
 	INextBot myBot = CBaseNPC_GetNextBotOfEntity(actor);
+	//  Something is shooting at the bot, so the trap stops being the job
+	// 	The bombs already down are not wasted: the detonation tick blows them the moment the fight
+	// 	walks into them, whether this action laid all eight or two
 	CKnownEntity threat = myBot.GetVisionInterface().GetPrimaryKnownThreat(true);
 	if (threat != NULL_KNOWN_ENTITY)
 	{
@@ -86,6 +91,7 @@ public Action CTFBotStickyTrap_Update(BehaviorAction action, int actor, float in
 	float myOrigin[3];
 	GetClientAbsOrigin(actor, myOrigin);
 	float trapRange = GetVectorDistance(myOrigin, m_vStickyTrapSpot[actor]);
+	// Too far to aim at the ground honestly. Walk in, and give up if the walk takes the deadline
 	if (trapRange > STICKY_TRAP_MAX_RANGE)
 	{
 		if (m_flRepathTime[actor] <= GetGameTime())
@@ -96,11 +102,13 @@ public Action CTFBotStickyTrap_Update(BehaviorAction action, int actor, float in
 		m_pPath[actor].Update(myBot);
 		return action.Continue();
 	}
+	// Standing in it. Anywhere further from the trap will do, and the path back is the way it came
 	if (trapRange < STICKY_TRAP_MIN_RANGE)
 	{
 		return action.Done("Standing in my own trap");
 	}
 	TF2Util_SetPlayerActiveWeapon(actor, launcher);
+	// A fresh point for each bomb, near enough to the last that a giant takes the whole stack
 	if (IsZeroVector(m_vStickyTrapPoint[actor]))
 	{
 		float spread = 120.0;
@@ -129,6 +137,12 @@ public Action CTFBotStickyTrap_Update(BehaviorAction action, int actor, float in
 	return action.Continue();
 }
 
+// Spot is the ground worth trapping, which for a defender is wherever the bomb is.
+//
+// Robots escort it, so it is the one piece of ground every robot on the map is
+// walking towards, and the carrier stands on it while the rest of them fight around
+// it. With no bomb in play the hatch is the same argument with the robots not there
+// yet.
 stock bool StickyTrapSpot(float spot[3])
 {
 	for (int i = 0; i < 3; i++)
@@ -146,6 +160,7 @@ stock bool StickyTrapSpot(float spot[3])
 	return !IsZeroVector(spot);
 }
 
+// Reset forgets the trap, which is what a death or a wave end does.
 stock void ResetStickyTrap(int client)
 {
 	m_ctStickyTrapAgain[client] = 0.0;
@@ -153,6 +168,8 @@ stock void ResetStickyTrap(int client)
 	m_vStickyTrapSpot[client] = NULL_VECTOR;
 }
 
+// IsPossible is the seven questions asked before a Demoman stops fighting to
+// lay one.
 stock bool CTFBotStickyTrap_IsPossible(int client)
 {
 	if (TF2_GetPlayerClass(client) != TFClass_DemoMan)
@@ -172,10 +189,12 @@ stock bool CTFBotStickyTrap_IsPossible(int client)
 	{
 		return false;
 	}
+	// There is already a trap down. Another one is the same ground covered twice
 	if (GetEntProp(launcher, Prop_Send, "m_iPipebombCount") >= STICKY_TRAP_ENOUGH)
 	{
 		return false;
 	}
+	// A fight is not the time. Laying a trap is what a Demoman does before one
 	if (CBaseNPC_GetNextBotOfEntity(client).GetVisionInterface().GetPrimaryKnownThreat(true) != NULL_KNOWN_ENTITY)
 	{
 		return false;

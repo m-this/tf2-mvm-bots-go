@@ -17,6 +17,7 @@ BehaviorAction CTFBotCollectMoney()
 int m_iCurrencyPack[65];
 float m_ctMoneyAsk[65];
 
+// OnStart aims the path and picks a pack.
 public Action CTFBotCollectMoney_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
@@ -24,8 +25,10 @@ public Action CTFBotCollectMoney_OnStart(BehaviorAction action, int actor, Behav
 	return action.Continue();
 }
 
+// Update walks to it.
 public Action CTFBotCollectMoney_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
+	// TODO: if we're not a scout, see if we should attack instead if we have an active threat
 	if (!IsValidCurrencyPack(m_iCurrencyPack[actor]))
 	{
 		return action.Done("No credits to collect");
@@ -40,16 +43,20 @@ public Action CTFBotCollectMoney_Update(BehaviorAction action, int actor, float 
 	return action.Continue();
 }
 
+// OnEnd forgets the pack.
 public void CTFBotCollectMoney_OnEnd(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_iCurrencyPack[actor] = -1;
 }
 
+// TimeUntilRemoved is how long the pack has left.
 stock float GetTimeUntilRemoved(int powerup)
 {
 	return CBaseEntity(powerup).GetNextThink("PowerupRemoveThink") - GetGameTime();
 }
 
+// IsCurrencyPackClaimed says whoever else is already walking at this one, so a
+// heap is shared out instead of raced for.
 stock bool IsCurrencyPackClaimed(int actor, int pack)
 {
 	for (int i = 1; i <= MaxClients; i++)
@@ -66,8 +73,11 @@ stock bool IsCurrencyPackClaimed(int actor, int pack)
 	return false;
 }
 
+// SelectCurrencyPack picks the cheapest pack to walk to, with a discount for
+// one about to vanish.
 stock int SelectCurrencyPack(int actor)
 {
+	// The held pack is re-asked on its own interval; losing it is what forces a fresh look
 	if (IsValidCurrencyPack(m_iCurrencyPack[actor]) && (m_ctMoneyAsk[actor] > GetGameTime()))
 	{
 		return m_iCurrencyPack[actor];
@@ -113,6 +123,11 @@ stock int SelectCurrencyPack(int actor)
 	return iBestPack;
 }
 
+// IsValidCurrencyPack says the entity is still a money pack.
+//
+// The last two lines could be one return of a comparison. They are two because
+// the shipped file is two, and a port that tidies as it goes cannot be diffed
+// against what it replaces.
 stock bool IsValidCurrencyPack(int pack)
 {
 	if (!IsValidEntity(pack))
@@ -128,8 +143,14 @@ stock bool IsValidCurrencyPack(int pack)
 	return true;
 }
 
+// IsPossible says whether collecting is worth doing.
 stock bool CTFBotCollectMoney_IsPossible(int actor)
 {
+	//  One of them in a wave, all of them in the break
+	//
+	// 	Mid-wave the money is a distraction from the robots walking a bomb up the map, so one goes and
+	// 	the rest keep shooting. Between waves there is nothing else to do with the time, and one bot
+	// 	clearing a heap on his own does not finish before the break does.
 	if ((GameRules_GetRoundState() != RoundState_BetweenRounds) && (GetCountOfBotsWithNamedAction("DefenderCollectMoney") > 0))
 	{
 		return false;
@@ -141,6 +162,10 @@ stock bool CTFBotCollectMoney_IsPossible(int actor)
 	return true;
 }
 
+// ResetCollectMoney forgets the credit this bot was walking to.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat
+// is a different bot.
 stock void Go_ResetCollectMoney(int client)
 {
 	m_iCurrencyPack[client] = -1;

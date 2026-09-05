@@ -15,6 +15,7 @@ Menu g_hBotPreferenceMenu;
 Menu m_hWeaponPrefClassMenu;
 char m_sSelectedWeaponSlot[65][10];
 
+// DisplayClassPreferenceMenu shows the nine toggles with their current answers.
 stock void DisplayClassPreferenceMenu(int client, int item = 0)
 {
 	int flags = GetClassPreferencesFlags(client);
@@ -33,6 +34,10 @@ stock void DisplayClassPreferenceMenu(int client, int item = 0)
 	DisplayMenuAtItem(hClassPrefMenu, client, item, MENU_TIME_FOREVER);
 }
 
+// MenuHandlerClassPreference flips whichever class was pressed.
+//
+// It writes the opposite of what it reads, which is what a toggle is, and redraws
+// at the same row so the player can flip several without hunting for their place.
 stock int MenuHandler_ClassPreference(Menu menu, MenuAction action, int param1, int param2)
 {
 	switch (action)
@@ -96,6 +101,11 @@ stock int MenuHandler_ClassPreference(Menu menu, MenuAction action, int param1, 
 	return 0;
 }
 
+// MenuHandlerBotVote hears the round's vote on whether to have bots at all.
+//
+// Who called it is remembered on a yes and forgotten on anything else: the caller
+// is the one player allowed to send the bots away again, and a vote that failed
+// gives nobody that.
 stock int MenuHandler_BotVote(Menu menu, MenuAction action, int param1, int param2)
 {
 	switch (action)
@@ -104,11 +114,14 @@ stock int MenuHandler_BotVote(Menu menu, MenuAction action, int param1, int para
 		{
 			if (param1 == 0)
 			{
+				// They said yes.
 				ManageDefenderBots(true);
 			}
 			else
 				if (param1 == 1)
 				{
+					// They said no. Forget who called the vote, as they were not
+					// able to summon bots.
 					g_iUIDBotSummoner = 0;
 					PrintToChatAll("%s Bot vote was unsuccessful!", PLUGIN_PREFIX);
 				}
@@ -121,6 +134,11 @@ stock int MenuHandler_BotVote(Menu menu, MenuAction action, int param1, int para
 	return 0;
 }
 
+// DefenderBotTeamSetupCancelled puts things back when nobody finished picking.
+//
+// What back means depends on the mode: with preferences behind it the lineup is
+// recomputed from what the players asked for, and without them the half-built
+// lineup is cleared, or the manager would think one had been chosen.
 stock void DefenderBotTeamSetupCancelled()
 {
 	switch (redbots_manager_bot_lineup_mode.IntValue)
@@ -136,6 +154,8 @@ stock void DefenderBotTeamSetupCancelled()
 	}
 }
 
+// MenuHandlerBotPreferenceMain is the root of the preference menus: classes,
+// or weapons when the server allows custom loadouts at all.
 stock int MenuHandler_BotPreferenceMain(Menu menu, MenuAction action, int param1, int param2)
 {
 	switch (action)
@@ -163,6 +183,8 @@ stock int MenuHandler_BotPreferenceMain(Menu menu, MenuAction action, int param1
 	return 0;
 }
 
+// CreateBotPreferenceMenu builds the two kept menus, replacing whatever pair
+// was there.
 stock void CreateBotPreferenceMenu()
 {
 	g_hBotPreferenceMenu.Close();
@@ -184,8 +206,15 @@ stock void CreateBotPreferenceMenu()
 	AddMenuItem(m_hWeaponPrefClassMenu, "8", "Spy");
 }
 
+// DisplayWeaponPreferenceMenu shows the slots of one class, each row saying what
+// is picked for it.
+//
+// The spy gets a fourth row: his watch is a loadout slot the other classes have
+// nothing in.
 stock void DisplayWeaponPreferenceMenu(int client, char[] class, int item = 0)
 {
+	// Tell us the class we just chose so everything else will get the correct
+	// data for this class.
 	strcopy(m_sSelectedClass[client], 16, class);
 	Menu hWeaponPrefMenu = CreateMenu(MenuHandler_WeaponPreference);
 	SetMenuTitle(hWeaponPrefMenu, "Bot Weapon Preferences: %s", class);
@@ -200,6 +229,8 @@ stock void DisplayWeaponPreferenceMenu(int client, char[] class, int item = 0)
 	DisplayMenuAtItem(hWeaponPrefMenu, client, item, MENU_TIME_FOREVER);
 }
 
+// MenuHandlerWeaponPreferenceClassList picks which class the loadout menus are
+// about.
 stock int MenuHandler_WeaponPreferenceClassList(Menu menu, MenuAction action, int param1, int param2)
 {
 	switch (action)
@@ -257,6 +288,11 @@ stock int MenuHandler_WeaponPreferenceClassList(Menu menu, MenuAction action, in
 	return 0;
 }
 
+// MenuHandlerWeaponPreference picks which slot of the chosen class to list items
+// for.
+//
+// Row three is only ever pressed by a spy: the builder does not add it for anyone
+// else, so the branch cannot be reached from another class's menu.
 stock int MenuHandler_WeaponPreference(Menu menu, MenuAction action, int param1, int param2)
 {
 	switch (action)
@@ -298,8 +334,19 @@ stock int MenuHandler_WeaponPreference(Menu menu, MenuAction action, int param1,
 	return 0;
 }
 
+// ShowWeaponPreferenceItemListMenu lists every item that class can carry in that
+// slot.
+//
+// The shipped file wrote this as twenty seven blocks, one per class and slot, each
+// the same four lines around a different pool. The pools live in loadouts with the
+// chain that draws from them, so this asks that chain for the count and the item
+// and walks it once. Same items, same order.
+//
+// An item the schema has no name for is skipped rather than shown blank, which is
+// what the shipped file did by testing the name before adding the row.
 stock void ShowWeaponPreferenceItemListMenu(int client, const char[] class, const char[] slot)
 {
+	// Tell us the weapon slot that we now want to edit.
 	strcopy(m_sSelectedWeaponSlot[client], 10, slot);
 	Menu hMenu = new Menu(MenuHandler_WeaponPreferenceItemList);
 	for (int i = 0; i < WeaponPoolCount(class, slot); i++)
@@ -309,6 +356,7 @@ stock void ShowWeaponPreferenceItemListMenu(int client, const char[] class, cons
 		bool named = TF2Econ_GetItemName(itemDefinition, weaponName, 512);
 		if (named)
 		{
+			// Menu item info stores the item definition index as a string.
 			char menuInfo[512];
 			IntToString(itemDefinition, menuInfo, 512);
 			AddMenuItem(hMenu, menuInfo, weaponName);
@@ -317,6 +365,8 @@ stock void ShowWeaponPreferenceItemListMenu(int client, const char[] class, cons
 	hMenu.Display(client, MENU_TIME_FOREVER);
 }
 
+// MenuHandlerWeaponPreferenceItemList records the item that was pressed and
+// goes back to the slot list.
 stock int MenuHandler_WeaponPreferenceItemList(Menu menu, MenuAction action, int param1, int param2)
 {
 	switch (action)
@@ -327,6 +377,7 @@ stock int MenuHandler_WeaponPreferenceItemList(Menu menu, MenuAction action, int
 			bool found = menu.GetItem(param2, info, 512);
 			if (found)
 			{
+				// Info should be storing an item's definition index.
 				int itemDefIndex = StringToInt(info);
 				SetWeaponPreference(param1, m_sSelectedClass[param1], m_sSelectedWeaponSlot[param1], itemDefIndex);
 				DisplayWeaponPreferenceMenu(param1, m_sSelectedClass[param1]);
@@ -347,6 +398,12 @@ stock int MenuHandler_WeaponPreferenceItemList(Menu menu, MenuAction action, int
 	return 0;
 }
 
+// GetWeaponPrefMenuItemText is one row of the slot menu: the slot's name and what
+// this player has picked for it.
+//
+// An empty row is what a player who has picked nothing sees, and what a pick the
+// schema cannot name sees too: the buffer is only written when the name comes
+// back.
 stock char[] GetWeaponPrefMenuItemText(int client, char[] class, int slot)
 {
 	char menuText[512];
@@ -397,6 +454,11 @@ stock char[] GetWeaponPrefMenuItemText(int client, char[] class, int slot)
 	return menuText;
 }
 
+// StartBotVote asks RED whether to have bots this round.
+//
+// The voter list is a fixed array rather than one sized to MaxClients, which is
+// what every other client walk in this repository does: the slots are bounded at
+// compile time and VoteMenu takes the count separately anyway.
 stock bool StartBotVote(int voteCaller)
 {
 	Menu vMenu = CreateMenu(MenuHandler_BotVote, MENU_ACTIONS_ALL);
@@ -417,6 +479,7 @@ stock bool StartBotVote(int voteCaller)
 	}
 	if (VoteMenu(vMenu, players, total, 15))
 	{
+		// Remember who started the vote.
 		g_iUIDBotSummoner = GetClientUserId(voteCaller);
 		return true;
 	}

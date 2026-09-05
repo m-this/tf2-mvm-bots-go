@@ -17,6 +17,9 @@ int m_iPathsThisTick;
 bool m_bPathFailed[65];
 int m_iPathFailures[65];
 
+// TakePathBudget says there is room to compute a path this frame. Only the
+// per-frame refresh asks: a behaviour that computes once when it starts has
+// nothing to retry with, so it is never refused.
 stock bool TakePathBudget()
 {
 	int tick = GetGameTickCount();
@@ -33,16 +36,19 @@ stock bool TakePathBudget()
 	return true;
 }
 
+// PathFailuresOf is how many times this bot's route requests have failed.
 stock int PathFailuresOf(int client)
 {
 	return m_iPathFailures[client];
 }
 
+// PathFailedFor says the last request failed.
 stock bool PathFailedFor(int client)
 {
 	return m_bPathFailed[client];
 }
 
+// NudgeTowardsGoal steps a grounded bot off ground the mesh refuses from.
 stock void NudgeTowardsGoal(int client, INextBot myBot, const float goal[3])
 {
 	ILocomotion myLoco = myBot.GetLocomotionInterface();
@@ -71,6 +77,7 @@ stock void NudgeTowardsGoal(int client, INextBot myBot, const float goal[3])
 	myLoco.Approach(step);
 }
 
+// RepathToTarget asks for a route to an entity, measured and counted.
 stock void RepathToTarget(int actor, INextBot myBot, int target)
 {
 	float began = GetEngineTime();
@@ -79,6 +86,7 @@ stock void RepathToTarget(int actor, INextBot myBot, int target)
 	NotePathResult(actor, built);
 }
 
+// SayIfSlow puts a search that cost real frame time in the log.
 stock void SayIfSlow(int actor, float began, const char[] what)
 {
 	float ms = (GetEngineTime() - began) * 1000.0;
@@ -89,6 +97,13 @@ stock void SayIfSlow(int actor, float began, const char[] what)
 	LogMessage("Path: %N spent %.0fms searching %s", actor, ms, what);
 }
 
+// RepathToPos asks for a route to a point, measured and counted.
+//
+// The faults injector can substitute a goal with no path to it: a wedged bot is
+// not expensive on its own, and what the cores show is NavAreaBuildPath walking
+// the whole mesh for an answer it never finds. Pinning a bot reproduces the wedge
+// and none of the cost, so the injector sends the held bot at a point off the mesh
+// instead.
 stock void RepathToPos(int actor, INextBot myBot, const float goal[3])
 {
 	float unreachable[3];
@@ -107,6 +122,7 @@ stock void RepathToPos(int actor, INextBot myBot, const float goal[3])
 	NotePathResult(actor, built);
 }
 
+// PathLengthCap is the cap when the feature asks for one, and no cap otherwise.
 stock float PathLengthCap()
 {
 	if (Feature(FEATURE_PATH_LENGTH_CAP))
@@ -116,6 +132,8 @@ stock float PathLengthCap()
 	return 0.0;
 }
 
+// NotePathResult counts a failure once per streak, so the count reads as
+// incidents rather than frames.
 stock void NotePathResult(int actor, bool built)
 {
 	bool failed = !built || (m_pPath[actor].GetLength() <= 0.0);
@@ -126,12 +144,21 @@ stock void NotePathResult(int actor, bool built)
 	m_bPathFailed[actor] = failed;
 }
 
+// PluginBotSimulateFrame is the per-frame walk: whenever a behaviour has set a
+// goal and bPathing, this is what actually gets the bot there.
+//
+// An empty path is a failure the same as a refusal, and it is the shape seen in
+// play. The engineer skips it inside his supply runs so the two pathings do not
+// fight.
 stock void PluginBot_SimulateFrame(int client)
 {
+	// SimulateFrame > PFContext::RecalculatePath. This is used whenever we
+	// want to path somewhere constantly.
 	if (g_arrPluginBot[client].bPathing)
 	{
 		if (TF2_GetPlayerClass(client) == TFClass_Engineer)
 		{
+			// Dumb hack for engineer so pathing does not conflict.
 			if ((ActionsManager.LookupEntityActionByName(client, "DefenderGetAmmo") != INVALID_ACTION) || (ActionsManager.LookupEntityActionByName(client, "DefenderGetHealth") != INVALID_ACTION))
 			{
 				return;
