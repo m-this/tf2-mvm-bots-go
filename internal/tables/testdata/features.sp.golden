@@ -214,9 +214,11 @@ void LoadFeatures()
 	g_arrFeatureConVars[FEATURE_GENERATED_THREAT_PRIORITY] = MakeFeature(FEATURE_GENERATED_THREAT_PRIORITY,
 		"Rank threats with the table generated from the Go, rather than with the hand written chain.", false);
 
-	/* Off until a run says otherwise. The entrance used to wait for the nest, so the engineer built
-	it, walked to the nest, built there, and walked back to spawn for the entrance. Peppy asked
-	for the entrance first and the walk is what the test-bed measures. See mvm-dh8. */
+	/* Off: measured and not clearly better. Three attempts each of two waves of Decoy, 2026-09-05:
+	the entrance goes up at 18s of the break against 37s, the exit at 33s against 65s, the sentry at
+	17s against 7s, and the walk is the same 15600 units. Peppy asked for the entrance first, and it
+	is; whether ten seconds off the sentry is worth thirty off the exit is a call for a longer run.
+	See mvm-dh8. */
 	g_arrFeatureConVars[FEATURE_ENGINEER_ENTRANCE_FIRST] = MakeFeature(FEATURE_ENGINEER_ENTRANCE_FIRST,
 		"The engineer puts his teleporter entrance up in spawn before he walks out to build the nest.", false);
 

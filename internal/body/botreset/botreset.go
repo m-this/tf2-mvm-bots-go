@@ -57,6 +57,7 @@ func ResetNextBot(client int32) {
 	engine.ResetAttackForUber(client)
 	engine.ResetAttackTank(client)
 	engine.ResetDestroyTeleporter(client)
+	engine.ResetBuildTeleporter(client)
 	engine.ResetGuardPoint(client)
 
 	engine.PluginBotOf(client).Reset()

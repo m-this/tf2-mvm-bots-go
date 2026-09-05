@@ -563,6 +563,12 @@ func Update(actor int32) engine.Outcome {
 		ReportEngineerStall(actor, "no nest area to build on")
 	}
 
+	// The entrance on the way out of spawn, before the nest: ShouldBuildTeleporter says yes here
+	// only under its own switch, and only while there is no sentry to build first
+	if sentry == engine.InvalidEntReference() && !goingToGrab[actor] && engine.ShouldBuildTeleporter(actor) {
+		return engine.SuspendFor(engine.BuildTeleporter(), "Entrance first, on the way out of spawn")
+	}
+
 	if engine.NestAreaOf(actor) != engine.NullArea() {
 		if sentry != engine.InvalidEntReference() {
 			if IsSentrySafe(sentry) {

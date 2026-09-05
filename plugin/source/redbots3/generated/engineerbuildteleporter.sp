@@ -50,6 +50,8 @@ float m_vTeleporterRouteStand[65][8][3];
 int m_iTeleporterRoutePoints[65];
 bool m_bTeleporterNamedSpot[65];
 bool m_bTeleporterGaveUp[65];
+bool m_bTeleporterEntranceFirst[65];
+bool m_bTeleporterEntranceFirstTried[65];
 char m_sTeleporterLastResult[65][512];
 
 public Action CTFBotMvMEngineerBuildTeleporter_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
@@ -63,11 +65,18 @@ public Action CTFBotMvMEngineerBuildTeleporter_OnStart(BehaviorAction action, in
 	m_iTeleporterRoutePoints[actor] = 0;
 	if ((m_nTeleporterMode[actor] == TFObjectMode_Entrance) && !m_bTeleporterNamedSpot[actor])
 	{
-		m_iTeleporterRoutePoints[actor] = SpawnRoutePoints(actor, m_vTeleporterSpawn[actor], TELEPORTER_SPAWN_OFFSET, TELEPORTER_SPAWN_STEP, TELEPORTER_BUILD_REACH, m_vTeleporterRouteSpot[actor], m_vTeleporterRouteStand[actor], TELEPORTER_TRY_POINTS);
+		if (m_bTeleporterEntranceFirst[actor])
+		{
+			m_iTeleporterRoutePoints[actor] = SpawnRouteOut(actor, m_vTeleporterNest[actor], TELEPORTER_SPAWN_OFFSET, TELEPORTER_SPAWN_STEP, TELEPORTER_BUILD_REACH, m_vTeleporterRouteSpot[actor], m_vTeleporterRouteStand[actor], TELEPORTER_TRY_POINTS);
+		}
+		else
+		{
+			m_iTeleporterRoutePoints[actor] = SpawnRoutePoints(actor, m_vTeleporterSpawn[actor], TELEPORTER_SPAWN_OFFSET, TELEPORTER_SPAWN_STEP, TELEPORTER_BUILD_REACH, m_vTeleporterRouteSpot[actor], m_vTeleporterRouteStand[actor], TELEPORTER_TRY_POINTS);
+		}
 	}
 	if (!TeleporterStandPoint(actor))
 	{
-		m_bTeleporterGaveUp[actor] = true;
+		TeleporterGiveUp(actor);
 		return TeleporterDone(action, actor, "No route out of spawn to walk");
 	}
 	UpdateLookAroundForEnemies(actor, true);
@@ -80,7 +89,7 @@ public Action CTFBotMvMEngineerBuildTeleporter_Update(BehaviorAction action, int
 	{
 		return TeleporterDone(action, actor, "Wave started");
 	}
-	if (GetObjectOfType(actor, TFObject_Sentry) == INVALID_ENT_REFERENCE)
+	if (!m_bTeleporterEntranceFirst[actor] && (GetObjectOfType(actor, TFObject_Sentry) == INVALID_ENT_REFERENCE))
 	{
 		return TeleporterDone(action, actor, "No sentry to leave behind");
 	}
@@ -91,7 +100,7 @@ public Action CTFBotMvMEngineerBuildTeleporter_Update(BehaviorAction action, int
 	}
 	if (m_ctTeleporterGiveUp[actor] < GetGameTime())
 	{
-		m_bTeleporterGaveUp[actor] = true;
+		TeleporterGiveUp(actor);
 		return TeleporterDone(action, actor, "Ran out of time");
 	}
 	if (Feature(FEATURE_ENGINEER_CLIMBS) && (m_nTeleporterMode[actor] == TFObjectMode_Exit) && (GetGameTime() > m_ctTeleporterReachDeadline[actor]))
@@ -150,7 +159,7 @@ public Action CTFBotMvMEngineerBuildTeleporter_Update(BehaviorAction action, int
 			{
 				if (m_nTeleporterMode[actor] != TFObjectMode_Exit)
 				{
-					m_bTeleporterGaveUp[actor] = true;
+					TeleporterGiveUp(actor);
 					return TeleporterDone(action, actor, "Nowhere out of spawn takes one");
 				}
 				if (!Feature(FEATURE_ENGINEER_CLIMBS) || !TeleporterFallBackToNest(actor))
@@ -276,6 +285,16 @@ stock bool TeleporterStandPoint(int actor)
 	return true;
 }
 
+stock void TeleporterGiveUp(int actor)
+{
+	if (m_bTeleporterEntranceFirst[actor])
+	{
+		m_bTeleporterEntranceFirstTried[actor] = true;
+		return;
+	}
+	m_bTeleporterGaveUp[actor] = true;
+}
+
 stock Action TeleporterDone(BehaviorAction action, int actor, const char[] reason)
 {
 	strcopy(m_sTeleporterLastResult[actor], 512, reason);
@@ -313,11 +332,19 @@ stock void EngineerTeleporter_Spot(int actor, float spot[3])
 	return;
 }
 
+stock void Go_ResetBuildTeleporter(int client)
+{
+	m_bTeleporterEntranceFirst[client] = false;
+	m_bTeleporterEntranceFirstTried[client] = false;
+}
+
 stock void EngineerTeleporter_ForgetGivingUp()
 {
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		m_bTeleporterGaveUp[i] = false;
+		m_bTeleporterEntranceFirst[i] = false;
+		m_bTeleporterEntranceFirstTried[i] = false;
 	}
 }
 
@@ -330,6 +357,11 @@ stock bool ShouldBuildTeleporter(int actor)
 	if (m_bTeleporterGaveUp[actor])
 	{
 		return false;
+	}
+	m_bTeleporterEntranceFirst[actor] = false;
+	if (Feature(FEATURE_ENGINEER_ENTRANCE_FIRST) && !m_bTeleporterEntranceFirstTried[actor] && (HasObjectOfType(actor, TFObject_Sentry, TFObjectMode_None) == INVALID_ENT_REFERENCE) && (GetObjectOfType(actor, TFObject_Teleporter, TFObjectMode_Entrance) == INVALID_ENT_REFERENCE))
+	{
+		return ShouldBuildEntranceFirst(actor);
 	}
 	if (HasObjectOfType(actor, TFObject_Sentry, TFObjectMode_None) == INVALID_ENT_REFERENCE)
 	{
@@ -370,6 +402,30 @@ stock bool ShouldBuildTeleporter(int actor)
 		return true;
 	}
 	return false;
+}
+
+stock bool ShouldBuildEntranceFirst(int actor)
+{
+	if (m_aNestArea[actor] == NULL_AREA)
+	{
+		return false;
+	}
+	NestBuildPosition(m_aNestArea[actor], m_vTeleporterNest[actor]);
+	m_nTeleporterMode[actor] = TFObjectMode_Entrance;
+	float spot[3];
+	bool named = NearestConfiguredSpot(g_arrMapConfig.adtTeleporterEntranceLocation, GetAbsOrigin(actor), spot);
+	m_bTeleporterNamedSpot[actor] = named;
+	m_vTeleporterSpot[actor] = spot;
+	if (m_bTeleporterNamedSpot[actor])
+	{
+		m_bTeleporterEntranceFirst[actor] = true;
+		return true;
+	}
+	float spawn[3];
+	bool ok = NearestSpawnPoint(actor, spawn);
+	m_vTeleporterSpawn[actor] = spawn;
+	m_bTeleporterEntranceFirst[actor] = ok;
+	return ok;
 }
 
 stock bool NearestFreeExitSpot(int actor, float nest[3], float spot[3])

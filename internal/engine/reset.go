@@ -21,6 +21,7 @@ type ResetCalls struct {
 	ResetAttackForUber     func(client int32)
 	ResetAttackTank        func(client int32)
 	ResetDestroyTeleporter func(client int32)
+	ResetBuildTeleporter   func(client int32)
 	ResetGuardPoint        func(client int32)
 	ResetAttack            func(client int32)
 	ResetCollectMoney      func(client int32)
@@ -98,6 +99,12 @@ func ResetAttackTank(client int32) { resets.ResetAttackTank(client) }
 //
 //sp:body Go_ResetDestroyTeleporter
 func ResetDestroyTeleporter(client int32) { resets.ResetDestroyTeleporter(client) }
+
+// ResetBuildTeleporter is engineerbuildteleporter's own: the early entrance
+// flags, and nothing that was already carried between bots.
+//
+//sp:body Go_ResetBuildTeleporter
+func ResetBuildTeleporter(client int32) { resets.ResetBuildTeleporter(client) }
 
 // ResetGuardPoint is guardpoint's own. Ported, guardpoint.
 //

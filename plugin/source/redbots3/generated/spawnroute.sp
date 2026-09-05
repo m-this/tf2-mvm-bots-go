@@ -61,3 +61,27 @@ stock int SpawnRoutePoints(int actor, const float spawn[3], float first, float s
 	return found;
 }
 
+stock int SpawnRouteOut(int actor, const float nest[3], float first, float step, float reach, float spots[][3], float stands[][3], int pointsMax)
+{
+	CBaseCombatCharacter(actor).UpdateLastKnownArea();
+	PathFollower route = PathFollower(_, Path_FilterIgnoreActors, Path_FilterOnlyActors);
+	int found = 0;
+	if (route.ComputeToPos(CBaseNPC_GetNextBotOfEntity(actor), nest))
+	{
+		float length = route.GetLength();
+		for (int i = 0; i < pointsMax; i++)
+		{
+			float fromSpawn = first + (step * float(i));
+			if (length <= fromSpawn)
+			{
+				break;
+			}
+			route.GetPosition(fromSpawn, spots[i]);
+			route.GetPosition(fromSpawn - reach, stands[i]);
+			found++;
+		}
+	}
+	route.Destroy();
+	return found;
+}
+

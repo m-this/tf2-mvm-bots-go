@@ -185,6 +185,16 @@ var (
 	//
 	//sp:name m_bTeleporterGaveUp
 	gaveUp [slots.Count]bool
+	/* This attempt is the entrance on the way out of spawn, before the nest
+
+	It has its own give-up, so an early attempt that finds nowhere leaves the ordinary one, after the
+	nest, untouched: the fault the third A/B on mvm-dh8 measured was one refusal latching gaveUp for
+	the whole break. */
+	//
+	//sp:name m_bTeleporterEntranceFirst
+	entranceFirst [slots.Count]bool
+	//sp:name m_bTeleporterEntranceFirstTried
+	entranceFirstTried [slots.Count]bool
 	// Why the last attempt ended, for sm_dump_nest, since every give-up looks the same from outside
 	//
 	//sp:name m_sTeleporterLastResult
@@ -201,14 +211,20 @@ func OnStart(actor int32) engine.Outcome {
 	tryIndex[actor] = 0
 	routePoints[actor] = 0
 
-	// While he is at his nest, which is the only place the whole route can be read from
+	// From the nest towards spawn when he stands at the nest, from spawn towards the nest when he
+	// is still in it: the same route, read from whichever end he is at
 	if mode[actor] == engine.ModeEntrance() && !namedSpot[actor] {
-		routePoints[actor], routeSpot[actor], routeStand[actor] = engine.SpawnRoutePoints(actor, spawnOf[actor],
-			spawnOffset, spawnStep, buildReach)
+		if entranceFirst[actor] {
+			routePoints[actor], routeSpot[actor], routeStand[actor] = engine.SpawnRouteOut(actor, nestOf[actor],
+				spawnOffset, spawnStep, buildReach)
+		} else {
+			routePoints[actor], routeSpot[actor], routeStand[actor] = engine.SpawnRoutePoints(actor, spawnOf[actor],
+				spawnOffset, spawnStep, buildReach)
+		}
 	}
 
 	if !StandPoint(actor) {
-		gaveUp[actor] = true
+		GiveUp(actor)
 
 		return Ended(engine.ThisAction(), actor, "No route out of spawn to walk")
 	}
@@ -226,7 +242,7 @@ func Update(actor int32) engine.Outcome {
 		return Ended(engine.ThisAction(), actor, "Wave started")
 	}
 
-	if engine.ObjectOfType(actor, engine.ObjectSentry()) == engine.InvalidEntReference() {
+	if !entranceFirst[actor] && engine.ObjectOfType(actor, engine.ObjectSentry()) == engine.InvalidEntReference() {
 		return Ended(engine.ThisAction(), actor, "No sentry to leave behind")
 	}
 
@@ -237,7 +253,7 @@ func Update(actor int32) engine.Outcome {
 	}
 
 	if giveUp[actor] < engine.GameTime() {
-		gaveUp[actor] = true
+		GiveUp(actor)
 
 		return Ended(engine.ThisAction(), actor, "Ran out of time")
 	}
@@ -333,7 +349,7 @@ func Update(actor int32) engine.Outcome {
 			if tryIndex[actor] >= TryLimit(actor) || !StandPoint(actor) {
 				// The exit goes down here, and an entrance nowhere near the spawn door goes nowhere
 				if mode[actor] != engine.ModeExit() {
-					gaveUp[actor] = true
+					GiveUp(actor)
 
 					return Ended(engine.ThisAction(), actor, "Nowhere out of spawn takes one")
 				}
@@ -551,6 +567,20 @@ func StandPoint(actor int32) bool {
 	return true
 }
 
+// GiveUp stops the asking: for the break when the nest stood, for the early
+// attempt alone when it did not, so the ordinary one still gets its turn.
+//
+//sp:name TeleporterGiveUp
+func GiveUp(actor int32) {
+	if entranceFirst[actor] {
+		entranceFirstTried[actor] = true
+
+		return
+	}
+
+	gaveUp[actor] = true
+}
+
 // Ended is every way this action can end, so the reason survives it.
 //
 //sp:name TeleporterDone
@@ -603,6 +633,17 @@ func Spot(actor int32) (spot [3]float32) {
 	return spot
 }
 
+// ResetBuildTeleporter forgets the early entrance for a seat, since the next bot
+// in it is a different bot. Nothing else here is touched: the fields that were
+// already carried between bots stay on the unreviewed list until mvm-z83.91
+// decides them.
+//
+//sp:name Go_ResetBuildTeleporter
+func ResetBuildTeleporter(client int32) {
+	entranceFirst[client] = false
+	entranceFirstTried[client] = false
+}
+
 // ForgetGivingUp is a new wave being a new chance, and whatever refused him last
 // time may have been a body standing on it.
 //
@@ -610,6 +651,8 @@ func Spot(actor int32) (spot [3]float32) {
 func ForgetGivingUp() {
 	for i := int32(1); i <= engine.MaxClients(); i++ {
 		gaveUp[i] = false
+		entranceFirst[i] = false
+		entranceFirstTried[i] = false
 	}
 }
 
@@ -630,6 +673,17 @@ func ShouldBuild(actor int32) bool {
 
 	if gaveUp[actor] {
 		return false
+	}
+
+	entranceFirst[actor] = false
+
+	// The entrance first, while he still stands in spawn, when the switch says so: the nest is
+	// picked by then and he is teleported onto it the moment the sentry action starts, so the
+	// only walk this costs is the few hundred units out of the door
+	if engine.Feature(engine.FeatureEngineerEntranceFirst()) && !entranceFirstTried[actor] &&
+		engine.HasObjectOfType(actor, engine.ObjectSentry(), engine.ModeNone()) == engine.InvalidEntReference() &&
+		engine.ObjectOfTypeMode(actor, engine.ObjectTeleporter(), engine.ModeEntrance()) == engine.InvalidEntReference() {
+		return ShouldBuildEntranceFirst(actor)
 	}
 
 	// The nest comes first and it is not finished
@@ -681,6 +735,38 @@ func ShouldBuild(actor int32) bool {
 	}
 
 	return false
+}
+
+// ShouldBuildEntranceFirst is the early entrance: the nest must be picked, since
+// the route out of spawn is read towards it, and the map's own spot wins when it
+// names one.
+//
+//sp:name ShouldBuildEntranceFirst
+func ShouldBuildEntranceFirst(actor int32) bool {
+	if engine.NestAreaOf(actor) == engine.NullArea() {
+		return false
+	}
+
+	nestOf[actor] = engine.NestBuildPosition(engine.NestAreaOf(actor))
+	mode[actor] = engine.ModeEntrance()
+
+	named, spot := engine.NearestConfiguredSpot(engine.TeleporterEntranceSpots(), engine.AbsOriginOf(actor))
+
+	namedSpot[actor] = named
+	spotOf[actor] = spot
+
+	if namedSpot[actor] {
+		entranceFirst[actor] = true
+
+		return true
+	}
+
+	ok, spawn := engine.NearestSpawnPoint(actor)
+
+	spawnOf[actor] = spawn
+	entranceFirst[actor] = ok
+
+	return ok
 }
 
 /*

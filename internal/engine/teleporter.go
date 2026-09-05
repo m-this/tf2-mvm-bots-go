@@ -3,6 +3,7 @@ package engine
 // TeleporterCalls are the answers.
 type TeleporterCalls struct {
 	SpawnRoutePoints   func(actor int32, spawn [3]float32, first float32, step float32, reach float32) (int32, [8][3]float32, [8][3]float32)
+	SpawnRouteOut      func(actor int32, nest [3]float32, first float32, step float32, reach float32) (int32, [8][3]float32, [8][3]float32)
 	NearestSpawnPoint  func(actor int32) (bool, [3]float32)
 	HasObjectOfType    func(client int32, objectType Object, mode ObjectMode) int32
 	ObjectOfTypeMode   func(client int32, objectType Object, mode ObjectMode) int32
@@ -54,6 +55,12 @@ func ObjectTeleporter() Object { return 1 }
 //sp:global FEATURE_ENGINEER_CLIMBS
 func FeatureEngineerClimbs() int32 { return 16 }
 
+// FeatureEngineerEntranceFirst is the switch on the entrance going up on the
+// way out of spawn before the nest stands, rather than after a walk back to it.
+//
+//sp:global FEATURE_ENGINEER_ENTRANCE_FIRST
+func FeatureEngineerEntranceFirst() int32 { return 22 }
+
 // InForward is IN_FORWARD.
 //
 //sp:global IN_FORWARD
@@ -85,6 +92,17 @@ arrays it fills, so it is written as a trailing argument rather than a Go one.
 */
 func SpawnRoutePoints(actor int32, spawn [3]float32, first float32, step float32, reach float32) (found int32, spots [8][3]float32, stands [8][3]float32) {
 	return teleporters.SpawnRoutePoints(actor, spawn, first, step, reach)
+}
+
+/*
+SpawnRouteOut is the same way out of spawn, read from spawn: the route from where
+he stands to the nest, sampled from its near end, with the stand a build's reach
+short of each spot on the spawn side, since that is the side he arrives from.
+
+//sp:body SpawnRouteOut after TELEPORTER_TRY_POINTS
+*/
+func SpawnRouteOut(actor int32, nest [3]float32, first float32, step float32, reach float32) (found int32, spots [8][3]float32, stands [8][3]float32) {
+	return teleporters.SpawnRouteOut(actor, nest, first, step, reach)
 }
 
 // NearestSpawnPoint is where this bot's team respawns, and false when there is

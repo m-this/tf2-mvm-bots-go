@@ -196,9 +196,11 @@ var Features = []Feature{
 		Name:        "engineer_entrance_first",
 		Description: "The engineer puts his teleporter entrance up in spawn before he walks out to build the nest.",
 		On:          false,
-		Note: "Off until a run says otherwise. The entrance used to wait for the nest, so the engineer built\n" +
-			"it, walked to the nest, built there, and walked back to spawn for the entrance. Peppy asked\n" +
-			"for the entrance first and the walk is what the test-bed measures. See mvm-dh8.",
+		Note: "Off: measured and not clearly better. Three attempts each of two waves of Decoy, 2026-09-05:\n" +
+			"the entrance goes up at 18s of the break against 37s, the exit at 33s against 65s, the sentry at\n" +
+			"17s against 7s, and the walk is the same 15600 units. Peppy asked for the entrance first, and it\n" +
+			"is; whether ten seconds off the sentry is worth thirty off the exit is a call for a longer run.\n" +
+			"See mvm-dh8.",
 	},
 	{
 		Name:        "bot_test_by_nextbot",

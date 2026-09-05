@@ -90,3 +90,48 @@ func Points(actor int32, spawn [3]float32, first float32, step float32, reach fl
 
 	return found
 }
+
+/*
+Out samples the same way out of spawn from its near end: the route from where he
+stands, in spawn, to the nest. The spot is first + step*i along it, and the stand
+is a build's reach short of the spot on the spawn side, which is the side he
+arrives from when the entrance goes up before the nest.
+
+Returns how many points the route was long enough for, which is none when there is
+no route to the nest.
+*/
+//
+//sp:name SpawnRouteOut
+//sp:const nest
+//sp:mutates spots
+//sp:mutates stands
+func Out(actor int32, nest [3]float32, first float32, step float32, reach float32,
+	spots [8][3]float32, stands [8][3]float32, pointsMax int32,
+) int32 {
+	engine.CombatOf(actor).UpdateLastKnownArea()
+
+	route := engine.NewRoute(engine.FilterIgnoreActors(), engine.FilterOnlyActors())
+	defer route.Close()
+
+	found := int32(0)
+
+	if route.Compute(engine.NextBotOf(actor), nest) {
+		length := route.Length()
+
+		for i := int32(0); i < pointsMax; i++ {
+			fromSpawn := first + step*float32(i)
+
+			// A point past the nest is not on the way out of spawn
+			if length <= fromSpawn {
+				break
+			}
+
+			spots[i] = route.PositionAlong(fromSpawn)
+			stands[i] = route.PositionAlong(fromSpawn - reach)
+
+			found++
+		}
+	}
+
+	return found
+}

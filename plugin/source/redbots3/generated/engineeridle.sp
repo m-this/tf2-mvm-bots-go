@@ -349,6 +349,10 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 	{
 		ReportEngineerStall(actor, "no nest area to build on");
 	}
+	if ((sentry == INVALID_ENT_REFERENCE) && !g_bGoingToGrabBuilding[actor] && ShouldBuildTeleporter(actor))
+	{
+		return action.SuspendFor(CTFBotMvMEngineerBuildTeleporter(), "Entrance first, on the way out of spawn");
+	}
 	if (m_aNestArea[actor] != NULL_AREA)
 	{
 		if (sentry != INVALID_ENT_REFERENCE)
