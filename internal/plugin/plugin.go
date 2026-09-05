@@ -1,11 +1,9 @@
 /*
 Package plugin resolves the SourcePawn tree this repository owns.
 
-It used to live in another repository and be reached through internal/upstream,
-which is what made that repository impossible to archive: half of this one asked
-it where the plugin was. The tree is under plugin/ now, and the only thing left
-that wants the old repository is the snapshot, which is taken from its history
-and then never read again.
+It used to live in another repository, which is what made that repository
+impossible to archive: half of this one asked it where the plugin was. The tree
+is under plugin/ now and nothing reads the old repository.
 */
 package plugin
 
@@ -109,10 +107,9 @@ func SkipOrFail(t testing.TB) string {
 
 // RequireEnv turns a missing plugin tree from a skip into a failure. make check
 // sets it.
-const RequireEnv = "MVMBOTS_REQUIRE_UPSTREAM"
+const RequireEnv = "MVMBOTS_REQUIRE_PLUGIN"
 
-// ReadPath is Read taking the path in pieces, which is how the callers that
-// came from internal/upstream spell it.
+// ReadPath is Read taking the path in pieces.
 func ReadPath(parts ...string) (string, error) {
 	body, err := Read(parts...)
 	return string(body), err

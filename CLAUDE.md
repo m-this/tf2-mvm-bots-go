@@ -25,10 +25,11 @@ The mod is what tf2-archipelago deploys, as a Go module and nothing else: its
 go.mod requirement is the only pin, and `go get` is how it moves. There is no
 tag in its versions.env any more.
 
-The proofs no longer read the old repository. Every shipped file a comparison
-needs is snapshotted under `internal/upstream/shipped` at the revision that
-comparison reads it at, so the port keeps its evidence after the repository it
-came from is archived.
+`../tf2-mvm-bots` is archived and nothing here reads it. The port is not
+compared against it any more: this repository is where the mod evolves, and a
+proof about what the plugin shipped in 2026 is a claim about a repository nobody
+can change. What is proved instead is this tree against itself, generator
+against table and generated SourcePawn against the Go it came from.
 
 The design and the reasoning, including why SourceGo is read and not forked, is
 `docs/design.md`. Read it first, and read the epic `mvm-z83` with it: the design
@@ -61,8 +62,7 @@ overtaken.
 - `internal/spaction`, `internal/action` — a behaviour. A Go package with the
   callbacks becomes the `BehaviorAction` subclass, the constructor and the
   wiring; the bodies come from `internal/spbody`, which is why this part is
-  small. `internal/action/spysap` is the first one across, compared against the
-  file it replaces on every callback's declaration and call sequence.
+  small.
 - `internal/body` — the bodies themselves, one package each, and the list that
   says which are generated. `internal/body/roster` is the first, and it is
   proved twice: run under spshell against the same canned world as the Go, call
@@ -79,9 +79,9 @@ overtaken.
   on.
 - `cmd/testbed`, `cmd/rc`, `internal/lab`, `internal/rcon`, `internal/wave`,
   `report`, `sweepreport` — the test-bed. It runs the mission, watches the
-  waves and reports what happened. It drives the plugin repository through
-  `internal/upstream`: build.sh, the compose file, the popfiles and the map
-  configs all live there, and none of them are code.
+  waves and reports what happened. It drives the plugin tree through
+  `internal/plugin`: build.sh, the compose file, the popfiles and the map
+  configs all live under `plugin/`, and none of them are code.
 
 ## Beads
 
@@ -100,11 +100,11 @@ counts were checked both ways. Everything is under the epic `mvm-z83`.
 - Generated code is gitignored and never edited by hand.
 - `make check` is the gate: `go vet`, the linter, `go test -race`, then
   generation, then `spcomp` over the output. It sets `MVMBOTS_REQUIRE_SPSHELL`
-  and `MVMBOTS_REQUIRE_UPSTREAM`, so a test that needs the toolchain or the
-  plugin repository fails there rather than skipping.
-- The plugin repository is reached through `internal/upstream` and nowhere else.
-  It owns the pinned revision and the path resolution, because three packages
-  doing it themselves got it wrong and their proofs skipped in silence.
+  and `MVMBOTS_REQUIRE_PLUGIN`, so a test that needs the toolchain or the
+  plugin tree fails there rather than skipping.
+- The plugin tree is reached through `internal/plugin` and nowhere else. It owns
+  the path resolution, because three packages doing it themselves got it wrong
+  and their proofs skipped in silence.
 - CI runs Make targets, never raw commands, so the gate runs the same locally.
 - No dependency without a reason written down. The standard library first.
 - Every generator has golden files. A generator without a test is decoration.

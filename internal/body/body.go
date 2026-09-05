@@ -44,40 +44,7 @@ type Body struct {
 	// Prefix goes in front of every emitted name. Go_ says at the call site
 	// that the function came from here and is not to be edited.
 	Prefix string
-	// Shipped is the file this replaces, at the pinned revision, relative to
-	// the plugin repository. The comparison reads it there rather than in
-	// the working tree, because the port deletes it.
-	Shipped string
-	/*
-		Rev is the revision to read Shipped at, and the global pin when it
-		is empty.
-
-		One pin cannot serve a port that spans months of plugin history. A
-		file ported a year ago has to be compared against the plugin as it
-		was then, because the hand-written original is gone from anything
-		newer; a file being ported today has to be compared against what
-		the plugin says today, or a change the plugin made in between reads
-		as a port that lost something. Event_MvmWaveBegin is the one that
-		showed it: the port carried a call the pinned text did not have,
-		because the call landed in the plugin after the pin.
-
-		So the pin is per file, and a body that names one is saying which
-		plugin it is a port of.
-	*/
-	Rev string
 }
-
-/*
-campaignRev is the plugin as it stood when this round of porting started, and
-it holds every file this round touches whole.
-
-One pin cannot serve a port that spans months of plugin history. The global pin
-is right for what was ported under it and wrong for what is being ported now:
-the plugin kept changing these files after it, so a faithful port of today's
-text compared against the old text reads as a port that gained a call.
-Event_MvmWaveBegin is the one that showed it.
-*/
-const campaignRev = "08e9782"
 
 // Actions are the behaviours: a Go package each, emitted as the BehaviorAction
 // subclass the plugin includes. They are bodies with a shape around them, so
@@ -85,107 +52,81 @@ const campaignRev = "08e9782"
 var Actions = []Body{
 	{
 		Dir: "internal/action/spysap", Out: "sourcepawn/spysap.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/spysap.sp",
 	},
 	{
 		Dir: "internal/action/collectnearmoney", Out: "sourcepawn/collectnearmoney.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/collectnearmoney.sp",
 	},
 	{
 		Dir: "internal/action/destroyteleporter", Out: "sourcepawn/destroyteleporter.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/destroyteleporter.sp",
 	},
 	{
 		Dir: "internal/action/spysapplayer", Out: "sourcepawn/spysapplayer.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/spysapplayer.sp",
 	},
 	{
 		Dir: "internal/action/attackforuber", Out: "sourcepawn/attackforuber.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/attackforuber.sp",
 	},
 	{
 		Dir: "internal/action/medicrevive", Out: "sourcepawn/medicrevive.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/medicrevive.sp",
 	},
 	{
 		Dir: "internal/action/campbomb", Out: "sourcepawn/campbomb.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/campbomb.sp",
 	},
 	{
 		Dir: "internal/action/guardpoint", Out: "sourcepawn/guardpoint.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/guardpoint.sp",
 	},
 	{
 		Dir: "internal/action/evadebuster", Out: "sourcepawn/evadebuster.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/evadebuster.sp",
 	},
 	{
 		Dir: "internal/action/spylurk", Out: "sourcepawn/spylurk.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/spylurk.sp",
 	},
 	{
 		Dir: "internal/action/markgiant", Out: "sourcepawn/markgiant.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/markgiant.sp",
 	},
 	{
 		Dir: "internal/action/gotoupgrade", Out: "sourcepawn/gotoupgrade.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/gotoupgrade.sp",
 	},
 	{
 		Dir: "internal/action/upgrade", Out: "sourcepawn/upgrade.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/upgrade.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/action/collectmoney", Out: "sourcepawn/collectmoney.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/collectmoney.sp",
 	},
 	{
 		Dir: "internal/action/stickytrap", Out: "sourcepawn/stickytrap.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/stickytrap.sp",
 	},
 	{
 		Dir: "internal/action/engineerbuilddisposable", Out: "sourcepawn/engineerbuilddisposable.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/engineerbuilddisposable.sp",
 	},
 	{
 		Dir: "internal/action/attack", Out: "sourcepawn/attack.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/attack.sp",
 	},
 	{
 		Dir: "internal/action/gethealth", Out: "sourcepawn/gethealth.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/gethealth.sp",
 	},
 	{
 		Dir: "internal/action/movetofront", Out: "sourcepawn/movetofront.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/movetofront.sp",
 	},
 	{
 		Dir: "internal/action/engineeridle", Out: "sourcepawn/engineeridle.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/engineeridle.sp",
 	},
 	{
 		Dir: "internal/action/engineerbuildteleporter", Out: "sourcepawn/engineerbuildteleporter.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/engineerbuildteleporter.sp",
 	},
 	{
 		Dir: "internal/action/attacktank", Out: "sourcepawn/attacktank.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/attacktank.sp",
 	},
 	{
 		Dir: "internal/action/engineerbuilddispenser", Out: "sourcepawn/engineerbuilddispenser.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/engineerbuilddispenser.sp",
 	},
 	{
 		Dir: "internal/action/spycheck", Out: "sourcepawn/spycheck.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/spycheck.sp",
 	},
 	{
 		Dir: "internal/action/getammo", Out: "sourcepawn/getammo.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/getammo.sp",
 	},
 	{
 		Dir: "internal/action/engineerbuildsentrygun", Out: "sourcepawn/engineerbuildsentrygun.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/engineerbuildsentrygun.sp",
 	},
 }
 
@@ -203,87 +144,66 @@ var All = []Body{
 	},
 	{
 		Dir: "internal/body/botcommands", Out: "sourcepawn/botcommands.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/statnatives", Out: "sourcepawn/statnatives.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/aimweapons", Out: "sourcepawn/aimweapons.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/botaim.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/panels", Out: "sourcepawn/panels.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/menu.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/addmenu", Out: "sourcepawn/addmenu.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/menu.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/prefmenu", Out: "sourcepawn/prefmenu.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/menu.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/teammenu", Out: "sourcepawn/teammenu.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/menu.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/manage", Out: "sourcepawn/manage.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/botnames", Out: "sourcepawn/botnames.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/mapconfig", Out: "sourcepawn/mapconfig.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/seating", Out: "sourcepawn/seating.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/upgradereport", Out: "sourcepawn/upgradereport.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/teamchange", Out: "sourcepawn/teamchange.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/composition", Out: "sourcepawn/composition.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/settings", Out: "sourcepawn/settings.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/lifecycle", Out: "sourcepawn/lifecycle.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/commands", Out: "sourcepawn/commands.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/readystate", Out: "sourcepawn/readystate.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/dumpspot", Out: "sourcepawn/dumpspot.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/soundhook", Out: "sourcepawn/soundhook.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/pluginstart", Out: "sourcepawn/pluginstart.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	/* Shipped, for the three records rather than for any function
 
@@ -292,215 +212,162 @@ var All = []Body{
 	Without the path they would generate and prove nothing. */
 	{
 		Dir: "internal/body/declarations", Out: "sourcepawn/declarations.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/pluginbot", Out: "sourcepawn/pluginbot.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/tfupgrades", Out: "sourcepawn/tf_upgrades.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/tf_upgrades.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/offsets", Out: "sourcepawn/offsets.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/offsets.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/sdkcalls", Out: "sourcepawn/sdkcalls.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/sdkcalls.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/dhooks", Out: "sourcepawn/dhooks.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/dhooks.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/humans", Out: "sourcepawn/humans.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/roster_counts", Out: "sourcepawn/roster_counts.sp", Prefix: "Go_",
-		Shipped: "source/tf2_defenderbots.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/botreset", Out: "sourcepawn/botreset.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/threataudit", Out: "sourcepawn/threataudit.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/hooks", Out: "sourcepawn/hooks.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/medicnudge", Out: "sourcepawn/medicnudge.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/dispatch", Out: "sourcepawn/dispatch.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/bottle", Out: "sourcepawn/bottle.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/scoutjump", Out: "sourcepawn/scoutjump.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/spawnexit", Out: "sourcepawn/spawnexit.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/mediccall", Out: "sourcepawn/mediccall.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/stuckwatch", Out: "sourcepawn/stuckwatch.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/pathing", Out: "sourcepawn/pathing.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/readiness", Out: "sourcepawn/readiness.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/botqueries", Out: "sourcepawn/botqueries.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/nextbot_behavior.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/archipelago", Out: "sourcepawn/archipelago.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/archipelago.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/gameevents", Out: "sourcepawn/gameevents.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/events.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/behaviourreset", Out: "sourcepawn/behaviourreset.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/events.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/playerpref", Out: "sourcepawn/playerpref.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/player_pref.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/loadouts", Out: "sourcepawn/loadouts.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/loadouts.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/cosmetics", Out: "sourcepawn/cosmetics.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/cosmetics.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/chat", Out: "sourcepawn/chat.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/econitem", Out: "sourcepawn/econitem.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/sapper", Out: "sourcepawn/sapper.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/spawnroute", Out: "sourcepawn/spawnroute.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/reflect", Out: "sourcepawn/reflect.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/movement", Out: "sourcepawn/movement.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/actionstack", Out: "sourcepawn/actionstack.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/angles", Out: "sourcepawn/angles.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/stocks", Out: "sourcepawn/stocks.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/bombinfo", Out: "sourcepawn/bombinfo.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/nestmove", Out: "sourcepawn/nestmove.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/buildarea", Out: "sourcepawn/buildarea.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/nesthint", Out: "sourcepawn/nesthint.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/nestpick", Out: "sourcepawn/nestpick.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/lineoffire", Out: "sourcepawn/lineoffire.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/nestscore", Out: "sourcepawn/nestscore.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/entity", Out: "sourcepawn/entity.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/loadout", Out: "sourcepawn/loadout.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/state", Out: "sourcepawn/state.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/mission", Out: "sourcepawn/mission.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/weapons", Out: "sourcepawn/weapons.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/finders", Out: "sourcepawn/finders.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/nestspot", Out: "sourcepawn/nestspot.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/buildings", Out: "sourcepawn/buildings.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/util.sp", Rev: campaignRev,
 	},
 	{
 		Dir: "internal/body/faults", Out: "sourcepawn/debug_faults.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/debug_faults.sp",
 	},
 	{
 		Dir: "internal/body/stickies", Out: "sourcepawn/demoman_stickies.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/demoman_stickies.sp",
 	},
 	/*
 		No Shipped, and it had one: source/redbots3/blu_assist.sp at
@@ -529,11 +396,9 @@ var All = []Body{
 	},
 	{
 		Dir: "internal/body/upgraderules", Out: "sourcepawn/upgrade_rules.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/behavior/upgrade.sp",
 	},
 	{
 		Dir: "internal/body/uber", Out: "sourcepawn/uber.sp", Prefix: "Go_",
-		Shipped: "source/redbots3/medic_uber.sp",
 	},
 }
 
