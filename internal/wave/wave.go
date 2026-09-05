@@ -12,6 +12,8 @@ import (
 	"os"
 	"sort"
 	"strings"
+
+	"github.com/m-this/tf2-mvm-bots-go/internal/machine"
 )
 
 // Result is one wave, as the statistics plugin wrote it.
@@ -86,6 +88,9 @@ type Arm struct {
 	Attempts int // runs started, which is not the number of waves they produced
 	Crashes  int
 	Empty    int // attempts that produced no wave at all
+	// Machines is what each attempt was played on, in order. Two arms
+	// whose machines differ are refused a comparison: see machine.Comparable.
+	Machines []machine.Machine
 }
 
 // Cleared is how many of the arm's waves ended in a win.

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/lab"
+	"github.com/m-this/tf2-mvm-bots-go/internal/machine"
 	"github.com/m-this/tf2-mvm-bots-go/internal/wave"
 )
 
@@ -72,7 +73,16 @@ func playInto(ctx context.Context, l lab.Lab, a arm, o options, round int, got *
 	got.Attempts++
 
 	path := filepath.Join(o.out, fmt.Sprintf("%s-%s-%d.jsonl", o.tag, a.name, round))
-	results, crashed, err := playOnce(ctx, l, a, o, path)
+
+	// Read before the attempt, so what is recorded is the machine the wave
+	// started on rather than the machine the wave left behind.
+	played, err := machine.Snapshot(extensionsDir(o.root))
+	if err != nil {
+		return err
+	}
+	got.Machines = append(got.Machines, played)
+
+	results, crashed, err := playOnce(ctx, l, a, o, path, played)
 	switch {
 	case errors.Is(err, context.Canceled):
 		return err
@@ -154,7 +164,13 @@ func cleared(results []wave.Result) int {
 	return n
 }
 
-func playOnce(ctx context.Context, l lab.Lab, a arm, o options, path string) ([]wave.Result, bool, error) {
+// extensionsDir is where the plugin build puts the SourceMod extensions the
+// server loads, which is what the machine record checksums.
+func extensionsDir(root string) string {
+	return filepath.Join(root, "testbed", "build", "package", "addons", "sourcemod", "extensions")
+}
+
+func playOnce(ctx context.Context, l lab.Lab, a arm, o options, path string, played machine.Machine) ([]wave.Result, bool, error) {
 	if err := clearStats(ctx, o.root); err != nil {
 		return nil, false, err
 	}
@@ -220,10 +236,11 @@ func playOnce(ctx context.Context, l lab.Lab, a arm, o options, path string) ([]
 	if err := copyStats(ctx, o.root, path); err != nil {
 		return results, crashed, err
 	}
-	if err := writeRunRecord(path, runRecord{
+	if err := writeRunRecord(path, wave.Run{
 		Tag: o.tag, Arm: a.name, Cvars: a.cvars, Map: o.mapName, Mission: o.mission,
 		Team: o.team, Defenders: o.defenders, Puppets: o.puppets.count, PuppetCalls: o.puppets.calls,
 		Waves: o.waves, StartWave: max(o.jump, 1), Plugin: o.plugin, At: time.Now().UTC().Format(time.RFC3339),
+		Machine: played,
 	}); err != nil {
 		return results, crashed, err
 	}

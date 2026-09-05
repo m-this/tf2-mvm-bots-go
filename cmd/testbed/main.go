@@ -21,6 +21,9 @@ believed. What it refuses to do is the point:
     build.
   - an empty run. RED must hold defenders and the mission must be the one asked
     for, or the attempt is a refusal rather than a file full of zeros.
+  - arms played on different machines. Each attempt records the host, the
+    memory and load it started with and the extensions' checksums, and two
+    arms that differ on any of them are reported and not compared.
 */
 package main
 
@@ -40,6 +43,7 @@ import (
 	"time"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/lab"
+	"github.com/m-this/tf2-mvm-bots-go/internal/machine"
 	"github.com/m-this/tf2-mvm-bots-go/internal/rcon"
 	"github.com/m-this/tf2-mvm-bots-go/internal/wave"
 )
@@ -254,6 +258,10 @@ func report(tag, mapName, mission string, got []wave.Arm) string {
 		// and the treated arm is the one being asked about.
 		control := got[len(got)-1]
 		for _, treated := range got[:len(got)-1] {
+			if err := machine.Comparable(treated.Machines, control.Machines); err != nil {
+				fmt.Fprintf(&b, "\n%s against %s is not compared: %v\n", treated.Name, control.Name, err)
+				continue
+			}
 			b.WriteString(wave.Compare(treated, control))
 		}
 	}

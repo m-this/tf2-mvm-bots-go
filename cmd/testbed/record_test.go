@@ -15,7 +15,7 @@ func TestTheRunRecordLeadsTheFileAndCountsForNoWave(t *testing.T) {
 	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := writeRunRecord(path, runRecord{Tag: "t", Arm: "on", Plugin: "2.46.0"}); err != nil {
+	if err := writeRunRecord(path, wave.Run{Tag: "t", Arm: "on", Plugin: "2.46.0"}); err != nil {
 		t.Fatal(err)
 	}
 	got, err := os.ReadFile(path)

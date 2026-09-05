@@ -7,37 +7,14 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/m-this/tf2-mvm-bots-go/internal/wave"
 )
-
-/*
-runRecord is the first line of a results file: what the run was, so a file
-found a week later says which arm, which build and which preconditions
-produced it rather than leaving that to the file name.
-
-The event name keeps it out of every reader: wave.Read counts wave_begin and
-wave_end and nothing else, and the report loaders each look for their own.
-*/
-type runRecord struct {
-	Event       string `json:"event"`
-	Tag         string `json:"tag"`
-	Arm         string `json:"arm"`
-	Cvars       string `json:"cvars"`
-	Map         string `json:"map"`
-	Mission     string `json:"mission"`
-	Team        string `json:"team"`
-	Defenders   int    `json:"defenders"`
-	Puppets     int    `json:"puppets"`
-	PuppetCalls bool   `json:"puppet_calls"`
-	Waves       int    `json:"waves"`
-	StartWave   int    `json:"start_wave"`
-	Plugin      string `json:"plugin"`
-	At          string `json:"at"`
-}
 
 // writeRunRecord puts the record ahead of what the server wrote. The file is
 // a few megabytes at most, so it is rewritten rather than spliced.
-func writeRunRecord(path string, r runRecord) error {
-	r.Event = "run"
+func writeRunRecord(path string, r wave.Run) error {
+	r.Event = wave.RunEvent
 	line, err := json.Marshal(r)
 	if err != nil {
 		return err

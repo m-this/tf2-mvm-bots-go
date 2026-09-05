@@ -19,6 +19,8 @@ import (
 	"strings"
 
 	waveline "github.com/m-this/tf2-mvm-bots-go/gen/go/wave"
+	"github.com/m-this/tf2-mvm-bots-go/internal/machine"
+	runs "github.com/m-this/tf2-mvm-bots-go/internal/wave"
 )
 
 /*
@@ -449,9 +451,32 @@ func main() {
 
 	then := summarise(before)
 	report(args[1], then)
+	if err := sameMachine(args[0], args[1]); err != nil {
+		fmt.Printf("\nnot compared: %v\n", err)
+		os.Exit(1)
+	}
 	compare(now, then)
 
 	if thenSetup, err := loadSetup(args[1]); err == nil {
 		compareSetup(nowSetup, thenSetup)
 	}
+}
+
+// sameMachine refuses to read two files against each other when their run
+// records say they were played on different things. A file with no record
+// predates the record, and is said so rather than refused.
+func sameMachine(after, before string) error {
+	var machines [][]machine.Machine
+	for _, path := range []string{after, before} {
+		run, found, err := runs.ReadRun(path)
+		if err != nil {
+			return err
+		}
+		if !found {
+			fmt.Printf("\n%s has no run record, so the machine it was played on is unknown\n", path)
+			return nil
+		}
+		machines = append(machines, []machine.Machine{run.Machine})
+	}
+	return machine.Comparable(machines...)
 }
