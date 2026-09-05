@@ -10,6 +10,8 @@
 
 #define PATH_RETRY_INTERVAL (0.5)
 
+#define PATH_REFRESH_INTERVAL (0.2)
+
 int m_iPathBudgetTick;
 int m_iPathsThisTick;
 bool m_bPathFailed[65];
@@ -169,7 +171,7 @@ stock void PluginBot_SimulateFrame(int client)
 					m_iPathFailures[client]++;
 				}
 				m_bPathFailed[client] = failed;
-				m_flRepathTime[client] = GetGameTime() + (failed ? PATH_RETRY_INTERVAL : 0.2);
+				m_flRepathTime[client] = GetGameTime() + (failed ? PATH_RETRY_INTERVAL : PATH_REFRESH_INTERVAL);
 			}
 			if (m_bPathFailed[client])
 			{

@@ -216,6 +216,12 @@ func NotePathResult(actor int32, built bool) {
 //sp:name PATH_RETRY_INTERVAL
 const PathRetryInterval = 0.5
 
+// PathRefreshInterval is how long a path that built waits before it is asked
+// for again. PATHS_PER_FRAME is sized against it: see internal/tables.
+//
+//sp:name PATH_REFRESH_INTERVAL
+const PathRefreshInterval = 0.2
+
 /*
 PluginBotSimulateFrame is the per-frame walk: whenever a behaviour has set a
 goal and bPathing, this is what actually gets the bot there.
@@ -271,7 +277,7 @@ func PluginBotSimulateFrame(client int32) {
 
 				pathFailed[client] = failed
 
-				engine.SetRepathTime(client, engine.GameTime()+engine.ChooseFloat(failed, PathRetryInterval, 0.2))
+				engine.SetRepathTime(client, engine.GameTime()+engine.ChooseFloat(failed, PathRetryInterval, PathRefreshInterval))
 			}
 
 			if pathFailed[client] {
