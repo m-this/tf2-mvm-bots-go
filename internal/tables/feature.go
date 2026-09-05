@@ -217,12 +217,13 @@ var Features = []Feature{
 	{
 		Name:        "engineer_setup_phase",
 		Description: "Between waves the engineer claims his spots, jumps to each of them, and what he builds comes up finished.",
-		On:          false,
-		Note: "Off: measured 2026-09-05 on Decoy, two engineers, three attempts each of two waves. The\n" +
-			"entrance goes up at 21 to 30s of the break against 37 to 45s, the exit at 26 to 38s against\n" +
-			"50 to 58s, and the walk drops from 13810 and 15544 units to 12877 and 12404. Six of six waves\n" +
-			"cleared in both arms. Against that the sentry is at level three in 76% of samples rather than\n" +
-			"85%: the wrench is what applies a level and an engineer who jumps has less time swinging.\n" +
-			"Asked for by Mathis. See mvm-dn5, and mvm-9nu for upgrading a building outright.",
+		On:          true,
+		Note: "On by Mathis's decision, with the trade on the record. Measured 2026-09-05 on Decoy, two\n" +
+			"engineers, three attempts each of two waves: the entrance goes up at 21 to 30s of the break\n" +
+			"against 37 to 45s, the exit at 26 to 38s against 50 to 58s, and the walk drops from 13810\n" +
+			"and 15544 units to 12877 and 12404. Six of six waves cleared in both arms. Against that the\n" +
+			"sentry is at level three in 76% of samples rather than 85%: the wrench is what applies a\n" +
+			"level and an engineer who jumps has less time swinging. See mvm-dn5, and mvm-9nu for\n" +
+			"upgrading a building outright, which is what removes the trade.",
 	},
 }

@@ -36,5 +36,5 @@ var Arms = []Arm{
 	{Name: "generated_threat_priority", ConVar: "sm_redbots_feature_generated_threat_priority", Default: false, About: "Rank threats with the table generated from the Go, rather than with the hand written chain."},
 	{Name: "engineer_entrance_first", ConVar: "sm_redbots_feature_engineer_entrance_first", Default: false, About: "The engineer puts his teleporter entrance up in spawn before he walks out to build the nest."},
 	{Name: "bot_test_by_nextbot", ConVar: "sm_redbots_feature_bot_test_by_nextbot", Default: false, About: "A seat is one of the game's own bots when it has a nextbot, rather than whenever it is a fake client."},
-	{Name: "engineer_setup_phase", ConVar: "sm_redbots_feature_engineer_setup_phase", Default: false, About: "Between waves the engineer claims his spots, jumps to each of them, and what he builds comes up finished."},
+	{Name: "engineer_setup_phase", ConVar: "sm_redbots_feature_engineer_setup_phase", Default: true, About: "Between waves the engineer claims his spots, jumps to each of them, and what he builds comes up finished."},
 }
