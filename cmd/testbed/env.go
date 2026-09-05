@@ -19,13 +19,35 @@ func envOr(key, fallback string) string {
 	return fallback
 }
 
-func address() string {
-	return "127.0.0.1:" + envOr("TESTBED_PORT", "27025")
+/*
+bed is which test-bed this runner drives.
+
+One machine can run two: each is a compose project with a port of its own, and
+the second builds its tree over the first's game volume rather than downloading
+the game again. TESTBED_PROJECT names the bed. A bed that is not the first must
+also be given TESTBED_PORT, because two servers on 27025 is one server and a
+runner reading the wrong one.
+*/
+const firstBed = "mvmbots-testbed"
+
+func bed() string { return envOr("TESTBED_PROJECT", firstBed) }
+
+func port() (string, error) {
+	p := os.Getenv("TESTBED_PORT")
+	if p == "" && bed() != firstBed {
+		return "", fmt.Errorf("TESTBED_PROJECT=%s needs a TESTBED_PORT of its own; the first bed has 27025", bed())
+	}
+	if p == "" {
+		return "27025", nil
+	}
+	return p, nil
 }
+
+func address(port string) string { return "127.0.0.1:" + port }
 
 func password() string { return envOr("TESTBED_RCONPW", "testbed") }
 
-func container() string { return envOr("TESTBED_CONTAINER", "mvmbots-testbed-srcds-1") }
+func container() string { return envOr("TESTBED_CONTAINER", bed()+"-srcds-1") }
 
 /*
 	repoRoot is the plugin tree, not this repository's root

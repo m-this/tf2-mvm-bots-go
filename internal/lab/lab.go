@@ -270,19 +270,33 @@ func (l Lab) LoadMission(ctx context.Context, mapName, mission string) error {
 		return nil
 	}
 	l.say("naming mission %s", mission)
-	if _, err := l.Do("tf_mvm_popfile " + mission); err != nil {
-		return err
-	}
-	if err := sleep(ctx, 15*time.Second); err != nil {
-		return err
-	}
+	/* Named again until it is heard, rather than once and read after a wait.
 
-	loaded, err := l.PopFile()
-	if err != nil {
-		return err
-	}
-	if !strings.Contains(loaded, mission) {
-		return fmt.Errorf("%w: asked for %s and the server is playing %s", ErrPrecondition, mission, loaded)
+	A fresh container answers rcon before the map has finished coming up, and
+	the first tf_mvm_popfile it is handed then goes nowhere: three runs in a
+	row were refused with the map's own mission still playing, while the same
+	name typed a minute later took inside eight seconds. Sixty seconds is the
+	bound, and a name the server never takes is still a refusal. */
+	var loaded string
+	deadline := time.Now().Add(60 * time.Second)
+	for {
+		if _, err := l.Do("tf_mvm_popfile " + mission); err != nil {
+			return err
+		}
+		if err := sleep(ctx, 5*time.Second); err != nil {
+			return err
+		}
+		var err error
+		loaded, err = l.PopFile()
+		if err != nil {
+			return err
+		}
+		if strings.Contains(loaded, mission) {
+			break
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("%w: asked for %s and the server is playing %s", ErrPrecondition, mission, loaded)
+		}
 	}
 
 	// The map load reads server.cfg again, and the mission was named after it.

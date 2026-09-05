@@ -55,6 +55,10 @@ func Read(path string) ([]Result, error) {
 	defer func() { _ = file.Close() }()
 
 	var out []Result
+	// A wave_end with no wave_begin before it in the file began under the
+	// previous run's settings and finished under this one's. It is nobody's
+	// wave and is not counted.
+	begun := false
 	scan := bufio.NewScanner(file)
 	scan.Buffer(make([]byte, 0, 1<<20), 1<<22)
 	for scan.Scan() {
@@ -62,8 +66,14 @@ func Read(path string) ([]Result, error) {
 		if err := json.Unmarshal(scan.Bytes(), &r); err != nil {
 			continue
 		}
-		if r.Event == "wave_end" {
-			out = append(out, r)
+		switch r.Event {
+		case "wave_begin":
+			begun = true
+		case "wave_end":
+			if begun {
+				out = append(out, r)
+			}
+			begun = false
 		}
 	}
 	return out, scan.Err()

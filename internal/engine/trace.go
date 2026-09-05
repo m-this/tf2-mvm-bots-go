@@ -16,6 +16,7 @@ type TraceCalls struct {
 	PropertyValue          func(p Properties, key string) (bool, int32)
 	CloseProperties        func(p Properties)
 	TraceRayFilter         func(from [3]float32, to [3]float32, mask int32, rayType int32, filter func(entity int32, contentsMask int32, data Properties) bool, data Properties)
+	TraceHull              func(from [3]float32, to [3]float32, mins [3]float32, maxs [3]float32, mask int32)
 	DidHit                 func() bool
 	TraceEntityIndex       func() int32
 	StandardFilterRules    func(entity int32, contentsMask int32) bool
@@ -81,6 +82,14 @@ func (p Properties) Close() { traces.CloseProperties(p) }
 //nolint:revive // unused-parameter: the filter is a name the emitter writes, not something the Go calls
 func TraceRayFilterData(from [3]float32, to [3]float32, mask int32, rayType int32, filter func(entity int32, contentsMask int32, data Properties) bool, data Properties) {
 	traces.TraceRayFilter(from, to, mask, rayType, filter, data)
+}
+
+// TraceHull sweeps a box from one point to the other, and leaves what it met
+// for DidHit. The same box at both ends asks whether the box fits there.
+//
+//sp:native TR_TraceHull
+func TraceHull(from [3]float32, to [3]float32, mins [3]float32, maxs [3]float32, mask int32) {
+	traces.TraceHull(from, to, mins, maxs, mask)
 }
 
 // DidHit says the last ray hit something.

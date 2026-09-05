@@ -112,6 +112,31 @@ public void OnPluginStart()
 		"Say what each puppet is doing and who is healing it, for a run to read without the results file.");
 
 	CreateTimer(HOST_WATCH_INTERVAL, Timer_WatchHost, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+
+	HookEvent("mvm_wave_failed", Event_RoundOver, EventHookMode_Post);
+	HookEvent("teamplay_round_start", Event_RoundOver, EventHookMode_Post);
+}
+
+/* A lost wave, or a restart, leaves the host readied and the bots gone.
+ *
+ * The game kicks the defenders when it restarts a wave, and in READY_BOTS mode
+ * the mod adds them again only on a ready press. The host still counted as
+ * ready, so the watch above never pressed, the restarted wave began with RED
+ * empty, and the next attempt refused with "RED reached 0 defenders". Taking
+ * the ready off is what makes the watch press it again. */
+static void Event_RoundOver(Event event, const char[] name, bool dontBroadcast)
+{
+	DropReady(g_iHost);
+
+	//The puppets sit in the same seats and go stale the same way
+	for (int n = 0; n < MAX_PUPPETS; n++)
+		DropReady(g_arrPuppets[n]);
+}
+
+static void DropReady(int client)
+{
+	if (client > 0 && client <= MaxClients && IsClientInGame(client))
+		FakeClientCommand(client, "tournament_player_readystate 0");
 }
 
 public void OnMapStart()
