@@ -20,27 +20,6 @@ Author: ★ Officer Spy ★
 #pragma semicolon 1
 #pragma newdecls required
 
-// #define TESTING_ONLY
-
-#define MOD_REQUEST_CREDITS
-#define MOD_CUSTOM_ATTRIBUTES
-#define MOD_ROLL_THE_DICE_REVAMPED
-
-#define METHOD_MVM_UPGRADES
-
-#define CHANGETEAM_RESTRICTIONS
-
-// #define TFBOT_CUSTOM_SPY_CONTACT
-
-#define EXTRA_PLUGINBOT
-
-// #define VALIDATE_ENTITY_TANKBOSS
-
-// #define IDLEBOT_AIMING
-
-
-
-
 //A zone name is a short label like "inside": long enough to read, short enough to keep in a config
 
 
