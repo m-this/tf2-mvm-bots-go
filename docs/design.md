@@ -108,6 +108,14 @@ Refusing is the whole value. A transpiler that quietly does something reasonable
 with a construct it half supports is how you get a generated plugin that compiles
 and is wrong.
 
+One place the generated SourcePawn is deliberately not what the hand written
+plugin was: a function's out-parameters. Go zeroes a named result at entry and
+SourcePawn hands the body whatever the caller's variable held, so the emitter
+clears every by-reference result before the body runs. A caller that read the
+buffer after a false answer used to see its old contents and now sees zero.
+Both call sites that existed checked the bool first, and the Go is now the
+definition, so the Go rule stands: a result is zero until the body writes it.
+
 ## Order of work
 
 One function end to end before anything else. Threat priority is the candidate:
