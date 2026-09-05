@@ -6,6 +6,8 @@
 
 #define SPAWN_EXIT_PROGRESS (96.0)
 
+#define SPAWN_RECOVERY_TRIES (8)
+
 float m_vecSpawnExitProgress[65][3];
 float m_flSpawnExitProgressAt[65];
 float m_flSpawnExitStartedAt[65];
@@ -175,6 +177,38 @@ stock CNavArea FindSpawnRecoveryArea(int client, char[] source, int sourceLength
 	return best;
 }
 
+stock bool IsRoomToStand(float point[3])
+{
+	float mins[3];
+	float maxs[3];
+	mins[0] = -24.0;
+	mins[1] = -24.0;
+	mins[2] = 0.0;
+	maxs[0] = 24.0;
+	maxs[1] = 24.0;
+	maxs[2] = 82.0;
+	TR_TraceHull(point, point, mins, maxs, MASK_PLAYERSOLID);
+	return !TR_DidHit();
+}
+
+stock bool RecoveryDestination(CNavArea area, float destination[3])
+{
+	for (int i = 0; i < 3; i++)
+	{
+		destination[i] = 0.0;
+	}
+	for (int attempt = 0; attempt < SPAWN_RECOVERY_TRIES; attempt++)
+	{
+		CNavArea_GetRandomPoint(area, destination);
+		destination[2] += 10.0;
+		if (IsRoomToStand(destination))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 stock bool MoveDefenderFromSpawnToBattlefield(int client, const char[] reason)
 {
 	if ((client < 1) || (client > MaxClients) || !IsClientInGame(client) || !IsPlayerAlive(client) || !g_bIsDefenderBot[client])
@@ -192,12 +226,16 @@ stock bool MoveDefenderFromSpawnToBattlefield(int client, const char[] reason)
 		return false;
 	}
 	float destination[3];
-	CNavArea_GetRandomPoint(area, destination);
-	destination[2] += 10.0;
+	bool found = RecoveryDestination(area, destination);
+	if (!found)
+	{
+		LogMessage("SpawnNavRecovery: %N %s; no room to stand in the %s area, so they stay", client, reason, anchorSource);
+		return false;
+	}
 	float stopped[3];
 	TeleportEntity(client, destination, NULL_VECTOR, stopped);
 	CBaseCombatCharacter(client).UpdateLastKnownArea();
-	m_flRepathTime[client] = 0.0;
+	m_flRepathTime[client] = GetGameTime() + GetRandomFloat(0.5, 1.0);
 	ResetSpawnExitWatch(client);
 	LogMessage("SpawnNavRecovery: %N %s; moved them using %s", client, reason, anchorSource);
 	return true;

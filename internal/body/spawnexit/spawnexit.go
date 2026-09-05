@@ -26,6 +26,12 @@ const SpawnExitStallTime = 6.0
 //sp:name SPAWN_EXIT_PROGRESS
 const SpawnExitProgress = 96.0
 
+// SpawnRecoveryTries is how many points of the recovery area are tried for one
+// the bot can stand at before the recovery is given up for this look.
+//
+//sp:name SPAWN_RECOVERY_TRIES
+const SpawnRecoveryTries = 8
+
 //sp:name m_vecSpawnExitProgress
 var spawnExitProgress [slots.Count][3]float32
 
@@ -237,6 +243,42 @@ func FindSpawnRecoveryArea(client int32, source engine.Text, sourceLength int32)
 	return best
 }
 
+// IsRoomToStand says a standing player's box fits at the point, against
+// everything that blocks a player. A nav area's random point can sit inside a
+// prop or under a ledge, and a bot put there never finishes its next path search.
+//
+//sp:name IsRoomToStand
+func IsRoomToStand(point [3]float32) bool {
+	var mins [3]float32
+	var maxs [3]float32
+	mins[0] = -24.0
+	mins[1] = -24.0
+	mins[2] = 0.0
+	maxs[0] = 24.0
+	maxs[1] = 24.0
+	maxs[2] = 82.0
+
+	engine.TraceHull(point, point, mins, maxs, engine.MaskPlayerSolid())
+	return !engine.DidHit()
+}
+
+// RecoveryDestination is a point of the area with room to stand, if a few draws
+// find one.
+//
+//sp:name RecoveryDestination
+func RecoveryDestination(area engine.Area) (found bool, destination [3]float32) {
+	for attempt := int32(0); attempt < SpawnRecoveryTries; attempt++ {
+		destination = engine.RandomPointIn(area)
+		destination[2] += 10.0
+
+		if IsRoomToStand(destination) {
+			return true, destination
+		}
+	}
+
+	return false, destination
+}
+
 // MoveDefenderFromSpawnToBattlefield moves the bot to walkable NAV near the
 // final objective, then lets normal class behaviour resume.
 //
@@ -257,13 +299,18 @@ func MoveDefenderFromSpawnToBattlefield(client int32, reason string) bool {
 		return false
 	}
 
-	destination := engine.RandomPointIn(area)
-	destination[2] += 10.0
+	found, destination := RecoveryDestination(area)
+
+	if !found {
+		engine.LogMessage("SpawnNavRecovery: %N %s; no room to stand in the %s area, so they stay", client, reason, anchorSource)
+		return false
+	}
+
 	var stopped [3]float32
 
 	engine.TeleportEntity(client, destination, engine.NullVector(), stopped)
 	engine.CombatOf(client).UpdateLastKnownArea()
-	engine.SetRepathTime(client, 0.0)
+	engine.SetRepathTime(client, engine.GameTime()+engine.RandomFloat(0.5, 1.0))
 	ResetSpawnExitWatch(client)
 
 	engine.LogMessage("SpawnNavRecovery: %N %s; moved them using %s", client, reason, anchorSource)
