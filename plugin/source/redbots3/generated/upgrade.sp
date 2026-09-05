@@ -679,7 +679,7 @@ public Action CTFBotUpgrade_Update(BehaviorAction action, int actor, float inter
 		int secondary = GetPlayerWeaponSlot(actor, TFWeaponSlot_Secondary);
 		if ((secondary != -1) && (TF2Util_GetWeaponID(secondary) == TF_WEAPON_MEDIGUN))
 		{
-			int teammate = GerNearestTeammate(actor, WEAPON_MEDIGUN_RANGE);
+			int teammate = GetNearestTeammate(actor, WEAPON_MEDIGUN_RANGE);
 			if (teammate != -1)
 			{
 				// Heal a nearby teammate so we build up uber.

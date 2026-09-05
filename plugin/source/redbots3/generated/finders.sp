@@ -203,9 +203,9 @@ stock int FindBotNearestToBombNearestToHatch(int client)
 	return bestEntity;
 }
 
-// GerNearestTeammate is the closest player on the bot's own team within the
+// GetNearestTeammate is the closest player on the bot's own team within the
 // distance, and -1 for nobody. The name is the shipped one, typo included.
-stock int GerNearestTeammate(int client, const float maxDistance)
+stock int GetNearestTeammate(int client, const float maxDistance)
 {
 	float origin[3];
 	origin = WorldSpaceCenter(client);

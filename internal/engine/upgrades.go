@@ -275,7 +275,7 @@ func UpgradePostAction(client int32) Outcome { return upgrades.UpgradePostAction
 // NearestTeammate is the closest friendly player within that range. Ported,
 // finders.
 //
-//sp:body GerNearestTeammate
+//sp:body GetNearestTeammate
 func NearestTeammate(client int32, maxDistance float32) int32 {
 	return upgrades.NearestTeammate(client, maxDistance)
 }

@@ -246,12 +246,12 @@ func FindBotNearestToBombNearestToHatch(client int32) int32 {
 	return bestEntity
 }
 
-// GerNearestTeammate is the closest player on the bot's own team within the
+// GetNearestTeammate is the closest player on the bot's own team within the
 // distance, and -1 for nobody. The name is the shipped one, typo included.
 //
-//sp:name GerNearestTeammate
+//sp:name GetNearestTeammate
 //sp:const maxDistance
-func GerNearestTeammate(client int32, maxDistance float32) int32 {
+func GetNearestTeammate(client int32, maxDistance float32) int32 {
 	origin := engine.WorldSpaceCenter(client)
 
 	bestDistance := float32(999999.0)
