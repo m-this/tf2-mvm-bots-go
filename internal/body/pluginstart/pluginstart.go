@@ -54,7 +54,6 @@ func OnPluginStart() {
 	engine.SetRtdVariance(engine.CreateConVar("sm_redbots_manager_bot_rtd_variance", "15.0", "", engine.FcvarNotify()))
 
 	engine.HookConVarChange(engine.DefenderTeamSize(), engine.ConVarChangedDefenderTeamSize)
-	engine.HookConVarChange(engine.ManagerMode(), engine.ConVarChangedManagerMode)
 	engine.HookConVarChange(engine.BotLineupMode(), engine.ConVarChangedBotLineupMode)
 	engine.HookConVarChange(engine.TeamComposition(), engine.ConVarChangedTeamComposition)
 

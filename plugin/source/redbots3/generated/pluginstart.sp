@@ -39,7 +39,6 @@ public void OnPluginStart()
 	redbots_manager_bot_request_credits = CreateConVar("sm_redbots_manager_bot_request_credits", "1", "", FCVAR_NOTIFY);
 	redbots_manager_bot_rtd_variance = CreateConVar("sm_redbots_manager_bot_rtd_variance", "15.0", "", FCVAR_NOTIFY);
 	HookConVarChange(redbots_manager_defender_team_size, ConVarChanged_DefenderTeamSize);
-	HookConVarChange(redbots_manager_mode, ConVarChanged_ManagerMode);
 	HookConVarChange(redbots_manager_bot_lineup_mode, ConVarChanged_BotLineupMode);
 	HookConVarChange(redbots_manager_team_composition, ConVarChanged_TeamComposition);
 	RegConsoleCmd("sm_votebots", Command_Votebots);

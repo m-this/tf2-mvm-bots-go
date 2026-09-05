@@ -159,12 +159,6 @@ func ConVarChangedBotLineupMode(convar ConVar, before Text, after Text) {}
 //nolint:revive // unused-parameter: a name handed to a registration, never called
 func ConVarChangedDefenderTeamSize(convar ConVar, before Text, after Text) {}
 
-// ConVarChangedManagerMode is the convar hook of that name.
-//
-//sp:callback ConVarChanged_ManagerMode
-//nolint:revive // unused-parameter: a name handed to a registration, never called
-func ConVarChangedManagerMode(convar ConVar, before Text, after Text) {}
-
 // ConVarChangedTeamComposition is the convar hook of that name.
 //
 //sp:callback ConVarChanged_TeamComposition
