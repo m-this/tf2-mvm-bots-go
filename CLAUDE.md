@@ -57,9 +57,9 @@ overtaken.
   and `Fill` puts a panic naming itself behind every one the caller left out.
   A body may also import another generated package: the registry knows what
   each emits, so a shared decision is an import rather than an extern.
-- `internal/body/scan` — util.sp's client loop, ported one function at a time.
-  The duplication it holds is collapsed once every variant is here, not on the
-  way across.
+- `internal/body/scan` — util.sp's client loop: two loops, `nearestClient`
+  and `nearestObject`, and the named questions each variant asks. The traces
+  are pinned in `internal/body/testdata/scan_cells.golden`.
 - `internal/spaction`, `internal/action` — a behaviour. A Go package with the
   callbacks becomes the `BehaviorAction` subclass, the constructor and the
   wiring; the bodies come from `internal/spbody`, which is why this part is

@@ -39,9 +39,9 @@ down twice, and of the interesting code being unreachable from a test.
   engine call, each carrying the directive that says whether SourcePawn writes
   it as a native, an SDKCall or an address read. Nothing here means anything in
   a Go process: the differential test installs the answers.
-- `internal/body/scan` — util.sp's client loop, ported one function at a time.
-  The duplication it holds is collapsed once every variant is here, not on the
-  way across.
+- `internal/body/scan` — util.sp's client loop: two loops, `nearestClient`
+  and `nearestObject`, and the named questions each variant asks. The traces
+  are pinned in `internal/body/testdata/scan_cells.golden`.
 - `internal/spaction`, `internal/action` — a behaviour. A Go package with the
   callbacks becomes the `BehaviorAction` subclass, the constructor and the
   wiring; the bodies come from `internal/spbody`, which is why this part is
