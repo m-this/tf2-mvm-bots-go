@@ -198,9 +198,7 @@ func UpdateStuckWatchdog(actor int32) {
 		return
 	}
 
-	lurkingNowhere := false
-
-	wantsToBeElsewhere := engine.PluginBotOf(actor).Pathing() || myLoco.IsStuck() || noBehaviour || lurkingNowhere
+	wantsToBeElsewhere := engine.PluginBotOf(actor).Pathing() || myLoco.IsStuck() || noBehaviour
 
 	if !wantsToBeElsewhere || engine.VectorDistance(here, stuckOrigin[actor]) > StuckRadius {
 		stuckOrigin[actor] = here

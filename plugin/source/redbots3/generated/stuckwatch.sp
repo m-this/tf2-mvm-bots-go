@@ -97,8 +97,7 @@ stock void UpdateStuckWatchdog(int actor)
 			RequestFrame(Frame_UnstickDefender, actor);
 			return;
 		}
-	bool lurkingNowhere = false;
-	bool wantsToBeElsewhere = g_arrPluginBot[actor].bPathing || myLoco.IsStuck() || noBehaviour || lurkingNowhere;
+	bool wantsToBeElsewhere = g_arrPluginBot[actor].bPathing || myLoco.IsStuck() || noBehaviour;
 	if (!wantsToBeElsewhere || (GetVectorDistance(here, m_vStuckOrigin[actor]) > STUCK_RADIUS))
 	{
 		m_vStuckOrigin[actor] = here;
