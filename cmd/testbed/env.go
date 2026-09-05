@@ -28,12 +28,12 @@ func password() string { return envOr("TESTBED_RCONPW", "testbed") }
 func container() string { return envOr("TESTBED_CONTAINER", "mvmbots-testbed-srcds-1") }
 
 /*
-	repoRoot is the plugin repository, not this one
+	repoRoot is the plugin tree, not this repository's root
 
 The test-bed lives here and everything it runs lives there: build.sh, the
 compose file, the popfiles, the map configs and the results. It used to find its
-own working tree by walking up to a go.mod, which was the same repository; since
-mvm-x2c it is not, so the path comes from internal/upstream like every other
+own working tree by walking up to a go.mod, which was the same directory; since
+mvm-x2c it is not, so the path comes from internal/plugin like every other
 reader of that tree.
 */
 func repoRoot() (string, error) {

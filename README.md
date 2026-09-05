@@ -3,11 +3,11 @@
 The decisions the RED bots make in Mann vs Machine, written in Go, and the
 generators that turn them into SourcePawn.
 
-The plugin is [tf2-mvm-bots](https://github.com/m-this/tf2-mvm-bots). It kept
-the SourcePawn that had to be SourcePawn: `SDKCall`, `DHook`, raw address reads,
-gamedata. About 250 sites in 24k lines. That boundary is gone: `internal/spbody`
-emits all three, so what stays there is the gamedata, the map configs and the
-popfiles, and this repository is meant to own everything else.
+The plugin came from [tf2-mvm-bots](https://github.com/m-this/tf2-mvm-bots),
+which is archived. It kept the SourcePawn that had to be SourcePawn: `SDKCall`,
+`DHook`, raw address reads, gamedata. About 250 sites in 24k lines. That
+boundary is gone: `internal/spbody` emits all three, the tree moved to `plugin/`
+here, and this repository owns everything else.
 
 ## Why
 
@@ -45,8 +45,7 @@ down twice, and of the interesting code being unreachable from a test.
 - `internal/spaction`, `internal/action` — a behaviour. A Go package with the
   callbacks becomes the `BehaviorAction` subclass, the constructor and the
   wiring; the bodies come from `internal/spbody`, which is why this part is
-  small. `internal/action/spysap` is the first one across, compared against the
-  file it replaces on every callback's declaration and call sequence.
+  small.
 - `internal/body` — the bodies themselves, one package each, and the list that
   says which are generated. `internal/body/roster` is the first, and it is
   proved twice: run under spshell against the same canned world as the Go, call
@@ -58,9 +57,9 @@ down twice, and of the interesting code being unreachable from a test.
   standalone VM, compared with the Go on `float32` bits, with no game server.
 - `cmd/testbed`, `cmd/rc`, `internal/lab`, `internal/rcon`, `internal/wave`,
   `report`, `sweepreport` — the test-bed. It runs the mission, watches the waves
-  and reports what happened. It drives the plugin repository through
-  `internal/upstream`: build.sh, the compose file, the popfiles and the map
-  configs live there, and none of them are code.
+  and reports what happened. It drives the plugin tree through
+  `internal/plugin`: build.sh, the compose file, the popfiles and the map
+  configs live under `plugin/`, and none of them are code.
 
 `gen/` is the output. It is gitignored and never edited by hand.
 
@@ -75,10 +74,9 @@ cached under `toolchain/`. Without it the differential tests skip and say so;
 `make check` builds it first and sets `MVMBOTS_REQUIRE_SPSHELL`, so under the
 gate an absent toolchain fails instead of quietly running nothing.
 
-It sets `MVMBOTS_REQUIRE_UPSTREAM` for the same reason. Three packages resolved
-the path to the plugin repository themselves, got it wrong, and skipped: the
-binding and nav mesh proofs reported `ok` in under a second while running none
-of them.
+It sets `MVMBOTS_REQUIRE_PLUGIN` for the same reason. Three packages resolved
+the path to the plugin tree themselves, got it wrong, and skipped: the binding
+and nav mesh proofs reported `ok` in under a second while running none of them.
 
 ## What this does not fix
 

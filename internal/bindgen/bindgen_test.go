@@ -13,10 +13,10 @@ import (
 )
 
 // includeRoot is the include tree inside the plugin's test-bed build
-// directory. The plugin repository is resolved by internal/upstream, which is
-// where a relative MVMBOTS_UPSTREAM is read from the repository root rather
-// than from this package: doing it here got it wrong, and every proof below
-// skipped in silence.
+// directory. The tree is resolved by internal/plugin, which is where a relative
+// MVMBOTS_PLUGIN is read from the repository root rather than from this
+// package: doing it here got it wrong, and every proof below skipped in
+// silence.
 func includeRoot(t *testing.T) string {
 	t.Helper()
 	return filepath.Join(pluginDir(t), "testbed", "build")

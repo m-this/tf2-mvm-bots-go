@@ -19,10 +19,10 @@ import (
 
 func main() {
 	out := flag.String("out", "gen", "directory to write generated files into")
-	upstream := flag.String("upstream", "plugin", "the plugin tree, read for the include tree")
+	plugin := flag.String("plugin", "plugin", "the plugin tree, read for the include tree")
 	flag.Parse()
 
-	if err := run(*out, *upstream); err != nil {
+	if err := run(*out, *plugin); err != nil {
 		fmt.Fprintln(os.Stderr, "gen:", err)
 		os.Exit(1)
 	}
@@ -68,15 +68,15 @@ It lives inside the plugin's test-bed build directory because that is what
 build.sh already downloads and caches. Bindings generated from includes older
 than the compiler are bindings for the wrong API, which is mvm-z83.21.
 */
-func includeRoot(upstream string) string {
-	return filepath.Join(upstream, "testbed", "build")
+func includeRoot(plugin string) string {
+	return filepath.Join(plugin, "testbed", "build")
 }
 
 // writeBindings emits the SourceMod API as Go. Absent includes are not an
 // error: a fresh clone has not run build.sh yet, and the rest of the output
 // does not depend on them.
-func writeBindings(out, upstream string) error {
-	root := includeRoot(upstream)
+func writeBindings(out, plugin string) error {
+	root := includeRoot(plugin)
 	if !isDir(root) {
 		fmt.Fprintf(os.Stderr, "gen: no include tree at %s, skipping bindings\n", root)
 		return nil
@@ -102,7 +102,7 @@ func isDir(path string) bool {
 	return err == nil && info.IsDir()
 }
 
-func run(out, upstream string) error {
+func run(out, plugin string) error {
 	if err := os.RemoveAll(out); err != nil {
 		return fmt.Errorf("clearing %s: %w", out, err)
 	}
@@ -127,5 +127,5 @@ func run(out, upstream string) error {
 			return fmt.Errorf("writing %s: %w", path, err)
 		}
 	}
-	return writeBindings(out, upstream)
+	return writeBindings(out, plugin)
 }

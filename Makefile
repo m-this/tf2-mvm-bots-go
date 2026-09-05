@@ -1,7 +1,7 @@
 GO ?= go
 GOLANGCI_VERSION ?= latest
 GOLANGCI := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_VERSION)
-UPSTREAM ?= plugin
+PLUGIN ?= plugin
 
 # The standalone SourcePawn build tools/spshell.sh caches. Present means the
 # differential tests run; absent means they skip and say so.
@@ -17,15 +17,15 @@ help:
 	@grep -E '^[a-z-]+:' Makefile | cut -d: -f1 | grep -v help
 
 gen:
-	$(GO) run ./cmd/gen -upstream $(UPSTREAM) -out gen
+	$(GO) run ./cmd/gen -plugin $(PLUGIN) -out gen
 
 # The target-specific variable reaches test through the prerequisite, which is
 # the whole point: the gate runs the same tests and refuses to skip the ones
 # that need spcomp.
-check: REQUIRE := MVMBOTS_REQUIRE_SPSHELL=1 MVMBOTS_REQUIRE_UPSTREAM=1
+check: REQUIRE := MVMBOTS_REQUIRE_SPSHELL=1 MVMBOTS_REQUIRE_PLUGIN=1
 check: toolchain gen vet lint test
-	$(GO) run ./cmd/gen -upstream $(UPSTREAM) -out gen
-	@cp -r gen .gen.first && $(GO) run ./cmd/gen -upstream $(UPSTREAM) -out gen \
+	$(GO) run ./cmd/gen -plugin $(PLUGIN) -out gen
+	@cp -r gen .gen.first && $(GO) run ./cmd/gen -plugin $(PLUGIN) -out gen \
 		&& diff -r .gen.first gen >/dev/null \
 		|| { rm -rf .gen.first; echo "generated output is not reproducible"; exit 1; }
 	@rm -rf .gen.first
@@ -34,7 +34,7 @@ check: toolchain gen vet lint test
 # a clone that has never generated does not build at all. It is cheap and
 # reproducible, so there is no reason to make anybody remember it.
 test: gen
-	MVMBOTS_PLUGIN=$(UPSTREAM) $(SPENV) $(REQUIRE) $(GO) test -race ./...
+	MVMBOTS_PLUGIN=$(PLUGIN) $(SPENV) $(REQUIRE) $(GO) test -race ./...
 
 # Builds SourcePawn's own compiler and VM at the pinned commit. Idempotent: a
 # second run finds the binaries and exits.
