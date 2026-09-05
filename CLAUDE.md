@@ -65,9 +65,11 @@ overtaken.
   wiring; the bodies come from `internal/spbody`, which is why this part is
   small.
 - `internal/body` — the bodies themselves, one package each, and the list that
-  says which are generated. `internal/body/roster` is the first, and it is
-  proved twice: run under spshell against the same canned world as the Go, call
-  traces compared, and its DHook callbacks compiled with the shipped compiler.
+  says which are generated, and which are proof: `internal/body/roster` is run
+  under spshell against the same canned world as the Go, call traces compared,
+  and its DHook callbacks compiled with the shipped compiler, and it ships
+  nowhere. `internal/generated` is the whole output, and `internal/adopt` places
+  what the plugin tree commits.
 - `internal/spshell` — running generated SourcePawn under SourcePawn's
   standalone VM, so a generated function can be compared with the Go it came
   from on golden inputs.

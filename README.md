@@ -47,9 +47,11 @@ down twice, and of the interesting code being unreachable from a test.
   wiring; the bodies come from `internal/spbody`, which is why this part is
   small.
 - `internal/body` — the bodies themselves, one package each, and the list that
-  says which are generated. `internal/body/roster` is the first, and it is
-  proved twice: run under spshell against the same canned world as the Go, call
-  traces compared, and its DHook callbacks compiled with the shipped compiler.
+  says which are generated, and which are proof: `internal/body/roster` is run
+  under spshell against the same canned world as the Go, call traces compared,
+  and its DHook callbacks compiled with the shipped compiler, and it ships
+  nowhere. `internal/generated` is the whole output, and `internal/adopt` places
+  what the plugin tree commits.
 - `internal/actionsel` — action selection as a total function over 1425408
   reachable combinations, with exhaustiveness asserted. It found a hole that
   was shipping.

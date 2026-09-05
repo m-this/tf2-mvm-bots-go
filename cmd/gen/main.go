@@ -12,10 +12,7 @@ import (
 	mvmbots "github.com/m-this/tf2-mvm-bots-go"
 	"github.com/m-this/tf2-mvm-bots-go/internal/adopt"
 	"github.com/m-this/tf2-mvm-bots-go/internal/bindgen"
-	"github.com/m-this/tf2-mvm-bots-go/internal/body"
-	"github.com/m-this/tf2-mvm-bots-go/internal/spgen"
-	"github.com/m-this/tf2-mvm-bots-go/internal/tables"
-	"github.com/m-this/tf2-mvm-bots-go/internal/upgrade"
+	"github.com/m-this/tf2-mvm-bots-go/internal/generated"
 )
 
 func main() {
@@ -28,39 +25,6 @@ func main() {
 		fmt.Fprintln(os.Stderr, "gen:", err)
 		os.Exit(1)
 	}
-}
-
-// files is the whole output. A generator that emits a file not listed here does
-// not exist as far as the reproducibility check is concerned.
-func files(root string) (map[string][]byte, error) {
-	sel, err := spgen.EmitActionSel()
-	if err != nil {
-		return nil, fmt.Errorf("emitting action selection: %w", err)
-	}
-	bodies, err := body.Generate(root)
-	if err != nil {
-		return nil, fmt.Errorf("emitting bodies: %w", err)
-	}
-	out := map[string][]byte{
-		"sourcepawn/actionsel.sp":          []byte(sel.Data),
-		"sourcepawn/actionsel_dispatch.sp": []byte(sel.Dispatch),
-		"sourcepawn/attributes.sp":         tables.SourcePawnAttributes(),
-		"sourcepawn/features.sp":           tables.SourcePawnFeatures(),
-		"sourcepawn/threat_priority.sp":    spgen.EmitThreatPriority(),
-		"sourcepawn/upgrade_rank.sp":       upgrade.SourcePawnRanking(),
-		"sourcepawn/weapon_tuning.sp":      tables.SourcePawnTuning(),
-		"sourcepawn/wave_write.sp":         tables.SourcePawnWaveWriter(),
-		"go/arms/arms.go":                  tables.GoFeatureArms("arms"),
-		"go/attr/attr.go":                  tables.GoAttributes("attr"),
-		"go/wave/wave.go":                  tables.GoWaveParser("wave"),
-	}
-	for name, source := range bodies {
-		if _, taken := out[name]; taken {
-			return nil, fmt.Errorf("two generators write %s", name)
-		}
-		out[name] = source
-	}
-	return out, nil
 }
 
 /*
@@ -116,7 +80,7 @@ func run(out, plugin string, adoptFiles bool) error {
 	}
 	defer done()
 
-	emitted, err := files(sources)
+	emitted, err := generated.Files(sources)
 	if err != nil {
 		return err
 	}

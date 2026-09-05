@@ -1,10 +1,12 @@
 /*
-Package roster is the first body generated with engine calls in it.
+Package roster is the differential harness's subject, and ships nowhere.
 
-Four shapes, one per kind the port needs: a scan calling natives, a weapon
-question through an SDKCall, a DHook callback, and the plugin state two of them
-read. The scan is the first of the nine copies of one client loop that util.sp
-holds, which is mvm-z83.35.
+Four shapes, one per kind the generator has to get right: a scan calling
+natives, a weapon question through an SDKCall, a DHook callback, and the plugin
+state two of them read. Each is run under spshell against the same canned world
+as the Go and the call traces compared. The live versions are elsewhere:
+internal/body/dhooks holds the MyTouch and IsBot callbacks the plugin registers,
+and internal/body/scan the client loops.
 */
 package roster
 

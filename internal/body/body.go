@@ -44,6 +44,9 @@ type Body struct {
 	// Prefix goes in front of every emitted name. Go_ says at the call site
 	// that the function came from here and is not to be edited.
 	Prefix string
+	// Proof says the package exists to prove the generator: it is emitted,
+	// compiled and run under spshell, and never adopted into the plugin.
+	Proof bool
 }
 
 // Actions are the behaviours: a Go package each, emitted as the BehaviorAction
@@ -136,7 +139,7 @@ var All = []Body{
 	// for a number every caller folds. It is in the list because being in
 	// the list is what makes a package importable.
 	{Dir: "internal/body/slots", Prefix: "Go_"},
-	{Dir: "internal/body/roster", Out: "sourcepawn/roster.sp", Hooks: "sourcepawn/roster_dhooks.sp", Prefix: "Go_"},
+	{Dir: "internal/body/roster", Out: "sourcepawn/roster.sp", Hooks: "sourcepawn/roster_dhooks.sp", Prefix: "Go_", Proof: true},
 	{Dir: "internal/body/scan", Out: "sourcepawn/scan.sp", Prefix: "Go_"},
 	{Dir: "internal/body/medic", Out: "sourcepawn/medic.sp", Prefix: "Go_"},
 	{

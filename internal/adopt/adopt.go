@@ -1,11 +1,11 @@
 /*
-Package adopt is the list of generated files the plugin tree includes.
+Package adopt places the generated SourcePawn the plugin tree commits.
 
 The plugin's build is a shell script and a compiler, so what it includes out of
 a generated directory is committed there rather than produced at build time.
-This is the one place that says which files those are: make adopt writes them
-and the drift test in internal/tables reads the same list, so neither can
-forget a file the other knows about.
+Files is the placement rule over the generator's whole output: make adopt
+writes it and the drift test in internal/tables reads it, so a generated file
+is shipped, or it is proof, and never quietly neither.
 */
 package adopt
 
@@ -16,56 +16,48 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/m-this/tf2-mvm-bots-go/internal/body"
-	"github.com/m-this/tf2-mvm-bots-go/internal/spgen"
-	"github.com/m-this/tf2-mvm-bots-go/internal/tables"
+	"github.com/m-this/tf2-mvm-bots-go/internal/generated"
 )
 
-// generated is where the plugin includes generated bodies from.
-var generated = filepath.Join("source", "redbots3", "generated")
+// pluginDir is where the plugin includes generated SourcePawn from.
+var pluginDir = filepath.Join("source", "redbots3", "generated")
 
-/*
-Files is every adopted file, keyed by its path inside the plugin tree.
+// testbedDir is where the test-bed's statistics plugin includes it from.
+var testbedDir = filepath.Join("testbed", "stats", "generated")
 
-The behaviours and the bodies come from the lists rather than being named here,
-so a port that adds one cannot forget to ship it. roster is the generator's
-proof and ships nowhere, so it is skipped.
-*/
+// testbed names the output files that are the test-bed's and not the plugin's.
+var testbed = map[string]bool{
+	"sourcepawn/wave_write.sp": true,
+}
+
+// Files is every adopted file, keyed by its path inside the plugin tree.
 func Files(root string) (map[string][]byte, error) {
-	bodies, err := body.Generate(root)
+	emitted, err := generated.Files(root)
 	if err != nil {
-		return nil, fmt.Errorf("generating the bodies: %w", err)
+		return nil, err
 	}
 
-	files := map[string][]byte{
-		filepath.Join(generated, "features.sp"):                         tables.SourcePawnFeatures(),
-		filepath.Join(generated, "threat_priority.sp"):                  spgen.EmitThreatPriority(),
-		filepath.Join(generated, "scan.sp"):                             bodies["sourcepawn/scan.sp"],
-		filepath.Join(generated, "spysap.sp"):                           bodies["sourcepawn/spysap.sp"],
-		filepath.Join(generated, "collectnearmoney.sp"):                 bodies["sourcepawn/collectnearmoney.sp"],
-		filepath.Join("testbed", "stats", "generated", "wave_write.sp"): tables.SourcePawnWaveWriter(),
-	}
-
-	for _, b := range slices.Concat(body.Actions, body.All) {
-		if b.Out == "" {
+	files := make(map[string][]byte, len(emitted))
+	for name, source := range emitted {
+		if !strings.HasPrefix(name, "sourcepawn/") || generated.Proof(name) {
 			continue
 		}
-		name := filepath.Base(b.Out)
-		if strings.HasPrefix(name, "roster") {
-			continue
+		dir := pluginDir
+		if testbed[name] {
+			dir = testbedDir
 		}
-		files[filepath.Join(generated, name)] = bodies[b.Out]
+		files[filepath.Join(dir, filepath.Base(name))] = source
 	}
 
 	return files, nil
 }
 
 // Write puts every adopted file into the plugin tree, and says which ones moved.
-func Write(pluginDir string, files map[string][]byte) ([]string, error) {
+func Write(tree string, files map[string][]byte) ([]string, error) {
 	moved := make([]string, 0, len(files))
 
 	for name, want := range files {
-		path := filepath.Join(pluginDir, name)
+		path := filepath.Join(tree, name)
 
 		got, err := os.ReadFile(path) //nolint:gosec // the path is this repository's own tree
 		if err == nil && string(got) == string(want) {
