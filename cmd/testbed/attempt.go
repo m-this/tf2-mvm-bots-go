@@ -38,6 +38,16 @@ func playArms(ctx context.Context, l lab.Lab, list arms, o options) ([]wave.Arm,
 		for _, at := range roundOrder(len(list), round) {
 			o.say("=== %s attempt %d of %d", list[at].name, round, o.attempts)
 			if err := playInto(ctx, l, list[at], o, round, &got[at]); err != nil {
+				/* What completed is reported with the refusal.
+
+				A noise-floor run played five attempts of six, refused the
+				sixth, and reported nothing: five files of good data read as a
+				failure. The refusal stands and the run exits non-zero; the
+				caller sees what it has and decides whether it is enough. */
+				if errors.Is(err, lab.ErrPrecondition) {
+					o.say("stopping here: %v", err)
+					o.say("%d of %d rounds completed; what follows is the completed part", round-1, o.attempts)
+				}
 				return got, err
 			}
 		}
@@ -136,6 +146,20 @@ func playOnce(ctx context.Context, l lab.Lab, a arm, o options, path string) ([]
 		}
 	}
 
+	/* Every attempt starts from the same wave, between waves.
+
+	A mission that is not reloaded carries on from the wave it reached, so
+	each attempt started wherever the last one stopped: one noise-floor run
+	played waves 1 and 2 against 2 and 3, then 6 and 7 against 4 and 5, and
+	wave 8 of a mission is not wave 1. A wave already in flight was counted
+	for the arm that found it running. The jump restarts the round at the
+	wave asked for, or the first, and leaves the server between waves, which
+	is what the settle below expects to find. */
+	start := max(o.jump, 1)
+	o.say("starting at wave %d", start)
+	if err := l.JumpToWave(ctx, start); err != nil {
+		return nil, false, err
+	}
 	if err := l.Settle(ctx, o.defenders, 3*time.Minute); err != nil {
 		return nil, false, err
 	}

@@ -22,8 +22,10 @@ func write(t *testing.T, lines ...string) string {
 func TestReadTakesOnlyWaveEnds(t *testing.T) {
 	path := write(t,
 		`{"event":"bot","class":"engineer"}`,
+		`{"event":"wave_begin","wave":1}`,
 		`{"event":"wave_end","wave":1,"result":"lost","robot_kills":50}`,
 		`not json at all`,
+		`{"event":"wave_begin","wave":2}`,
 		`{"event":"wave_end","wave":2,"result":"cleared","robot_kills":80}`,
 	)
 	got, err := Read(path)
@@ -96,4 +98,22 @@ func lineFor(report, column string) string {
 		}
 	}
 	return ""
+}
+
+// A wave_end with no wave_begin before it began under the previous run's
+// settings and finished under this one's: results/gothreat-race-on-1.jsonl
+// held one and counted it for an arm it did not belong to. It is nobody's.
+func TestAWaveThatBeganUnderAnotherRunIsNotCounted(t *testing.T) {
+	path := write(t,
+		`{"event":"wave_end","wave":2,"result":"cleared","robot_kills":80}`,
+		`{"event":"wave_begin","wave":3}`,
+		`{"event":"wave_end","wave":3,"result":"lost","robot_kills":20}`,
+	)
+	got, err := Read(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].Wave != 3 {
+		t.Fatalf("read %+v, want only wave 3", got)
+	}
 }

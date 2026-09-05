@@ -40,7 +40,7 @@ services:
       # 66, so anything above that is work nobody reads.
       SRCDS_FPSMAX: 120
       # Read by our entrypoint, and written into server.cfg
-      BOT_MANAGER_MODE: ${TESTBED_BOT_MANAGER_MODE:-1}
+      BOT_MANAGER_MODE: ${TESTBED_BOT_MANAGER_MODE:-2}
       BOT_TEAM_SIZE: ${TESTBED_BOT_TEAM_SIZE:-6}
       BOT_TEAM_COMP: ${TESTBED_BOT_TEAM_COMP:-}
       BOT_CLASS_BLACKLIST: ${TESTBED_BOT_CLASS_BLACKLIST:-}

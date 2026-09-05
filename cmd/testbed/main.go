@@ -107,7 +107,11 @@ func run() error {
 		return err
 	}
 
-	release, err := hold(filepath.Join(root, "testbed", ".lock"))
+	/* The lock names the thing that is shared, which is the compose project,
+	   one container for the whole machine. A lock under the checkout let a
+	   worktree or a second clone take a different file and recreate the same
+	   container out from under the first runner. */
+	release, err := hold(filepath.Join(os.TempDir(), "mvmbots-testbed.lock"))
 	if err != nil {
 		return err
 	}
@@ -130,13 +134,13 @@ func run() error {
 		Say:    say,
 	}
 
+	compose := filepath.Join(root, "testbed", "compose.yml")
 	if *build {
 		say("building")
 		if err := compile(ctx, root); err != nil {
 			return err
 		}
 		say("restarting the server onto it")
-		compose := filepath.Join(root, "testbed", "compose.yml")
 		if err := lab.Compose(ctx, compose, containerEnv(*mapName, *team, *defend, replayed), "up", "-d", "--force-recreate"); err != nil {
 			return err
 		}
@@ -162,15 +166,30 @@ func run() error {
 	}
 
 	for _, name := range played {
+		/* A map the server is not on is a fresh container on that map, never
+		   a changelevel. The changelevel dropped the connection under the exec
+		   that writes the lineup, and the mod disables its bots in OnMapStart
+		   and waits to be started again: every second map of a sweep refused
+		   with RED at nought. Recreating is what a first map already does. */
+		if current, err := l.CurrentMap(); err != nil || current != name {
+			say("recreating the server on %s", name)
+			if err := lab.Compose(ctx, compose, containerEnv(name, *team, *defend, replayed), "up", "-d", "--force-recreate"); err != nil {
+				return err
+			}
+			if err := l.WaitForRcon(ctx, 20*time.Minute); err != nil {
+				return err
+			}
+		}
 		results, err := playArms(ctx, l, list, options{
 			root: root, mapName: name, mission: *mission, waves: *waves,
 			attempts: *attempts, timeout: *timeout, team: *team, defenders: *defend,
 			out: filepath.Join(root, *out), tag: *tag, jump: *jumpTo, say: say,
 		})
+		// Reported whatever happened: what completed is data.
+		fmt.Print(report(*tag, name, *mission, results))
 		if err != nil {
 			return err
 		}
-		fmt.Print(report(*tag, name, *mission, results))
 	}
 	return nil
 }
