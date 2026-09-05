@@ -220,6 +220,74 @@ if [ -n "${TESTBED_DEFINE_ONLY:-}" ]; then
 	return 0
 fi
 
+# A bed that is not the first has an empty volume and the first bed's game at
+# BASE, read-only. Its tree is a symlink to everything in the game except what
+# a bed writes: addons, cfg and logs are real directories, copied once, so the
+# plugin and the server.cfg installed here are this bed's alone. Bounded by
+# the number of entries in the game directory, which is a few hundred.
+BASE="${BASE:-${HOMEDIR}/tf-base}"
+
+link_over_base() {
+	[ -e "$BASE/srcds_run" ] || {
+		echo "[test-bed] no game at $BASE to build a bed over" >&2
+		exit 1
+	}
+
+	mkdir -p "$STEAMAPPDIR/${STEAMAPP}"
+
+	for entry in "$BASE"/* "$BASE"/.[!.]*; do
+		[ -e "$entry" ] || continue
+		name=$(basename "$entry")
+		[ "$name" = "${STEAMAPP}" ] && continue
+		ln -sfn "$entry" "$STEAMAPPDIR/$name"
+	done
+
+	for entry in "$BASE/${STEAMAPP}"/* "$BASE/${STEAMAPP}"/.[!.]*; do
+		[ -e "$entry" ] || continue
+		name=$(basename "$entry")
+		case "$name" in
+		addons | cfg | logs)
+			[ -e "$STEAMAPPDIR/${STEAMAPP}/$name" ] || cp -a "$entry" "$STEAMAPPDIR/${STEAMAPP}/$name"
+			;;
+		*)
+			ln -sfn "$entry" "$STEAMAPPDIR/${STEAMAPP}/$name"
+			;;
+		esac
+	done
+
+	mkdir -p "$STEAMAPPDIR/${STEAMAPP}/logs"
+	echo "[test-bed] built a bed over $BASE"
+}
+
+# The image's entrypoint runs steamcmd against the volume before the server,
+# and a linked tree is nothing steamcmd can update. A bed over the base runs
+# the same server line without the update; the base bed keeps the image's.
+run_over_base() {
+	link_over_base
+	supervise &
+	cd "${STEAMAPPDIR}"
+	exec bash "${STEAMAPPDIR}/srcds_run" -game "${STEAMAPP}" -console \
+		-usercon \
+		+fps_max "${SRCDS_FPSMAX}" \
+		-tickrate "${SRCDS_TICKRATE}" \
+		-port "${SRCDS_PORT}" \
+		+tv_port "${SRCDS_TV_PORT}" \
+		+clientport "${SRCDS_CLIENT_PORT:-27005}" \
+		+maxplayers "${SRCDS_MAXPLAYERS}" \
+		+map "${SRCDS_STARTMAP}" \
+		+sv_setsteamaccount "${SRCDS_TOKEN}" \
+		+rcon_password "${SRCDS_RCONPW}" \
+		+sv_password "${SRCDS_PW}" \
+		+sv_region "${SRCDS_REGION}" \
+		-ip "${SRCDS_IP}" \
+		+servercfgfile "${SRCDS_CFG}" \
+		+mapcyclefile "${SRCDS_MAPCYCLE}"
+}
+
+if [ ! -e "${STEAMAPPDIR}/srcds_run" ] && [ -e "$BASE/srcds_run" ]; then
+	run_over_base
+fi
+
 supervise &
 
 # The image's own entrypoint owns the command line, and reads SRCDS_STARTMAP,

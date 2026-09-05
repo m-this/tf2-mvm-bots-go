@@ -7,7 +7,13 @@
 # The project name is pinned so the game volume survives a rebuild.
 # Re-downloading the game because a directory was renamed is not a mistake
 # worth being able to make.
-name: mvmbots-testbed
+#
+# A second bed on the same machine is a second project: TESTBED_PROJECT names
+# it and TESTBED_PORT gives it a port of its own. It does not download the game
+# again. Its container mounts the first bed's volume read-only at tf-base and
+# builds its own tree over it, a symlink to every file of the game and a real
+# copy of addons, cfg and logs, so what one bed installs the other never sees.
+name: ${TESTBED_PROJECT:-mvmbots-testbed}
 
 services:
   srcds:
@@ -69,6 +75,10 @@ services:
       - "127.0.0.1:${TESTBED_PORT:-27025}:${TESTBED_PORT:-27025}/tcp"
     volumes:
       - tf2game:/home/steam/tf-dedicated
+      # The game as the first bed downloaded it. The first bed mounts its own
+      # volume here a second time and never reads it; any other bed reads it
+      # to build its tree, and cannot write into it.
+      - tf2base:/home/steam/tf-base:ro
       # Read only: the entrypoint copies out of here, and a server that can
       # write back into the build output is a server that can corrupt it.
       - ../testbed/build/package/addons:/opt/mvmbots/addons:ro
@@ -76,3 +86,5 @@ services:
 
 volumes:
   tf2game:
+  tf2base:
+    name: mvmbots-testbed_tf2game

@@ -55,6 +55,23 @@ It listens on **27025**, not 27015, so it can share a machine with a server
 that is already running. Loopback only: it has no password, no Steam session
 and a known rcon password, and it exists to be shouted at by a script.
 
+### Two beds at once
+
+A second checkout, a worktree for instance, gets a bed of its own rather than
+recreating the first one's container out from under it:
+
+```sh
+TESTBED_PROJECT=mvmbots-puppet TESTBED_PORT=27137 go run ./cmd/testbed -arm plain:
+TESTBED_PORT=27137 go run ./cmd/rc status
+```
+
+It does not download the game again. The second container mounts the first
+bed's volume read-only and builds its own tree over it: a symlink to every file
+of the game, and a real copy of `addons`, `cfg` and `logs`, so the plugin and
+the `server.cfg` each bed installs are its own. It runs the server without the
+image's steamcmd update, since a linked tree is nothing steamcmd can update; the
+first bed keeps updating the game for both. Each bed has its own lock.
+
 ### Alongside the worklab server
 
 worklab already runs the `tf2-archipelago` stack, deployed by

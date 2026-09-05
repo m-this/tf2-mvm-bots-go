@@ -13,8 +13,9 @@ believed. What it refuses to do is the point:
     first round on a freshly recreated server" the same thing, and five watchdog
     trips in a day all landed in whichever arm ran first. The arms interleave and
     the order flips every round.
-  - two runners at once. A lock file holds the test-bed, and a second runner
-    says who has it rather than quietly fighting for the map.
+  - two runners on one bed. A lock file holds the bed, and a second runner
+    says who has it rather than quietly fighting for the map. A second bed is
+    TESTBED_PROJECT and TESTBED_PORT, and has a lock of its own.
   - a stale plugin. The version the server has loaded is compared with the one
     on disk, and a mismatch stops the run instead of measuring a two hour old
     build.
@@ -107,11 +108,16 @@ func run() error {
 		return err
 	}
 
+	port, err := port()
+	if err != nil {
+		return err
+	}
+
 	/* The lock names the thing that is shared, which is the compose project,
-	   one container for the whole machine. A lock under the checkout let a
-	   worktree or a second clone take a different file and recreate the same
-	   container out from under the first runner. */
-	release, err := hold(filepath.Join(os.TempDir(), "mvmbots-testbed.lock"))
+	   one container per bed for the whole machine. A lock under the checkout
+	   let a worktree or a second clone take a different file and recreate the
+	   same container out from under the first runner. */
+	release, err := hold(filepath.Join(os.TempDir(), bed()+".lock"))
 	if err != nil {
 		return err
 	}
@@ -130,7 +136,7 @@ func run() error {
 		say("replaying %s", setting)
 	}
 	l := lab.Lab{
-		Client: rcon.Client{Addr: address(), Password: password(), Timeout: 15 * time.Second},
+		Client: rcon.Client{Addr: address(port), Password: password(), Timeout: 15 * time.Second},
 		Say:    say,
 	}
 
@@ -141,7 +147,7 @@ func run() error {
 			return err
 		}
 		say("restarting the server onto it")
-		if err := lab.Compose(ctx, compose, containerEnv(*mapName, *team, *defend, replayed), "up", "-d", "--force-recreate"); err != nil {
+		if err := lab.Compose(ctx, compose, containerEnv(*mapName, *team, *defend, port, replayed), "up", "-d", "--force-recreate"); err != nil {
 			return err
 		}
 	}
@@ -173,7 +179,7 @@ func run() error {
 		   with RED at nought. Recreating is what a first map already does. */
 		if current, err := l.CurrentMap(); err != nil || current != name {
 			say("recreating the server on %s", name)
-			if err := lab.Compose(ctx, compose, containerEnv(name, *team, *defend, replayed), "up", "-d", "--force-recreate"); err != nil {
+			if err := lab.Compose(ctx, compose, containerEnv(name, *team, *defend, port, replayed), "up", "-d", "--force-recreate"); err != nil {
 				return err
 			}
 			if err := l.WaitForRcon(ctx, 20*time.Minute); err != nil {
@@ -272,13 +278,14 @@ func sortedPairs(of map[string]string) []string {
 	return out
 }
 
-func containerEnv(mapName, team string, size int, replayed map[string]string) []string {
+func containerEnv(mapName, team string, size int, port string, replayed map[string]string) []string {
 	env := map[string]string{
 		"TESTBED_MAP":           mapName,
 		"TESTBED_BOT_TEAM_COMP": team,
 		"TESTBED_BOT_TEAM_SIZE": strconv.Itoa(size),
 		"TESTBED_HOST":          "1",
-		"TESTBED_PORT":          envOr("TESTBED_PORT", "27025"),
+		"TESTBED_PROJECT":       bed(),
+		"TESTBED_PORT":          port,
 		"TESTBED_RCONPW":        envOr("TESTBED_RCONPW", "testbed"),
 	}
 
