@@ -11,10 +11,11 @@ from `../tf2-mvm-bots`, which is being archived.
 That is wider than this repository was opened with, and the port is done.
 `plugin/source` holds 240 lines of hand-written SourcePawn, down from 27005,
 and no hand-written SourcePawn holds a function any more. What is left is two
-files of declarations: `tf2_defenderbots.sp`, which is the include list, ten
-defines and `public Plugin myinfo`, and `archipelago.sp`, which is one `native`
-declaration of another plugin's export and the paragraph saying why it is
-optional. Six of the ten defines are read nowhere: `mvm-z83.82`.
+files of declarations: `tf2_defenderbots.sp`, which is the include list, the
+two `_disable_actions_*` defines the actions include reads and `public Plugin
+myinfo`, and `archipelago.sp`, which is one `native` declaration of another
+plugin's export and the paragraph saying why it is optional. The mod ships one
+build: the compile-time toggles the SourcePawn had were resolved by the port.
 
 The whole gamedata seam went too. Calling it unportable was twice too quick: an
 offset read, an SDKCall preparation, a DHook callback and a methodmap over an
@@ -97,7 +98,9 @@ counts were checked both ways. Everything is under the epic `mvm-z83`.
 
 ## Rules
 
-- Generated code is gitignored and never edited by hand.
+- Generated code is gitignored and never edited by hand. The copies the plugin
+  tree commits are written by `make adopt` and checked by `make check`;
+  `internal/adopt` is the one list of which files those are.
 - `make check` is the gate: `go vet`, the linter, `go test -race`, then
   generation, then `spcomp` over the output. It sets `MVMBOTS_REQUIRE_SPSHELL`
   and `MVMBOTS_REQUIRE_PLUGIN`, so a test that needs the toolchain or the

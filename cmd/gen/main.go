@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	mvmbots "github.com/m-this/tf2-mvm-bots-go"
+	"github.com/m-this/tf2-mvm-bots-go/internal/adopt"
 	"github.com/m-this/tf2-mvm-bots-go/internal/bindgen"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spgen"
@@ -20,9 +21,10 @@ import (
 func main() {
 	out := flag.String("out", "gen", "directory to write generated files into")
 	plugin := flag.String("plugin", "plugin", "the plugin tree, read for the include tree")
+	adoptFiles := flag.Bool("adopt", false, "also write the adopted files into the plugin tree")
 	flag.Parse()
 
-	if err := run(*out, *plugin); err != nil {
+	if err := run(*out, *plugin, *adoptFiles); err != nil {
 		fmt.Fprintln(os.Stderr, "gen:", err)
 		os.Exit(1)
 	}
@@ -102,7 +104,7 @@ func isDir(path string) bool {
 	return err == nil && info.IsDir()
 }
 
-func run(out, plugin string) error {
+func run(out, plugin string, adoptFiles bool) error {
 	if err := os.RemoveAll(out); err != nil {
 		return fmt.Errorf("clearing %s: %w", out, err)
 	}
@@ -127,5 +129,28 @@ func run(out, plugin string) error {
 			return fmt.Errorf("writing %s: %w", path, err)
 		}
 	}
-	return writeBindings(out, plugin)
+	if err := writeBindings(out, plugin); err != nil {
+		return err
+	}
+	if !adoptFiles {
+		return nil
+	}
+	return writeAdopted(sources, plugin)
+}
+
+// writeAdopted refreshes the generated files the plugin tree commits, so the
+// drift test has nothing to report.
+func writeAdopted(sources, plugin string) error {
+	files, err := adopt.Files(sources)
+	if err != nil {
+		return err
+	}
+	moved, err := adopt.Write(plugin, files)
+	if err != nil {
+		return err
+	}
+	for _, name := range moved {
+		fmt.Fprintf(os.Stderr, "gen: adopted %s\n", name)
+	}
+	return nil
 }

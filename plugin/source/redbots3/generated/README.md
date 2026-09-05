@@ -5,12 +5,12 @@ came from in its first line.
 
 Committed rather than generated at build time, because the plugin's build is a
 shell script and a compiler and adding Go to it would put a second toolchain in
-front of anybody who wants to build the mod. The cost of that choice is drift:
-nothing here stops a file being edited in place.
+front of anybody who wants to build the mod. The cost of that choice is drift,
+and `make check` pays it: a file here that is not what the generator writes
+today fails the gate.
 
-To refresh:
+To refresh, from the repository root:
 
 ```sh
-make -C ../tf2-mvm-bots-go gen
-cp ../tf2-mvm-bots-go/gen/sourcepawn/<file> source/redbots3/generated/
+make adopt
 ```

@@ -11,13 +11,18 @@ SPENV := SPCOMP=$(SPROOT)/objdir/spcomp/linux-x86_64/spcomp \
 	SPSHELL=$(SPROOT)/objdir/spshell/linux-x86_64/spshell \
 	SPINCLUDE=$(SPROOT)/include/core
 
-.PHONY: help gen check test lint vet toolchain clean
+.PHONY: help gen adopt check test lint vet toolchain clean
 
 help:
 	@grep -E '^[a-z-]+:' Makefile | cut -d: -f1 | grep -v help
 
 gen:
 	$(GO) run ./cmd/gen -plugin $(PLUGIN) -out gen
+
+# The generated files the plugin tree commits, refreshed from the generator.
+# The drift test fails until this has run.
+adopt:
+	$(GO) run ./cmd/gen -plugin $(PLUGIN) -out gen -adopt
 
 # The target-specific variable reaches test through the prerequisite, which is
 # the whole point: the gate runs the same tests and refuses to skip the ones
