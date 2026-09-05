@@ -33,3 +33,27 @@ func TestEveryRelationNamesConstantsInTheTable(t *testing.T) {
 		}
 	}
 }
+
+// TestRelationsHold is the proof itself, over the values the bodies declare
+// today. A relation that reads a name the table lacks fails here rather than
+// comparing against zero.
+func TestRelationsHold(t *testing.T) {
+	t.Parallel()
+
+	for _, r := range tables.Relations {
+		t.Run(r.Name, func(t *testing.T) {
+			t.Parallel()
+
+			value := func(name string) float64 {
+				v, ok := tables.Value(name)
+				if !ok {
+					t.Fatalf("%q reads %s, which is not in Constants", r.Name, name)
+				}
+				return v
+			}
+			if !r.Holds(value) {
+				t.Errorf("%s does not hold: %s", r.Statement, r.Why)
+			}
+		})
+	}
+}

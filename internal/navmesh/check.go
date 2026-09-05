@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/m-this/tf2-mvm-bots-go/internal/action/engineerbuildteleporter"
 )
 
 // Severity is how badly a finding hurts, in the maintainer's own three steps.
@@ -265,10 +267,9 @@ func killOrHurt(d DropVerdict) string {
 	return "which hurts"
 }
 
-// ExitRingRadius is TELEPORTER_EXIT_RADIUS_SAFE, BUSTER_BLAST_RANGE plus a
-// hundred, from engineerbuildteleporter.sp. It is how far out from his nest the
-// engineer ring-places the exit when the named spot beats him.
-const ExitRingRadius float32 = 500
+// ExitRingRadius is how far out from his nest the engineer ring-places the exit
+// when the named spot beats him.
+const ExitRingRadius float32 = engineerbuildteleporter.ExitRadiusSafe
 
 // ringWorstFall is the deepest hurting fall beside any side of the fallback exit
 // ring round a nest, and whether there is one at all. Nothing in the plugin vets

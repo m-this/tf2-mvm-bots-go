@@ -106,7 +106,7 @@ var (
 )
 
 /*
-How long an engineer gets to move a sentry to better ground before he puts it down where he is
+RelocateHaulTime is how long an engineer gets to move a sentry to better ground before he puts it down where he is
 
 The move is decided between waves and the wave can start while he is still
 walking. A sentry in a toolbox when the robots arrive is worse than a badly placed
@@ -115,10 +115,10 @@ in time.
 */
 //
 //sp:name NEST_RELOCATE_HAUL_TIME
-const relocateHaulTime = 20.0
+const RelocateHaulTime = 20.0
 
 /*
-How long an engineer may walk around holding a building before he puts it down
+CarryGiveUpTime is how long an engineer may walk around holding a building before he puts it down
 
 The carry had no clock at all. He only tries to place while he is within seventy
 units of the nest centre, so a centre he cannot reach, or a spot that keeps
@@ -133,7 +133,7 @@ was already crossing.
 */
 //
 //sp:name CARRY_GIVE_UP_TIME
-const carryGiveUpTime = 25.0
+const CarryGiveUpTime = 25.0
 
 var (
 	//sp:name m_ctCarryDeadline
@@ -312,7 +312,7 @@ func Update(actor int32) engine.Outcome {
 
 			ResetProperties(actor)
 
-			relocateDeadline[actor] = engine.GameTime() + relocateHaulTime
+			relocateDeadline[actor] = engine.GameTime() + RelocateHaulTime
 			engine.SetNestArea(actor, destination)
 
 			goingToGrab[actor] = true
@@ -411,7 +411,7 @@ func Update(actor int32) engine.Outcome {
 		if !engine.IsCarryingObject(actor) {
 			carryDeadline[actor] = 0.0
 		} else if carryDeadline[actor] <= 0.0 {
-			carryDeadline[actor] = engine.GameTime() + carryGiveUpTime
+			carryDeadline[actor] = engine.GameTime() + CarryGiveUpTime
 		} else if engine.GameTime() > carryDeadline[actor] {
 			here := engine.NearestNavArea(engine.AbsOriginOf(actor), false, 500.0, false, true, engine.TeamAny())
 

@@ -28,15 +28,6 @@ type Relation struct {
 // means something per second.
 const TickRate = 66.0
 
-/*
-	PathRefreshInterval is the 0.2 second repath at nextbot_behavior.sp:703
-
-An inline literal, not a #define, which is why the relation below could not be
-written against a name. PATHS_PER_FRAME is sized against it in prose and against
-nothing in code.
-*/
-const PathRefreshInterval = 0.2
-
 // RedTeamSize is the cap on defending bots, which is what turns one bot's
 // refresh rate into the team's demand for paths. See mvm-jmo.
 const RedTeamSize = 6
@@ -47,7 +38,7 @@ var Relations = []Relation{
 	{
 		Name:      "the exit stands outside the blast",
 		Statement: "TELEPORTER_EXIT_RADIUS_SAFE >= BUSTER_BLAST_RANGE",
-		Why:       "mvm-1pq: the exit sat at 150 against a 400 unit blast, so one buster took the sentry and the forward spawn together.",
+		Why:       "mvm-1pq: the exit sat at 150 against a 400 unit blast, so one buster took the sentry and the forward spawn together. mvm-74r: the proof went silent when the pinned plugin it read from was archived.",
 		Uses:      []string{"TELEPORTER_EXIT_RADIUS_SAFE", "BUSTER_BLAST_RANGE"},
 		Holds: func(v func(string) float64) bool {
 			return v("TELEPORTER_EXIT_RADIUS_SAFE") >= v("BUSTER_BLAST_RANGE")
@@ -73,11 +64,11 @@ var Relations = []Relation{
 	},
 	{
 		Name:      "the path budget covers what the team asks for",
-		Statement: fmt.Sprintf("PATHS_PER_FRAME * %g >= %d / %g", TickRate, RedTeamSize, PathRefreshInterval),
+		Statement: fmt.Sprintf("PATHS_PER_FRAME * %g >= %d / PATH_REFRESH_INTERVAL", TickRate, RedTeamSize),
 		Why:       "mvm-297: two a frame is there to remove the frame where everybody asks at once, not to starve anyone. A budget under the team's own refresh rate would make bots wait for paths, which is a different bug wearing the fix's clothes.",
-		Uses:      []string{"PATHS_PER_FRAME"},
+		Uses:      []string{"PATHS_PER_FRAME", "PATH_REFRESH_INTERVAL"},
 		Holds: func(v func(string) float64) bool {
-			return v("PATHS_PER_FRAME")*TickRate >= RedTeamSize/PathRefreshInterval
+			return v("PATHS_PER_FRAME")*TickRate >= RedTeamSize/v("PATH_REFRESH_INTERVAL")
 		},
 	},
 }

@@ -104,7 +104,7 @@ const (
 )
 
 /*
-The exit stands off the nest centre rather than on it
+ExitRadius is the tight ring: the exit stands off the nest centre rather than on it
 
 The nest centre is where the sentry is, so eight stand points looking at the centre
 are eight looks at the sentry and eight refusals. The spot walks round the nest
@@ -113,7 +113,14 @@ sentry, a build's reach short of where the exit goes.
 */
 //
 //sp:name TELEPORTER_EXIT_RADIUS
-const exitRadius = 150.0
+const ExitRadius = 150.0
+
+// ExitRadiusSafe is the ring tried first, sized off BUSTER_BLAST_RANGE with a
+// hundred to spare rather than off the build reach. internal/tables holds the
+// relation.
+//
+//sp:name TELEPORTER_EXIT_RADIUS_SAFE
+const ExitRadiusSafe = 500.0
 
 /*
 And the sentry is the thing sentry busters are sent to kill
@@ -546,10 +553,10 @@ func StandPoint(actor int32) bool {
 		nest := nestOf[actor]
 
 		// The safe ring first, the whole way round, then the tight one
-		radius := float32(exitRadius)
+		radius := float32(ExitRadius)
 
 		if attempt < tryPoints {
-			radius = engine.BusterBlastRange() + 100.0
+			radius = ExitRadiusSafe
 		}
 
 		angle := attempt % tryPoints

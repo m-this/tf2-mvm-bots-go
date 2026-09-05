@@ -27,6 +27,8 @@ BehaviorAction CTFBotMvMEngineerBuildTeleporter()
 
 #define TELEPORTER_EXIT_RADIUS (150.0)
 
+#define TELEPORTER_EXIT_RADIUS_SAFE (500.0)
+
 #define TELEPORTER_EXIT_RINGS (2)
 
 #define TELEPORTER_TRY_POINTS (8)
@@ -270,7 +272,7 @@ stock bool TeleporterStandPoint(int actor)
 		float radius = 150.0;
 		if (attempt < TELEPORTER_TRY_POINTS)
 		{
-			radius = BUSTER_BLAST_RANGE + 100.0;
+			radius = TELEPORTER_EXIT_RADIUS_SAFE;
 		}
 		int angle = attempt % TELEPORTER_TRY_POINTS;
 		float spot[3];
