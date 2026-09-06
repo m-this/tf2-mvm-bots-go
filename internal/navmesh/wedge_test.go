@@ -38,6 +38,10 @@ func TestMannworksWedgeIsNoLongerADeclaredNest(t *testing.T) {
 	if best <= StepHeight {
 		t.Fatalf("%s is back on the wedge, %.0f away", nearest, best)
 	}
+	// Beside the hole is where it stays for now. Measured on the bed, the
+	// engineer still wedged at 1031 880 275 while building there, and a try
+	// at the open ground 185 units east ended in a watchdog crash on its
+	// first break, so the move that cures the wedge is not yet known: mvm-wb0.
 	if nearest.Kind != EngineerNest || best > 40 {
 		t.Fatalf("the nearest declared spot to the wedge is %s, %.0f away; the moved nest should be the one beside it", nearest, best)
 	}
