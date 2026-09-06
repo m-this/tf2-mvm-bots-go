@@ -9,6 +9,8 @@ import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
 
 // ObjectKind is which entity scan this is: what is walked, and what is asked of
 // each one.
+//
+//sp:name ScanObjectKind
 type ObjectKind int32
 
 const (

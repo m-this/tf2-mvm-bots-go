@@ -18,6 +18,8 @@ import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
 
 // Kind is which of the shipped loops a scan is: the five questions every
 // client scan asks come first, and the kind is what it asks after them.
+//
+//sp:name ScanKind
 type Kind int32
 
 const (

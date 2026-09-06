@@ -25,6 +25,12 @@ enum Go_Priority
 	Go_PriorityUrgent = 2
 };
 
+enum ClaimedTier
+{
+	Go_TierLow = 0,
+	Go_TierHigh = 1
+};
+
 #define Go_Slots (4)
 
 enum struct Go_Sample
@@ -36,6 +42,16 @@ enum struct Go_Sample
 
 int Go_seen[4] = {1, 2};
 Go_Priority Go_worst = Go_PriorityIdle;
+
+// Tiered is that type at a use site, which is the half that was wrong.
+stock ClaimedTier Go_Tiered(ClaimedTier t)
+{
+	if (t == Go_TierLow)
+	{
+		return Go_TierHigh;
+	}
+	return Go_TierLow;
+}
 
 // Note records a client and returns what the highest priority seen so far is,
 // which is the read-and-write a state emission has to get right.

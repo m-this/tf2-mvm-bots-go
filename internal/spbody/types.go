@@ -96,6 +96,15 @@ func (e *emitter) namedTag(t *types.Named) (string, []int64, error) {
 		if !e.hasConstants(t) {
 			return "", nil, fmt.Errorf("the named type %s declares no constants, so there is no SourcePawn enum to emit; declare its constants, or write int32", name)
 		}
+		/* The name the port claimed, the same as a struct's
+
+		typeSpec writes the enum out under it, and a parameter of that type
+		read as the prefixed Go name instead: the generated file declared
+		enum ScanKind and then took a Go_Kind, which spcomp refuses with
+		"could not find type". See mvm-52p. */
+		if claimed, ok := e.typeNames[name]; ok {
+			return claimed, nil, nil
+		}
 		return e.cfg.Prefix + name, nil, nil
 	case *types.Array:
 		return "", nil, fmt.Errorf("the named array type %s has no SourcePawn; write the array type out", name)

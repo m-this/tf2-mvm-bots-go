@@ -11,6 +11,30 @@ const (
 	PriorityUrgent
 )
 
+/*
+	Tier is a named integer whose SourcePawn name the port claimed
+
+The enum is declared under that name and so is every parameter of it. They read
+from two different places in the emitter, and for a while only the declaration
+was renamed: see mvm-52p.
+*/
+//
+//sp:name ClaimedTier
+type Tier int32
+
+const (
+	TierLow Tier = iota
+	TierHigh
+)
+
+// Tiered is that type at a use site, which is the half that was wrong.
+func Tiered(t Tier) Tier {
+	if t == TierLow {
+		return TierHigh
+	}
+	return TierLow
+}
+
 // Slots is a plain constant, which becomes a define so it can size an array.
 const Slots = 4
 
