@@ -79,14 +79,14 @@ func TestPathSharesCountRefusedAndDrifting(t *testing.T) {
 	for _, p := range got.Paths {
 		byWho[p.Who] = p
 	}
-	if lost := byWho["Lost"]; lost.Bad() != 1 || lost.Failed != 10 || lost.Drifting != 10 {
-		t.Errorf("Lost %+v; every sample is refused or moving with no path", lost)
+	if lost := byWho["Lost"]; lost.Bad() != 0.5 || lost.Failed != 10 || lost.Drifting != 10 {
+		t.Errorf("Lost %+v; half refused outright and half measured nothing while moving", lost)
 	}
 	if fine := byWho["Fine"]; fine.Bad() != 0 {
 		t.Errorf("Fine %+v", fine)
 	}
-	if parked := byWho["Parked"]; parked.Bad() != 0 || parked.Drifting != 0 {
-		t.Errorf("Parked %+v; a bot that has arrived is not drifting", parked)
+	if parked := byWho["Parked"]; parked.Bad() != 0 || parked.Adrift() != 0 {
+		t.Errorf("Parked %+v; a bot that has arrived is neither refused nor drifting", parked)
 	}
 	report := TraceReport(writeTrace(t, lines))
 	if !strings.Contains(report, "Lost") || strings.Contains(report, "Fine") || strings.Contains(report, "Parked") {

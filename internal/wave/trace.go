@@ -53,13 +53,15 @@ type Huddle struct {
 /*
 PathShare is how a bot's path requests went.
 
-Drifting is a zero length path the bot is moving on, and it is not the same
-thing as a zero length path standing still: a bot that has arrived has nowhere
-left to go, and its path is empty for the right reason. Measured on Coaltown
-2026-09-06, an engineer wrenching his own sentry reads pathing with a zero
-length path in half his samples, which is him standing at it. So the position
-has to move for the sample to count, which is what mvm-zx0 describes: drifting
-on a zero length path until the pack expires.
+A refused path is the reliable signal and it is what this flags on. A zero
+length path is not: a bot that has arrived has nowhere left to go, and at a five
+second sample "arrived somewhere during the last five seconds" and "moving with
+no path" look the same from the position alone. Measured on Coaltown 2026-09-06,
+an engineer wrenching his own sentry read half his samples that way.
+
+So Drifting is counted and printed, because mvm-zx0 is about exactly that
+shape, and it is not folded into what raises the report. Telling the two apart
+wants the action the bot is running, or a faster sample, and neither is here.
 */
 type PathShare struct {
 	Who, Class string
@@ -70,12 +72,21 @@ type PathShare struct {
 	Drifting int
 }
 
-// Bad is the share of pathing samples that were refused or drifted.
+// Bad is the share of pathing samples the engine refused outright.
 func (p PathShare) Bad() float64 {
 	if p.Pathing == 0 {
 		return 0
 	}
-	return float64(p.Failed+p.Drifting) / float64(p.Pathing)
+	return float64(p.Failed) / float64(p.Pathing)
+}
+
+// Adrift is the share that measured nothing while the bot moved. Read beside
+// Bad rather than added to it: see the type's own note.
+func (p PathShare) Adrift() float64 {
+	if p.Pathing == 0 {
+		return 0
+	}
+	return float64(p.Drifting) / float64(p.Pathing)
 }
 
 // Traces is what the three passes found in one file.
@@ -286,8 +297,8 @@ func TraceReport(path string) string {
 		if p.Bad() < PathFailShareWorthReporting || p.Pathing < 10 {
 			continue
 		}
-		lines = append(lines, fmt.Sprintf("  %-20s %-8s %3.0f%% of %d pathing samples refused or drifted (%d refused, %d drifting)",
-			p.Who, p.Class, p.Bad()*100, p.Pathing, p.Failed, p.Drifting))
+		lines = append(lines, fmt.Sprintf("  %-20s %-8s %3.0f%% of %d path requests refused, and %.0f%% measured nothing while moving",
+			p.Who, p.Class, p.Bad()*100, p.Pathing, p.Adrift()*100))
 	}
 	if len(lines) == 0 {
 		return ""
