@@ -57,8 +57,14 @@ func TestFootingReadingIsNotBorderline(t *testing.T) {
 		}
 		m := loadMap(t, c.Map)
 
+		probes := make([]Vec3, 0, len(c.Spots)+len(formerHoles[c.Map]))
 		for _, s := range c.Spots {
-			v := m.CheckPoint(s.Origin)
+			probes = append(probes, s.Origin)
+		}
+		probes = append(probes, formerHoles[c.Map]...)
+
+		for _, origin := range probes {
+			v := m.CheckPoint(origin)
 			if v.Under != nil {
 				continue
 			}
@@ -89,6 +95,14 @@ func TestFootingReadingIsNotBorderline(t *testing.T) {
 		t.Errorf("only %.0f units separate the highest hole from the lowest rock top, which is too close to read",
 			raisedMin-pocketMax)
 	}
+}
+
+// formerHoles are the four spots mvm-dx2 moved out of ground-level holes. The
+// holes are still in the meshes, so they still calibrate the line between a
+// pocket and a rock top now that no shipped config sits in one.
+var formerHoles = map[string][]Vec3{
+	"mvm_mannhattan": {{214, -1319, 204}, {-723, -629, -68}, {-414, -3222, -240}},
+	"mvm_mannworks":  {{1014, 885, 256}},
 }
 
 // TestRaisedIsNotSuspicious keeps the correction from being undone. A spot on a

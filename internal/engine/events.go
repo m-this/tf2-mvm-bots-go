@@ -23,7 +23,7 @@ type EventCalls struct {
 	SetDefenderBotFlag           func(client int32, ours bool)
 	SetRandomNameOnBot           func(client int32)
 	RespawnPlayer                func(client int32)
-	RegeneratePlayer func(client int32)
+	RegeneratePlayer             func(client int32)
 	AddBotAttribute              func(client int32, attribute int32)
 	MarkNeedsNamePurge           func(client int32)
 	SetCurrencyWithBundles       func(client int32, credits int32)

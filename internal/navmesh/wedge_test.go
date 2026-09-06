@@ -7,14 +7,14 @@ import "testing"
 // of the three crashes in that bundle landed.
 var mannworksWedge = Vec3{1014, 885, 274}
 
-// TestMannworksWedgeIsADeclaredNest answers mvm-wb0's own question, "what the
-// nest picker offers that leads him through it".
+// TestMannworksWedgeIsNoLongerADeclaredNest answers mvm-wb0's own question,
+// "what the nest picker offers that leads him through it".
 //
-// It does not lead him through it. It sends him to it. The fourth EngineerNest
-// spot in configs/defenderbots/map/mvm_mannworks.cfg is 1014 885 256, which is
-// the wedge coordinate one step lower: the config names the spot the engineer
-// gets stuck on.
-func TestMannworksWedgeIsADeclaredNest(t *testing.T) {
+// It did not lead him through it. It sent him to it: the fourth EngineerNest
+// spot in configs/defenderbots/map/mvm_mannworks.cfg was 1014 885 256, the
+// wedge coordinate one step lower, in a ground-level hole of the mesh. mvm-dx2
+// moved the spot onto the surface beside the hole, and this keeps it there.
+func TestMannworksWedgeIsNoLongerADeclaredNest(t *testing.T) {
 	cfgs := loadConfigs(t)
 
 	var mannworks *MapConfig
@@ -35,11 +35,15 @@ func TestMannworksWedgeIsADeclaredNest(t *testing.T) {
 		}
 	}
 
-	if best > StepHeight {
-		t.Fatalf("the nearest declared spot to the wedge is %s, %.0f away", nearest, best)
+	if best <= StepHeight {
+		t.Fatalf("%s is back on the wedge, %.0f away", nearest, best)
 	}
-	if nearest.Kind != EngineerNest {
-		t.Fatalf("the spot on the wedge is a %s, want an %s", nearest.Kind, EngineerNest)
+	if nearest.Kind != EngineerNest || best > 40 {
+		t.Fatalf("the nearest declared spot to the wedge is %s, %.0f away; the moved nest should be the one beside it", nearest, best)
+	}
+	m := loadMap(t, "mvm_mannworks")
+	if m.AreaAt(nearest.Origin, StepHeight) == nil {
+		t.Fatalf("%s is off the mesh again", nearest)
 	}
 }
 

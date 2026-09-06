@@ -123,14 +123,13 @@ func TestGroundSpotsOffTheMesh(t *testing.T) {
 		distance float32
 	}
 
-	// Measured, not chosen. Regenerate with the report golden.
+	// Measured, not chosen. Regenerate with the report golden. The four
+	// rock tops are what is left since mvm-dx2 moved the holes onto the mesh.
 	want := []offender{
 		{"mvm_bigrock", "EngineerNest 1", 98},
 		{"mvm_bigrock", "EngineerNest 2", 96},
 		{"mvm_bigrock", "TeleporterExit 1", 68},
 		{"mvm_coaltown", "DispenserSpot 2", 79},
-		{"mvm_mannhattan", "EngineerNest 1", 19},
-		{"mvm_mannhattan", "DispenserSpot 2", 23},
 	}
 
 	var got []offender
