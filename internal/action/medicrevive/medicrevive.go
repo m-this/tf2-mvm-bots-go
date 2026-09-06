@@ -127,6 +127,20 @@ func OnInjured(actor int32, takedamageinfo int32) engine.Outcome {
 	return engine.Continue()
 }
 
+/*
+ResetMedicRevive forgets a seat's answer, which was about somebody else.
+
+IsPossible holds a marker within reviveRange of where the medic stood, and the
+path to it, for half a second. A bot spawning into the seat is nowhere near
+either, so it walks to a marker it cannot reach or refuses one it can.
+*/
+//
+//sp:name Go_ResetMedicRevive
+func ResetMedicRevive(client int32) {
+	reviveAsk[client] = 0.0
+	revivePossible[client] = false
+}
+
 // IsPossible answers whether there is anybody to revive, held for askInterval.
 //
 //sp:name CTFBotMedicRevive_IsPossible

@@ -50,6 +50,7 @@ func ResetNextBot(client int32) {
 	engine.ResetGetAmmo(client)
 	engine.ResetMoveToFront(client)
 	engine.ResetGetHealth(client)
+	engine.ResetMedicRevive(client)
 
 	// The engineer's own state is reset inside its action.
 	engine.ResetSpySap(client)

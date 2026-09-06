@@ -260,4 +260,9 @@ func IsPossible(actor int32) bool {
 // is a different bot.
 func ResetGetHealth(client int32) {
 	healthPack[client] = -1
+
+	// The memo goes with it: IsPossible answers from a search around where the
+	// bot stood and holds the answer, which is not a fact about the seat.
+	healthAsk[client] = 0.0
+	healthPossible[client] = false
 }
