@@ -78,7 +78,6 @@ public void Event_MvmWaveBegin(Event event, const char[] name, bool dontBroadcas
 	// standing, and a claim that survives a wave reserves ground against an
 	// engineer whose own building was destroyed on it.
 	ForgetSetupPlans();
-	ThreatPortAudit_Report();
 	// Whatever the queue has left is about a bomb that is about to move.
 	EngineerNestRelocation_StopEvaluating();
 	// A new wave is a new chance at a spot that refused him last time.

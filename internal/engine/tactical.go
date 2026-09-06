@@ -39,8 +39,6 @@ type TacticalCalls struct {
 	HealerOrThreat           func(bot Bot, threat Known) Known
 	SelectCloserThreat       func(bot Bot, threat1 Known, threat2 Known) Known
 	ThreatPriority           func(threat int32, rangeSq float32) int32
-	ThreatPriorityGenerated  func(threat int32, rangeSq float32) int32
-	ThreatPortAudit          func(threat int32, rangeSq float32)
 	ProjectileSpeed          func(weapon int32) float32
 	LookupBone               func(entity int32, name string) int32
 	BonePosition             func(entity int32, bone int32) ([3]float32, [3]float32)
@@ -223,39 +221,13 @@ func SelectCloserThreatOf(bot Bot, threat1 Known, threat2 Known) Known {
 //sp:global FEATURE_THREAT_PRIORITY
 func FeatureThreatPriority() int32 { return 0 }
 
-// FeatureGeneratedThreatPriority is FEATURE_GENERATED_THREAT_PRIORITY, the A/B
-// switch mvm-z83.47 exists to settle.
-//
-//sp:global FEATURE_GENERATED_THREAT_PRIORITY
-func FeatureGeneratedThreatPriority() int32 { return 21 }
-
-/*
-The threat priority pair, generated now but still scaffolding.
-
-mvm-z83.47 wants the two played against each other in a running game before
-either half goes. Porting them moved the scaffolding rather than settling it:
-the measurement is still what closes that bead, and the chain and the audit are
-deleted then.
-*/
-
-// ThreatPriority is the chain that shipped. Ported, threataudit.
+// ThreatPriority is the table's answer, and the only one since mvm-z83.47
+// closed. Ported, threataudit.
 //
 //sp:body ThreatPriority
 func ThreatPriority(threat int32, rangeSq float32) int32 {
 	return tacticals.ThreatPriority(threat, rangeSq)
 }
-
-// ThreatPriorityGenerated is the table's answer. Ported, threataudit.
-//
-//sp:body ThreatPriorityGenerated
-func ThreatPriorityGenerated(threat int32, rangeSq float32) int32 {
-	return tacticals.ThreatPriorityGenerated(threat, rangeSq)
-}
-
-// ThreatPortAudit records where the two disagree. Ported, threataudit.
-//
-//sp:body ThreatPortAudit
-func ThreatPortAudit(threat int32, rangeSq float32) { tacticals.ThreatPortAudit(threat, rangeSq) }
 
 // ChooseThreat is the ternary the shipped file writes to pick between two
 // known entities.

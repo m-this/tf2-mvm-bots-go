@@ -399,14 +399,8 @@ public Action CTFBotMainAction_SelectMoreDangerousThreat(BehaviorAction action, 
 	}
 	float rangeSq1 = nextbot.GetRangeSquaredTo(iThreat1);
 	float rangeSq2 = nextbot.GetRangeSquaredTo(iThreat2);
-	bool generated = Feature(FEATURE_GENERATED_THREAT_PRIORITY);
-	int priority1 = (generated ? ThreatPriorityGenerated(iThreat1, rangeSq1) : ThreatPriority(iThreat1, rangeSq1));
-	int priority2 = (generated ? ThreatPriorityGenerated(iThreat2, rangeSq2) : ThreatPriority(iThreat2, rangeSq2));
-	if (generated)
-	{
-		ThreatPortAudit(iThreat1, rangeSq1);
-		ThreatPortAudit(iThreat2, rangeSq2);
-	}
+	int priority1 = ThreatPriority(iThreat1, rangeSq1);
+	int priority2 = ThreatPriority(iThreat2, rangeSq2);
 	if (Feature(FEATURE_THREAT_PRIORITY) && (priority1 != priority2))
 	{
 		knownEntity = (priority1 > priority2 ? threat1 : threat2);

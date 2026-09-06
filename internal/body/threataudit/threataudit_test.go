@@ -36,22 +36,11 @@ func TestFillingATankAsksNothingOfAClient(t *testing.T) {
 		},
 	})()
 
-	if got := threataudit.ThreatPriorityGenerated(tank, 0); got != 7 {
+	if got := threataudit.ThreatPriority(tank, 0); got != 7 {
 		t.Fatalf("the table's answer was %d, want 7", got)
 	}
 	if asked.isPlayer || asked.inGame || asked.class != engine.ClassUnknown() {
 		t.Errorf("the record for a tank was player=%v inGame=%v class=%d; want false, false, unknown",
 			asked.isPlayer, asked.inGame, asked.class)
-	}
-}
-
-// The shipped chain short-circuits the same way, and the port keeps that.
-func TestTheChainAsksNothingOfATank(t *testing.T) {
-	defer engine.Install(engine.Calls{
-		IsPlayer: func(entity int32) bool { return entity != tank },
-	})()
-
-	if got := threataudit.ThreatPriority(tank, 0); got != engine.ThreatPriorityNone() {
-		t.Fatalf("the chain ranked a tank %d, want none", got)
 	}
 }

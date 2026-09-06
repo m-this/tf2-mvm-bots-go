@@ -452,15 +452,8 @@ func MainActionSelectMoreDangerousThreat(action engine.Behaviour, nextbot engine
 	rangeSq1 := nextbot.RangeSquaredTo(iThreat1)
 	rangeSq2 := nextbot.RangeSquaredTo(iThreat2)
 
-	generated := engine.Feature(engine.FeatureGeneratedThreatPriority())
-
-	priority1 := engine.ChooseInt(generated, engine.ThreatPriorityGenerated(iThreat1, rangeSq1), engine.ThreatPriority(iThreat1, rangeSq1))
-	priority2 := engine.ChooseInt(generated, engine.ThreatPriorityGenerated(iThreat2, rangeSq2), engine.ThreatPriority(iThreat2, rangeSq2))
-
-	if generated {
-		engine.ThreatPortAudit(iThreat1, rangeSq1)
-		engine.ThreatPortAudit(iThreat2, rangeSq2)
-	}
+	priority1 := engine.ThreatPriority(iThreat1, rangeSq1)
+	priority2 := engine.ThreatPriority(iThreat2, rangeSq2)
 
 	if engine.Feature(engine.FeatureThreatPriority()) && priority1 != priority2 {
 		knownEntity = engine.ChooseThreat(priority1 > priority2, threat1, threat2)

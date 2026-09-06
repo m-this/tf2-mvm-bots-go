@@ -40,7 +40,6 @@ enum
 	FEATURE_WATCH_LURKING_SNIPERS,
 	FEATURE_AMMO_FAILOVER,
 	FEATURE_MEDIC_ANSWERS_CALL,
-	FEATURE_GENERATED_THREAT_PRIORITY,
 	FEATURE_ENGINEER_ENTRANCE_FIRST,
 	FEATURE_BOT_TEST_BY_NEXTBOT,
 	FEATURE_ENGINEER_SETUP_PHASE,
@@ -76,7 +75,6 @@ static const char FEATURE_NAME[FEATURE_COUNT][] =
 	"watch_lurking_snipers",
 	"ammo_failover",
 	"medic_answers_call",
-	"generated_threat_priority",
 	"engineer_entrance_first",
 	"bot_test_by_nextbot",
 	"engineer_setup_phase"
@@ -219,12 +217,6 @@ void LoadFeatures()
 	carries on healing whichever bot it had picked. See mvm-w9b. */
 	g_arrFeatureConVars[FEATURE_MEDIC_ANSWERS_CALL] = MakeFeature(FEATURE_MEDIC_ANSWERS_CALL,
 		"A player who calls for a medic takes the beam, and a player outranks a bot for it either way.");
-
-	/* Off until a run says otherwise, and this one is meant to change nothing. It is the port in
-	mvm-z83.6 wired up: the two are proved identical over the whole domain under SourcePawn's own
-	VM, so an arm that moves is the edge filling the record wrong, not the decision. */
-	g_arrFeatureConVars[FEATURE_GENERATED_THREAT_PRIORITY] = MakeFeature(FEATURE_GENERATED_THREAT_PRIORITY,
-		"Rank threats with the table generated from the Go, rather than with the hand written chain.", false);
 
 	/* Off: measured and not clearly better. Three attempts each of two waves of Decoy, 2026-09-05:
 	the entrance goes up at 18s of the break against 37s, the exit at 33s against 65s, the sentry at

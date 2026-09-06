@@ -802,8 +802,12 @@ GiveNamedOrKeepStock puts the item in the slot, or leaves the stock one.
 The slot used to be emptied before the schema was asked whether the item had a
 class name, and left empty when the give came back with nothing: a Heavy
 joined RED on Rottenburg with no weapon at all, which is mvm-gkv. The callers
-look the name up first now and only reach this with one, and a give that
-fails hands the bot its stock loadout back.
+look the name up first now and only reach this with one, and a give that fails
+hands the bot its stock loadout back.
+
+That takes the slots already filled back to stock with it, because regenerating
+is the whole inventory. It is the price of never leaving a hand empty, and the
+error line above says which item cost it.
 */
 //
 //sp:writable itemClassname

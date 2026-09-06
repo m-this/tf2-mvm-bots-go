@@ -108,7 +108,6 @@ func EventMvmWaveBegin(event engine.Event, name string, dontBroadcast bool) {
 	standing, and a claim that survives a wave reserves ground against an
 	engineer whose own building was destroyed on it. */
 	nestsetup.ForgetSetupPlans()
-	engine.ThreatPortAuditReport()
 
 	// Whatever the queue has left is about a bomb that is about to move.
 	engine.NestRelocationStopEvaluating()

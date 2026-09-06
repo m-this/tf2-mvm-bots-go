@@ -26,7 +26,6 @@ type RegisterCalls struct {
 	DebugFaultsOnWaveStart         func()
 	DebugFaultsOnWaveStartEmpty    func()
 	PublishActiveFeatures          func()
-	ThreatPortAuditReport          func()
 	NestRelocationStopEvaluating   func()
 	TeleporterForgetGivingUp       func()
 	DisposableForgetGivingUp       func()
@@ -153,11 +152,6 @@ func DebugFaultsOnWaveStartEmpty() { registrations.DebugFaultsOnWaveStartEmpty()
 //
 //sp:plugin PublishActiveFeatures
 func PublishActiveFeatures() { registrations.PublishActiveFeatures() }
-
-// ThreatPortAuditReport says what the threat port disagreed about.
-//
-//sp:body ThreatPortAudit_Report
-func ThreatPortAuditReport() { registrations.ThreatPortAuditReport() }
 
 // NestRelocationStopEvaluating drops whatever the relocation queue has left,
 // because it is about a bomb that is about to move. Ported, engineeridle.
