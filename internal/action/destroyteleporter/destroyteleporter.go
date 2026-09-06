@@ -58,7 +58,6 @@ func SelectMoreDangerousThreat(nextbot engine.Bot, entity int32, threat1 engine.
 	myWeapon := engine.ActiveWeapon(me)
 
 	if myWeapon != -1 && (engine.WeaponID(myWeapon) == engine.WeaponFlamethrower() || engine.IsMeleeWeapon(myWeapon)) {
-		// We can only get the nearest threat
 		return engine.Changed(), engine.SelectCloserThreat(nextbot, threat1, threat2)
 	}
 
@@ -71,7 +70,6 @@ func SelectMoreDangerousThreat(nextbot engine.Bot, entity int32, threat1 engine.
 		return engine.Changed(), threat2
 	}
 
-	// Our most dangerous threat should be the teleporter
 	if iThreat1 == teleporterTarget[me] && engine.IsLineOfFireClearEntity(me, engine.EyePosition(me), iThreat1) {
 		return engine.Changed(), threat1
 	}
@@ -80,7 +78,6 @@ func SelectMoreDangerousThreat(nextbot engine.Bot, entity int32, threat1 engine.
 		return engine.Changed(), threat2
 	}
 
-	// We probably can't see it right now
 	return engine.Changed(), engine.NoKnownEntity()
 }
 

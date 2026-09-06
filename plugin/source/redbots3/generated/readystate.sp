@@ -31,7 +31,6 @@ public Action Listener_TournamentPlayerReadystate(int client, const char[] comma
 			{
 				return Plugin_Continue;
 			}
-			// Allow players that are ready to unready.
 			if (IsPlayerReady(client))
 			{
 				return Plugin_Continue;
@@ -114,13 +113,11 @@ public Action Listener_TournamentPlayerReadystate(int client, const char[] comma
 			}
 			if (g_bBotsEnabled)
 			{
-				// Bots already going, okay to pass.
 				return Plugin_Continue;
 			}
 			if (g_flNextReadyTime > GetGameTime())
 			{
 				PrintToChat(client, "%s You're going too fast!", PLUGIN_PREFIX);
-				// Give more time to ready up.
 				return Plugin_Handled;
 			}
 			float botBanTime = g_flEnableBotsCooldown[client] - GetGameTime();

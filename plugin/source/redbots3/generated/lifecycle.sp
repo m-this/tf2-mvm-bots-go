@@ -62,7 +62,6 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 {
 	if ((condition == TFCond_Taunting) && (TF2_GetClientTeam(client) == TFTeam_Blue) && IsSentryBusterRobot(client))
 	{
-		// Keep track of the player that is detonating.
 		g_iDetonatingPlayer = client;
 		CreateTimer(2.0, Timer_ForgetDetonatingPlayer, client);
 	}
@@ -264,7 +263,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 					}
 					case TF_WEAPON_BUFF_ITEM:
 					{
-						// Once the horn is blowing, stop pressing fire.
 						if (IsPlayingHorn(myWeapon))
 						{
 							buttons &= ~IN_ATTACK;
@@ -301,7 +299,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 					{
 						if ((threat != NULL_KNOWN_ENTITY) && IsLineOfFireClearEntity(client, GetEyePosition(client), threat.GetEntity()))
 						{
-							// Help aim towards the desired target point.
 							float aimPos[3];
 							myBot.GetIntentionInterface().SelectTargetPoint(threat.GetEntity(), aimPos);
 							SnapViewToPosition(client, aimPos);
@@ -420,7 +417,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	{
 		if (m_flDeadRethinkTime[client] <= GetGameTime())
 		{
-			// Think once a second while dead.
 			m_flDeadRethinkTime[client] = GetGameTime() + 1.0;
 			int iObsMode = BasePlayer_GetObserverMode(client);
 			if ((iObsMode == OBS_MODE_FREEZECAM) || (iObsMode == OBS_MODE_DEATHCAM))
@@ -430,7 +426,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			}
 			else
 			{
-				// Randomly think about buying back.
 				g_iBuybackNumber[client] = GetRandomInt(1, 100);
 			}
 			if (ShouldBuybackIntoGame(client))

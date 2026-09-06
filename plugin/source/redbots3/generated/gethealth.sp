@@ -93,7 +93,6 @@ public Action CTFBotGetHealth_Update(BehaviorAction action, int actor, float int
 	}
 	else
 	{
-		// Path if not currently healed by dispenser
 		if (m_flRepathTime[actor] <= GetGameTime())
 		{
 			m_flRepathTime[actor] = GetGameTime() + GetRandomFloat(0.9, 1.0);
@@ -191,7 +190,6 @@ stock bool CTFBotGetHealth_IsPossible(int actor)
 	float farRange = tf_bot_health_search_far_range.FloatValue;
 	float maxRange = ratio * (tf_bot_health_search_near_range.FloatValue - farRange);
 	maxRange += farRange;
-	// Skip lag.
 	if ((m_iHealthPack[actor] != -1) && IsValidHealth(m_iHealthPack[actor]))
 	{
 		return true;

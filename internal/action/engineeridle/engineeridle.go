@@ -356,7 +356,6 @@ func Update(actor int32) engine.Outcome {
 				engine.PrintToServer("CTFBotMvMEngineerIdle_Update: ADVANCE")
 			}
 
-			// RIGHT NOW
 			ResetProperties(actor)
 
 			engine.SetNestArea(actor, candidate)
@@ -509,7 +508,6 @@ func Update(actor int32) engine.Outcome {
 			return engine.Continue()
 		}
 
-		// Start
 		findNestHint[actor] = engine.GameTime() + engine.RandomFloat(1.0, 2.0)
 
 		engine.SetNestArea(actor, engine.PickBuildArea(actor))
@@ -597,7 +595,6 @@ func Update(actor int32) engine.Outcome {
 		// Don't build a dispenser if we don't have a sentry...
 		if sentry != engine.InvalidEntReference() {
 			if dispenser != engine.InvalidEntReference() {
-				// sentry is not safe.
 				if sentrySafe[actor] < engine.GameTime() {
 					dispenserCooldown[actor] = engine.GameTime() + 3.0
 				}
@@ -1098,7 +1095,6 @@ func ShouldAdvanceNestSpot(actor int32) bool {
 
 	flBombTargetDistance := engine.TravelDistanceToBombTarget(engine.NavArea(engine.NestAreaOf(actor)))
 
-	// No point in advancing now.
 	if flBombTargetDistance <= 1000.0 {
 		return false
 	}

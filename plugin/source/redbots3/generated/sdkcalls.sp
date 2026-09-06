@@ -160,7 +160,6 @@ stock bool InitSDKCalls(GameData hGamedata)
 		LogError("Failed to create SDKCall for CTFGameRules::IsUpgradeTierEnabled!");
 		iFailCount++;
 	}
-	// SDKHooks gamedata.
 	char sTempConfFileName[512] = "sdkhooks.games/engine.ep2v";
 	GameData hTempConf = new GameData(sTempConfFileName);
 	StartPrepSDKCall(SDKCall_Entity);

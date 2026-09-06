@@ -50,7 +50,6 @@ out is the four keys a person would be holding.
 //sp:const vGoal
 //sp:mutates vVel
 func MovePlayerTowardsGoal(client int32, vGoal [3]float32, vVel [3]float32) {
-	// WASD Movement
 	forward3D := engine.EyeVectors(client)
 
 	var vForward [3]float32

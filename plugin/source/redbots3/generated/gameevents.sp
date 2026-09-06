@@ -43,7 +43,6 @@ public void Event_TeamplayRoundStart(Event event, const char[] name, bool dontBr
 	// A new wave has its own Spies, and the last wave's paranoia is not
 	// evidence about this one.
 	ResetSpyIntel();
-	// Was the map reset?
 	if (event.GetBool("full_reset"))
 	{
 		SetupSniperSpotHints();
@@ -109,7 +108,6 @@ public Action Timer_WaveFailure(Handle timer)
 	{
 		return Plugin_Stop;
 	}
-	// Don't refund if we wanna keep them.
 	if (redbots_manager_keep_bot_upgrades.BoolValue)
 	{
 		return Plugin_Stop;
@@ -162,7 +160,6 @@ public void Event_MvmWaveFailed(Event event, const char[] name, bool dontBroadca
 	}
 	if (redbots_manager_mode.IntValue == MANAGER_MODE_READY_BOTS)
 	{
-		// Global cooldown before players can ready up again.
 		g_flNextReadyTime = GetGameTime() + redbots_manager_ready_cooldown.FloatValue;
 		if (m_iWaveFailCounterTick > 3)
 		{
@@ -273,7 +270,6 @@ stock void Event_MvmWaveComplete(Event event, const char[] name, bool dontBroadc
 	{
 		if (IsClientInGame(i) && g_bIsDefenderBot[i])
 		{
-			// Wave complete, rethink what we should do.
 			ClearSniperStall(i);
 			ResetIntentionInterface(i);
 			if (bRequestCredits)
@@ -408,7 +404,6 @@ public Action Timer_PlayerSpawn(Handle timer, int data)
 	}
 	char clientName[512];
 	GetClientName(data, clientName, 512);
-	// Identify if the bot is ours.
 	if (StrContains(clientName, TFBOT_IDENTITY_NAME, true) != -1)
 	{
 		g_bIsDefenderBot[data] = true;
@@ -430,7 +425,6 @@ public Action Timer_PlayerSpawn(Handle timer, int data)
 				SetMission(data, CTFBot_MISSION_SNIPER);
 			}
 		}
-		// Let medic bots use their shields.
 		VS_AddBotAttribute(data, CTFBot_PROJECTILE_SHIELD);
 		BaseEntity_MarkNeedsNamePurge(data);
 		SetCurrencyWithBundles(data, GetStartingCurrency(g_iPopulationManager) + GetAcquiredCreditsOfAllWaves());

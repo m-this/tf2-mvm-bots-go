@@ -72,7 +72,6 @@ func ShouldDetonateStickies(client int32) bool {
 		return false
 	}
 
-	// Nothing to blow up
 	if engine.EntProp(launcher, engine.PropSend(), "m_iPipebombCount") <= 0 {
 		return false
 	}

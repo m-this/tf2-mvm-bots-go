@@ -83,7 +83,6 @@ stock void HandleTeamPlayerCountChanged(TFTeam team, int iWhoChanging = -1)
 		}
 		iMemberCount++;
 	}
-	// Are all remaining members of the team ready?
 	if (iReadyCount == iMemberCount)
 	{
 		// Unready one so the wave cannot start and another bot may enter.

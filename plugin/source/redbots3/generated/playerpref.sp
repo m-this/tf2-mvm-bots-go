@@ -356,7 +356,6 @@ stock void AddBotsBasedOnPreferences(int amount)
 		return;
 	}
 	ArrayList classPref = new ArrayList(TF2_CLASS_MAX_NAME_LENGTH);
-	// Get the players' class preferences.
 	CollectPlayerBotClassPreferences(classPref);
 	if (classPref.Length > 0)
 	{
@@ -371,7 +370,6 @@ stock void AddBotsBasedOnPreferences(int amount)
 	}
 	else
 	{
-		// Nobody had preferences, just add random bots.
 		AddRandomDefenderBots(amount);
 	}
 	delete classPref;

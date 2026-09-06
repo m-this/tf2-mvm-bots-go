@@ -64,7 +64,6 @@ public Action CTFBotMedicRevive_Update(BehaviorAction action, int actor, float i
 	}
 	else
 	{
-		// Fend off from enemies
 		int primary = GetPlayerWeaponSlot(actor, TFWeaponSlot_Primary);
 		if (primary != -1)
 		{

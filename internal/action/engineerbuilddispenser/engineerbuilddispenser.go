@@ -189,8 +189,6 @@ func Update(actor int32) engine.Outcome {
 	sentry := engine.ObjectOfType(actor, engine.ObjectSentry())
 
 	if sentry == engine.InvalidEntReference() {
-		// Fuck you.
-
 		engine.LogBuildFailure(actor, "dispenser", "no sentry to feed")
 		return engine.Done("No sentry")
 	}
@@ -207,8 +205,6 @@ func Update(actor int32) engine.Outcome {
 	}
 
 	if engine.ShouldAdvanceNestSpot(actor) {
-		// Fuck you too.
-
 		engine.LogBuildFailure(actor, "dispenser", "told to advance the nest")
 		return engine.Done("Need to advance nest")
 	}
@@ -263,7 +259,6 @@ func Update(actor int32) engine.Outcome {
 	myBody := myNextbot.Body()
 
 	if rangeToStand < 200.0 {
-		// Start building a dispenser
 		if !engine.IsBuilderSetTo(actor, engine.ObjectDispenser()) {
 			engine.FakeClientCommandThrottled(actor, "build 0")
 		}

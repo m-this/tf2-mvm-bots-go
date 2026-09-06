@@ -225,7 +225,6 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 			{
 				PrintToServer("CTFBotMvMEngineerIdle_Update: ADVANCE");
 			}
-			// RIGHT NOW
 			CTFBotMvMEngineerIdle_ResetProperties(actor);
 			m_aNestArea[actor] = candidate;
 			m_ctAdvanceAgain[actor] = GetGameTime() + NEST_ADVANCE_COOLDOWN;
@@ -373,7 +372,6 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 		{
 			return action.Continue();
 		}
-		// Start
 		m_ctFindNestHint[actor] = GetGameTime() + GetRandomFloat(1.0, 2.0);
 		m_aNestArea[actor] = PickBuildArea(actor);
 	}
@@ -461,7 +459,6 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 		{
 			if (dispenser != INVALID_ENT_REFERENCE)
 			{
-				// sentry is not safe.
 				if (m_ctSentrySafe[actor] < GetGameTime())
 				{
 					m_ctDispenserCooldown[actor] = GetGameTime() + 3.0;
@@ -893,7 +890,6 @@ stock bool CTFBotMvMEngineerIdle_ShouldAdvanceNestSpot(int actor)
 		return false;
 	}
 	float flBombTargetDistance = GetTravelDistanceToBombTarget(view_as<CTFNavArea>(m_aNestArea[actor]));
-	// No point in advancing now.
 	if (flBombTargetDistance <= 1000.0)
 	{
 		return false;

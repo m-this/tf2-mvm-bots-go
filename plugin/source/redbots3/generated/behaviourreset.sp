@@ -42,7 +42,6 @@ public Action Timer_ResetOneBehaviour(Handle timer)
 		{
 			continue;
 		}
-		// Rethink what we're supposed to do.
 		ResetIntentionInterface(client);
 		return Plugin_Continue;
 	}
@@ -54,17 +53,14 @@ public Action Timer_ResetOneBehaviour(Handle timer)
 // leaving alone.
 stock bool ShouldResetBehavior(int client)
 {
-	// Looking for sniping spots, don't disturb.
 	if (ActionsManager.LookupEntityActionByName(client, "SniperLurk") != INVALID_ACTION)
 	{
 		return false;
 	}
-	// I'm healing people.
 	if (ActionsManager.LookupEntityActionByName(client, "Heal") != INVALID_ACTION)
 	{
 		return false;
 	}
-	// I am building shit.
 	if (ActionsManager.LookupEntityActionByName(client, "DefenderEngineerIdle") != INVALID_ACTION)
 	{
 		return false;

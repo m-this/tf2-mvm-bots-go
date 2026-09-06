@@ -56,7 +56,6 @@ public Action CTFBotSniperLurk_Update(BehaviorAction action, int actor, float in
 	}
 	if (!CanUsePrimayWeapon(actor))
 	{
-		// Where did my gun go?
 		return action.SuspendFor(CTFBotDefenderAttack(), "Lost my rifle");
 	}
 	return Plugin_Continue;
@@ -163,7 +162,6 @@ public Action CTFBotSniperLurk_SelectMoreDangerousThreat(BehaviorAction action, 
 			int enemyWepID = TF2Util_GetWeaponID(enemyWeapon);
 			if (WeaponID_IsSniperRifle(enemyWepID))
 			{
-				// This sniper ain't gonna snipe me.
 				knownEntity = threat1;
 				return Plugin_Changed;
 			}
@@ -408,14 +406,12 @@ public Action CTFBotMainAction_SelectMoreDangerousThreat(BehaviorAction action, 
 	else
 		if (rangeSq1 < rangeSq2)
 		{
-			// Target the closest visible.
 			knownEntity = threat1;
 		}
 		else
 		{
 			knownEntity = threat2;
 		}
-	// Target the healer.
 	knownEntity = HealerOrThreat(nextbot, knownEntity);
 	return Plugin_Changed;
 }

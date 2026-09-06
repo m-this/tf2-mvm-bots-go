@@ -46,7 +46,6 @@ public Action CTFBotDestroyTeleporter_SelectMoreDangerousThreat(BehaviorAction a
 	int myWeapon = BaseCombatCharacter_GetActiveWeapon(me);
 	if ((myWeapon != -1) && ((TF2Util_GetWeaponID(myWeapon) == TF_WEAPON_FLAMETHROWER) || IsMeleeWeapon(myWeapon)))
 	{
-		// We can only get the nearest threat
 		knownEntity = SelectCloserThreat(nextbot, threat1, threat2);
 		return Plugin_Changed;
 	}
@@ -61,7 +60,6 @@ public Action CTFBotDestroyTeleporter_SelectMoreDangerousThreat(BehaviorAction a
 		knownEntity = threat2;
 		return Plugin_Changed;
 	}
-	// Our most dangerous threat should be the teleporter
 	if ((iThreat1 == m_iTeleporterTarget[me]) && IsLineOfFireClearEntity(me, GetEyePosition(me), iThreat1))
 	{
 		knownEntity = threat1;
@@ -72,7 +70,6 @@ public Action CTFBotDestroyTeleporter_SelectMoreDangerousThreat(BehaviorAction a
 		knownEntity = threat2;
 		return Plugin_Changed;
 	}
-	// We probably can't see it right now
 	knownEntity = NULL_KNOWN_ENTITY;
 	return Plugin_Changed;
 }

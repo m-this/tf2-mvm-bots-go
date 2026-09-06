@@ -93,7 +93,6 @@ func HandleTeamPlayerCountChanged(team engine.Team, iWhoChanging int32) {
 		iMemberCount++
 	}
 
-	// Are all remaining members of the team ready?
 	if iReadyCount == iMemberCount {
 		// Unready one so the wave cannot start and another bot may enter.
 		engine.SetPlayerReady(iWhoToUnready, false)

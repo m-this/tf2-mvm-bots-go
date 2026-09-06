@@ -86,7 +86,6 @@ func ShouldAttack(nextbot engine.Bot, knownEntity engine.Known) (changed engine.
 //
 //nolint:revive // unused-parameter: the signature is the engine's, not ours
 func IsHindrance(nextbot engine.Bot, entity int32) (changed engine.Outcome, result engine.Answer) {
-	// Avoid no one
 	return engine.Changed(), engine.AnswerNo()
 }
 

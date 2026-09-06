@@ -47,7 +47,6 @@ func Update(actor int32) engine.Outcome {
 
 	theStation := station[actor]
 
-	// Moved from OnStart for technical reasons
 	hasGoal, center := MapUpgradeStationGoal()
 
 	if !hasGoal {

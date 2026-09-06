@@ -88,7 +88,6 @@ public Action CTFBotMvMEngineerBuildDispenser_Update(BehaviorAction action, int 
 	int sentry = GetObjectOfType(actor, TFObject_Sentry);
 	if (sentry == INVALID_ENT_REFERENCE)
 	{
-		// Fuck you.
 		LogBuildFailure(actor, "dispenser", "no sentry to feed");
 		return action.Done("No sentry");
 	}
@@ -105,7 +104,6 @@ public Action CTFBotMvMEngineerBuildDispenser_Update(BehaviorAction action, int 
 	}
 	if (CTFBotMvMEngineerIdle_ShouldAdvanceNestSpot(actor))
 	{
-		// Fuck you too.
 		LogBuildFailure(actor, "dispenser", "told to advance the nest");
 		return action.Done("Need to advance nest");
 	}
@@ -154,7 +152,6 @@ public Action CTFBotMvMEngineerBuildDispenser_Update(BehaviorAction action, int 
 	IBody myBody = myNextbot.GetBodyInterface();
 	if (rangeToStand < 200.0)
 	{
-		// Start building a dispenser
 		if (!IsBuilderSetTo(actor, TFObject_Dispenser))
 		{
 			FakeClientCommandThrottled(actor, "build 0");

@@ -27,7 +27,6 @@ public Action CTFBotGuardPoint_OnStart(BehaviorAction action, int actor, Behavio
 	for (int i = 0; i < hAreas.Count(); i++)
 	{
 		CTFNavArea area = hAreas.Get(i);
-		// Don't go in spawn room
 		if (area.HasAttributeTF(RED_SPAWN_ROOM) || area.HasAttributeTF(BLUE_SPAWN_ROOM))
 		{
 			continue;
@@ -95,7 +94,6 @@ public Action CTFBotGuardPoint_Update(BehaviorAction action, int actor, float in
 			return action.Continue();
 		}
 	}
-	// Stay near the point to defend it
 	if (myBot.IsRangeGreaterThanEx(m_vecPointDefendArea[actor], 200.0))
 	{
 		if (m_flRepathTime[actor] <= GetGameTime())
@@ -122,7 +120,6 @@ public Action CTFBotGuardPoint_OnTerritoryContested(BehaviorAction action, int a
 	{
 		PrintToChatAll("[OnTerritoryContested] Losing CP %d", GetControlPointByID(territory));
 	}
-	// Someone tried to capture it, keep defending
 	return action.TryToSustain();
 }
 
@@ -133,7 +130,6 @@ public Action CTFBotGuardPoint_OnTerritoryLost(BehaviorAction action, int actor,
 	{
 		PrintToChatAll("[OnTerritoryLost] Lost CP %d!", GetControlPointByID(territory));
 	}
-	// We lost the point, give up
 	return action.TryChangeTo(CTFBotDefenderAttack(), RESULT_CRITICAL, "Point lost");
 }
 
@@ -145,12 +141,10 @@ stock bool CTFBotGuardPoint_IsPossible(int client)
 	{
 		return false;
 	}
-	// One of us is already watching the point
 	if (GetCountOfBotsWithNamedAction("DefenderGuardPoint") > 0)
 	{
 		return false;
 	}
-	// Nothing to defend
 	if (GetCapturableAreaTrigger(GetPlayerEnemyTeam(client)) == -1)
 	{
 		return false;

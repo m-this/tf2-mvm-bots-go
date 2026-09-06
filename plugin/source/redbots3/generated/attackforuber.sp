@@ -47,7 +47,6 @@ public Action CTFBotAttackUber_Update(BehaviorAction action, int actor, float in
 	}
 	TF2Util_SetPlayerActiveWeapon(actor, melee);
 	INextBot myBot = CBaseNPC_GetNextBotOfEntity(actor);
-	// Let's not stray too far from the patient
 	if (myBot.IsRangeGreaterThanEx(m_vecStartArea[actor], MEDIC_ATTACK_UBER_SEEK_RANGE))
 	{
 		return action.Done("Too far from home");
@@ -96,17 +95,14 @@ public void CTFBotAttackUber_OnEnd(BehaviorAction action, int actor, BehaviorAct
 stock bool CTFBotAttackUber_IsPossible(int client, int medigun)
 {
 	bool isUbered = TF2_IsInvulnerable(client);
-	// Health is too low
 	if (!isUbered && (GetClientHealth(client) < MEDIC_ATTACK_UBER_LOW_HEALTH))
 	{
 		return false;
 	}
-	// I should be healing someone first
 	if (GetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget") == -1)
 	{
 		return false;
 	}
-	// It's already full
 	if (GetEntPropFloat(medigun, Prop_Send, "m_flChargeLevel") >= 1.0)
 	{
 		return false;
@@ -125,7 +121,6 @@ stock bool CTFBotAttackUber_IsPossible(int client, int medigun)
 	{
 		return false;
 	}
-	// Too dangerous
 	if (!isUbered && (GetNearestEnemyCount(client, 1000.0, false) > 2))
 	{
 		return false;

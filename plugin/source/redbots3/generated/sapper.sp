@@ -50,12 +50,10 @@ stock int GetCapturableAreaTrigger(TFTeam team)
 		{
 			break;
 		}
-		// Only want capture areas
 		if (!HasEntProp(trigger, Prop_Data, "CTriggerAreaCaptureCaptureThink"))
 		{
 			continue;
 		}
-		// Ignore disabled triggers
 		if (GetEntProp(trigger, Prop_Data, "m_bDisabled") != 0)
 		{
 			continue;
@@ -68,7 +66,6 @@ stock int GetCapturableAreaTrigger(TFTeam team)
 		{
 			continue;
 		}
-		// Now find the matching control point
 		int point = -1;
 		for (;;)
 		{

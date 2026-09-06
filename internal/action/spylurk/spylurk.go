@@ -101,7 +101,6 @@ func Update(actor int32) engine.Outcome {
 						}
 					}
 				} else {
-					// We're exposed anyways, attack!
 					engine.PressFireButton(actor)
 				}
 			}

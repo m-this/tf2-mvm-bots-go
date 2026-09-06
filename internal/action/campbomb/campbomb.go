@@ -48,7 +48,6 @@ func OnStart(actor int32) engine.Outcome {
 func Update(actor int32) engine.Outcome {
 	switch engine.PlayerClass(actor) {
 	case engine.ClassSoldier(), engine.ClassPyro(), engine.ClassDemoMan():
-		// Tank is more important
 		if engine.AttackTankSelectTarget(actor) {
 			return engine.ChangeTo(engine.AttackTank(), "Tank inbound")
 		}
@@ -61,7 +60,6 @@ func Update(actor int32) engine.Outcome {
 	}
 
 	if engine.OwnerEntity(flag) != -1 {
-		// Someone picked up the bomb!
 		return engine.ChangeTo(engine.DefenderAttack(), "Bomb is taken")
 	}
 
@@ -125,7 +123,6 @@ func Update(actor int32) engine.Outcome {
 func IsPossible(client int32) bool {
 	switch engine.PlayerClass(client) {
 	case engine.ClassScout(), engine.ClassMedic():
-		// We're not very useful for this
 		return false
 	}
 
@@ -154,7 +151,6 @@ func IsPossible(client int32) bool {
 		}
 
 		if engine.VectorDistance(bombPosition, engine.WorldSpaceCenter(iEnt)) <= maxWatchRadius {
-			// There;s a sentry watching the bomb
 			return false
 		}
 	}

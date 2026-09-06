@@ -43,7 +43,6 @@ func OnStart(actor int32) engine.Outcome {
 	for i := int32(0); i < hAreas.Count(); i++ {
 		area := hAreas.Get(i)
 
-		// Don't go in spawn room
 		if area.HasAttributeTF(engine.RedSpawnRoom()) || area.HasAttributeTF(engine.BlueSpawnRoom()) {
 			continue
 		}
@@ -111,7 +110,6 @@ func Update(actor int32) engine.Outcome {
 		}
 	}
 
-	// Stay near the point to defend it
 	if myBot.IsRangeGreaterThanEx(pointDefendArea[actor], 200.0) {
 		if engine.RepathTime(actor) <= engine.GameTime() {
 			engine.SetRepathTime(actor, engine.GameTime()+engine.RandomFloat(1.0, 2.0))
@@ -138,7 +136,6 @@ func OnTerritoryContested(actor int32, territory int32) engine.Outcome {
 		engine.PrintToChatAll("[OnTerritoryContested] Losing CP %d", engine.ControlPointByID(territory))
 	}
 
-	// Someone tried to capture it, keep defending
 	return engine.TryToSustain()
 }
 
@@ -150,7 +147,6 @@ func OnTerritoryLost(actor int32, territory int32) engine.Outcome {
 		engine.PrintToChatAll("[OnTerritoryLost] Lost CP %d!", engine.ControlPointByID(territory))
 	}
 
-	// We lost the point, give up
 	return engine.TryChangeTo(engine.DefenderAttack(), engine.ResultCritical(), "Point lost")
 }
 
@@ -163,12 +159,10 @@ func IsPossible(client int32) bool {
 		return false
 	}
 
-	// One of us is already watching the point
 	if engine.CountOfBotsWithNamedAction("DefenderGuardPoint") > 0 {
 		return false
 	}
 
-	// Nothing to defend
 	if engine.CapturableAreaTrigger(engine.PlayerEnemyTeam(client)) == -1 {
 		return false
 	}

@@ -45,7 +45,6 @@ public Action CTFBotGotoUpgrade_Update(BehaviorAction action, int actor, float i
 		return action.ChangeTo(CTFBotUpgrade(), "Reached upgrade station; buying upgrades");
 	}
 	int theStation = m_iStation[actor];
-	// Moved from OnStart for technical reasons
 	float center[3];
 	bool hasGoal = GetMapUpgradeStationGoal(center);
 	if (!hasGoal)

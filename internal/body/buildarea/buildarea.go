@@ -92,7 +92,6 @@ func PickBuildArea(client int32, sentryRange float32) engine.Area {
 			continue
 		}
 
-		// Area in spawn
 		if area.HasAttributeTF(engine.BlueSpawnRoom()) || area.HasAttributeTF(engine.RedSpawnRoom()) {
 			continue
 		}

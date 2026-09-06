@@ -112,7 +112,6 @@ func GetUpgradeInterval() float32 {
 		return customInterval
 	}
 
-	// Upgrading during an active round, buy upgrades fast.
 	if engine.RoundState() == engine.RoundStateRunning() {
 		return engine.RandomFloat(0.1, 0.75)
 	}
@@ -333,7 +332,6 @@ func CollectUpgrades(client int32) {
 
 			switch weaponID {
 			case engine.WeaponJar(), engine.WeaponJarMilk(), engine.WeaponBuffItem(), engine.WeaponJarGas():
-				// Secondary items that have some use.
 				iArraySlots.Push(engine.LoadoutSlotSecondary())
 			case engine.WeaponPipebombLauncher():
 				// With no actual primary, the secondary is what it relies on.

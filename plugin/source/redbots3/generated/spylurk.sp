@@ -109,7 +109,6 @@ static Action CTFBotSpyLurkMvM_Update(BehaviorAction action, int actor, float in
 				}
 				else
 				{
-					// We're exposed anyways, attack!
 					VS_PressFireButton(actor);
 				}
 			}

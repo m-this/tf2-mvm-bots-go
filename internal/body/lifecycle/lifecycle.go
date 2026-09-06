@@ -82,7 +82,6 @@ func OnEntityCreated(entity int32, classname engine.Text) {
 //sp:public
 func TF2OnConditionAdded(client int32, condition engine.Condition) {
 	if condition == engine.ConditionTaunting() && engine.ClientTeam(client) == engine.TeamBlue() && engine.IsSentryBusterRobot(client) {
-		// Keep track of the player that is detonating.
 		engine.SetDetonatingPlayer(client)
 		engine.CreateTimerData(2.0, TimerForgetDetonatingPlayer, client)
 	}
@@ -319,7 +318,6 @@ func OnPlayerRunCmd(client int32, buttons int32, impulse int32, vel [3]float32, 
 						buttons &= ^engine.InAttack()
 					}
 				case engine.WeaponBuffItem():
-					// Once the horn is blowing, stop pressing fire.
 					if engine.IsPlayingHorn(myWeapon) {
 						buttons &= ^engine.InAttack()
 					}
@@ -351,7 +349,6 @@ func OnPlayerRunCmd(client int32, buttons int32, impulse int32, vel [3]float32, 
 				if engine.IsPlayerInCondition(client, engine.ConditionZoomed()) {
 					if engine.AimSkill().Int() >= 1 {
 						if threat != engine.NoKnownEntity() && engine.IsLineOfFireClearEntity(client, engine.EyePosition(client), threat.Entity()) {
-							// Help aim towards the desired target point.
 							aimPos := myBot.Intention().SelectTargetPointOf(threat.Entity())
 							engine.SnapViewToPosition(client, aimPos)
 
@@ -437,7 +434,6 @@ func OnPlayerRunCmd(client int32, buttons int32, impulse int32, vel [3]float32, 
 		}
 	} else { //nolint:gocritic // elseif: the shipped function nests these, and flattening them would not compare
 		if engine.DeadRethinkTime(client) <= engine.GameTime() {
-			// Think once a second while dead.
 			engine.SetDeadRethinkTime(client, engine.GameTime()+1.0)
 
 			iObsMode := engine.ObserverMode(client)
@@ -446,7 +442,6 @@ func OnPlayerRunCmd(client int32, buttons int32, impulse int32, vel [3]float32, 
 				// Buying back is not possible right now, so do not think about it.
 				engine.SetBuybackNumber(client, 0)
 			} else {
-				// Randomly think about buying back.
 				engine.SetBuybackNumber(client, engine.RandomInt(1, 100))
 			}
 

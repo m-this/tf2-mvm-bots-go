@@ -114,7 +114,6 @@ stock bool IsHealedByMedic(int client)
 	for (int i = 0; i < TF2_GetNumHealers(client); i++)
 	{
 		int healerIndex = TF2Util_GetPlayerHealer(client, i);
-		// Not a player.
 		if (!BaseEntity_IsPlayer(healerIndex))
 		{
 			continue;

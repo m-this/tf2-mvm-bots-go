@@ -149,7 +149,6 @@ func IsHealedByMedic(client int32) bool {
 	for i := int32(0); i < engine.NumHealers(client); i++ {
 		healerIndex := engine.PlayerHealer(client, i)
 
-		// Not a player.
 		if !engine.IsPlayer(healerIndex) {
 			continue
 		}

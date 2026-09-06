@@ -51,12 +51,10 @@ stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INext
 	{
 		case POWERUP_BOTTLE_CRITBOOST:
 		{
-			// Can't do anything useful without a weapon.
 			if (activeWeapon == -1)
 			{
 				return false;
 			}
-			// No threat to actually use it against.
 			if (threat == NULL_KNOWN_ENTITY)
 			{
 				return false;
@@ -66,7 +64,6 @@ stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INext
 			{
 				return false;
 			}
-			// Already have crits.
 			if (TF2_IsCritBoosted(client) || TF2_IsPlayerInCondition(client, TFCond_CritMmmph))
 			{
 				return false;
@@ -110,7 +107,6 @@ stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INext
 		}
 		case POWERUP_BOTTLE_UBERCHARGE:
 		{
-			// I'm invincible already.
 			if (TF2_IsInvulnerable(client))
 			{
 				return false;
@@ -149,34 +145,29 @@ stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INext
 			{
 				return false;
 			}
-			// We're busy going for the tank.
 			if (ActionsManager.LookupEntityActionByName(client, "DefenderAttackTank") != INVALID_ACTION)
 			{
 				return false;
 			}
 			float myPosition[3];
 			myPosition = WorldSpaceCenter(client);
-			// I'm already in my spawn room.
 			if (TF2Util_IsPointInRespawnRoom(myPosition, client, true))
 			{
 				return false;
 			}
 			float hatchPosition[3];
 			hatchPosition = GetBombHatchPosition();
-			// We're already close enough to the hatch.
 			if (GetVectorDistance(myPosition, hatchPosition) <= 1000.0)
 			{
 				return false;
 			}
 			int flag = FindBombNearestToHatch();
-			// No bomb active.
 			if (flag == -1)
 			{
 				return false;
 			}
 			float bombPosition[3];
 			bombPosition = WorldSpaceCenter(flag);
-			// Bomb is far and not a threat.
 			if (GetVectorDistance(bombPosition, hatchPosition) > BOMB_HATCH_RANGE_CRITICAL)
 			{
 				return false;
@@ -189,7 +180,6 @@ stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INext
 			}
 			float threatPosition[3];
 			GetClientAbsOrigin(closestToHatch, threatPosition);
-			// Nearest robot isn't that close to the bomb.
 			if (GetVectorDistance(threatPosition, bombPosition) > 800.0)
 			{
 				return false;

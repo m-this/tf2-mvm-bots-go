@@ -75,7 +75,6 @@ func OnStart(actor int32) engine.Outcome {
 func Update(actor int32) engine.Outcome {
 	if engine.PlayerClass(actor) == engine.ClassSniper() && engine.TFBotMission(actor) == engine.MissionSniper() {
 		if engine.CanUsePrimaryWeapon(actor) {
-			// We can snipe again
 			return engine.Done("I have gun")
 		}
 	}
@@ -103,7 +102,6 @@ func Update(actor int32) engine.Outcome {
 	if revalidateTarget[actor] <= engine.GameTime() {
 		revalidateTarget[actor] = engine.GameTime() + 2.0
 
-		// Need new target.
 		if !TargetEntityReachable(actor, attackTarget[actor]) {
 			if !SelectTarget(actor, false) {
 				return engine.Done("Unreachable target")
@@ -113,7 +111,6 @@ func Update(actor int32) engine.Outcome {
 
 	switch engine.PlayerClass(actor) {
 	case engine.ClassScout():
-		// Scouts primarily prefer to get money
 		if engine.CollectMoneyIsPossible(actor) {
 			return engine.ChangeTo(engine.CollectMoney(), "Collectinh money")
 		}
@@ -132,7 +129,6 @@ func Update(actor int32) engine.Outcome {
 					class := engine.PlayerClass(i)
 
 					if class != engine.ClassMedic() && class != engine.ClassSniper() && class != engine.ClassEngineer() && class != engine.ClassSpy() {
-						// We have someone we'd prefer to heal
 						return engine.Done("I have patient")
 					}
 				}
@@ -174,7 +170,6 @@ func Update(actor int32) engine.Outcome {
 	threat := myVision.PrimaryKnownThreat(false)
 
 	if threat != 0 {
-		// We have a threat, prepare to fight it
 		engine.EquipBestWeaponForThreat(actor, threat)
 	}
 
@@ -250,14 +245,11 @@ func SelectTarget(actor int32, bBombCarrierOnly bool) bool {
 	// Always go after the bot closest to the bomb, if possible
 	target := engine.BotNearestToBombNearestToHatch(actor)
 
-	// No bomb in play, just find random target
 	if !bBombCarrierOnly && target == -1 {
 		target = engine.SelectRandomReachableEnemy(actor)
 	}
 
-	// Found a valid target, update
 	if target != -1 {
-		// Go after the healer first
 		healer := engine.HealerOfPlayer(target, true)
 
 		if healer != -1 {

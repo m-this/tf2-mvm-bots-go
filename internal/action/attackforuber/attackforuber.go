@@ -66,7 +66,6 @@ func Update(actor int32) engine.Outcome {
 
 	myBot := engine.NextBotOf(actor)
 
-	// Let's not stray too far from the patient
 	if myBot.IsRangeGreaterThanEx(startArea[actor], seekRange) {
 		return engine.Done("Too far from home")
 	}
@@ -113,17 +112,14 @@ func OnEnd(actor int32) {
 func IsPossible(client int32, medigun int32) bool {
 	isUbered := engine.IsInvulnerable(client)
 
-	// Health is too low
 	if !isUbered && engine.ClientHealth(client) < lowHealth {
 		return false
 	}
 
-	// I should be healing someone first
 	if engine.EntPropEnt(medigun, engine.PropSend(), "m_hHealingTarget") == -1 {
 		return false
 	}
 
-	// It's already full
 	if engine.EntPropFloatOf(medigun, engine.PropSend(), "m_flChargeLevel") >= 1.0 {
 		return false
 	}
@@ -143,7 +139,6 @@ func IsPossible(client int32, medigun int32) bool {
 		return false
 	}
 
-	// Too dangerous
 	if !isUbered && engine.NearestEnemyCount(client, 1000.0, false) > 2 {
 		return false
 	}

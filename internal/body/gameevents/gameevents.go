@@ -66,7 +66,6 @@ func EventTeamplayRoundStart(event engine.Event, name string, dontBroadcast bool
 	// evidence about this one.
 	engine.ResetSpyIntel()
 
-	// Was the map reset?
 	if event.EventBool("full_reset") {
 		engine.SetupSniperSpotHints()
 		engine.NestRelocationResetAll()
@@ -158,7 +157,6 @@ func TimerWaveFailure(timer engine.Timer) engine.Outcome {
 		return engine.PluginStop()
 	}
 
-	// Don't refund if we wanna keep them.
 	if engine.KeepBotUpgrades().Bool() {
 		return engine.PluginStop()
 	}
@@ -222,7 +220,6 @@ func EventMvmWaveFailed(event engine.Event, name string, dontBroadcast bool) {
 	}
 
 	if engine.ManagerMode().Int() == engine.ManagerModeReadyBots() {
-		// Global cooldown before players can ready up again.
 		engine.SetNextReadyTime(engine.GameTime() + engine.ReadyCooldown().Float())
 
 		if waveFailCounterTick > 3 {
@@ -354,7 +351,6 @@ func EventMvmWaveComplete(event engine.Event, name string, dontBroadcast bool) {
 
 	for i := int32(1); i <= engine.MaxClients(); i++ {
 		if engine.IsClientInGame(i) && engine.DefenderBotFlag(i) {
-			// Wave complete, rethink what we should do.
 			engine.ClearSniperStall(i)
 			engine.ResetIntentionInterface(i)
 
@@ -503,7 +499,6 @@ func TimerPlayerSpawn(timer engine.Timer, data int32) engine.Outcome {
 
 	_, clientName := engine.ClientName(data)
 
-	// Identify if the bot is ours.
 	if engine.StrContains(clientName, engine.TFBotIdentityName(), true) != -1 {
 		engine.SetDefenderBotFlag(data, true)
 		engine.SetHasBoughtUpgrades(data, false)
@@ -523,7 +518,6 @@ func TimerPlayerSpawn(timer engine.Timer, data int32) engine.Outcome {
 			}
 		}
 
-		// Let medic bots use their shields.
 		engine.AddBotAttribute(data, engine.BotProjectileShield())
 
 		engine.MarkNeedsNamePurge(data)

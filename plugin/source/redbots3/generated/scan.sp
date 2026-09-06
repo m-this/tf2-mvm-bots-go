@@ -148,7 +148,6 @@ stock bool Go_sappableWanted(int i, bool giantsOnly, TFClassType class, float sp
 	{
 		return false;
 	}
-	// Not fast enough
 	return (speedCheck <= 0.0) || (GetEntPropFloat(i, Prop_Send, "m_flMaxspeed") >= speedCheck);
 }
 

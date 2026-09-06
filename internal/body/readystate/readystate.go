@@ -44,7 +44,6 @@ func ListenerTournamentPlayerReadystate(client int32, command engine.Text, argc 
 			return engine.PluginContinue()
 		}
 
-		// Allow players that are ready to unready.
 		if engine.IsPlayerReady(client) {
 			return engine.PluginContinue()
 		}
@@ -112,14 +111,12 @@ func ListenerTournamentPlayerReadystate(client int32, command engine.Text, argc 
 		}
 
 		if engine.BotsEnabled() {
-			// Bots already going, okay to pass.
 			return engine.PluginContinue()
 		}
 
 		if engine.NextReadyTime() > engine.GameTime() {
 			engine.PrintToChat(client, "%s You're going too fast!", engine.PluginPrefix())
 
-			// Give more time to ready up.
 			return engine.PluginHandled()
 		}
 

@@ -106,7 +106,6 @@ func MenuHandlerBotVote(menu engine.Menu, action engine.MenuChoice, param1 int32
 	switch action {
 	case engine.MenuVoteEnd():
 		if param1 == 0 {
-			// They said yes.
 			engine.ManageDefenderBotsOn(true)
 		} else if param1 == 1 {
 			// They said no. Forget who called the vote, as they were not
@@ -450,7 +449,6 @@ func StartBotVote(voteCaller int32) bool {
 	}
 
 	if engine.VoteMenu(vMenu, players, total, 15) {
-		// Remember who started the vote.
 		engine.SetBotSummoner(engine.ClientUserID(voteCaller))
 		return true
 	}

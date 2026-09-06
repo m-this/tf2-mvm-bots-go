@@ -29,7 +29,6 @@ stock bool ShouldDetonateStickies(int client)
 	{
 		return false;
 	}
-	// Nothing to blow up
 	if (GetEntProp(launcher, Prop_Send, "m_iPipebombCount") <= 0)
 	{
 		return false;

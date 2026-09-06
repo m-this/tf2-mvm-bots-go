@@ -222,7 +222,6 @@ stock bool IsValidAmmo(int pack)
 	{
 		return false;
 	}
-	// Can't use a disabled dispenser
 	if ((StrContains(class, "obj_dispenser", false) != -1) && TF2_HasSapper(pack))
 	{
 		return false;
@@ -244,7 +243,6 @@ stock void HoldOffAmmo(int actor)
 // IsPossible says whether there is ammo worth walking to.
 stock bool CTFBotGetAmmo_IsPossible(int actor)
 {
-	// Skip lag.
 	if ((m_iAmmoPack[actor] != -1) && IsValidAmmo(m_iAmmoPack[actor]))
 	{
 		return true;
@@ -303,12 +301,10 @@ stock void ComputeHealthAndAmmoVectors(int client, ArrayList found, float maxRan
 			}
 			if (BaseEntity_IsBaseObject(ammo))
 			{
-				// Can't get anything from still building buildings.
 				if (TF2_IsBuilding(ammo))
 				{
 					continue;
 				}
-				// Skip empty dispenser.
 				if ((TF2_GetObjectType(ammo) == TFObject_Dispenser) && (GetEntProp(ammo, Prop_Send, "m_iAmmoMetal") <= 0))
 				{
 					continue;

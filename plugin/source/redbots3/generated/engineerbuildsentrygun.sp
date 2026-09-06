@@ -90,7 +90,6 @@ public Action CTFBotMvMEngineerBuildSentrygun_Update(BehaviorAction action, int 
 	}
 	if (CTFBotMvMEngineerIdle_ShouldAdvanceNestSpot(actor))
 	{
-		// And you.
 		LogBuildFailure(actor, "sentry", "told to advance the nest");
 		return action.Done("No sentry");
 	}
@@ -145,7 +144,6 @@ public Action CTFBotMvMEngineerBuildSentrygun_Update(BehaviorAction action, int 
 	ILocomotion myLoco = myNextbot.GetLocomotionInterface();
 	if (rangeToStand < 200.0)
 	{
-		// Start building a sentry
 		if (!IsBuilderSetTo(actor, TFObject_Sentry))
 		{
 			FakeClientCommandThrottled(actor, "build 2");
@@ -166,7 +164,6 @@ public Action CTFBotMvMEngineerBuildSentrygun_Update(BehaviorAction action, int 
 		g_arrPluginBot[actor].bPathing = true;
 		if (rangeToStand > 300.0)
 		{
-			// Fuck em up.
 			EquipWeaponSlot(actor, TFWeaponSlot_Primary);
 		}
 		UpdateLookAroundForEnemies(actor, true);

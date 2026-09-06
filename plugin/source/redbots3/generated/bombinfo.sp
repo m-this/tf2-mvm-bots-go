@@ -13,7 +13,6 @@ stock bool GetBombInfo(BombInfo_t info)
 	for (int i = 0; i < (areaCount - 1); i++)
 	{
 		CTFNavArea area = TheNavAreas.Get(i);
-		// Skip spawn areas
 		if (area.HasAttributeTF(BLUE_SPAWN_ROOM) || area.HasAttributeTF(RED_SPAWN_ROOM))
 		{
 			continue;
@@ -31,7 +30,6 @@ stock bool GetBombInfo(BombInfo_t info)
 		{
 			break;
 		}
-		// Ignore bombs not in play
 		if (GetEntProp(flag, Prop_Send, "m_nFlagStatus") == TF_FLAGINFO_HOME)
 		{
 			continue;

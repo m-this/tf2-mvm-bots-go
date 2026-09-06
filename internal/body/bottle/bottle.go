@@ -87,12 +87,10 @@ func OpportunisticallyUsePowerupBottle(client int32, activeWeapon int32, bot eng
 
 	switch engine.PowerupBottleKind(bottle) {
 	case engine.BottleCritBoost():
-		// Can't do anything useful without a weapon.
 		if activeWeapon == -1 {
 			return false
 		}
 
-		// No threat to actually use it against.
 		if threat == engine.NoKnownEntity() {
 			return false
 		}
@@ -102,7 +100,6 @@ func OpportunisticallyUsePowerupBottle(client int32, activeWeapon int32, bot eng
 			return false
 		}
 
-		// Already have crits.
 		if engine.IsCritBoosted(client) || engine.IsPlayerInCondition(client, engine.ConditionCritMmmph()) {
 			return false
 		}
@@ -141,7 +138,6 @@ func OpportunisticallyUsePowerupBottle(client int32, activeWeapon int32, bot eng
 			return true
 		}
 	case engine.BottleUberCharge():
-		// I'm invincible already.
 		if engine.IsInvulnerable(client) {
 			return false
 		}
@@ -178,35 +174,30 @@ func OpportunisticallyUsePowerupBottle(client int32, activeWeapon int32, bot eng
 			return false
 		}
 
-		// We're busy going for the tank.
 		if engine.LookupEntityActionByName(client, "DefenderAttackTank") != engine.InvalidAction() {
 			return false
 		}
 
 		myPosition := engine.WorldSpaceCenter(client)
 
-		// I'm already in my spawn room.
 		if engine.IsPointInRespawnRoomStrict(myPosition, client) {
 			return false
 		}
 
 		hatchPosition := engine.BombHatchPosition()
 
-		// We're already close enough to the hatch.
 		if engine.VectorDistance(myPosition, hatchPosition) <= 1000.0 {
 			return false
 		}
 
 		flag := engine.BombNearestToHatch()
 
-		// No bomb active.
 		if flag == -1 {
 			return false
 		}
 
 		bombPosition := engine.WorldSpaceCenter(flag)
 
-		// Bomb is far and not a threat.
 		if engine.VectorDistance(bombPosition, hatchPosition) > engine.BombHatchRangeCritical() {
 			return false
 		}
@@ -220,7 +211,6 @@ func OpportunisticallyUsePowerupBottle(client int32, activeWeapon int32, bot eng
 
 		threatPosition := engine.Origin(closestToHatch)
 
-		// Nearest robot isn't that close to the bomb.
 		if engine.VectorDistance(threatPosition, bombPosition) > 800.0 {
 			return false
 		}

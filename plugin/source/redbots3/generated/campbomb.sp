@@ -30,7 +30,6 @@ public Action CTFBotCampBomb_Update(BehaviorAction action, int actor, float inte
 	{
 		case TFClass_Soldier, TFClass_Pyro, TFClass_DemoMan:
 		{
-			// Tank is more important
 			if (CTFBotAttackTank_SelectTarget(actor))
 			{
 				return action.ChangeTo(CTFBotAttackTank(), "Tank inbound");
@@ -44,7 +43,6 @@ public Action CTFBotCampBomb_Update(BehaviorAction action, int actor, float inte
 	}
 	if (BaseEntity_GetOwnerEntity(flag) != -1)
 	{
-		// Someone picked up the bomb!
 		return action.ChangeTo(CTFBotDefenderAttack(), "Bomb is taken");
 	}
 	INextBot myBot = CBaseNPC_GetNextBotOfEntity(actor);
@@ -105,7 +103,6 @@ stock bool CTFBotCampBomb_IsPossible(int client)
 	{
 		case TFClass_Scout, TFClass_Medic:
 		{
-			// We're not very useful for this
 			return false;
 		}
 	}
@@ -135,7 +132,6 @@ stock bool CTFBotCampBomb_IsPossible(int client)
 		}
 		if (GetVectorDistance(bombPosition, WorldSpaceCenter(iEnt)) <= Go_maxWatchRadius)
 		{
-			// There;s a sentry watching the bomb
 			return false;
 		}
 	}

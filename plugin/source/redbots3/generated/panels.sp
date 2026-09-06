@@ -17,14 +17,12 @@ char PANEL_CLASS_NAMES[][] =
 // readout, and there is nothing to press.
 stock int MenuHandler_ShowBotChances(Menu menu, MenuAction action, int param1, int param2)
 {
-	// Do nothing.
 	return 0;
 }
 
 // MenuHandlerShowBotTeamComposition is the same for the lineup readout.
 stock int MenuHandler_ShowBotTeamComposition(Menu menu, MenuAction action, int param1, int param2)
 {
-	// Do nothing.
 	return 0;
 }
 

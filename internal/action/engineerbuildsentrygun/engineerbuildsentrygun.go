@@ -200,8 +200,6 @@ func Update(actor int32) engine.Outcome {
 	}
 
 	if engine.ShouldAdvanceNestSpot(actor) {
-		// And you.
-
 		engine.LogBuildFailure(actor, "sentry", "told to advance the nest")
 		return engine.Done("No sentry")
 	}
@@ -264,7 +262,6 @@ func Update(actor int32) engine.Outcome {
 	myLoco := myNextbot.Locomotion()
 
 	if rangeToStand < 200.0 {
-		// Start building a sentry
 		if !engine.IsBuilderSetTo(actor, engine.ObjectSentry()) {
 			engine.FakeClientCommandThrottled(actor, "build 2")
 		}
@@ -287,7 +284,6 @@ func Update(actor int32) engine.Outcome {
 		engine.PluginBotOf(actor).SetPathing(true)
 
 		if rangeToStand > 300.0 {
-			// Fuck em up.
 			engine.EquipWeaponSlot(actor, engine.WeaponSlotPrimary())
 		}
 

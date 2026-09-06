@@ -335,7 +335,6 @@ stock MRESReturn DHookCallback_IsIgnored_Pre(Address pThis, DHookReturn hReturn,
 					{
 						if (!CanWeaponAirblast(myWeapon))
 						{
-							// Nothing can be done about that.
 							hReturn.Value = true;
 							return MRES_Supercede;
 						}

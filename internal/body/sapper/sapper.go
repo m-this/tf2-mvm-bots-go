@@ -68,12 +68,10 @@ func GetCapturableAreaTrigger(team engine.Team) int32 {
 			break
 		}
 
-		// Only want capture areas
 		if !engine.HasEntProp(trigger, engine.PropData(), "CTriggerAreaCaptureCaptureThink") {
 			continue
 		}
 
-		// Ignore disabled triggers
 		if engine.EntProp(trigger, engine.PropData(), "m_bDisabled") != 0 {
 			continue
 		}
@@ -86,7 +84,6 @@ func GetCapturableAreaTrigger(team engine.Team) int32 {
 			continue
 		}
 
-		// Now find the matching control point
 		point := int32(-1)
 
 		for {

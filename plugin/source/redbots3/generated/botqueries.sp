@@ -39,7 +39,6 @@ stock bool IsAmmoFull(int client)
 	bool isSecondaryFull = BaseCombatCharacter_GetAmmoCount(client, TF_AMMO_SECONDARY) >= TF2Util_GetPlayerMaxAmmo(client, TF_AMMO_SECONDARY);
 	if (TF2_GetPlayerClass(client) == TFClass_Engineer)
 	{
-		// In addition, I want some metal as well.
 		return (BaseCombatCharacter_GetAmmoCount(client, TF_AMMO_METAL) >= 200) && isPrimaryFull && isSecondaryFull;
 	}
 	return isPrimaryFull && isSecondaryFull;
@@ -149,22 +148,18 @@ stock bool ShouldBuybackIntoGame(int client)
 	{
 		return false;
 	}
-	// Can't afford a buyback.
 	if (TF2_GetCurrency(client) < MVM_BUYBACK_COST_PER_SEC)
 	{
 		return false;
 	}
-	// Not opportunistic if we're about to fail.
 	if (IsFailureImminent(client))
 	{
 		return true;
 	}
-	// We're being revived.
 	if (g_bIsBeingRevived[client])
 	{
 		return false;
 	}
-	// Based on our rolled number, decide to buyback.
 	return g_iBuybackNumber[client] <= redbots_manager_bot_buyback_chance.IntValue;
 }
 
@@ -218,7 +213,6 @@ stock bool IsFailureImminent(int client)
 	}
 	float bombPosition[3];
 	bombPosition = WorldSpaceCenter(flag);
-	// Bomb is far and not a threat.
 	if (GetVectorDistance(bombPosition, GetBombHatchPosition()) > BOMB_HATCH_RANGE_CRITICAL)
 	{
 		return false;

@@ -16,7 +16,6 @@ import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
 //sp:name MenuHandler_ShowBotChances
 //nolint:revive // unused-parameter: SourceMod calls this with the full set and the panel answers none of it
 func MenuHandlerShowBotChances(menu engine.Menu, action engine.MenuChoice, param1 int32, param2 int32) int32 {
-	// Do nothing.
 	return 0
 }
 
@@ -25,7 +24,6 @@ func MenuHandlerShowBotChances(menu engine.Menu, action engine.MenuChoice, param
 //sp:name MenuHandler_ShowBotTeamComposition
 //nolint:revive // unused-parameter: SourceMod calls this with the full set and the panel answers none of it
 func MenuHandlerShowBotTeamComposition(menu engine.Menu, action engine.MenuChoice, param1 int32, param2 int32) int32 {
-	// Do nothing.
 	return 0
 }
 

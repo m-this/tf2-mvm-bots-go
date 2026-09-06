@@ -36,7 +36,6 @@ stock void TFBot_NoticeThreat(int tfbot, int threat)
 // out is the four keys a person would be holding.
 stock void MovePlayerTowardsGoal(int client, const float vGoal[3], float vVel[3])
 {
-	// WASD Movement
 	float forward3D[3];
 	BasePlayer_EyeVectors(client, forward3D);
 	float vForward[3];

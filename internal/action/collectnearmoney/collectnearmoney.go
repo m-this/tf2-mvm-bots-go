@@ -53,7 +53,6 @@ func OnEnd(actor int32) {
 func SelectTarget(client int32) bool {
 	threat := engine.NextBotOf(client).Vision().PrimaryKnownThreat(false)
 
-	// Not with an active threat around
 	if threat != 0 {
 		return false
 	}

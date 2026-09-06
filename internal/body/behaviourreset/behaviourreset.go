@@ -70,7 +70,6 @@ func TimerResetOneBehaviour(timer engine.Timer) engine.Outcome {
 			continue
 		}
 
-		// Rethink what we're supposed to do.
 		engine.ResetIntentionInterface(client)
 
 		return engine.PluginContinue()
@@ -86,17 +85,14 @@ func TimerResetOneBehaviour(timer engine.Timer) engine.Outcome {
 //
 //sp:name ShouldResetBehavior
 func ShouldResetBehavior(client int32) bool {
-	// Looking for sniping spots, don't disturb.
 	if engine.LookupEntityActionByName(client, "SniperLurk") != engine.InvalidAction() {
 		return false
 	}
 
-	// I'm healing people.
 	if engine.LookupEntityActionByName(client, "Heal") != engine.InvalidAction() {
 		return false
 	}
 
-	// I am building shit.
 	if engine.LookupEntityActionByName(client, "DefenderEngineerIdle") != engine.InvalidAction() {
 		return false
 	}

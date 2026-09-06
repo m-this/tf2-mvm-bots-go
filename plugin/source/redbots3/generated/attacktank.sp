@@ -41,7 +41,6 @@ public Action CTFBotAttackTank_Update(BehaviorAction action, int actor, float in
 	{
 		case TFClass_Scout:
 		{
-			// We still prefer money
 			if (CTFBotCollectMoney_IsPossible(actor))
 			{
 				return action.ChangeTo(CTFBotCollectMoney(), "Get credits");
@@ -112,11 +111,9 @@ public Action CTFBotAttackTank_SelectMoreDangerousThreat(BehaviorAction action, 
 	int myWeapon = BaseCombatCharacter_GetActiveWeapon(me);
 	if ((myWeapon != -1) && IsMeleeWeapon(myWeapon))
 	{
-		// Close range weapons only target the closest threat
 		knownEntity = SelectCloserThreat(nextbot, threat1, threat2);
 		return Plugin_Changed;
 	}
-	// Nearby enemies might try to kill us
 	float notSafeRange = FLAMETHROWER_REACH_RANGE;
 	if (BaseEntity_IsPlayer(iThreat1))
 	{
@@ -134,7 +131,6 @@ public Action CTFBotAttackTank_SelectMoreDangerousThreat(BehaviorAction action, 
 			return Plugin_Changed;
 		}
 	}
-	// Our most dangerous threat should be the tank
 	if (iThreat1 == m_iTankTarget[me])
 	{
 		knownEntity = threat1;
@@ -145,7 +141,6 @@ public Action CTFBotAttackTank_SelectMoreDangerousThreat(BehaviorAction action, 
 		knownEntity = threat2;
 		return Plugin_Changed;
 	}
-	// We probably can't see it right now
 	knownEntity = NULL_KNOWN_ENTITY;
 	return Plugin_Changed;
 }
@@ -187,7 +182,6 @@ stock int GetTankToTarget(int actor, float maxDistance = 999999.0)
 		{
 			break;
 		}
-		// Ignore tanks on our team
 		if (myTeam == BaseEntity_GetTeamNumber(ent))
 		{
 			continue;

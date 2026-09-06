@@ -48,7 +48,6 @@ func IsAmmoFull(client int32) bool {
 	isSecondaryFull := engine.AmmoCount(client, engine.AmmoSecondary()) >= engine.PlayerMaxAmmo(client, engine.AmmoSecondary())
 
 	if engine.PlayerClass(client) == engine.ClassEngineer() {
-		// In addition, I want some metal as well.
 		return engine.AmmoCount(client, engine.AmmoMetal()) >= 200 && isPrimaryFull && isSecondaryFull
 	}
 
@@ -165,22 +164,18 @@ func ShouldBuybackIntoGame(client int32) bool {
 		return false
 	}
 
-	// Can't afford a buyback.
 	if engine.Currency(client) < engine.BuybackCostPerSecond() {
 		return false
 	}
 
-	// Not opportunistic if we're about to fail.
 	if IsFailureImminent(client) {
 		return true
 	}
 
-	// We're being revived.
 	if engine.BeingRevived(client) {
 		return false
 	}
 
-	// Based on our rolled number, decide to buyback.
 	return engine.BuybackNumber(client) <= engine.BuybackChance().Int()
 }
 
@@ -244,7 +239,6 @@ func IsFailureImminent(client int32) bool {
 
 	bombPosition := engine.WorldSpaceCenter(flag)
 
-	// Bomb is far and not a threat.
 	if engine.VectorDistance(bombPosition, engine.BombHatchPosition()) > engine.BombHatchRangeCritical() {
 		return false
 	}

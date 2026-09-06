@@ -114,7 +114,6 @@ stock int MenuHandler_BotVote(Menu menu, MenuAction action, int param1, int para
 		{
 			if (param1 == 0)
 			{
-				// They said yes.
 				ManageDefenderBots(true);
 			}
 			else
@@ -479,7 +478,6 @@ stock bool StartBotVote(int voteCaller)
 	}
 	if (VoteMenu(vMenu, players, total, 15))
 	{
-		// Remember who started the vote.
 		g_iUIDBotSummoner = GetClientUserId(voteCaller);
 		return true;
 	}

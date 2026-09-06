@@ -364,7 +364,6 @@ func CommandBoughtUpgrades(client int32, args int32) engine.Outcome {
 		return engine.PluginHandled()
 	}
 
-	// Only our bots should execute this command.
 	if !engine.IsFakeClient(client) {
 		return engine.PluginHandled()
 	}

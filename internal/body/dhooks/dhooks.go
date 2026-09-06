@@ -385,7 +385,6 @@ func DHookCallbackIsIgnoredPre(pThis engine.Address, hReturn engine.DHookReturn,
 					// Not ignored with these, which have knockback.
 				case engine.WeaponFlamethrower():
 					if !engine.CanWeaponAirblast(myWeapon) {
-						// Nothing can be done about that.
 						hReturn.SetBool(true)
 						return engine.MresSupercede()
 					}

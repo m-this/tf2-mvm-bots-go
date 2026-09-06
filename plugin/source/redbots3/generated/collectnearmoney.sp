@@ -49,7 +49,6 @@ public void CTFBotCollectNearMoney_OnEnd(BehaviorAction action, int actor, Behav
 stock bool CTFBotCollectNearMoney_SelectTarget(int client)
 {
 	CKnownEntity threat = CBaseNPC_GetNextBotOfEntity(client).GetVisionInterface().GetPrimaryKnownThreat(false);
-	// Not with an active threat around
 	if (threat != 0)
 	{
 		return false;

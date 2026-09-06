@@ -98,7 +98,6 @@ stock float GetUpgradeInterval()
 	{
 		return customInterval;
 	}
-	// Upgrading during an active round, buy upgrades fast.
 	if (GameRules_GetRoundState() == RoundState_RoundRunning)
 	{
 		return GetRandomFloat(0.1, 0.75);
@@ -251,7 +250,6 @@ stock void CollectUpgrades(int client)
 			{
 				case TF_WEAPON_JAR, TF_WEAPON_JAR_MILK, TF_WEAPON_BUFF_ITEM, TF_WEAPON_JAR_GAS:
 				{
-					// Secondary items that have some use.
 					iArraySlots.Push(TF_LOADOUT_SLOT_SECONDARY);
 				}
 				case TF_WEAPON_PIPEBOMBLAUNCHER:

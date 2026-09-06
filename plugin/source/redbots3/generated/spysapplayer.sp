@@ -75,7 +75,6 @@ public Action CTFBotSpySapPlayers_ShouldAttack(BehaviorAction action, INextBot n
 public Action CTFBotSpySapPlayers_IsHindrance(BehaviorAction action, INextBot nextbot, int entity, QueryResultType& result)
 {
 	result = view_as<QueryResultType>(0);
-	// Avoid no one
 	result = ANSWER_NO;
 	return Plugin_Changed;
 }

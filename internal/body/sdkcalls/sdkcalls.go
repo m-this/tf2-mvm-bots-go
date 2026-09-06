@@ -173,7 +173,6 @@ func InitSDKCalls(hGamedata engine.GameData) bool {
 		iFailCount++
 	}
 
-	// SDKHooks gamedata.
 	sTempConfFileName := engine.LiteralText("sdkhooks.games/engine.ep2v")
 	hTempConf := engine.NewGameDataText(sTempConfFileName)
 

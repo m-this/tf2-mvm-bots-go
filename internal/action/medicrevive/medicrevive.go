@@ -93,7 +93,6 @@ func Update(actor int32) engine.Outcome {
 			return engine.Continue()
 		}
 	} else {
-		// Fend off from enemies
 		primary := engine.PlayerWeaponSlot(actor, engine.WeaponSlotPrimary())
 
 		if primary != -1 {

@@ -42,7 +42,6 @@ func sappableWanted(i int32, giantsOnly bool, class engine.Class, speedCheck flo
 	if class > engine.ClassUnknown() && engine.PlayerClass(i) != class {
 		return false
 	}
-	// Not fast enough
 	return speedCheck <= 0.0 || engine.EntPropFloat(i, engine.PropSend(), "m_flMaxspeed") >= speedCheck
 }
 

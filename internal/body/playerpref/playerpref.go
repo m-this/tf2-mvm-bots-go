@@ -460,7 +460,6 @@ func AddBotsBasedOnPreferences(amount int32) {
 
 	classPref := engine.NewStringList(ClassMaxNameLength)
 
-	// Get the players' class preferences.
 	CollectPlayerBotClassPreferences(classPref)
 
 	if classPref.Length() > 0 {
@@ -472,7 +471,6 @@ func AddBotsBasedOnPreferences(amount int32) {
 			engine.AddDefenderTFBotOf(1, class, "red", "expert")
 		}
 	} else {
-		// Nobody had preferences, just add random bots.
 		engine.AddRandomDefenderBots(amount)
 	}
 

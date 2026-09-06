@@ -390,7 +390,6 @@ public Action Command_BoughtUpgrades(int client, int args)
 	{
 		return Plugin_Handled;
 	}
-	// Only our bots should execute this command.
 	if (!IsFakeClient(client))
 	{
 		return Plugin_Handled;

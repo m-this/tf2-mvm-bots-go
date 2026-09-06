@@ -57,7 +57,6 @@ stock CNavArea PickBuildArea(int client, float sentryRange = 1300.0)
 		{
 			continue;
 		}
-		// Area in spawn
 		if (area.HasAttributeTF(BLUE_SPAWN_ROOM) || area.HasAttributeTF(RED_SPAWN_ROOM))
 		{
 			continue;

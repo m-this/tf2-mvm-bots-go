@@ -245,7 +245,6 @@ func IsValidAmmo(pack int32) bool {
 		return false
 	}
 
-	// Can't use a disabled dispenser
 	if engine.StrContains(class, "obj_dispenser", false) != -1 && engine.HasSapper(pack) {
 		return false
 	}
@@ -294,7 +293,6 @@ func HoldOff(actor int32) {
 //
 //sp:name CTFBotGetAmmo_IsPossible
 func IsPossible(actor int32) bool {
-	// Skip lag.
 	if ammoPack[actor] != -1 && IsValidAmmo(ammoPack[actor]) {
 		return true
 	}
@@ -400,12 +398,10 @@ func ComputeVectors(client int32, found engine.List, maxRange float32) {
 			}
 
 			if engine.IsBaseObject(ammo) {
-				// Can't get anything from still building buildings.
 				if engine.IsBuildingUp(ammo) {
 					continue
 				}
 
-				// Skip empty dispenser.
 				if engine.ObjectType(ammo) == engine.ObjectDispenser() && engine.EntProp(ammo, engine.PropSend(), "m_iAmmoMetal") <= 0 {
 					continue
 				}

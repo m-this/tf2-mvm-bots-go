@@ -34,7 +34,6 @@ static Action CTFBotDefenderAttack_Update(BehaviorAction action, int actor, floa
 	{
 		if (CanUsePrimayWeapon(actor))
 		{
-			// We can snipe again
 			return action.Done("I have gun");
 		}
 	}
@@ -60,7 +59,6 @@ static Action CTFBotDefenderAttack_Update(BehaviorAction action, int actor, floa
 	if (m_flRevalidateTarget[actor] <= GetGameTime())
 	{
 		m_flRevalidateTarget[actor] = GetGameTime() + 2.0;
-		// Need new target.
 		if (!IsTargetEntityReachable(actor, m_iAttackTarget[actor]))
 		{
 			if (!CTFBotDefenderAttack_SelectTarget(actor, false))
@@ -73,7 +71,6 @@ static Action CTFBotDefenderAttack_Update(BehaviorAction action, int actor, floa
 	{
 		case TFClass_Scout:
 		{
-			// Scouts primarily prefer to get money
 			if (CTFBotCollectMoney_IsPossible(actor))
 			{
 				return action.ChangeTo(CTFBotCollectMoney(), "Collectinh money");
@@ -100,7 +97,6 @@ static Action CTFBotDefenderAttack_Update(BehaviorAction action, int actor, floa
 						TFClassType class = TF2_GetPlayerClass(i);
 						if ((class != TFClass_Medic) && (class != TFClass_Sniper) && (class != TFClass_Engineer) && (class != TFClass_Spy))
 						{
-							// We have someone we'd prefer to heal
 							return action.Done("I have patient");
 						}
 					}
@@ -144,7 +140,6 @@ static Action CTFBotDefenderAttack_Update(BehaviorAction action, int actor, floa
 	CKnownEntity threat = myVision.GetPrimaryKnownThreat(false);
 	if (threat != 0)
 	{
-		// We have a threat, prepare to fight it
 		EquipBestWeaponForThreat(actor, threat);
 	}
 	return action.Continue();
@@ -208,15 +203,12 @@ stock bool CTFBotDefenderAttack_SelectTarget(int actor, bool bBombCarrierOnly = 
 {
 	// Always go after the bot closest to the bomb, if possible
 	int target = FindBotNearestToBombNearestToHatch(actor);
-	// No bomb in play, just find random target
 	if (!bBombCarrierOnly && (target == -1))
 	{
 		target = SelectRandomReachableEnemy(actor);
 	}
-	// Found a valid target, update
 	if (target != -1)
 	{
-		// Go after the healer first
 		int healer = GetHealerOfPlayer(target, true);
 		if (healer != -1)
 		{

@@ -87,7 +87,6 @@ func SniperLurkUpdate(action engine.Behaviour, actor int32, interval float32, re
 	}
 
 	if !engine.CanUsePrimaryWeapon(actor) {
-		// Where did my gun go?
 		return engine.SuspendFor(engine.DefenderAttack(), "Lost my rifle")
 	}
 
@@ -215,7 +214,6 @@ func SniperLurkSelectMoreDangerousThreat(action engine.Behaviour, nextbot engine
 			enemyWepID := engine.WeaponID(enemyWeapon)
 
 			if engine.WeaponIDIsSniperRifle(enemyWepID) {
-				// This sniper ain't gonna snipe me.
 				return engine.Changed(), threat1
 			} else if enemyWepID == engine.WeaponMedigun() {
 				if engine.EntPropEnt(enemyWeapon, engine.PropSend(), "m_hHealingTarget") != -1 || engine.EntPropFloatOf(enemyWeapon, engine.PropSend(), "m_flChargeLevel") >= 1.0 {
@@ -458,13 +456,11 @@ func MainActionSelectMoreDangerousThreat(action engine.Behaviour, nextbot engine
 	if engine.Feature(engine.FeatureThreatPriority()) && priority1 != priority2 {
 		knownEntity = engine.ChooseThreat(priority1 > priority2, threat1, threat2)
 	} else if rangeSq1 < rangeSq2 {
-		// Target the closest visible.
 		knownEntity = threat1
 	} else {
 		knownEntity = threat2
 	}
 
-	// Target the healer.
 	knownEntity = engine.HealerOrThreat(nextbot, knownEntity)
 
 	return engine.Changed(), knownEntity

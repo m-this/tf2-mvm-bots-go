@@ -58,7 +58,6 @@ func Update(actor int32) engine.Outcome {
 
 	switch engine.PlayerClass(actor) {
 	case engine.ClassScout():
-		// We still prefer money
 		if engine.CollectMoneyIsPossible(actor) {
 			return engine.ChangeTo(engine.CollectMoney(), "Get credits")
 		}
@@ -132,11 +131,9 @@ func SelectMoreDangerousThreat(nextbot engine.Bot, entity int32, threat1 engine.
 	myWeapon := engine.ActiveWeapon(me)
 
 	if myWeapon != -1 && engine.IsMeleeWeapon(myWeapon) {
-		// Close range weapons only target the closest threat
 		return engine.Changed(), engine.SelectCloserThreat(nextbot, threat1, threat2)
 	}
 
-	// Nearby enemies might try to kill us
 	notSafeRange := engine.FlamethrowerReachRange()
 
 	if engine.IsPlayer(iThreat1) {
@@ -151,7 +148,6 @@ func SelectMoreDangerousThreat(nextbot engine.Bot, entity int32, threat1 engine.
 		}
 	}
 
-	// Our most dangerous threat should be the tank
 	if iThreat1 == tankTarget[me] {
 		return engine.Changed(), threat1
 	}
@@ -160,7 +156,6 @@ func SelectMoreDangerousThreat(nextbot engine.Bot, entity int32, threat1 engine.
 		return engine.Changed(), threat2
 	}
 
-	// We probably can't see it right now
 	return engine.Changed(), engine.NoKnownEntity()
 }
 
@@ -209,7 +204,6 @@ func TankToTarget(actor int32, maxDistance float32) int32 {
 			break
 		}
 
-		// Ignore tanks on our team
 		if myTeam == engine.EntityTeamNumber(ent) {
 			continue
 		}

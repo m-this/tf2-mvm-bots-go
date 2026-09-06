@@ -119,7 +119,6 @@ func Update(actor int32) engine.Outcome {
 			engine.PressAltFireButton(actor)
 		}
 	} else {
-		// Path if not currently healed by dispenser
 		if engine.RepathTime(actor) <= engine.GameTime() {
 			engine.SetRepathTime(actor, engine.GameTime()+engine.RandomFloat(0.9, 1.0))
 			engine.RepathToPos(actor, myBot, engine.WorldSpaceCenter(healthPack[actor]))
@@ -218,7 +217,6 @@ func IsPossible(actor int32) bool {
 	maxRange := ratio * (engine.HealthSearchNearRange().Float() - farRange)
 	maxRange += farRange
 
-	// Skip lag.
 	if healthPack[actor] != -1 && IsValidHealth(healthPack[actor]) {
 		return true
 	}

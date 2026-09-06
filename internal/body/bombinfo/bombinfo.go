@@ -26,7 +26,6 @@ func GetBombInfo() (found bool, info engine.BombInfo) {
 	for i := int32(0); i < (areaCount - 1); i++ {
 		area := engine.AllNavAreas().NavAreaAt(i)
 
-		// Skip spawn areas
 		if area.HasAttributeTF(engine.BlueSpawnRoom()) || area.HasAttributeTF(engine.RedSpawnRoom()) {
 			continue
 		}
@@ -49,7 +48,6 @@ func GetBombInfo() (found bool, info engine.BombInfo) {
 			break
 		}
 
-		// Ignore bombs not in play
 		if engine.EntProp(flag, engine.PropSend(), "m_nFlagStatus") == engine.FlagInfoHome() {
 			continue
 		}
