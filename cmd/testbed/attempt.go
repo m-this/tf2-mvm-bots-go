@@ -119,6 +119,12 @@ func playInto(ctx context.Context, l lab.Lab, a arm, o options, round int, got *
 	if report := wave.IdleReport(path); report != "" {
 		o.say("%s", report)
 	}
+	// The same file, read for the shapes the beads describe: a pinned bot, a
+	// huddle, paths that go nowhere. A fault that is a pass over every run
+	// is found every time it comes back. See mvm-z83.28.
+	if report := wave.TraceReport(path); report != "" {
+		o.say("%s", report)
+	}
 
 	return nil
 }

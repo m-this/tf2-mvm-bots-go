@@ -36,6 +36,13 @@ type Sample struct {
 	At     []float64 `json:"at"`
 	Firing int       `json:"firing"`
 	Action string    `json:"action"`
+	// The path fields the bots plugin exports, when it does: -1 and 0 when
+	// the natives were missing.
+	PathLen    float64 `json:"path_len"`
+	Pathing    int     `json:"pathing"`
+	PathFailed int     `json:"path_failed"`
+	Health     int     `json:"hp"`
+	NearestFoe float64 `json:"nearest_enemy"`
 }
 
 // Idle is one defender that spent part of a run with nothing to do.

@@ -439,6 +439,9 @@ func main() {
 	if begins, err := loadWaveBegins(args[0]); err == nil {
 		printUberAtWaveStart(begins)
 	}
+	if traces := runs.TraceReport(args[0]); traces != "" {
+		fmt.Printf("\n  %s\n", strings.ReplaceAll(traces, "\n", "\n  "))
+	}
 
 	nowSetup, err := loadSetup(args[0])
 	if err == nil {
