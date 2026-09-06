@@ -361,5 +361,14 @@ stock int SortByStraightLineRange(int index1, int index2, Handle array, Handle h
 stock void Go_ResetGetAmmo(int client)
 {
 	m_iAmmoPack[client] = -1;
+	// The memo goes with it, and the hold-off above all
+	//
+	// IsPossible answers from a nav search around where the bot stood, and holds
+	// the answer for half a second. HoldOff holds a no for three, which is what a
+	// walk that ran out of reachable packs leaves behind. Neither is about the
+	// seat: a bot that spawns into one is refused ammo it can reach, for a walk
+	// its predecessor gave up on.
+	m_ctAmmoAsk[client] = 0.0;
+	m_bAmmoPossible[client] = false;
 }
 

@@ -465,4 +465,14 @@ func SortByStraightLineRange(index1 int32, index2 int32, array engine.Handle, hn
 // is a different bot.
 func ResetGetAmmo(client int32) {
 	ammoPack[client] = -1
+
+	/* The memo goes with it, and the hold-off above all
+
+	IsPossible answers from a nav search around where the bot stood, and holds
+	the answer for half a second. HoldOff holds a no for three, which is what a
+	walk that ran out of reachable packs leaves behind. Neither is about the
+	seat: a bot that spawns into one is refused ammo it can reach, for a walk
+	its predecessor gave up on. */
+	ammoAsk[client] = 0.0
+	ammoPossible[client] = false
 }

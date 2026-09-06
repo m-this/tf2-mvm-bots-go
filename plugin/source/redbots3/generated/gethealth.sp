@@ -229,5 +229,9 @@ stock bool CTFBotGetHealth_IsPossible(int actor)
 stock void Go_ResetGetHealth(int client)
 {
 	m_iHealthPack[client] = -1;
+	// The memo goes with it: IsPossible answers from a search around where the
+	// bot stood and holds the answer, which is not a fact about the seat.
+	m_ctHealthAsk[client] = 0.0;
+	m_bHealthPossible[client] = false;
 }
 

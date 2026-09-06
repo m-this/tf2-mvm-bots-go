@@ -24,6 +24,7 @@ type ResetCalls struct {
 	ResetBuildTeleporter    func(client int32)
 	ResetNestSetup          func(client int32)
 	ForgetRangeRepairStalls func(client int32)
+	ResetMedicRevive        func(client int32)
 	ResetGuardPoint         func(client int32)
 	ResetAttack             func(client int32)
 	ResetCollectMoney       func(client int32)
@@ -118,6 +119,12 @@ func ResetNestSetup(client int32) { resets.ResetNestSetup(client) }
 //
 //sp:body Go_ForgetRangeRepairStalls
 func ForgetRangeRepairStalls(client int32) { resets.ForgetRangeRepairStalls(client) }
+
+// ResetMedicRevive is medicrevive's own: the marker a medic found and the path
+// to it, neither of which is a fact about the seat.
+//
+//sp:body Go_ResetMedicRevive
+func ResetMedicRevive(client int32) { resets.ResetMedicRevive(client) }
 
 // ResetGuardPoint is guardpoint's own. Ported, guardpoint.
 //

@@ -96,6 +96,17 @@ public Action CTFBotMedicRevive_OnInjured(BehaviorAction action, int actor, Addr
 	return action.Continue();
 }
 
+// ResetMedicRevive forgets a seat's answer, which was about somebody else.
+//
+// IsPossible holds a marker within reviveRange of where the medic stood, and the
+// path to it, for half a second. A bot spawning into the seat is nowhere near
+// either, so it walks to a marker it cannot reach or refuses one it can.
+stock void Go_ResetMedicRevive(int client)
+{
+	m_ctReviveAsk[client] = 0.0;
+	m_bRevivePossible[client] = false;
+}
+
 // IsPossible answers whether there is anybody to revive, held for askInterval.
 stock bool CTFBotMedicRevive_IsPossible(int client)
 {
