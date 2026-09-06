@@ -475,6 +475,7 @@ func CollectSpots(actor int32, wanted engine.Text, free engine.List, refused eng
 			continue
 		}
 
+		//sp:unbounded the map's own declared dispenser spots, a handful, once per placement decision
 		if engine.IsPathToVectorPossible(actor, candidate) {
 			free.PushArray(candidate)
 		} else {

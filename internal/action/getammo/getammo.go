@@ -425,6 +425,7 @@ func ComputeVectors(client int32, found engine.List, maxRange float32) {
 
 		searches++
 
+		//sp:unbounded the loop carries its own cap, pathsMax, which is what searches counts against
 		reachable, length := engine.IsPathToVectorPossibleLength(client, engine.WorldSpaceCenter(ammo))
 
 		if !reachable {

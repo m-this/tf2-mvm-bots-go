@@ -123,6 +123,7 @@ func PickTheFront(actor int32) bool {
 
 		flDistance := engine.VectorDistance(engine.WorldSpaceCenter(spawn), engine.WorldSpaceCenter(holo))
 
+		//sp:unbounded behind the distance test, which short circuits, so only a candidate nearer than the best is searched for
 		if flDistance <= flSmallestDistance && engine.IsPathToVectorPossible(actor, engine.WorldSpaceCenter(holo)) {
 			iBestEnt = holo
 			flSmallestDistance = flDistance

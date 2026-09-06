@@ -50,6 +50,7 @@ func OnStart(actor int32) engine.Outcome {
 
 		center := area.Center()
 
+		//sp:unbounded stops at the first area that answers, and the areas round the hatch are sorted nearest first
 		if !engine.IsPathToVectorPossible(actor, center) {
 			continue
 		}

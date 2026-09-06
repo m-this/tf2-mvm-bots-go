@@ -393,6 +393,7 @@ func ReportSniperSpots() {
 		for i := int32(0); i < spots.Length(); i++ {
 			spot := spots.GetArray(i)
 
+			//sp:unbounded a console command somebody types, over the map's declared spots, never a think
 			engine.PrintToServer("[sniperspots] bot %d spot %d away %.0f reachable %d rifle %d",
 				client, i, engine.VectorDistance(here, spot),
 				engine.IsPathToVectorPossible(client, spot), engine.HasSniperRifle(client))

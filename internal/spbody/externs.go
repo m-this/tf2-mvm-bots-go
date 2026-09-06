@@ -130,6 +130,15 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 		if !strings.HasPrefix(line, directive) {
 			continue
 		}
+		/* The cost annotation is not the emitter's
+
+		It says what a call is worth to the server, which internal/body's cost
+		test reads and SourcePawn has no form for. Skipped here rather than
+		accepted as a flag, so a real directive typed wrong still fails. See
+		mvm-z83.30. */
+		if strings.HasPrefix(line, directive+"cost ") {
+			continue
+		}
 		fields := strings.Fields(strings.TrimPrefix(line, directive))
 		// after NAME... are constant arguments written last, so they are
 		// taken off before the one optional flag is read.

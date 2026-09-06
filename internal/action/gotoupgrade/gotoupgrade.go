@@ -142,6 +142,7 @@ func FindClosestUpgradeStation(actor int32) int32 {
 		engine.TraceRay(center, engine.WorldSpaceCenter(i), engine.MaskPlayerSolid(), engine.RayTypeEndPoint())
 		center = engine.TraceEndPosition()
 
+		//sp:unbounded the upgrade stations on the map, of which every mission has a few, once per break
 		if !engine.IsPathToVectorPossible(actor, center) {
 			continue
 		}

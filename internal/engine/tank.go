@@ -73,6 +73,7 @@ func AddVectors(a [3]float32, b [3]float32) (sum [3]float32) { return tanks.AddV
 // ComputeToPos builds a path to a position, with its own arguments: a tank is a
 // moving hull, and the goal is wanted even when the path fails.
 //
+//sp:cost path bounded
 //sp:method ComputeToPos
 func (p Path) ComputeToPos(bot Bot, goal [3]float32, maxDistance float32, includeGoal bool) {
 	tanks.ComputeToPos(p, bot, goal, maxDistance, includeGoal)

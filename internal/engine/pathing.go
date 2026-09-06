@@ -3,6 +3,15 @@ package engine
 /*
 The pathing seam: computing a route with the length cap, the clocks the budget
 runs on, and the faults injector's hook.
+
+Every call that builds a route carries //sp:cost path. It is not decoration: a
+route is a full NavAreaBuildPath, which walks the mesh until it finds the goal
+or runs out of areas, and an unreachable goal means the whole mesh. That is what
+the watchdog caught the server inside three times (mvm-cf3), and a core read on
+2026-09-06 named CTFBotLocomotion::IsAreaTraversable under NavAreaBuildPath with
+maxPathLength 0. "bounded" is one that takes a limit and has to be given one;
+"unbounded" is one that takes none, and internal/body's cost test refuses either
+in the shape that made it expensive. See mvm-z83.30.
 */
 
 // PathingCalls are the answers.
@@ -37,6 +46,7 @@ func InstallPathings(c PathingCalls) func() {
 // ComputeToTargetBuilt computes a route to an entity and says whether one was
 // built.
 //
+//sp:cost path bounded
 //sp:method ComputeToTarget
 func (p Path) ComputeToTargetBuilt(bot Bot, target int32, maxDistance float32) bool {
 	return pathings.ComputeToTargetBuilt(p, bot, target, maxDistance)
@@ -44,6 +54,7 @@ func (p Path) ComputeToTargetBuilt(bot Bot, target int32, maxDistance float32) b
 
 // ComputeToPosBuilt computes a route to a point and says whether one was built.
 //
+//sp:cost path bounded
 //sp:method ComputeToPos
 func (p Path) ComputeToPosBuilt(bot Bot, goal [3]float32, maxDistance float32) bool {
 	return pathings.ComputeToPosBuilt(p, bot, goal, maxDistance)

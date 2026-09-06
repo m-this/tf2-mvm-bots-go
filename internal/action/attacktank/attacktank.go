@@ -8,6 +8,7 @@ Shooting the tank, and choosing what to shoot it with.
 package attacktank
 
 import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/pathing"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
 )
@@ -110,7 +111,7 @@ func Update(actor int32) engine.Outcome {
 		if engine.RepathTime(actor) <= engine.GameTime() {
 			engine.SetRepathTime(actor, engine.GameTime()+engine.RandomFloat(0.5, 1.0))
 			// Its own arguments: a tank is a moving hull, and the goal is wanted even when the path fails
-			engine.PathOf(actor).ComputeToPos(myBot, engine.AbsOriginOf(tankTarget[actor]), 0.0, true)
+			engine.PathOf(actor).ComputeToPos(myBot, engine.AbsOriginOf(tankTarget[actor]), pathing.PathLengthCap(), true)
 		}
 
 		engine.PathOf(actor).Update(myBot)
