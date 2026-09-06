@@ -432,6 +432,11 @@ func main() {
 		printBreak(bots)
 	}
 
+	if deaths, upgrades, err := loadDeathsAndUpgrades(args[0]); err == nil {
+		printDeaths(deaths)
+		printUpgradeTiers(upgrades)
+	}
+
 	nowSetup, err := loadSetup(args[0])
 	if err == nil {
 		printSetup(nowSetup)

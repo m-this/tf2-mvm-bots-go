@@ -1137,6 +1137,7 @@ static void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 
 	//A defender who died to a knife in the back is a defender who never saw the Spy
 	int customKill = event.GetInt("customkill");
+	WriteDefenderDeath(victim, attacker, weapon, DeathCause(customKill, event.GetInt("damagebits")));
 
 	if (customKill == TF_CUSTOM_BACKSTAB || StrContains(weapon, "knife", false) != -1)
 		g_Wave.backstabs++;
@@ -1370,6 +1371,45 @@ static void CountDefenderDamage(int attacker, int inflictor, float damage, bool 
 
 Order matters: a backstab is also a melee hit and a headshot is also a bullet, so the specific
 answer has to be asked for first or every stab is filed as "melee" */
+// Same order as the enum, and the same words the wave line's deaths_* fields use.
+static const char DEATH_CAUSE_NAME[DEATH_CAUSE_COUNT][] =
+{
+	"bullet", "explosion", "fire", "melee", "backstab", "headshot", "fall", "other"
+};
+
+/* One line per defender who died, saying what did it
+ *
+ * The wave line counts deaths by killer class and by cause, and the two cannot be put back
+ * together: a Scout dying to something a resistance does not cover looks exactly like a Scout
+ * dying because the resistance was too cheap to buy. See mvm-a0q. */
+static void WriteDefenderDeath(int victim, int attacker, const char[] weapon, int cause)
+{
+	char killer[24];
+	bool giant = false;
+
+	if (StrContains(weapon, "obj_sentrygun", false) != -1 || StrContains(weapon, "sentry", false) != -1)
+		strcopy(killer, sizeof(killer), "sentry");
+	else if (attacker < 1 || !IsClientInGame(attacker))
+		strcopy(killer, sizeof(killer), "tank");
+	else
+	{
+		strcopy(killer, sizeof(killer), ClassName(TF2_GetPlayerClass(attacker)));
+		giant = HasEntProp(attacker, Prop_Send, "m_bIsMiniBoss") && GetEntProp(attacker, Prop_Send, "m_bIsMiniBoss") != 0;
+	}
+
+	char who[MAX_NAME_LENGTH]; GetClientName(victim, who, sizeof(who));
+
+	char line[ENGINEER_LINE_LENGTH];
+	FormatEx(line, sizeof(line),
+		"{\"event\":\"defender_death\",\"map\":\"%s\",\"wave\":%d,\"at\":%.1f,\"who\":\"%s\",\"class\":\"%s\","
+		... "\"killer\":\"%s\",\"giant\":%s,\"weapon\":\"%s\",\"cause\":\"%s\"}",
+		g_sMap, g_iWave, g_flWaveStart > 0.0 ? GetGameTime() - g_flWaveStart : 0.0, who,
+		ClassName(TF2_GetPlayerClass(victim)), killer, giant ? "true" : "false", weapon,
+		DEATH_CAUSE_NAME[cause]);
+
+	WriteLine(line);
+}
+
 static int DeathCause(int customKill, int damageBits)
 {
 	switch (customKill)
@@ -1533,12 +1573,29 @@ public void OnClientCommandKeyValues_Post(int client, KeyValues kv)
 		return;
 
 	int count = kv.GetNum("count", 1);
+	int slot = kv.GetNum("itemslot", -1);
+	int upgrade = kv.GetNum("upgrade", -1);
 	kv.GoBack();
 
 	if (count == 0)
 		return;
 
 	g_Wave.upgradesBought += count;
+
+	/* One line per purchase, so a report can say what tier each bot reached
+	 *
+	 * The wave line counts purchases and nothing says of what: a resistance bought once and one
+	 * bought to its third tier are the same number there. The station's upgrade index and the
+	 * count, refunds negative, add up to the tier. See mvm-a0q. */
+	char who[MAX_NAME_LENGTH]; GetClientName(client, who, sizeof(who));
+
+	char line[ENGINEER_LINE_LENGTH];
+	FormatEx(line, sizeof(line),
+		"{\"event\":\"upgrade\",\"map\":\"%s\",\"wave\":%d,\"who\":\"%s\",\"class\":\"%s\","
+		... "\"slot\":%d,\"upgrade\":%d,\"count\":%d}",
+		g_sMap, g_iWave, who, ClassName(TF2_GetPlayerClass(client)), slot, upgrade, count);
+
+	WriteLine(line);
 }
 
 static void Event_ChargeDeployed(Event event, const char[] name, bool dontBroadcast)
