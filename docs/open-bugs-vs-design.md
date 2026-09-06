@@ -88,14 +88,15 @@ default, and a meaning the testbed needs to arm. Named capability below.
 connection dropped. Runner and rcon plumbing, `testbed/internal/rcon` and the
 entrypoint. Engine-adjacent, no decision in it. The design does nothing.
 
-### mvm-tin, the engineer nest relocate trips the watchdog
+### mvm-tin, the engineer nest relocate loses the mission
 
-A reproducible watchdog trip with `sm_redbots_manager_engineer_nest_relocate`
-on. Fixing it means reading what the relocate does inside a frame, which is
-`ScoreNestArea`, `BestNestArea` and the path computes under them. Engine. The
-design does nothing for the crash. It would help for the scoring half once
-`ScoreNestArea` is split (see `mvm-dop`), but a wrong score does not trip a
-watchdog.
+There is no watchdog trip. Six waves on Decoy with two engineers and
+`sm_redbots_manager_engineer_nest_relocate` on crossed two transitions each and
+the server stayed up, so the crash the bead was filed on is gone or was never
+this. What the run measured instead is that the feature clears no waves against
+the control's two: an engineer who moves his nest rebuilds while the wave
+arrives. The convar stays at nought for that reason. The design does nothing
+here either way.
 
 ### mvm-ed0, Mannhunt does not play in the test-bed
 
