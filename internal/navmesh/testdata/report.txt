@@ -122,7 +122,7 @@ mvm_mannworks    DispenserSpot 3  -141 725 258                1    8/8          
 mvm_rottenburg   SniperSpot 1     1531 675 -146              63    8/8          8      62 to 66     63
 mvm_rottenburg   SniperSpot 2     1996 -556 -350             66    8/8          8      66 to 66     66
 mvm_rottenburg   SniperSpot 3     907 -670 -350              64    8/8          8      64 to 66     63
-mvm_rottenburg   SniperSpot 4     2238 122 -146             213    0/8          0        0 to 0      0
+mvm_rottenburg   SniperSpot 4     2238 122 -295              64    8/8          8      63 to 98     64
 mvm_rottenburg   SniperSpot 5     761 1055 -146              62    8/8          8      62 to 64     62
 mvm_rottenburg   EngineerNest 1   1958 -1289 -543             0    8/8          7     -11 to 16    -14
 mvm_rottenburg   TeleporterExit 1 1723 -199 -407              0    8/8          6       0 to 61      0
@@ -226,7 +226,6 @@ mvm_mannhattan   EngineerNest 1   214 -1319 204: in a ground-level hole, 4 over 
 mvm_mannhattan   DispenserSpot 2  -723 -629 -68: in a ground-level hole, -4 over the ground round it, nearest surface 23 away
 mvm_mannhattan   DispenserSpot 3  -414 -3222 -240: in a ground-level hole, 0 over the ground round it, nearest surface 14 away
 mvm_mannworks    EngineerNest 4   1014 885 256: in a ground-level hole, -1 over the ground round it, nearest surface 11 away
-mvm_rottenburg   SniperSpot 4     2238 122 -146: off the mesh, 0 over the ground round it, nearest surface 213 away
 
 mvm-z83.25: the configs as a checked table
 ------------------------------------------
@@ -254,9 +253,8 @@ mvm_mannhattan   note     spot-beside-fall       EngineerNest 2   267 down, whic
 mvm_mannhattan   note     exit-ring-beside-fall  EngineerNest 1   a fallback exit side has 282 down beside it
 mvm_mannhattan   note     exit-ring-beside-fall  EngineerNest 2   a fallback exit side has 272 down beside it
 mvm_mannworks    broken   spot-in-hole           EngineerNest 4   no area under it, -1 over the ground round it, nearest surface 11 away
-mvm_rottenburg   broken   spot-off-mesh          SniperSpot 4     nearest surface 213 away, 0 of 8 stand sides accepted
 
-12 findings.
+11 findings.
 
 mvm-wb0 and mvm-ipf: the coordinate
 -----------------------------------

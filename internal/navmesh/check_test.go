@@ -35,9 +35,6 @@ var wantFindings = map[string][]string{
 	"mvm_mannworks": {
 		"broken spot-in-hole EngineerNest 4",
 	},
-	"mvm_rottenburg": {
-		"broken spot-off-mesh SniperSpot 4",
-	},
 }
 
 // quietRules is the other half of the table. A rule that has stopped firing
@@ -46,6 +43,7 @@ var wantFindings = map[string][]string{
 var quietRules = map[Rule]string{
 	RuleNoSpots:     "every config declares sniper spots since mvm-tz9 was fixed on Decoy",
 	RuleTooFewExits: "every composition runs one engineer, and the maps that declare an exit declare one",
+	RuleSpotOffMesh: "Rottenburg SniperSpot 4 was written 213 units above its ground and sits on it since mvm-0dn",
 }
 
 func TestShippedConfigsCheck(t *testing.T) {
