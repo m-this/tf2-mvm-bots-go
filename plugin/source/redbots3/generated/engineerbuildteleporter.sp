@@ -119,8 +119,10 @@ public Action CTFBotMvMEngineerBuildTeleporter_Update(BehaviorAction action, int
 	{
 		return TeleporterDone(action, actor, "No sentry to leave behind");
 	}
-	if (GetObjectOfType(actor, TFObject_Teleporter, m_nTeleporterMode[actor]) != INVALID_ENT_REFERENCE)
+	int built = GetObjectOfType(actor, TFObject_Teleporter, m_nTeleporterMode[actor]);
+	if (built != INVALID_ENT_REFERENCE)
 	{
+		SayIfBuiltElsewhere(actor, built, m_vTeleporterSpot[actor], "teleporter");
 		g_arrPluginBot[actor].bPathing = false;
 		return TeleporterDone(action, actor, "Built one");
 	}

@@ -264,7 +264,10 @@ func Update(actor int32) engine.Outcome {
 		return Ended(engine.ThisAction(), actor, "No sentry to leave behind")
 	}
 
-	if engine.ObjectOfTypeMode(actor, engine.ObjectTeleporter(), mode[actor]) != engine.InvalidEntReference() {
+	built := engine.ObjectOfTypeMode(actor, engine.ObjectTeleporter(), mode[actor])
+
+	if built != engine.InvalidEntReference() {
+		nestsetup.SayIfBuiltElsewhere(actor, built, spotOf[actor], "teleporter")
 		engine.PluginBotOf(actor).SetPathing(false)
 
 		return Ended(engine.ThisAction(), actor, "Built one")

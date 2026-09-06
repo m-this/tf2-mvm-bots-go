@@ -276,3 +276,42 @@ func TopUpBuilding(building int32) {
 		engine.StartUpgrading(building)
 	}
 }
+
+/*
+	When a building lands somewhere other than the spot it was aimed at
+
+A spot on top of a rock has every stand side accepted and every one of them a
+storey below it, so the engineer builds at the foot of the rock and the config
+still reads as if it worked. Three Bigrock spots and one on Coaltown are like
+that, measured against the nav mesh, and the only symptom anybody ever saw was
+a player noticing a dispenser in the wrong place. That is mvm-wxp.
+
+This does not move the building. It says the thing out loud, once per build, so
+a map config that quietly does nothing stops reading like one that works.
+*/
+
+// BuildStrayDistance is how far a building may land from the spot it was aimed
+// at before it is worth a line. A build's reach is 90, so anything past twice
+// that is a different piece of ground rather than the same one.
+//
+//sp:name BUILD_STRAY_DISTANCE
+const BuildStrayDistance = 180.0
+
+// SayIfBuiltElsewhere names a building that went down away from its spot.
+//
+//sp:name SayIfBuiltElsewhere
+//sp:const spot
+func SayIfBuiltElsewhere(client int32, building int32, spot [3]float32, what string) {
+	if building == engine.InvalidEntReference() || !engine.IsValidEntity(building) {
+		return
+	}
+
+	away := engine.VectorDistance(engine.AbsOriginOf(building), spot)
+
+	if away < BuildStrayDistance {
+		return
+	}
+
+	engine.LogMessage("Placement: %N put his %s %.0f units from the spot he aimed at, which is mvm-wxp",
+		client, what, away)
+}

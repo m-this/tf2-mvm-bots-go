@@ -12,6 +12,8 @@
 
 #define SETUP_JUMPS_MAX (8)
 
+#define BUILD_STRAY_DISTANCE (180.0)
+
 float m_vSetupClaim[65][4][3];
 bool m_bSetupClaimed[65][4];
 int m_iSetupJumps[65];
@@ -185,5 +187,20 @@ stock void TopUpBuilding(int building)
 	{
 		SDKCall(m_hStartUpgrading, building);
 	}
+}
+
+// SayIfBuiltElsewhere names a building that went down away from its spot.
+stock void SayIfBuiltElsewhere(int client, int building, const float spot[3], const char[] what)
+{
+	if ((building == INVALID_ENT_REFERENCE) || !IsValidEntity(building))
+	{
+		return;
+	}
+	float away = GetVectorDistance(GetAbsOrigin(building), spot);
+	if (away < BUILD_STRAY_DISTANCE)
+	{
+		return;
+	}
+	LogMessage("Placement: %N put his %s %.0f units from the spot he aimed at, which is mvm-wxp", client, what, away);
 }
 
