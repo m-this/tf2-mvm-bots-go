@@ -426,6 +426,11 @@ func main() {
 	now := summarise(after)
 	report(args[0], now)
 
+	// What produced the file, said before anything read out of it.
+	if run, found, err := runs.ReadRun(args[0]); err == nil && found {
+		printRunRecord(run)
+	}
+
 	if bots, buildings, err := loadTelemetry(args[0]); err == nil {
 		printTelemetry(bots, buildings)
 		printStanding(bots, buildings)

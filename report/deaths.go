@@ -7,6 +7,8 @@ import (
 	"os"
 	"sort"
 	"strings"
+
+	runs "github.com/m-this/tf2-mvm-bots-go/internal/wave"
 )
 
 // A defender's death, as the statistics plugin writes it: who, and what did it.
@@ -150,4 +152,43 @@ func printUpgradeTiers(upgrades []upgradePurchase) {
 	for _, l := range lines {
 		fmt.Printf("    %-10s slot %2d upgrade %3d  tier %d\n", l.class, l.slot, l.upgrade, best[l])
 	}
+}
+
+/*
+printRunRecord says what produced the file, before any number out of it.
+
+A results file whose settings are not recorded is a file nobody can compare
+with anything, and one whose settings are recorded and never shown is the same
+file with the answer in a place nobody looks. The arm, the build, the machine
+and the faults that were forced all come off the record's first line.
+*/
+func printRunRecord(run runs.Run) {
+	fmt.Printf("  produced by       %s", run.Tag)
+	if run.Arm != "" {
+		fmt.Printf(", arm %s", run.Arm)
+	}
+	fmt.Printf(", plugin %s, %s\n", run.Plugin, run.At)
+
+	if run.Cvars != "" {
+		fmt.Printf("  arm set           %s\n", run.Cvars)
+	}
+	if len(run.Injectors) > 0 {
+		fmt.Printf("  faults forced     %s\n", strings.Join(run.Injectors, ", "))
+	}
+
+	where := run.Machine.Host
+	if where == "" {
+		where = "an unrecorded machine"
+	}
+	fmt.Printf("  played on         %s, %d MiB free, load %.2f\n",
+		where, run.Machine.MemAvailableKB>>10, run.Machine.Load1m)
+
+	if run.Mission != "" {
+		fmt.Printf("  mission           %s\n", run.Mission)
+	}
+	fmt.Printf("  lineup            %s, %d defenders", run.Team, run.Defenders)
+	if run.Puppets > 0 {
+		fmt.Printf(", %d puppet(s)", run.Puppets)
+	}
+	fmt.Println()
 }
