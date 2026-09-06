@@ -25,9 +25,9 @@ stock int EconItemCreateNoSpawn(char[] classname, int itemDefIndex, int level, i
 		SetEntData(item, iOffsetEntityLevel, level);
 		if (StrEqual(classname, "tf_weapon_builder", false))
 		{
-			//  NOTE: After the 2023-10-09 update, not setting netprop m_iObjectType
-			// 			will crash all client games (but the server will remain fine)
-			// 			I suspect the client's game code change and not setting it cause it to read garbage
+			// NOTE: After the 2023-10-09 update, not setting netprop m_iObjectType
+			// will crash all client games (but the server will remain fine)
+			// I suspect the client's game code change and not setting it cause it to read garbage
 			SetEntProp(item, Prop_Send, "m_iObjectType", 3);
 			// Set to OBJ_ATTACHMENT_SAPPER?
 			bool isSapper = IsItemDefIndexSapper(itemDefIndex);

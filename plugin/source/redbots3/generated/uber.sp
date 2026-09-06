@@ -56,8 +56,8 @@ stock bool ShouldDeployUber(int client, int medigun, int patient)
 	{
 		case MEDIGUN_CRITBOOST:
 		{
-			//  Crits are damage the patient has to deliver himself, so the patient has to be
-			// 		shooting. A giant counts for the crowd on its own: it is what the crits are for
+			// Crits are damage the patient has to deliver himself, so the patient has to be
+			// shooting. A giant counts for the crowd on its own: it is what the crits are for
 			if (GetTimeSinceWeaponFired(patient) > UBER_PATIENT_FIRING_TIME)
 			{
 				return false;
@@ -79,9 +79,9 @@ stock bool ShouldDeployUber(int client, int medigun, int patient)
 			return (HealthRatio(patient) < 1.0) || (HealthRatio(client) < 1.0);
 		}
 	}
-	//  Stock, and the one case where the game's own rule is nearly right. It is kept, and moved
-	// 	off the floor: waiting for the last of the patient's health spends the charge on the retreat
-	// 	rather than on the fight it was built for
+	// Stock, and the one case where the game's own rule is nearly right. It is kept, and moved
+	// off the floor: waiting for the last of the patient's health spends the charge on the retreat
+	// rather than on the fight it was built for
 	return (HealthRatio(patient) < UBER_PANIC_HEALTH_RATIO) || (HealthRatio(client) < UBER_PANIC_HEALTH_RATIO);
 }
 
@@ -108,11 +108,11 @@ stock void MedicProjectileShield(int actor, int patient)
 	{
 		return;
 	}
-	//  Said out loud, because a behaviour nobody can see fire is a behaviour nobody can measure
+	// Said out loud, because a behaviour nobody can see fire is a behaviour nobody can measure
 	//
-	// 	The first arm of this could not be read: every number sat inside the baseline's spread, which
-	// 	means either the shield does nothing or it never went up, and there was no way to tell those
-	// 	apart.
+	// The first arm of this could not be read: every number sat inside the baseline's spread, which
+	// means either the shield does nothing or it never went up, and there was no way to tell those
+	// apart.
 	LogMessage("Shield: %N puts it up, rage %.0f", actor, TF2_GetRageMeter(actor));
 	VS_PressSpecialFireButton(actor);
 }

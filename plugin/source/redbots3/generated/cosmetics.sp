@@ -46,12 +46,12 @@ int g_iEquipping[65];
 stock void DrawWardrobe(int client)
 {
 	TFClassType playerClass = TF2_GetPlayerClass(client);
-	//  An item still written here is one the game refused, not one with no model
+	// An item still written here is one the game refused, not one with no model
 	//
-	// 	Both reasons end in DropHatFromPool and it logs the same line for each, so
-	// 	the log could not tell a hat the schema has no model for from one the game
-	// 	would not attach. Only the second throws, and only the second is mvm-6gi.
-	// 	Named here because this is the one place that knows which it was.
+	// Both reasons end in DropHatFromPool and it logs the same line for each, so
+	// the log could not tell a hat the schema has no model for from one the game
+	// would not attach. Only the second throws, and only the second is mvm-6gi.
+	// Named here because this is the one place that knows which it was.
 	if (g_iEquipping[client] != 0)
 	{
 		LogMessage("Item %d passed the schema and the game refused to attach it to class %d, which is mvm-6gi", g_iEquipping[client], g_wardrobe[client].PlayerClass);
@@ -102,12 +102,12 @@ stock bool WearHat(int client)
 	{
 		return false;
 	}
-	//  Cleared here rather than trusted to have been cleared
+	// Cleared here rather than trusted to have been cleared
 	//
-	// 	TF2Util_EquipPlayerWearable throws when the game refuses the item, and the
-	// 	throw unwinds this function and the timer above it, so the line that clears
-	// 	this after the equip never runs. Clearing on the way in is the one place the
-	// 	throw cannot skip.
+	// TF2Util_EquipPlayerWearable throws when the game refuses the item, and the
+	// throw unwinds this function and the timer above it, so the line that clears
+	// this after the equip never runs. Clearing on the way in is the one place the
+	// throw cannot skip.
 	g_iEquipping[client] = 0;
 	// The quality decides whether a client draws the effect at all.
 	int quality = 6;
@@ -125,11 +125,11 @@ stock bool WearHat(int client)
 	SetEntProp(hat, Prop_Send, "m_iEntityQuality", quality);
 	SetEntProp(hat, Prop_Send, "m_iEntityLevel", 1);
 	SetEntProp(hat, Prop_Send, "m_iTeamNum", GetClientTeam(client));
-	//  The model, which the game does not work out for a wearable made by hand
+	// The model, which the game does not work out for a wearable made by hand
 	//
-	// 	Without it the hat is an entity with no shape: the unusual effect drew,
-	// 	attached to nothing. A hat with no model in the schema cannot be worn at all,
-	// 	so it goes the same way as one the game refuses.
+	// Without it the hat is an entity with no shape: the unusual effect drew,
+	// attached to nothing. A hat with no model in the schema cannot be worn at all,
+	// so it goes the same way as one the game refuses.
 	char model[512];
 	if (!HatModel(itemDefinition, TF2_GetPlayerClass(client), model, 512))
 	{
@@ -148,11 +148,11 @@ stock bool WearHat(int client)
 	// The game throws out a wearable whose item it thinks the wearer does not
 	// own, and a bot owns nothing.
 	TF2Util_SetWearableAlwaysValid(hat, true);
-	//  Written down before the equip and not after, both of them
+	// Written down before the equip and not after, both of them
 	//
-	// 	The entity so that a refused one is taken away on the next spawn rather than
-	// 	standing in the world with nobody wearing it, and the item so that the
-	// 	refusal is noticed at all.
+	// The entity so that a refused one is taken away on the next spawn rather than
+	// standing in the world with nobody wearing it, and the item so that the
+	// refusal is noticed at all.
 	g_iBotHat[client] = EntIndexToEntRef(hat);
 	g_iEquipping[client] = itemDefinition;
 	TF2Util_EquipPlayerWearable(client, hat);
@@ -360,6 +360,23 @@ stock ArrayList BuildHatPool(TFClassType playerClass)
 		char equipRegion[512];
 		bool hasRegion = TF2Econ_GetItemDefinitionString(itemDefinition, "equip_region", equipRegion, 512);
 		if (hasRegion && StrEqual(equipRegion, EQUIP_REGION_MEDAL))
+		{
+			continue;
+		}
+		// Not the Halloween items, which the game refuses to attach out of season
+		//
+		// The game will not put a holiday restricted wearable on anybody unless its
+		// holiday is running, so the equip leaves m_hOwnerEntity unset and
+		// TF2Util_EquipPlayerWearable throws on the assertion. That is mvm-6gi and
+		// mvm-ih3: measured on the bed 2026-09-06, all twelve items refused in one
+		// session carried holiday_restriction halloween_or_fullmoon, and every one
+		// of them was allowed for the class it was handed to.
+		//
+		// Read once when the pool is built rather than at every draw: the schema
+		// does not change under a running server, and the pool is cached per class.
+		char holiday[512];
+		bool restricted = TF2Econ_GetItemDefinitionString(itemDefinition, "holiday_restriction", holiday, 512);
+		if (restricted)
 		{
 			continue;
 		}

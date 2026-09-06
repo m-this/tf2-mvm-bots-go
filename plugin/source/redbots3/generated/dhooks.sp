@@ -4,8 +4,8 @@
 stock bool InitDHooks(GameData hGamedata)
 {
 	int iFailCount = 0;
-	//  No address for g_MannVsMachineUpgrades, so this detour fetches it
-	// 	instead. It will not support a late load.
+	// No address for g_MannVsMachineUpgrades, so this detour fetches it
+	// instead. It will not support a late load.
 	if (g_pMannVsMachineUpgrades == Address_Null)
 	{
 		if (!RegisterDetour(hGamedata, "CMannVsMachineUpgradeManager::LoadUpgradesFile", INVALID_FUNCTION, DHookCallback_LoadUpgradesFile_Post))

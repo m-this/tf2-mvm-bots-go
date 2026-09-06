@@ -62,9 +62,9 @@ stock CNavArea PickBuildArea(int client, float sentryRange = 1300.0)
 		{
 			continue;
 		}
-		//  BLOCKED is the one nav attribute that changes during a mission: gates and
-		// 		func_nav_blocker set it. PickBuildAreaPreRound has always checked it and this one never
-		// 		did, so a nest picked after a gate closed could sit on ground the mesh calls unreachable
+		// BLOCKED is the one nav attribute that changes during a mission: gates and
+		// func_nav_blocker set it. PickBuildAreaPreRound has always checked it and this one never
+		// did, so a nest picked after a gate closed could sit on ground the mesh calls unreachable
 		if (area.HasAttributeTF(BLOCKED))
 		{
 			continue;
@@ -82,9 +82,9 @@ stock CNavArea PickBuildArea(int client, float sentryRange = 1300.0)
 		{
 			continue;
 		}
-		//  Further up the path than an engineer nests. Kept, because the bomb spends the start of
-		// 		every wave up there and this is where the forward lists would otherwise be empty: better a
-		// 		nest too far forward than an engineer that never builds one
+		// Further up the path than an engineer nests. Kept, because the bomb spends the start of
+		// every wave up there and this is where the forward lists would otherwise be empty: better a
+		// nest too far forward than an engineer that never builds one
 		if ((limit > 0.0) && (bombTargetDistanceAtArea > limit))
 		{
 			areasTooFarUp.Push(view_as<int>(area));
@@ -98,10 +98,10 @@ stock CNavArea PickBuildArea(int client, float sentryRange = 1300.0)
 		{
 			continue;
 		}
-		//  Close enough to the bomb that the sentry never uses its range
-		// 		Kept rather than dropped, and kept last: a nest on top of the bomb is bad and no nest at
-		// 		all is worse, and a map whose every area near the bomb is this close is a map where the
-		// 		engineer would otherwise stand around with 300 metal
+		// Close enough to the bomb that the sentry never uses its range
+		// Kept rather than dropped, and kept last: a nest on top of the bomb is bad and no nest at
+		// all is worse, and a map whose every area near the bomb is this close is a map where the
+		// engineer would otherwise stand around with 300 metal
 		if (!IsNestRangeSane(areaDistanceToBomb, sentryRange))
 		{
 			areasTooClose.Push(view_as<int>(area));
@@ -227,9 +227,9 @@ stock CNavArea PickBuildAreaPreRound(int client, float sentryRange = 1300.0)
 		float center[3];
 		area.GetCenter(center);
 		center[2] += 50.0;
-		//  Sitting on the hatch is not nesting, whichever tier the area would have landed in
-		// 		The clearance above is a travel distance along the bomb path and says nothing about a
-		// 		ledge directly over the hatch, which is a short walk and no distance at all
+		// Sitting on the hatch is not nesting, whichever tier the area would have landed in
+		// The clearance above is a travel distance along the bomb path and says nothing about a
+		// ledge directly over the hatch, which is a short walk and no distance at all
 		if (!IsNestRangeSane(GetVectorDistance(center, hatch), sentryRange))
 		{
 			areasTooClose.Push(view_as<int>(area));

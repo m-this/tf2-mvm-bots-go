@@ -65,10 +65,10 @@ public Action CTFBotGuardPoint_Update(BehaviorAction action, int actor, float in
 			}
 		}
 	}
-	//  Something to shoot ends this, because holding ground is what a bot does instead of fighting
+	// Something to shoot ends this, because holding ground is what a bot does instead of fighting
 	//
-	// 	This action had no way out but a tank. Wired in as the thing a defender does when it has
-	// 	nothing to do, that would be a bot which guards the hatch once and never fights again.
+	// This action had no way out but a tank. Wired in as the thing a defender does when it has
+	// nothing to do, that would be a bot which guards the hatch once and never fights again.
 	if (CTFBotDefenderAttack_SelectTarget(actor))
 	{
 		return action.ChangeTo(CTFBotDefenderAttack(), "Something to fight");

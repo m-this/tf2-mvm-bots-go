@@ -65,18 +65,18 @@ public void Event_MvmWaveBegin(Event event, const char[] name, bool dontBroadcas
 	// Nothing unless a debug convar is set, which is never on a real server.
 	DebugFaults_OnWaveStart();
 	DebugFaults_OnWaveStartEmpty();
-	//  Published here rather than only on a timer after the map loads
+	// Published here rather than only on a timer after the map loads
 	//
-	// 	server.cfg runs at its own pace and a late-loaded plugin misses it
-	// 	entirely, so a list published once on map start can be the defaults rather
-	// 	than what the server was asked for. A wave beginning is after everything,
-	// 	every time.
+	// server.cfg runs at its own pace and a late-loaded plugin misses it
+	// entirely, so a list published once on map start can be the defaults rather
+	// than what the server was asked for. A wave beginning is after everything,
+	// every time.
 	PublishActiveFeatures();
-	//  The break is over, so the plans made for it are too
+	// The break is over, so the plans made for it are too
 	//
-	// 	A claim outlives its usefulness the moment the thing it reserved is
-	// 	standing, and a claim that survives a wave reserves ground against an
-	// 	engineer whose own building was destroyed on it.
+	// A claim outlives its usefulness the moment the thing it reserved is
+	// standing, and a claim that survives a wave reserves ground against an
+	// engineer whose own building was destroyed on it.
 	ForgetSetupPlans();
 	ThreatPortAudit_Report();
 	// Whatever the queue has left is about a bomb that is about to move.
@@ -295,15 +295,15 @@ stock void Event_PlayerTeam(Event event, const char[] name, bool dontBroadcast)
 	TFTeam team = view_as<TFTeam>(event.GetInt("team"));
 	TFTeam oldTeam = view_as<TFTeam>(event.GetInt("oldteam"));
 	bool isDisconnect = event.GetBool("disconnect");
-	//  A managed defender belongs on RED for its whole connection.
+	// A managed defender belongs on RED for its whole connection.
 	//
-	// 	If the game moves one elsewhere, RED is one seat short but the misplaced
-	// 	client still occupies a server slot. On a full server the fill timer then
-	// 	requests a replacement it cannot create. Remove only that bot; the normal
-	// 	imbalance path recreates the empty RED seat.
+	// If the game moves one elsewhere, RED is one seat short but the misplaced
+	// client still occupies a server slot. On a full server the fill timer then
+	// requests a replacement it cannot create. Remove only that bot; the normal
+	// imbalance path recreates the empty RED seat.
 	//
-	// 	An intentional kick also reports a team change. Leave disconnects alone so
-	// 	this does not turn every removal into a second kick.
+	// An intentional kick also reports a team change. Leave disconnects alone so
+	// this does not turn every removal into a second kick.
 	if (IsFakeClient(client))
 	{
 		if (!isDisconnect && g_bIsDefenderBot[client] && (oldTeam == TFTeam_Red) && (team != TFTeam_Red))
@@ -313,9 +313,9 @@ stock void Event_PlayerTeam(Event event, const char[] name, bool dontBroadcast)
 		}
 		return;
 	}
-	//  When changing teams, update the bot team composition for a RED
-	// 	player who disconnected, a player who joined RED, and a player who
-	// 	left RED.
+	// When changing teams, update the bot team composition for a RED
+	// player who disconnected, a player who joined RED, and a player who
+	// left RED.
 	if ((isDisconnect && (oldTeam == TFTeam_Red)) || (!isDisconnect && ((team == TFTeam_Red) || (oldTeam == TFTeam_Red))))
 	{
 		CreateTimer(0.1, Timer_UpdateChosenBotTeamComposition, _, TIMER_FLAG_NO_MAPCHANGE);
@@ -324,13 +324,13 @@ stock void Event_PlayerTeam(Event event, const char[] name, bool dontBroadcast)
 			HandleTeamPlayerCountChanged(TFTeam_Red, client);
 		}
 	}
-	//  Switching from BLUE to RED bars the player from starting the bots
-	// 		for a while
+	// Switching from BLUE to RED bars the player from starting the bots
+	// 	for a while
 	//
-	// 	A player who cannot get the team they want by asking used to get it by
-	// 	joining BLUE, starting the bots and coming back. The cooldown grows
-	// 	each time rather than resetting, so doing it repeatedly costs more
-	// 	each go.
+	// A player who cannot get the team they want by asking used to get it by
+	// joining BLUE, starting the bots and coming back. The cooldown grows
+	// each time rather than resetting, so doing it repeatedly costs more
+	// each go.
 	if (!isDisconnect && (team == TFTeam_Red) && (oldTeam == TFTeam_Blue) && !CheckCommandAccess(client, NULL_STRING, ADMFLAG_GENERIC, true))
 	{
 		if (g_flEnableBotsCooldown[client] <= GetGameTime())

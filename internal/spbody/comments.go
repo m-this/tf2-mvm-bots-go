@@ -39,10 +39,64 @@ func (e *emitter) comment(group *ast.CommentGroup) {
 	if text == "" {
 		return
 	}
-	for _, line := range strings.Split(text, "\n") {
+	lines := undent(strings.Split(text, "\n"))
+
+	// The opening marker leaves a space in front of the first line, and it is
+	// never one somebody typed for effect.
+	lines[0] = strings.TrimPrefix(lines[0], " ")
+
+	for _, line := range lines {
 		if strings.HasPrefix(line, "nolint") {
 			continue
 		}
 		e.line("%s", strings.TrimRight("// "+line, " "))
 	}
+}
+
+// undent takes the block's own indentation off, and leaves the shape inside it.
+//
+// A block comment written inside a for loop carries that loop's tabs on every
+// line after the first, and Text() keeps them: the emitted SourcePawn came out
+// with the comment's second line indented past its own opening. The longest run
+// of leading whitespace every non-empty line shares is the block's, so removing
+// that leaves a list or an example indented as it was written.
+func undent(lines []string) []string {
+	if len(lines) < 2 {
+		return lines
+	}
+
+	// The first line follows the opening marker on its own line and carries no
+	// indentation of its own, so it says nothing about the block's.
+	prefix, found := "", false
+
+	for _, line := range lines[1:] {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		lead := line[:len(line)-len(strings.TrimLeft(line, " \t"))]
+
+		if !found {
+			prefix, found = lead, true
+
+			continue
+		}
+
+		for !strings.HasPrefix(lead, prefix) {
+			prefix = prefix[:len(prefix)-1]
+		}
+	}
+
+	if prefix == "" {
+		return lines
+	}
+
+	out := make([]string, 0, len(lines))
+	out = append(out, lines[0])
+
+	for _, line := range lines[1:] {
+		out = append(out, strings.TrimPrefix(line, prefix))
+	}
+
+	return out
 }

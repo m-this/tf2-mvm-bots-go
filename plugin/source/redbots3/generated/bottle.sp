@@ -91,9 +91,9 @@ stock bool OpportunisticallyUsePowerupBottle(int client, int activeWeapon, INext
 			}
 			if (BaseEntity_IsPlayer(iThreat))
 			{
-				//  A giant with a lot of health is probably a boss, and a boss
-				// 			near a failing wave wants killing fast. This wants doing better
-				// 			by somebody who knows what the optimal use of this canteen is.
+				// A giant with a lot of health is probably a boss, and a boss
+				// near a failing wave wants killing fast. This wants doing better
+				// by somebody who knows what the optimal use of this canteen is.
 				if ((TF2_IsMiniBoss(iThreat) && (GetClientHealth(iThreat) > 5000)) || (IsFailureImminent(client) && (GetClientHealth(iThreat) > 2000)))
 				{
 					UseActionSlotItem(client);

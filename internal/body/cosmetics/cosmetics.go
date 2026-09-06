@@ -482,6 +482,25 @@ func BuildHatPool(playerClass engine.Class) (pool engine.List) {
 			continue
 		}
 
+		/* Not the Halloween items, which the game refuses to attach out of season
+
+		The game will not put a holiday restricted wearable on anybody unless its
+		holiday is running, so the equip leaves m_hOwnerEntity unset and
+		TF2Util_EquipPlayerWearable throws on the assertion. That is mvm-6gi and
+		mvm-ih3: measured on the bed 2026-09-06, all twelve items refused in one
+		session carried holiday_restriction halloween_or_fullmoon, and every one
+		of them was allowed for the class it was handed to.
+
+		Read once when the pool is built rather than at every draw: the schema
+		does not change under a running server, and the pool is cached per class. */
+		restricted, holiday := engine.ItemDefinitionString(itemDefinition, "holiday_restriction")
+
+		if restricted {
+			_ = holiday
+
+			continue
+		}
+
 		named, className := engine.ItemClassName(itemDefinition)
 
 		if !named {

@@ -80,9 +80,9 @@ public Action CTFBotStickyTrap_Update(BehaviorAction action, int actor, float in
 		return action.Done("Nothing to lay it with");
 	}
 	INextBot myBot = CBaseNPC_GetNextBotOfEntity(actor);
-	//  Something is shooting at the bot, so the trap stops being the job
-	// 	The bombs already down are not wasted: the detonation tick blows them the moment the fight
-	// 	walks into them, whether this action laid all eight or two
+	// Something is shooting at the bot, so the trap stops being the job
+	// The bombs already down are not wasted: the detonation tick blows them the moment the fight
+	// walks into them, whether this action laid all eight or two
 	CKnownEntity threat = myBot.GetVisionInterface().GetPrimaryKnownThreat(true);
 	if (threat != NULL_KNOWN_ENTITY)
 	{

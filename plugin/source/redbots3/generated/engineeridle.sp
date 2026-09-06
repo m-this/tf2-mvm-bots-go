@@ -102,24 +102,24 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 {
 	// The wrench he was going to swing anyway finishes a level, rather than an eighth of one
 	TopUpUpgrades(actor);
-	//  Counting what is in his hands, for both
+	// Counting what is in his hands, for both
 	//
-	// 	A carried building is not a reason to build a second one, and answering that question wrong is
-	// 	what a play-test filmed: the engineer stood holding a sentry, scrolling through his weapons and
-	// 	opening and cancelling the build menu, over and over. Two paths were undoing each other every
-	// 	frame. The carry logic equips the wrench and presses fire to put it down; the gate below saw no
-	// 	sentry, suspended for the build action, and that equips the toolbox and reopens the menu.
+	// A carried building is not a reason to build a second one, and answering that question wrong is
+	// what a play-test filmed: the engineer stood holding a sentry, scrolling through his weapons and
+	// opening and cancelling the build menu, over and over. Two paths were undoing each other every
+	// frame. The carry logic equips the wrench and presses fire to put it down; the gate below saw no
+	// sentry, suspended for the build action, and that equips the toolbox and reopens the menu.
 	int sentry = HasObjectOfType(actor, TFObject_Sentry, TFObjectMode_None);
 	int dispenser = HasObjectOfType(actor, TFObject_Dispenser, TFObjectMode_None);
 	// Standing, for the question of whether the nest is up: one in his hands is not defending anything
 	int sentryStanding = GetObjectOfType(actor, TFObject_Sentry);
 	bool stalled = (sentryStanding == INVALID_ENT_REFERENCE) && (GameRules_GetRoundState() == RoundState_RoundRunning);
 	bool bShouldAdvance = CTFBotMvMEngineerIdle_ShouldAdvanceNestSpot(actor);
-	//  A buster is walking at the nest, so the nest stops being where the engineer wants to be
-	// 	Handled before the advance below and before anything else this action does, because the whole
-	// 	value of it is spending the walk the buster still has left. It reuses the carry machinery that
-	// 	advancing already uses: the goal area is somewhere out of the blast rather than a better nest,
-	// 	and the engineer picks the sentry up and walks it there the same way
+	// A buster is walking at the nest, so the nest stops being where the engineer wants to be
+	// Handled before the advance below and before anything else this action does, because the whole
+	// value of it is spending the walk the buster still has left. It reuses the carry machinery that
+	// advancing already uses: the goal area is somewhere out of the blast rather than a better nest,
+	// and the engineer picks the sentry up and walks it there the same way
 	int buster = -1;
 	if (!g_bGoingToGrabBuilding[actor])
 	{
@@ -136,9 +136,9 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 					PrintToServer("CTFBotMvMEngineerIdle_Update: HAUL FROM BUSTER");
 				}
 				BaseMultiplayerPlayer_SpeakConceptIfAllowed(actor, MP_CONCEPT_PLAYER_INCOMING);
-				//  The nest this engineer is leaving, so that it goes back to it
-				// 				Without this the spot the sentry was carried to becomes the nest for the rest of the
-				// 				wave, and a spot chosen for being far from one robot is not a spot to hold ground from
+				// The nest this engineer is leaving, so that it goes back to it
+				// Without this the spot the sentry was carried to becomes the nest for the rest of the
+				// wave, and a spot chosen for being far from one robot is not a spot to hold ground from
 				m_aNestAreaBeforeHaul[actor] = m_aNestArea[actor];
 				CTFBotMvMEngineerIdle_ResetProperties(actor);
 				m_aNestArea[actor] = retreat;
@@ -149,8 +149,8 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 			}
 		}
 	}
-	//  The buster is gone and the sentry is standing somewhere it was carried to, not somewhere
-	// 	chosen to shoot from. Going back is the same walk in the other direction
+	// The buster is gone and the sentry is standing somewhere it was carried to, not somewhere
+	// chosen to shoot from. Going back is the same walk in the other direction
 	if ((m_aNestAreaBeforeHaul[actor] != NULL_AREA) && (buster == -1) && !g_bGoingToGrabBuilding[actor] && (sentry != INVALID_ENT_REFERENCE))
 	{
 		CNavArea home = m_aNestAreaBeforeHaul[actor];
@@ -162,9 +162,9 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 		g_arrPluginBot[actor].SetPathGoalEntity(sentry);
 		return action.Continue();
 	}
-	//  The between-waves answer says this nest moved and the buildings are still standing on the old
-	// 	ground, which is what happens when nothing tore them down at the upgrade station. Same carry as
-	// 	the buster haul above, with better ground as the goal rather than open ground
+	// The between-waves answer says this nest moved and the buildings are still standing on the old
+	// ground, which is what happens when nothing tore them down at the upgrade station. Same carry as
+	// the buster haul above, with better ground as the goal rather than open ground
 	if ((m_aNestAreaRelocate[actor] != NULL_AREA) && (m_aNestAreaBeforeHaul[actor] == NULL_AREA) && !g_bGoingToGrabBuilding[actor] && !TF2_IsCarryingObject(actor) && ((sentry == INVALID_ENT_REFERENCE) || !TF2_IsBuilding(sentry)))
 	{
 		CNavArea destination = m_aNestAreaRelocate[actor];
@@ -188,31 +188,31 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 			g_bGoingToGrabBuilding[actor] = true;
 			m_hBuildingToGrab[actor] = EntIndexToEntRef(sentry);
 			g_arrPluginBot[actor].SetPathGoalEntity(sentry);
-			//  The dispenser stays behind on ground nobody holds any more
-			// 			Only one building can be carried at a time and the sentry is the one worth the walk, so
-			// 			the dispenser is spent rather than dragged: the idle loop below builds another one at the
-			// 			new nest for 100 metal as soon as the sentry is safe
+			// The dispenser stays behind on ground nobody holds any more
+			// Only one building can be carried at a time and the sentry is the one worth the walk, so
+			// the dispenser is spent rather than dragged: the idle loop below builds another one at the
+			// new nest for 100 metal as soon as the sentry is safe
 			DetonateObjectOfType(actor, TFObject_Dispenser);
 			return action.Continue();
 		}
 	}
 	if (bShouldAdvance && !g_bGoingToGrabBuilding[actor])
 	{
-		//  Move, but only to ground that is actually further forward, and only once in a while
+		// Move, but only to ground that is actually further forward, and only once in a while
 		//
-		// 		Reported from play on Coaltown: the engineer on the building at the right picks the sentry
-		// 		up the moment the wave starts and keeps picking it up, and puts it down where it can see
-		// 		nothing.
+		// Reported from play on Coaltown: the engineer on the building at the right picks the sentry
+		// up the moment the wave starts and keeps picking it up, and puts it down where it can see
+		// nothing.
 		//
-		// 		Both halves of that are this block. It re-scored the nest on every frame the advance
-		// 		condition held and moved to whatever came back, and what came back is not required to be
-		// 		any further forward than where he already was: PickBuildArea answers with the best area it
-		// 		can find, and if that is the one he is standing on, or another one equally far behind the
-		// 		front, the condition is still true next frame and he picks the sentry up again.
+		// Both halves of that are this block. It re-scored the nest on every frame the advance
+		// condition held and moved to whatever came back, and what came back is not required to be
+		// any further forward than where he already was: PickBuildArea answers with the best area it
+		// can find, and if that is the one he is standing on, or another one equally far behind the
+		// front, the condition is still true next frame and he picks the sentry up again.
 		//
-		// 		So the candidate has to beat the ground he holds by a clear margin before he commits to
-		// 		carrying anything, and having moved, he leaves it alone for a while. A sentry in a toolbox
-		// 		shoots nothing, so a move has to buy more than it costs.
+		// So the candidate has to beat the ground he holds by a clear margin before he commits to
+		// carrying anything, and having moved, he leaves it alone for a while. A sentry in a toolbox
+		// shoots nothing, so a move has to buy more than it costs.
 		CNavArea candidate = PickBuildArea(actor);
 		if ((m_ctAdvanceAgain[actor] > GetGameTime()) || !IsWorthAdvancingTo(m_aNestArea[actor], candidate))
 		{
@@ -240,11 +240,11 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 	INextBot myNextbot = CBaseNPC_GetNextBotOfEntity(actor);
 	IBody myBody = myNextbot.GetBodyInterface();
 	ILocomotion myLoco = myNextbot.GetLocomotionInterface();
-	//  The clock ran out on a relocation, which means the wave started while he was still walking
+	// The clock ran out on a relocation, which means the wave started while he was still walking
 	//
-	// 	Down where he stands beats carried into the middle of a wave: the ground under his feet is at
-	// 	worst ground he was already crossing, and the alternative is a nest that exists in a toolbox.
-	// 	Before he picks the sentry up there is nothing to put down and the old nest is still a nest
+	// Down where he stands beats carried into the middle of a wave: the ground under his feet is at
+	// worst ground he was already crossing, and the alternative is a nest that exists in a toolbox.
+	// Before he picks the sentry up there is nothing to put down and the old nest is still a nest
 	if ((m_aNestAreaBeforeRelocate[actor] != NULL_AREA) && (m_ctNestRelocateDeadline[actor] > 0.0) && (GetGameTime() > m_ctNestRelocateDeadline[actor]))
 	{
 		m_ctNestRelocateDeadline[actor] = -1.0;
@@ -267,10 +267,10 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 	if (g_bGoingToGrabBuilding[actor])
 	{
 		int building = EntRefToEntIndex(m_hBuildingToGrab[actor]);
-		//  The clock on the carry, started when he first has the thing in his hands
+		// The clock on the carry, started when he first has the thing in his hands
 		//
-		// 		Placing it needs him within seventy units of the nest centre, and nothing here says what to
-		// 		do when he never gets there.
+		// Placing it needs him within seventy units of the nest centre, and nothing here says what to
+		// do when he never gets there.
 		if (!TF2_IsCarryingObject(actor))
 		{
 			m_ctCarryDeadline[actor] = 0.0;
@@ -397,15 +397,15 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 				if (threat != 0)
 				{
 					int iThreat = threat.GetEntity();
-					//  Two reasons to hold the wrangler, and the shield is the one that was missing
+					// Two reasons to hold the wrangler, and the shield is the one that was missing
 					//
-					// 					Out of range, the wrangler is the only way the sentry reaches the threat at all,
-					// 					which is what this did and all it did. Under fire, it is worth holding for the
-					// 					shield alone: two thirds of the damage aimed at the sentry stops there, and a
-					// 					sentry that survives the giant is worth more than the seconds of aim it costs.
+					// Out of range, the wrangler is the only way the sentry reaches the threat at all,
+					// which is what this did and all it did. Under fire, it is worth holding for the
+					// shield alone: two thirds of the damage aimed at the sentry stops there, and a
+					// sentry that survives the giant is worth more than the seconds of aim it costs.
 					//
-					// 					Both want the same thing of the bot, so both run the same code: point it at the
-					// 					threat and hold the buttons
+					// Both want the same thing of the bot, so both run the same code: point it at the
+					// threat and hold the buttons
 					bool defending = m_ctSentryUnderFire[actor] > GetGameTime();
 					if ((defending || (GetVectorDistance(GetAbsOrigin(sentry), GetAbsOrigin(iThreat)) > SENTRY_MAX_RANGE)) && IsLineOfFireClearEntity(actor, GetEyePosition(actor), iThreat))
 					{
@@ -444,8 +444,8 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 		}
 		else
 		{
-			//  do not have a sentry; retreat for a few seconds if we had a
-			// 			 * sentry before this; then build a new sentry
+			// do not have a sentry; retreat for a few seconds if we had a
+			// * sentry before this; then build a new sentry
 			if (m_ctSentryCooldown[actor] >= GetGameTime())
 			{
 				ReportEngineerStall(actor, "waiting out the rebuild cooldown");
@@ -469,8 +469,8 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 			}
 			else
 			{
-				//  do not have a dispenser; retreat for a few seconds if we had a
-				// 				 * dispenser before this; then build a new dispenser
+				// do not have a dispenser; retreat for a few seconds if we had a
+				// * dispenser before this; then build a new dispenser
 				if ((m_ctDispenserCooldown[actor] < GetGameTime()) && (m_ctSentrySafe[actor] > GetGameTime()))
 				{
 					m_ctDispenserCooldown[actor] = GetGameTime() + 3.0;
@@ -479,9 +479,9 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 			}
 		}
 	}
-	//  The nest is standing and the wave has not started, so there is time for a teleporter
-	// 	Nothing below this point is skipped by it: the action gives up the moment the wave starts or
-	// 	the sentry stops standing, and the engineer goes straight back to the nest
+	// The nest is standing and the wave has not started, so there is time for a teleporter
+	// Nothing below this point is skipped by it: the action gives up the moment the wave starts or
+	// the sentry stops standing, and the engineer goes straight back to the nest
 	if ((m_ctSentrySafe[actor] > GetGameTime()) && !g_bGoingToGrabBuilding[actor] && ShouldBuildTeleporter(actor))
 	{
 		return action.SuspendFor(CTFBotMvMEngineerBuildTeleporter(), "Nest is up, building a teleporter");
@@ -491,12 +491,12 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 	{
 		return action.SuspendFor(CTFBotMvMEngineerBuildDisposable(), "Nest is up, standing a mini beside it");
 	}
-	//  The dispenser is only a job once the sentry is not one
+	// The dispenser is only a job once the sentry is not one
 	//
-	// 	This branch comes first and returns, so an engineer whose dispenser was a level two stood at it
-	// 	swinging a wrench while the sentry twenty feet away was being shot to pieces. The sentry is the
-	// 	nest; the dispenser is what feeds it. Reported as the engineer not repairing his buildings,
-	// 	which he was doing, just never the one being destroyed.
+	// This branch comes first and returns, so an engineer whose dispenser was a level two stood at it
+	// swinging a wrench while the sentry twenty feet away was being shot to pieces. The sentry is the
+	// nest; the dispenser is what feeds it. Reported as the engineer not repairing his buildings,
+	// which he was doing, just never the one being destroyed.
 	bool sentryWantsMetal = (sentry != INVALID_ENT_REFERENCE) && SentryNeedsMetal(sentry);
 	if ((dispenser != INVALID_ENT_REFERENCE) && !sentryWantsMetal && (m_ctSentrySafe[actor] > GetGameTime()))
 	{
@@ -541,9 +541,9 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 	if (sentry != INVALID_ENT_REFERENCE)
 	{
 		float dist = GetVectorDistance(GetAbsOrigin(actor), GetAbsOrigin(sentry));
-		//  A finished sentry is not a job
-		// 		The wrench does nothing to a level three at full health and full shells, and the engineer
-		// 		swinging it is an engineer not shooting at the robots walking into his nest
+		// A finished sentry is not a job
+		// The wrench does nothing to a level three at full health and full shells, and the engineer
+		// swinging it is an engineer not shooting at the robots walking into his nest
 		if (!SentryNeedsMetal(sentry))
 		{
 			EquipWeaponSlot(actor, TFWeaponSlot_Primary);
@@ -729,15 +729,15 @@ stock bool CanRepairFromRange(int actor, int sentry, float dist)
 	{
 		return false;
 	}
-	//  A bolt repairs a building and does not reload one
+	// A bolt repairs a building and does not reload one
 	//
-	// 	Only a hit with the wrench puts shells back in a sentry. A sentry at full health with an empty
-	// 	magazine still answers yes to SentryNeedsMetal, so the engineer stood at range firing bolts into
-	// 	something that was already whole and never gained a shell. Reported from play as Rescue Ranger
-	// 	engineers refusing to reload, and measured on Coal Town before the fix: 21 of 126 samples of a
-	// 	full health sentry had it under fifty shells, and some at none.
+	// Only a hit with the wrench puts shells back in a sentry. A sentry at full health with an empty
+	// magazine still answers yes to SentryNeedsMetal, so the engineer stood at range firing bolts into
+	// something that was already whole and never gained a shell. Reported from play as Rescue Ranger
+	// engineers refusing to reload, and measured on Coal Town before the fix: 21 of 126 samples of a
+	// full health sentry had it under fifty shells, and some at none.
 	//
-	// 	So range repair is for damage and nothing else. Ammo is a walk.
+	// So range repair is for damage and nothing else. Ammo is a walk.
 	if (BaseEntity_GetHealth(sentry) >= TF2Util_GetEntityMaxHealth(sentry))
 	{
 		return false;
@@ -844,17 +844,17 @@ stock bool CTFBotMvMEngineerIdle_ShouldAdvanceNestSpot(int actor)
 		return false;
 	}
 	int obj = GetObjectOfType(actor, TFObject_Sentry);
-	//  Nothing to advance, and saying otherwise stopped him building at all
+	// Nothing to advance, and saying otherwise stopped him building at all
 	//
-	// 	The idle action asks this first and returns without doing anything when the answer is yes,
-	// 	because advancing is the thing it is about to do. An engineer whose sentry has just been
-	// 	destroyed has nothing to move, so the answer has to be no: it was yes, and he stood in the
-	// 	middle of Bigrock for the rest of the wave with no sentry, no dispenser, and every branch that
-	// 	would have built one behind that return.
+	// The idle action asks this first and returns without doing anything when the answer is yes,
+	// because advancing is the thing it is about to do. An engineer whose sentry has just been
+	// destroyed has nothing to move, so the answer has to be no: it was yes, and he stood in the
+	// middle of Bigrock for the rest of the wave with no sentry, no dispenser, and every branch that
+	// would have built one behind that return.
 	//
-	// 	It was expensive as well as wrong. Two frames of that is two calls to PickBuildArea, and
-	// 	PickBuildArea calls GetBombInfo, which walks every nav area on the map. Sixty-six times a
-	// 	second, twice, per engineer, for as long as he had no sentry.
+	// It was expensive as well as wrong. Two frames of that is two calls to PickBuildArea, and
+	// PickBuildArea calls GetBombInfo, which walks every nav area on the map. Sixty-six times a
+	// second, twice, per engineer, for as long as he had no sentry.
 	if (obj == INVALID_ENT_REFERENCE)
 	{
 		return false;
@@ -998,17 +998,17 @@ stock void EngineerNestRelocation_ResetAll()
 // walked to with sm_dump_spot.
 public Action Command_DumpNest(int client, int args)
 {
-	//  How many areas a nest decision walks, which is the size of everything else here
+	// How many areas a nest decision walks, which is the size of everything else here
 	//
-	// 	PickBuildArea and GetBombInfo both walk the whole mesh, so this number is the unit that any
-	// 	"why did the frame take that long" answer is counted in.
+	// PickBuildArea and GetBombInfo both walk the whole mesh, so this number is the unit that any
+	// "why did the frame take that long" answer is counted in.
 	ReplyToCommand(client, "%d nav areas on this map", TheNavAreas.Count);
-	//  Every building standing, and who the game says owns it
+	// Every building standing, and who the game says owns it
 	//
-	// 	Asked for because a play-test found two dispensers with one engineer on the team, which is a
-	// 	thing the game does not let a player do: an engineer placing a second one has his first taken
-	// 	down for him. So one of them belongs to somebody else, or to nobody, and the per-engineer
-	// 	listing below cannot show either. This walks the entities instead of the players.
+	// Asked for because a play-test found two dispensers with one engineer on the team, which is a
+	// thing the game does not let a player do: an engineer placing a second one has his first taken
+	// down for him. So one of them belongs to somebody else, or to nobody, and the per-engineer
+	// listing below cannot show either. This walks the entities instead of the players.
 	int building = -1;
 	int standing = 0;
 	for (;;)

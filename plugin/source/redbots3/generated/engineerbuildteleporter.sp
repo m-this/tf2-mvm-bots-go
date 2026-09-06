@@ -84,11 +84,11 @@ public Action CTFBotMvMEngineerBuildTeleporter_OnStart(BehaviorAction action, in
 		TeleporterGiveUp(actor);
 		return TeleporterDone(action, actor, "No route out of spawn to walk");
 	}
-	//  The half he is about to build is claimed, and the walk to it is a jump
+	// The half he is about to build is claimed, and the walk to it is a jump
 	//
-	// 	This is the walk the whole complaint was about: the entrance is at the far end of the map from
-	// 	the nest, so building the pair costs the length of the map twice. The jump refuses itself
-	// 	during a wave, so what a wave sees is the walk.
+	// This is the walk the whole complaint was about: the entrance is at the far end of the map from
+	// the nest, so building the pair costs the length of the map twice. The jump refuses itself
+	// during a wave, so what a wave sees is the walk.
 	if (Feature(FEATURE_ENGINEER_SETUP_PHASE))
 	{
 		ClaimSetupSpot(actor, TeleporterClaim(actor), m_vTeleporterSpot[actor]);
@@ -121,11 +121,11 @@ public Action CTFBotMvMEngineerBuildTeleporter_Update(BehaviorAction action, int
 		TeleporterGiveUp(actor);
 		return TeleporterDone(action, actor, "Ran out of time");
 	}
-	//  The walk to the named exit spot ran out, so he takes the ring round his own nest
+	// The walk to the named exit spot ran out, so he takes the ring round his own nest
 	//
-	// 	Where he stands when a walk fails is halfway to wherever he was going, and for the exit that is
-	// 	the lane the robots come down. The nest ring is a spot rather than an accident: beside his own
-	// 	sentry, out of the buster's blast, and it is where the exit goes on every map that names none.
+	// Where he stands when a walk fails is halfway to wherever he was going, and for the exit that is
+	// the lane the robots come down. The nest ring is a spot rather than an accident: beside his own
+	// sentry, out of the buster's blast, and it is where the exit goes on every map that names none.
 	if (Feature(FEATURE_ENGINEER_CLIMBS) && (m_nTeleporterMode[actor] == TFObjectMode_Exit) && (GetGameTime() > m_ctTeleporterReachDeadline[actor]))
 	{
 		TeleporterFallBackToNest(actor);
@@ -136,10 +136,10 @@ public Action CTFBotMvMEngineerBuildTeleporter_Update(BehaviorAction action, int
 	bool outOfTime = (m_nTeleporterMode[actor] == TFObjectMode_Exit) && (GetGameTime() > m_ctTeleporterReachDeadline[actor]);
 	INextBot myNextbot = CBaseNPC_GetNextBotOfEntity(actor);
 	IBody myBody = myNextbot.GetBodyInterface();
-	//  Say when the climb is not even asked for, so silence means one thing
+	// Say when the climb is not even asked for, so silence means one thing
 	//
-	// 	Three candidates for why the jump never lands, and the third is that this branch never runs.
-	// 	Without a line here that reads the same as the debug being off.
+	// Three candidates for why the jump never lands, and the third is that this branch never runs.
+	// Without a line here that reads the same as the debug being off.
 	if (redbots_manager_debug_actions.BoolValue && Feature(FEATURE_ENGINEER_CLIMBS) && (outOfTime || !m_bTeleporterNamedSpot[actor]))
 	{
 		PrintToServer("[teleclimb] %N not asked: out of time %d, named spot %d", actor, outOfTime, m_bTeleporterNamedSpot[actor]);
@@ -186,10 +186,10 @@ public Action CTFBotMvMEngineerBuildTeleporter_Update(BehaviorAction action, int
 		{
 			return action.Continue();
 		}
-		//  This floor will not take it, so try the next place that might
+		// This floor will not take it, so try the next place that might
 		//
-		// 		Only once he is actually looking at the spot: the answer while his head is still coming
-		// 		round is the answer for wherever it was pointing, which is not this spot.
+		// Only once he is actually looking at the spot: the answer while his head is still coming
+		// round is the answer for wherever it was pointing, which is not this spot.
 		if (!IsPlacementOK(objBeingBuilt) && !outOfTime && myBody.IsHeadAimingOnTarget() && (GetGameTime() > m_ctTeleporterTryDeadline[actor]))
 		{
 			m_iTeleporterTry[actor]++;
@@ -363,11 +363,11 @@ stock bool TeleporterStandPoint(int actor)
 		m_vTeleporterStand[actor] = stand;
 		return true;
 	}
-	//  Past whatever another engineer has claimed, rather than onto it
+	// Past whatever another engineer has claimed, rather than onto it
 	//
-	// 	The route out of spawn is the same route for everybody who spawns there, so two engineers
-	// 	reading it pick the same first point and stand in each other. The points are a hundred and
-	// 	fifty apart and there are eight of them, so stepping past a claim costs a step.
+	// The route out of spawn is the same route for everybody who spawns there, so two engineers
+	// reading it pick the same first point and stand in each other. The points are a hundred and
+	// fifty apart and there are eight of them, so stepping past a claim costs a step.
 	for (; attempt < m_iTeleporterRoutePoints[actor]; attempt++)
 	{
 		if (Feature(FEATURE_ENGINEER_SETUP_PHASE) && IsSetupSpotClaimed(actor, m_vTeleporterRouteSpot[actor][attempt]))

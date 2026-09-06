@@ -181,11 +181,11 @@ stock bool DebugFaults_ShouldEmpty(int client)
 	}
 	if ((GetGameTime() <= m_flEmptiedUntil) && IsPlayerAlive(client))
 	{
-		//  Say what the stack looks like while it is being emptied
+		// Say what the stack looks like while it is being emptied
 		//
-		// 		Ending MainAction lets the intention build it again, so the stack a watchdog sampling once a
-		// 		second sees may never be the empty one. Without this line, a rescue that does not fire and a
-		// 		fault that is not there read the same.
+		// Ending MainAction lets the intention build it again, so the stack a watchdog sampling once a
+		// second sees may never be the empty one. Without this line, a rescue that does not fire and a
+		// fault that is not there read the same.
 		if (m_flEmptiedSaid <= GetGameTime())
 		{
 			m_flEmptiedSaid = GetGameTime() + 1.0;

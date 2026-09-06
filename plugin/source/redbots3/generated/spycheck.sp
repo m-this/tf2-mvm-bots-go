@@ -127,9 +127,9 @@ public Action CTFBotSpyCheck_Update(BehaviorAction action, int actor, float inte
 	{
 		return action.Continue();
 	}
-	//  He is shooting at something, so he is not a Spy
-	// 	The one alibi a disguised Spy cannot produce: his weapon is a knife wearing somebody else's
-	// 	model, and firing it drops the disguise
+	// He is shooting at something, so he is not a Spy
+	// The one alibi a disguised Spy cannot produce: his weapon is a knife wearing somebody else's
+	// model, and firing it drops the disguise
 	if (GetTimeSinceWeaponFired(suspect) < 1.0)
 	{
 		m_iSpyCheckSuspect[actor] = -1;
@@ -147,8 +147,8 @@ public Action CTFBotSpyCheck_Update(BehaviorAction action, int actor, float inte
 		}
 		m_pPath[actor].Update(myBot);
 	}
-	//  Swing. Friendly fire is off, so being wrong about this costs nothing at all, and being
-	// 	right takes the disguise off him
+	// Swing. Friendly fire is off, so being wrong about this costs nothing at all, and being
+	// right takes the disguise off him
 	if (myBody.IsHeadAimingOnTarget())
 	{
 		VS_PressFireButton(actor);
@@ -197,15 +197,15 @@ stock int FindTeammateWhoWasNotThere(int actor)
 		{
 			continue;
 		}
-		//  A human teammate is never the disguised one
+		// A human teammate is never the disguised one
 		//
-		// 		Every robot in this mode is a fake client, so a real player on RED cannot be an enemy Spy,
-		// 		and frisking him for it is noise he can see: reported from play as the team calling a player
-		// 		out as a Spy and shooting at him while he was trying to play one.
+		// Every robot in this mode is a fake client, so a real player on RED cannot be an enemy Spy,
+		// and frisking him for it is noise he can see: reported from play as the team calling a player
+		// out as a Spy and shooting at him while he was trying to play one.
 		//
-		// 		It costs the one case where a human is on BLU through the mod's own join-blue command and
-		// 		has disguised as a defender. That is a curiosity, and being unstabbable in it is a smaller
-		// 		price than a Spy player being shot by his own team every wave.
+		// It costs the one case where a human is on BLU through the mod's own join-blue command and
+		// has disguised as a defender. That is a curiosity, and being unstabbable in it is a smaller
+		// price than a Spy player being shot by his own team every wave.
 		if (!IsFakeClient(i))
 		{
 			m_bSpyCheckSeen[actor][i] = true;
@@ -351,8 +351,8 @@ stock bool CTFBotSpyCheck_IsPossible(int client)
 	{
 		return false;
 	}
-	//  An engineer holding a nest is doing the one job nobody else can do, and the sentry is the
-	// 	spy check: anything that walks into it while sapping is already being shot at
+	// An engineer holding a nest is doing the one job nobody else can do, and the sentry is the
+	// spy check: anything that walks into it while sapping is already being shot at
 	if (TF2_GetPlayerClass(client) == TFClass_Engineer)
 	{
 		return false;

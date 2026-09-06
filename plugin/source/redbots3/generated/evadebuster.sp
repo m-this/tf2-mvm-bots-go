@@ -132,8 +132,8 @@ stock bool CTFBotEvadeBuster_IsPossible(int client)
 	{
 		return false;
 	}
-	//  A bot at the upgrade station is between waves and there is no buster walking towards it.
-	// 	Leaving the station mid-purchase is also how a bot ends up owing the wave a ready-up
+	// A bot at the upgrade station is between waves and there is no buster walking towards it.
+	// Leaving the station mid-purchase is also how a bot ends up owing the wave a ready-up
 	if (TF2_IsInUpgradeZone(client))
 	{
 		return false;

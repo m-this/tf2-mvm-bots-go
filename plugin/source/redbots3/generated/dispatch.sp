@@ -73,12 +73,12 @@ stock Action GetDesiredBotAction(int client, BehaviorAction action)
 			else
 				if ((ShouldTakeUpPosition(client) || IsSniperStalled(client)) && (ActionsManager.LookupEntityActionByName(client, "DefenderMoveToFront") == INVALID_ACTION))
 				{
-					//  Shopping is finished, so go and stand where the robots come out
+					// Shopping is finished, so go and stand where the robots come out
 					//
-					// 			Without this the break has nothing left to say to a bot that has
-					// 			bought its upgrades. Reported as the Heavy, the Medic and the Pyro
-					// 			wandering off before the wave, and found inside the middle house on
-					// 			Coaltown.
+					// Without this the break has nothing left to say to a bot that has
+					// bought its upgrades. Reported as the Heavy, the Medic and the Pyro
+					// wandering off before the wave, and found inside the middle house on
+					// Coaltown.
 					return action.SuspendFor(CTFBotMoveToFront(), "Shopping is done, so take up a position");
 				}
 	}
@@ -233,8 +233,8 @@ stock Action GetUpgradePostAction(int client, BehaviorAction action)
 					}
 		return action.ChangeTo(CTFBotMoveToFront(), "Finished upgrading; Move to front and press F4");
 	}
-	//  The round's probably already running.
-	// 	CTFBotScenarioMonitor_Update will assign the appropriate task.
+	// The round's probably already running.
+	// CTFBotScenarioMonitor_Update will assign the appropriate task.
 	return action.Done("I finished upgrading");
 }
 

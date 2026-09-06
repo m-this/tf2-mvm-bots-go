@@ -13,12 +13,12 @@ stock bool TraceFilter_TFBot(int entity, int contentsMask, StringMap data)
 	{
 		return false;
 	}
-	//  CTraceFilterIgnoreFriendlyCombatItems
+	// CTraceFilterIgnoreFriendlyCombatItems
 	//
-	// 	The shipped file initialises the pass entity to -1 before the lookup, so a
-	// 	map without the key skips the entity filter rather than filtering against
-	// 	entity zero. GetValue only writes when the key is there, so the initial
-	// 	value is the answer for a missing one.
+	// The shipped file initialises the pass entity to -1 before the lookup, so a
+	// map without the key skips the entity filter rather than filtering against
+	// entity zero. GetValue only writes when the key is there, so the initial
+	// value is the answer for a missing one.
 	int passEnt;
 	bool foundPass = data.GetValue("m_pPassEnt", passEnt);
 	if (!foundPass)

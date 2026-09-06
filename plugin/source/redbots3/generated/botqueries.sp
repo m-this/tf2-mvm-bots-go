@@ -511,9 +511,9 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 	{
 		primary = -1;
 	}
-	//  TFWeaponSlot_Secondary is 1 and TF_AMMO_SECONDARY is 2, so this once
-	// 	read primary ammo and retired the secondary along with the primary. A
-	// 	Heavy whose minigun ran dry was left with no shotgun.
+	// TFWeaponSlot_Secondary is 1 and TF_AMMO_SECONDARY is 2, so this once
+	// read primary ammo and retired the secondary along with the primary. A
+	// Heavy whose minigun ran dry was left with no shotgun.
 	if (BaseCombatCharacter_GetAmmoCount(client, TF_AMMO_SECONDARY) <= 0)
 	{
 		secondary = -1;
@@ -524,19 +524,19 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 	{
 		case TFClass_DemoMan:
 		{
-			//  The stickybomb launcher, which this switch used to pass over in
-			// 		silence: the Demoman was listed with the classes that only ever want
-			// 		their primary.
+			// The stickybomb launcher, which this switch used to pass over in
+			// silence: the Demoman was listed with the classes that only ever want
+			// their primary.
 			float threatOrigin[3];
 			threat.GetLastKnownPosition(threatOrigin);
 			float myOrigin[3];
 			GetClientAbsOrigin(client, myOrigin);
 			float threatRange = GetVectorDistance(myOrigin, threatOrigin);
 			bool wantSticky = (secondary != -1) && ShouldUseStickyLauncher(client, secondary, threatEnt, threatRange);
-			//  An empty launcher is not the weapon that lands, whatever the rule
-			// 		above says: holding eight spent bombs through the reload is a second
-			// 		and a half of nothing with a loaded grenade launcher in the other
-			// 		hand.
+			// An empty launcher is not the weapon that lands, whatever the rule
+			// above says: holding eight spent bombs through the reload is a second
+			// and a half of nothing with a loaded grenade launcher in the other
+			// hand.
 			if (wantSticky && (Clip1(secondary) > 0))
 			{
 				gun = secondary;
@@ -552,9 +552,9 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 		}
 		case TFClass_Medic:
 		{
-			//  The medigun is the weapon, and the syringe gun is what he holds
-			// 		when there is nobody to point it at. Reported after the 1.3
-			// 		play-test: "the Medics always keep using their Syringe Guns".
+			// The medigun is the weapon, and the syringe gun is what he holds
+			// when there is nobody to point it at. Reported after the 1.3
+			// play-test: "the Medics always keep using their Syringe Guns".
 			if ((secondary != -1) && MedicHasPatient(client, secondary))
 			{
 				gun = secondary;
@@ -579,12 +579,12 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 		}
 		case TFClass_Soldier:
 		{
-			//  Handing him the shotgun inside his own blast was tried, with the
-			// 		aim change in botaim, and the pair lost. A rocket that hurts him also
-			// 		kills what is standing on him, and a shotgun does not.
+			// Handing him the shotgun inside his own blast was tried, with the
+			// aim change in botaim, and the pair lost. A rocket that hurts him also
+			// kills what is standing on him, and a shotgun does not.
 			//
-			// 		Not against uber threats, or the detour at
-			// 		DHookCallback_IsIgnored_Pre would flick them ignored and back.
+			// Not against uber threats, or the detour at
+			// DHookCallback_IsIgnored_Pre would flick them ignored and back.
 			if ((gun != -1) && (Clip1(gun) == 0))
 			{
 				if ((secondary != -1) && (Clip1(secondary) != 0) && (!BaseEntity_IsPlayer(threatEnt) || !TF2_IsInvulnerable(threatEnt)))
@@ -650,10 +650,10 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 			}
 		}
 	}
-	//  Whatever the rules above picked, never walk at a robot holding
-	// 	something that cannot fire. The per class cases only ever choose between
-	// 	weapons; this is the one place that asks whether the choice can still
-	// 	shoot. Melee always can.
+	// Whatever the rules above picked, never walk at a robot holding
+	// something that cannot fire. The per class cases only ever choose between
+	// weapons; this is the one place that asks whether the choice can still
+	// shoot. Melee always can.
 	if ((gun != -1) && !IsMeleeWeapon(gun) && !HasAmmo(gun))
 	{
 		if ((primary != -1) && HasAmmo(primary))

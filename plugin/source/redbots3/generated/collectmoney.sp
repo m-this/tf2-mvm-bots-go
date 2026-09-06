@@ -146,11 +146,11 @@ stock bool IsValidCurrencyPack(int pack)
 // IsPossible says whether collecting is worth doing.
 stock bool CTFBotCollectMoney_IsPossible(int actor)
 {
-	//  One of them in a wave, all of them in the break
+	// One of them in a wave, all of them in the break
 	//
-	// 	Mid-wave the money is a distraction from the robots walking a bomb up the map, so one goes and
-	// 	the rest keep shooting. Between waves there is nothing else to do with the time, and one bot
-	// 	clearing a heap on his own does not finish before the break does.
+	// Mid-wave the money is a distraction from the robots walking a bomb up the map, so one goes and
+	// the rest keep shooting. Between waves there is nothing else to do with the time, and one bot
+	// clearing a heap on his own does not finish before the break does.
 	if ((GameRules_GetRoundState() != RoundState_BetweenRounds) && (GetCountOfBotsWithNamedAction("DefenderCollectMoney") > 0))
 	{
 		return false;

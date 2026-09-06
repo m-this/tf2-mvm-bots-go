@@ -89,8 +89,8 @@ stock bool HavePlayersChosenBotTeam()
 	{
 		return true;
 	}
-	//  Strictly requiring a chosen lineup means the list only ever holds classes
-	// 	a player picked, so an empty list is nobody having chosen yet.
+	// Strictly requiring a chosen lineup means the list only ever holds classes
+	// a player picked, so an empty list is nobody having chosen yet.
 	return g_adtChosenBotClasses.Length > 0;
 }
 

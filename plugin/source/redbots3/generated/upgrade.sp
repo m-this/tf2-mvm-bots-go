@@ -276,14 +276,14 @@ stock void CollectUpgrades(int client)
 			{
 				continue;
 			}
-			//  Canteens are not bought at all
+			// Canteens are not bought at all
 			//
-			// 			The player slot takes every upgrade the game does not attach to a
-			// 			weapon, which sweeps up the powerup bottle charges too. The game
-			// 			refuses those on slot -1, the bot pays nothing, and the next
-			// 			interval picks the same charge again for as long as the upgrade
-			// 			window lasts. See CTFBotUpgrade_OnEnd for why the leftovers stay
-			// 			in the wallet instead.
+			// The player slot takes every upgrade the game does not attach to a
+			// weapon, which sweeps up the powerup bottle charges too. The game
+			// refuses those on slot -1, the bot pays nothing, and the next
+			// interval picks the same charge again for as long as the upgrade
+			// window lasts. See CTFBotUpgrade_OnEnd for why the leftovers stay
+			// in the wallet instead.
 			if (UpgradeUIGroupOf(upgrade) == UIGROUP_POWERUPBOTTLE)
 			{
 				continue;
@@ -377,13 +377,13 @@ stock int CTFBotPurchaseUpgrades_ChooseUpgrade(int actor)
 		{
 			continue;
 		}
-		//  A negative priority is a refusal, not a low bid
+		// A negative priority is a refusal, not a low bid
 		//
-		// 		It used to be only a bid, so once everything worth having was maxed or
-		// 		unaffordable the bot worked down the list and bought whatever was left.
-		// 		Reported as Pyros buying Airblast Pushback Scale, which is in the
-		// 		canteen slot and was ranked at minus ten for exactly that reason.
-		// 		Ranking it last is not the same as never buying it.
+		// It used to be only a bid, so once everything worth having was maxed or
+		// unaffordable the bot worked down the list and bought whatever was left.
+		// Reported as Pyros buying Airblast Pushback Scale, which is in the
+		// canteen slot and was ranked at minus ten for exactly that reason.
+		// Ranking it last is not the same as never buying it.
 		if (GetUpgradePriority(actor, slot, index, view_as<TFClassType>(pclass)) < 0)
 		{
 			continue;
@@ -651,12 +651,12 @@ public Action CTFBotUpgrade_Update(BehaviorAction action, int actor, float inter
 			{
 				PrintToChatAll("Currenct left for %N: %d", actor, TF2_GetCurrency(actor));
 			}
-			//  The game refused what we asked for
+			// The game refused what we asked for
 			//
-			// 			Nothing about the next interval would differ, so the same upgrade
-			// 			would be picked and refused until the window runs out, with the
-			// 			wave waiting on a bot that cannot spend. Remembered rather than
-			// 			given up on: the next interval picks the next thing down.
+			// Nothing about the next interval would differ, so the same upgrade
+			// would be picked and refused until the window runs out, with the
+			// wave waiting on a bot that cannot spend. Remembered rather than
+			// given up on: the next interval picks the next thing down.
 			if (!purchased)
 			{
 				int refused = Go_RowIndexOf(actor, row);

@@ -30,8 +30,8 @@ public Action SoundHook_General(int clients[MAXPLAYERS], int &numClients, char s
 		{
 			if (TF2_IsPlayerInCondition(entity, TFCond_Disguised) && !TF2_IsStealthed(entity))
 			{
-				//  Robots have robotic voices even when disguised so any
-				// 				defender bot that can see him right now will call him out
+				// Robots have robotic voices even when disguised so any
+				// defender bot that can see him right now will call him out
 				for (int i = 1; i <= MaxClients; i++)
 				{
 					if (i == entity)

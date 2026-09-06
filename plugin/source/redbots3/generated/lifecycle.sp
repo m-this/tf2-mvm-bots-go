@@ -348,11 +348,11 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 						int iThreat = threat.GetEntity();
 						if (redbots_manager_bot_aim_skill.IntValue >= 2)
 						{
-							//  This used to be handled in CTFBotMainAction_SelectTargetPoint, but
-							// 							that function does not always get called when the bot is up close to a
-							// 							tank: the bot looks up, then starts looking towards the centre again and
-							// 							stops firing, then looks up and fires again, over and over until it gets
-							// 							away from the tank
+							// This used to be handled in CTFBotMainAction_SelectTargetPoint, but
+							// that function does not always get called when the bot is up close to a
+							// tank: the bot looks up, then starts looking towards the centre again and
+							// stops firing, then looks up and fires again, over and over until it gets
+							// away from the tank
 							if ((weaponID == TF_WEAPON_FLAMETHROWER) && IsBaseBoss(iThreat) && myBot.IsRangeLessThan(iThreat, FLAMETHROWER_REACH_RANGE))
 							{
 								float aimPos[3];

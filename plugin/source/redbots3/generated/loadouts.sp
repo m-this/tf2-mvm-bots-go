@@ -870,10 +870,10 @@ public Action Timer_GiveCustomLoadout(Handle timer, int client)
 	{
 		ReapplyItemUpgrades(client, primary, secondary, melee);
 	}
-	//  Certain weapons or upgrades may have changed the health and the ammo
+	// Certain weapons or upgrades may have changed the health and the ammo
 	//
-	// 	So both are refilled completely, though the health may end up lower than it
-	// 	was if a weapon's attribute lowered the maximum.
+	// So both are refilled completely, though the health may end up lower than it
+	// was if a weapon's attribute lowered the maximum.
 	for (int i = TF_AMMO_PRIMARY; i < TF_AMMO_COUNT; i++)
 	{
 		GivePlayerAmmo(client, 1000, i, true);
@@ -898,8 +898,12 @@ public Action Timer_GiveCustomLoadout(Handle timer, int client)
 // The slot used to be emptied before the schema was asked whether the item had a
 // class name, and left empty when the give came back with nothing: a Heavy
 // joined RED on Rottenburg with no weapon at all, which is mvm-gkv. The callers
-// look the name up first now and only reach this with one, and a give that
-// fails hands the bot its stock loadout back.
+// look the name up first now and only reach this with one, and a give that fails
+// hands the bot its stock loadout back.
+//
+// That takes the slots already filled back to stock with it, because regenerating
+// is the whole inventory. It is the price of never leaving a hand empty, and the
+// error line above says which item cost it.
 stock int Go_GiveNamedOrKeepStock(int client, int slot, int itemDefinition, char[] itemClassname, const char[] what)
 {
 	TF2_RemoveWeaponSlot(client, slot);

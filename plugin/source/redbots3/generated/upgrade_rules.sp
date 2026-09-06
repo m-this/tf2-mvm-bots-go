@@ -29,12 +29,12 @@ stock bool IsUpgradeWasted(int client, const char[] attribute)
 		// A flamethrower that cannot airblast, which is the Phlogistinator and anything like it
 		return TF2Attrib_GetByName(primary, "airblast disabled") != Address_Null;
 	}
-	//  Destroy Projectiles is an airblast on a Pyro and a spun-up minigun on a Heavy
+	// Destroy Projectiles is an airblast on a Pyro and a spun-up minigun on a Heavy
 	//
-	// 	Same attribute, two different things behind it, and the guides rate it for both because a
-	// 	person carrying a Phlogistinator knows they have given up the airblast. The upgrade menu does
-	// 	not, and this table did not either: the Pyro's own line ranked it at 250 while the loadout
-	// 	handed him the one flamethrower that cannot do it.
+	// Same attribute, two different things behind it, and the guides rate it for both because a
+	// person carrying a Phlogistinator knows they have given up the airblast. The upgrade menu does
+	// not, and this table did not either: the Pyro's own line ranked it at 250 while the loadout
+	// handed him the one flamethrower that cannot do it.
 	if (StrEqual(attribute, "attack projectiles") && (TF2_GetPlayerClass(client) == TFClass_Pyro))
 	{
 		int primary = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
@@ -44,22 +44,22 @@ stock bool IsUpgradeWasted(int client, const char[] attribute)
 		}
 		return TF2Attrib_GetByName(primary, "airblast disabled") != Address_Null;
 	}
-	//  The Projectile Shield, which nothing in this mod presses
+	// The Projectile Shield, which nothing in this mod presses
 	//
-	// 	Every guide puts one tick of it first for a Medic and they are right about a person: it is the
-	// 	strongest thing a Medic can do to a wave. It is deployed with the special attack key, and no
-	// 	behaviour here has ever pressed one, so what the rage meter fills is a button nobody uses.
+	// Every guide puts one tick of it first for a Medic and they are right about a person: it is the
+	// strongest thing a Medic can do to a wave. It is deployed with the special attack key, and no
+	// behaviour here has ever pressed one, so what the rage meter fills is a button nobody uses.
 	//
-	// 	Three hundred credits for that, ranked at the top of the Medic's list, every wave. It goes back
-	// 	the moment something deploys it, and that is the TODO rather than this.
+	// Three hundred credits for that, ranked at the top of the Medic's list, every wave. It goes back
+	// the moment something deploys it, and that is the TODO rather than this.
 	if (StrEqual(attribute, "generate rage on heal"))
 	{
 		return !Feature(FEATURE_MEDIC_SHIELD);
 	}
-	//  Afterburn, which the wiki calls useless and a bot has even less use for
+	// Afterburn, which the wiki calls useless and a bot has even less use for
 	//
-	// 	It does not scale the way direct damage does, a small robot dies before it finishes ticking,
-	// 	and a giant outlives it.
+	// It does not scale the way direct damage does, a small robot dies before it finishes ticking,
+	// and a giant outlives it.
 	if (StrEqual(attribute, "weapon burn dmg increased") || StrEqual(attribute, "weapon burn time increased"))
 	{
 		return true;

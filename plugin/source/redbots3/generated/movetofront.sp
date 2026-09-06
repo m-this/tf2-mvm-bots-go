@@ -38,15 +38,15 @@ stock bool IsWaitingAtTheFront(int client)
 // meeting the wave halfway up the map.
 stock bool PickTheFront(int actor)
 {
-	//  The classes that shoot from a distance wait at the nest, the rest at the gate
+	// The classes that shoot from a distance wait at the nest, the rest at the gate
 	//
-	// 	The gate is where the robots come out, and standing on it is how a defender meets a giant with
-	// 	nothing behind him. Waiting beside the sentry instead starts the wave with a sentry, a dispenser
-	// 	and the rest of the team in reach, and it is worth nothing to a Scout who has money to collect
-	// 	or a Pyro who has to be within a few metres to do anything at all.
+	// The gate is where the robots come out, and standing on it is how a defender meets a giant with
+	// nothing behind him. Waiting beside the sentry instead starts the wave with a sentry, a dispenser
+	// and the rest of the team in reach, and it is worth nothing to a Scout who has money to collect
+	// or a Pyro who has to be within a few metres to do anything at all.
 	//
-	// 	Holding the nest with the whole team was measured first and could not be told apart from the
-	// 	gate: four waves an arm, and the difference sat inside each arm's own spread.
+	// Holding the nest with the whole team was measured first and could not be told apart from the
+	// gate: four waves an arm, and the difference sat inside each arm's own spread.
 	if (Feature(FEATURE_HOLD_THE_NEST) && FightsAtRange(actor) && PickTheNest(actor))
 	{
 		return true;
@@ -205,12 +205,12 @@ public Action CTFBotMoveToFront_OnStart(BehaviorAction action, int actor, Behavi
 // arrives.
 public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
-	//  The wave is what ends this, not arriving
+	// The wave is what ends this, not arriving
 	//
-	// 	Arriving used to end it, and what happened next was nothing at all: the between-rounds branch
-	// 	of GetDesiredBotAction had no answer for a bot that had already shopped, so the game got the
-	// 	bot back and roamed it around the map. Reported as the Heavy, the Medic and the Pyro wandering
-	// 	off before the wave and turning up inside the middle house on Coaltown.
+	// Arriving used to end it, and what happened next was nothing at all: the between-rounds branch
+	// of GetDesiredBotAction had no answer for a bot that had already shopped, so the game got the
+	// bot back and roamed it around the map. Reported as the Heavy, the Medic and the Pyro wandering
+	// off before the wave and turning up inside the middle house on Coaltown.
 	if (GameRules_GetRoundState() != RoundState_BetweenRounds)
 	{
 		return action.Done("The wave has started");
@@ -232,15 +232,15 @@ public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float i
 	}
 	INextBot myBot = CBaseNPC_GetNextBotOfEntity(actor);
 	ILocomotion myLoco = myBot.GetLocomotionInterface();
-	//  Walking into the corner of a building is what spends an attempt
+	// Walking into the corner of a building is what spends an attempt
 	//
-	// 	The locomotion already knows the difference between walking and walking on the spot, and
-	// 	nothing outside the engineer has ever asked it. A fresh random point in the same area is a
-	// 	different approach to the same place, and three of them is a bound rather than a bot that
-	// 	repaths for ever.
+	// The locomotion already knows the difference between walking and walking on the spot, and
+	// nothing outside the engineer has ever asked it. A fresh random point in the same area is a
+	// different approach to the same place, and three of them is a bound rather than a bot that
+	// repaths for ever.
 	//
-	// 	Out of attempts, or out of clock, he stands where he is: short of the front is a bot in the
-	// 	wrong place, and handed back to the game is a bot in the middle house.
+	// Out of attempts, or out of clock, he stands where he is: short of the front is a bot in the
+	// wrong place, and handed back to the game is a bot in the middle house.
 	if (myLoco.IsStuck())
 	{
 		myLoco.ClearStuckStatus("Wedged on the way to the front");

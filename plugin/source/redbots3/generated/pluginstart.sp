@@ -64,9 +64,9 @@ public void OnPluginStart()
 	RegAdminCmd("sm_dump_credits", Command_DumpCredits, ADMFLAG_GENERIC, "What every player on RED is holding");
 	RegAdminCmd("sm_botmanager_stop", Command_StopManagingBots, ADMFLAG_GENERIC);
 	RegAdminCmd("sm_view_bot_upgrades", Command_ViewBotUpgrades, ADMFLAG_GENERIC);
-	//  Not RegAdminCmd: it prints where the caller is standing and changes
-	// 	nothing, and needing an admin entry to write down a nest spot is a gate in
-	// 	front of the only way to author one
+	// Not RegAdminCmd: it prints where the caller is standing and changes
+	// nothing, and needing an admin entry to write down a nest spot is a gate in
+	// front of the only way to author one
 	RegConsoleCmd("sm_dump_spot", Command_DumpSpot);
 	RegAdminCmd("sm_dump_upgrades", Command_DumpUpgrades, ADMFLAG_GENERIC);
 	RegAdminCmd("sm_dump_hats", Command_DumpHats, ADMFLAG_GENERIC);
@@ -144,13 +144,13 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] errorText, int err
 	CreateNative("Defenderbots_RangeRepairStalls", Native_RangeRepairStalls);
 	CreateNative("Defenderbots_GetAttackTarget", Native_GetAttackTarget);
 	RegisterFeatureNatives();
-	//  The one native this plugin asks for rather than offers, and it is
-	// 	allowed to be missing.
+	// The one native this plugin asks for rather than offers, and it is
+	// allowed to be missing.
 	//
-	// 	Without this line an unresolved native does not fail at the call, it fails
-	// 	the whole plugin load: a server that has never heard of Archipelago would
-	// 	get no defender bots at all. The runtime check in archipelago.sp only ever
-	// 	runs on a plugin that loaded.
+	// Without this line an unresolved native does not fail at the call, it fails
+	// the whole plugin load: a server that has never heard of Archipelago would
+	// get no defender bots at all. The runtime check in archipelago.sp only ever
+	// runs on a plugin that loaded.
 	MarkNativeAsOptional("TF2AP_GetBundleCredits");
 	RegPluginLibrary("tf2_defenderbots");
 	return APLRes_Success;

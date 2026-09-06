@@ -62,14 +62,14 @@ public Action CTFBotMvMEngineerBuildSentrygun_OnStart(BehaviorAction action, int
 	// After the teleport above, so a between-rounds walk is priced from where he actually starts it
 	m_ctSentryReachDeadline[actor] = GetGameTime() + BuildReachTime(GetAbsOrigin(actor), m_vSentryStand[actor]);
 	LogBuildFailure(actor, "sentry", "started");
-	//  The mark has to survive the watchdog's reset, which is the whole point of it
+	// The mark has to survive the watchdog's reset, which is the whole point of it
 	//
-	// 	ResetIntentionInterface restarts this action, so anything armed in OnStart is armed again every
-	// 	twelve seconds and can never expire. That is the fault in the reach deadline, and re-marking
-	// 	here would inherit it: the count would restart alongside the thing it counts.
+	// ResetIntentionInterface restarts this action, so anything armed in OnStart is armed again every
+	// twelve seconds and can never expire. That is the fault in the reach deadline, and re-marking
+	// here would inherit it: the count would restart alongside the thing it counts.
 	//
-	// 	So the mark belongs to the nest rather than to the attempt. It resets when he is sent somewhere
-	// 	new, and not when he is merely restarted at the same place.
+	// So the mark belongs to the nest rather than to the attempt. It resets when he is sent somewhere
+	// new, and not when he is merely restarted at the same place.
 	if (m_aSentryStuckArea[actor] != m_aNestArea[actor])
 	{
 		m_aSentryStuckArea[actor] = m_aNestArea[actor];
@@ -104,24 +104,24 @@ public Action CTFBotMvMEngineerBuildSentrygun_Update(BehaviorAction action, int 
 	spot = m_vSentrySpot[actor];
 	float stand[3];
 	stand = m_vSentryStand[actor];
-	//  The walk ran out, so he builds from where he got to rather than into whatever stopped him
+	// The walk ran out, so he builds from where he got to rather than into whatever stopped him
 	//
-	// 	And he puts it beside himself rather than pointing it at the nest he could not reach. Aiming at
-	// 	the nest from three metres short of it is the same thing; aiming at it from twenty metres short
-	// 	puts the sentry twenty metres from where anybody wanted it, facing a direction chosen by where
-	// 	he happened to get stuck. Decoy produced one 625 units from its own nest that way.
+	// And he puts it beside himself rather than pointing it at the nest he could not reach. Aiming at
+	// the nest from three metres short of it is the same thing; aiming at it from twenty metres short
+	// puts the sentry twenty metres from where anybody wanted it, facing a direction chosen by where
+	// he happened to get stuck. Decoy produced one 625 units from its own nest that way.
 	float rangeToSpot = GetVectorDistance(GetAbsOrigin(actor), m_vSentrySpot[actor]);
 	bool outOfTime = (GetGameTime() > m_ctSentryReachDeadline[actor]) && (rangeToSpot < SENTRY_SETTLE_RANGE);
-	//  The walk ran out and he is nowhere near the spot, so the spot is what to give up on
+	// The walk ran out and he is nowhere near the spot, so the spot is what to give up on
 	//
-	// 	outOfTime above deliberately refuses to build from far away, for the reason in the comment on
-	// 	it. What that leaves is the case nothing handled: an engineer who never arrives keeps walking at
-	// 	a spot he cannot reach, for the whole mission, and builds nothing at all. Reported on Mannworks
-	// 	with Mean Machines, and Bigrock has a spot on a rock he cannot jump onto.
+	// outOfTime above deliberately refuses to build from far away, for the reason in the comment on
+	// it. What that leaves is the case nothing handled: an engineer who never arrives keeps walking at
+	// a spot he cannot reach, for the whole mission, and builds nothing at all. Reported on Mannworks
+	// with Mean Machines, and Bigrock has a spot on a rock he cannot jump onto.
 	//
-	// 	The retry below re-scores the nest, and it only runs once he is close enough to try building. So
-	// 	the same thing is done here, from the other side of the range check: a new area rather than a
-	// 	sentry twenty metres from where anybody wanted one.
+	// The retry below re-scores the nest, and it only runs once he is close enough to try building. So
+	// the same thing is done here, from the other side of the range check: a new area rather than a
+	// sentry twenty metres from where anybody wanted one.
 	if (((GetGameTime() > m_ctSentryReachDeadline[actor]) && (rangeToSpot >= SENTRY_SETTLE_RANGE)) || ((StuckCountOf(actor) - m_iSentryStuckMark[actor]) >= SENTRY_STUCK_GIVEUP))
 	{
 		m_iSentryStuckMark[actor] = StuckCountOf(actor);
@@ -180,29 +180,29 @@ public Action CTFBotMvMEngineerBuildSentrygun_Update(BehaviorAction action, int 
 		{
 			return action.Continue();
 		}
-		//  One press, then a tick for the game to act on it
+		// One press, then a tick for the game to act on it
 		//
-		// 		The check at the end of this function runs in the same frame as this press, so it asks
-		// 		whether a sentry exists before the game has put one down. It answered no, the action
-		// 		carried on, and the toolbox re-armed: another press, another building. Measured on the
-		// 		dispenser, which has the same shape and which the test-bed caught standing twice under one
-		// 		engineer.
+		// The check at the end of this function runs in the same frame as this press, so it asks
+		// whether a sentry exists before the game has put one down. It answered no, the action
+		// carried on, and the toolbox re-armed: another press, another building. Measured on the
+		// dispenser, which has the same shape and which the test-bed caught standing twice under one
+		// engineer.
 		if (GetGameTime() >= m_ctSentryPressed[actor])
 		{
 			m_ctSentryPressed[actor] = GetGameTime() + SENTRY_PRESS_SETTLE;
 			VS_PressFireButton(actor);
 		}
-		//  The game says no from here, so try looking at it from the next side round
+		// The game says no from here, so try looking at it from the next side round
 		//
-		// 		Only once he is actually looking at it: the answer while his head is still coming round is
-		// 		the answer for wherever it was pointing, which is not this spot.
+		// Only once he is actually looking at it: the answer while his head is still coming round is
+		// the answer for wherever it was pointing, which is not this spot.
 		if (!IsPlacementOK(objBeingBuilt) && myBody.IsHeadAimingOnTarget() && (GetGameTime() > m_ctSentryTryDeadline[actor]))
 		{
 			m_iSentryTry[actor]++;
-			//  Every side refused him, so now the spot itself is the thing in question
+			// Every side refused him, so now the spot itself is the thing in question
 			//
-			// 			This is where the nest gets re-scored, and not before: a pass over the nav mesh is the
-			// 			expensive answer and it was being given to a wall behind the man.
+			// This is where the nest gets re-scored, and not before: a pass over the nav mesh is the
+			// expensive answer and it was being given to a wall behind the man.
 			if (m_iSentryTry[actor] >= SENTRY_TRY_POINTS)
 			{
 				m_aNestArea[actor] = PickBuildArea(actor);
@@ -252,12 +252,12 @@ public void CTFBotMvMEngineerBuildSentrygun_OnEnd(BehaviorAction action, int act
 {
 	g_arrPluginBot[actor].bPathing = false;
 	UpdateLookAroundForEnemies(actor, true);
-	//  Every way out of this action, including the ones nobody wrote a branch for
+	// Every way out of this action, including the ones nobody wrote a branch for
 	//
-	// 	The Done branches above name why they gave up, and a session produced far more starts than
-	// 	endings that said anything. Asking the result for its reason here printed nothing at all, which
-	// 	is what a thrown native looks like from the outside: it takes the callback with it. So this says
-	// 	only what is certainly true, which is that the attempt is over and whether it left a sentry.
+	// The Done branches above name why they gave up, and a session produced far more starts than
+	// endings that said anything. Asking the result for its reason here printed nothing at all, which
+	// is what a thrown native looks like from the outside: it takes the callback with it. So this says
+	// only what is certainly true, which is that the attempt is over and whether it left a sentry.
 	LogBuildFailure(actor, "sentry", (GetObjectOfType(actor, TFObject_Sentry) != INVALID_ENT_REFERENCE ? "ended with a sentry" : "ended with nothing"));
 }
 

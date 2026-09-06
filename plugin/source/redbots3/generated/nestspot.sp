@@ -24,12 +24,12 @@ stock void NestBuildPosition(CNavArea area, float out[3])
 	}
 	area.GetCenter(out);
 	float best = 400.0;
-	//  A fresh destination each time, because the same array cannot be both
+	// A fresh destination each time, because the same array cannot be both
 	//
-	// 	SourcePawn passes an array by reference and a generated function zeroes its
-	// 	out-parameters at entry, so passing one variable as both the candidate and
-	// 	the answer zeroes the candidate before it is read. The emitter refuses that
-	// 	shape now; this is what it looks like written safely.
+	// SourcePawn passes an array by reference and a generated function zeroes its
+	// out-parameters at entry, so passing one variable as both the candidate and
+	// the answer zeroes the candidate before it is read. The emitter refuses that
+	// shape now; this is what it looks like written safely.
 	float closest;
 	float nearest[3];
 	NestSpotFromList(g_arrMapConfig.adtEngineerNestLocation, out, best, nearest, closest);
@@ -38,11 +38,11 @@ stock void NestBuildPosition(CNavArea area, float out[3])
 	NestSpotFromList(g_arrMapConfig.adtNestTankOnlyLocation, out, best, nearest, closest);
 	out = nearest;
 	best = closest;
-	//  The third distance is written and never read again
+	// The third distance is written and never read again
 	//
-	// 	The shipped code threads one best through all three lists and the last one
-	// 	goes out of scope with the function. SourcePawn writes it through a
-	// 	parameter, so it needs a name here whether or not anything reads it.
+	// The shipped code threads one best through all three lists and the last one
+	// goes out of scope with the function. SourcePawn writes it through a
+	// parameter, so it needs a name here whether or not anything reads it.
 	NestSpotFromList(g_arrMapConfig.adtNestNoTankLocation, out, best, nearest, closest);
 	out = nearest;
 	return;

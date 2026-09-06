@@ -66,12 +66,12 @@ public Action CTFBotMvMEngineerBuildDispenser_OnStart(BehaviorAction action, int
 		ClaimSetupSpot(actor, 1, m_vDispenserSpot[actor]);
 		SetupJump(actor, m_vDispenserStand[actor]);
 	}
-	//  Priced by the walk, because the spot the map names is not always next to the nest
+	// Priced by the walk, because the spot the map names is not always next to the nest
 	//
-	// 	Coaltown's right-hand spot is 857 units from the nest it serves, on purpose, and he starts the
-	// 	walk at the upgrade station. A flat twelve seconds expired somewhere along the way and he built
-	// 	it wherever that was, which is how a hand-walked spot turned into a dispenser beside the
-	// 	teleporter entrance.
+	// Coaltown's right-hand spot is 857 units from the nest it serves, on purpose, and he starts the
+	// walk at the upgrade station. A flat twelve seconds expired somewhere along the way and he built
+	// it wherever that was, which is how a hand-walked spot turned into a dispenser beside the
+	// teleporter entrance.
 	m_ctDispenserReachDeadline[actor] = GetGameTime() + BuildReachTime(GetAbsOrigin(actor), m_vDispenserStand[actor]);
 	return action.Continue();
 }
@@ -92,12 +92,12 @@ public Action CTFBotMvMEngineerBuildDispenser_Update(BehaviorAction action, int 
 		LogBuildFailure(actor, "dispenser", "no sentry to feed");
 		return action.Done("No sentry");
 	}
-	//  Asked of the sentry, not of the flag the idle action keeps
+	// Asked of the sentry, not of the flag the idle action keeps
 	//
-	// 	Suspending the idle action stops its update running, so its three second flag expires three
-	// 	seconds after this one starts however well the sentry is doing. This ended itself on that,
-	// 	every time, and only ever finished a dispenser where the walk and the placement both fitted
-	// 	inside those three seconds.
+	// Suspending the idle action stops its update running, so its three second flag expires three
+	// seconds after this one starts however well the sentry is doing. This ended itself on that,
+	// every time, and only ever finished a dispenser where the walk and the placement both fitted
+	// inside those three seconds.
 	if (!IsSentrySafe(sentry))
 	{
 		LogBuildFailure(actor, "dispenser", "sentry under fire");
@@ -109,7 +109,7 @@ public Action CTFBotMvMEngineerBuildDispenser_Update(BehaviorAction action, int 
 		LogBuildFailure(actor, "dispenser", "told to advance the nest");
 		return action.Done("Need to advance nest");
 	}
-	//  The spot is chosen once, not every frame
+	// The spot is chosen once, not every frame
 	//
 	// 	Choosing it here used to mean a path computation per configured spot per tick per engineer,
 	// 	which is how the server's watchdog came to fire inside NavAreaBuildPath. A spot that was
@@ -125,25 +125,25 @@ public Action CTFBotMvMEngineerBuildDispenser_Update(BehaviorAction action, int 
 	spot = m_vDispenserSpot[actor];
 	float stand[3];
 	stand = m_vDispenserStand[actor];
-	//  The walk ran out of time, so he builds from where he stands and aims at the spot anyway
+	// The walk ran out of time, so he builds from where he stands and aims at the spot anyway
 	//
-	// 	Only while he is somewhere near his nest. Settling where he stands is a trade of accuracy for a
-	// 	dispenser that exists, and it stops being a trade at all once he is far enough away that what
-	// 	he settles for feeds nothing.
+	// Only while he is somewhere near his nest. Settling where he stands is a trade of accuracy for a
+	// dispenser that exists, and it stops being a trade at all once he is far enough away that what
+	// he settles for feeds nothing.
 	bool outOfTime = (m_ctDispenserReachDeadline[actor] > 0.0) && (GetGameTime() > m_ctDispenserReachDeadline[actor]) && (GetVectorDistance(GetAbsOrigin(actor), spot) < DISPENSER_SETTLE_RANGE);
 	if (outOfTime)
 	{
 		stand = GetAbsOrigin(actor);
 	}
-	//  He never arrived, so the spot is unreachable rather than slow
+	// He never arrived, so the spot is unreachable rather than slow
 	//
-	// 	outOfTime above settles for where he stands, and only while he is near the nest, for the reason
-	// 	in the comment on it. That leaves an engineer who never gets near at all walking at the same
-	// 	spot for the rest of the mission.
+	// outOfTime above settles for where he stands, and only while he is near the nest, for the reason
+	// in the comment on it. That leaves an engineer who never gets near at all walking at the same
+	// spot for the rest of the mission.
 	//
-	// 	He gives the dispenser up rather than standing there. The action ends, the idle behaviour picks
-	// 	again, and a dispenser he does not have is worth less than an engineer who is doing something
-	// 	else.
+	// He gives the dispenser up rather than standing there. The action ends, the idle behaviour picks
+	// again, and a dispenser he does not have is worth less than an engineer who is doing something
+	// else.
 	if ((m_ctDispenserReachDeadline[actor] > 0.0) && (GetGameTime() > m_ctDispenserReachDeadline[actor]) && (GetVectorDistance(GetAbsOrigin(actor), spot) >= DISPENSER_SETTLE_RANGE))
 	{
 		LogBuildFailure(actor, "dispenser", "could not reach the spot, gave it up");
@@ -179,20 +179,20 @@ public Action CTFBotMvMEngineerBuildDispenser_Update(BehaviorAction action, int 
 		{
 			return action.Continue();
 		}
-		//  The game says no from here, so try looking at it from the next side
+		// The game says no from here, so try looking at it from the next side
 		//
-		// 		Only once he is actually looking at the spot: the answer while his head is still coming
-		// 		round is the answer for wherever it was pointing, which is not this spot.
+		// Only once he is actually looking at the spot: the answer while his head is still coming
+		// round is the answer for wherever it was pointing, which is not this spot.
 		if (!IsPlacementOK(objBeingBuilt) && !outOfTime && myBody.IsHeadAimingOnTarget() && (GetGameTime() > m_ctDispenserTryDeadline[actor]))
 		{
 			NextDispenserStandPoint(actor);
 			return action.Continue();
 		}
 	}
-	//  Asked before the press, not after it
+	// Asked before the press, not after it
 	//
-	// 	It used to press and then ask in the same frame, which is a frame too early: the answer was
-	// 	always "no dispenser", so the next tick pressed again and put a second one down.
+	// It used to press and then ask in the same frame, which is a frame too early: the answer was
+	// always "no dispenser", so the next tick pressed again and put a second one down.
 	int dispenser = GetObjectOfType(actor, TFObject_Dispenser);
 	if (dispenser != INVALID_ENT_REFERENCE)
 	{
@@ -273,33 +273,33 @@ stock bool ConfiguredDispenserSpot(int actor, float spot[3])
 	// The authored point rather than the area centre, so the comparison is like with like
 	float nest[3];
 	NestBuildPosition(m_aNestArea[actor], nest);
-	//  The zone this nest belongs to, when the map names one, decides before distance does
+	// The zone this nest belongs to, when the map names one, decides before distance does
 	//
-	// 	Coaltown is why. The ground behind the wall on the right is eight hundred units from the nest
-	// 	it serves and two hundred from a different one, so nearest is simply the wrong answer there and
-	// 	no distance rule was ever going to fix it: the map has to be able to say which spot goes with
-	// 	which nest, and a zone is how it already says that about nests.
+	// Coaltown is why. The ground behind the wall on the right is eight hundred units from the nest
+	// it serves and two hundred from a different one, so nearest is simply the wrong answer there and
+	// no distance rule was ever going to fix it: the map has to be able to say which spot goes with
+	// which nest, and a zone is how it already says that about nests.
 	char myZone[512];
 	NestZoneOf(m_aNestArea[actor], myZone, 512);
-	//  His own zone if the map put a spot in it, and the spots belonging to nobody if it did not
+	// His own zone if the map put a spot in it, and the spots belonging to nobody if it did not
 	//
-	// 	Two passes rather than one condition, because the two ideas are different. A spot in a zone is
-	// 	reserved for it: Coaltown's right building has one and nothing else may take it, or the nearest
-	// 	rule hands it to the nest in the middle. A nest in a zone is a separate and older idea, about
-	// 	spreading engineers over the map, and it must not stop that engineer using a spot nobody
-	// 	reserved. Mannhattan names zones on all four of its nests and on none of its spots, and one
-	// 	condition covering both left it with nothing at all.
+	// Two passes rather than one condition, because the two ideas are different. A spot in a zone is
+	// reserved for it: Coaltown's right building has one and nothing else may take it, or the nearest
+	// rule hands it to the nest in the middle. A nest in a zone is a separate and older idea, about
+	// spreading engineers over the map, and it must not stop that engineer using a spot nobody
+	// reserved. Mannhattan names zones on all four of its nests and on none of its spots, and one
+	// condition covering both left it with nothing at all.
 	ArrayList free = new ArrayList(3);
-	//  A spot the path query refused is the last resort, not a spot that stopped existing
+	// A spot the path query refused is the last resort, not a spot that stopped existing
 	//
-	// 	The query is the same ComputeToPos that was measured returning nothing at all for a medic with
-	// 	a live patient in front of him, and it is asked here from wherever the engineer happens to be
-	// 	standing. Before the first wave that is his nest, and it answers; between later waves it is the
-	// 	upgrade station at the other end of the map, and when it refuses, the coordinate somebody
-	// 	walked the map to find is silently dropped and he builds wherever the fallback puts him.
+	// The query is the same ComputeToPos that was measured returning nothing at all for a medic with
+	// a live patient in front of him, and it is asked here from wherever the engineer happens to be
+	// standing. Before the first wave that is his nest, and it answers; between later waves it is the
+	// upgrade station at the other end of the map, and when it refuses, the coordinate somebody
+	// walked the map to find is silently dropped and he builds wherever the fallback puts him.
 	//
-	// 	Reported exactly that way: right before wave one, wrong from then on. So an unreachable
-	// 	authored spot is still an authored spot, and it is used when nothing better is offered.
+	// Reported exactly that way: right before wave one, wrong from then on. So an unreachable
+	// authored spot is still an authored spot, and it is used when nothing better is offered.
 	ArrayList refused = new ArrayList(3);
 	CollectDispenserSpots(actor, myZone, free, refused);
 	if ((free.Length == 0) && (myZone[0] != 0))

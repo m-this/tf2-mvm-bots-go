@@ -39,11 +39,11 @@ stock bool ShouldDetonateStickies(int client)
 	TFTeam enemyTeam = GetPlayerEnemyTeam(client);
 	int examined = 0;
 	int sticky = -1;
-	//  Counted across the whole cluster rather than answered by the first bomb that qualifies
+	// Counted across the whole cluster rather than answered by the first bomb that qualifies
 	//
-	// 	Alt-fire blows all of them, so the question is what the cluster catches, not what one bomb
-	// 	catches. Asking it a bomb at a time meant two robots on two different bombs read as two bombs
-	// 	with one robot each and the button was never pressed.
+	// Alt-fire blows all of them, so the question is what the cluster catches, not what one bomb
+	// catches. Asking it a bomb at a time meant two robots on two different bombs read as two bombs
+	// with one robot each and the button was never pressed.
 	int caughtTotal = 0;
 	int bombsWithEnemies = 0;
 	bool worthItAlone = false;
@@ -67,16 +67,16 @@ stock bool ShouldDetonateStickies(int client)
 		}
 		float stickyOrigin[3];
 		stickyOrigin = GetAbsOrigin(sticky);
-		//  One bomb of his own on top of him and the button is not worth pressing at all
+		// One bomb of his own on top of him and the button is not worth pressing at all
 		//
-		// 		This used to skip the bomb and carry on, which reads as a safety rule and is not one. The
-		// 		detonator is one button for every bomb he owns: skipping a close one only stops it counting
-		// 		towards whether to press, it does not stop it going off when he does. So a Demoman with six
-		// 		on a tank hull and two down the corridor scored the two, pressed, and took all eight.
+		// This used to skip the bomb and carry on, which reads as a safety rule and is not one. The
+		// detonator is one button for every bomb he owns: skipping a close one only stops it counting
+		// towards whether to press, it does not stop it going off when he does. So a Demoman with six
+		// on a tank hull and two down the corridor scored the two, pressed, and took all eight.
 		//
-		// 		He is the worst self-harmer on the team by an order of magnitude and this is the mechanism.
-		// 		Vetoing outright rather than pricing it: the cluster he gives up is one press, the health he
-		// 		gives up is the rest of the wave.
+		// He is the worst self-harmer on the team by an order of magnitude and this is the mechanism.
+		// Vetoing outright rather than pricing it: the cluster he gives up is one press, the health he
+		// gives up is the rest of the wave.
 		if (GetVectorDistance(myOrigin, stickyOrigin) < STICKY_SELF_SAFE_RANGE)
 		{
 			if (Feature(FEATURE_DEMO_STICKY_SELF_VETO))
@@ -101,11 +101,11 @@ stock bool ShouldDetonateStickies(int client)
 				continue;
 			}
 			caught++;
-			//  A giant, the bomb carrier, or a Medic is worth the cluster by itself
+			// A giant, the bomb carrier, or a Medic is worth the cluster by itself
 			//
-			// 			The Medic is the addition and it is the whole job on a wave that has them: a giant
-			// 			with one attached cannot be killed by anybody until the Medic is, and a Demoman is
-			// 			one of the two classes that can reach it.
+			// The Medic is the addition and it is the whole job on a wave that has them: a giant
+			// with one attached cannot be killed by anybody until the Medic is, and a Demoman is
+			// one of the two classes that can reach it.
 			if (TF2_IsMiniBoss(i) || TF2_HasTheFlag(i) || (TF2_GetPlayerClass(i) == TFClass_Medic))
 			{
 				worthItAlone = true;
@@ -116,9 +116,9 @@ stock bool ShouldDetonateStickies(int client)
 			bombsWithEnemies++;
 		}
 		caughtTotal += caught;
-		//  A tank is not a player, so none of the counting above sees one
-		// 		Without this a bot puts a clip into the hull and never presses the button, which is the
-		// 		same weapon doing nothing that this file exists to fix
+		// A tank is not a player, so none of the counting above sees one
+		// Without this a bot puts a clip into the hull and never presses the button, which is the
+		// same weapon doing nothing that this file exists to fix
 		if (IsStickyOnTank(stickyOrigin))
 		{
 			worthItAlone = true;

@@ -64,16 +64,16 @@ public Action CTFBotAttackTank_Update(BehaviorAction action, int actor, float in
 	float distToTank = GetVectorDistance(myEyePos, targetOrigin);
 	INextBot myBot = CBaseNPC_GetNextBotOfEntity(actor);
 	float attackRange = GetIdealTankAttackRange(actor);
-	//  Backing off a tank he is already inside the blast radius of
+	// Backing off a tank he is already inside the blast radius of
 	//
-	// 	Every range here is measured to the middle of the tank, and a tank is a large box: the hull he
-	// 	actually detonates a rocket against is half a tank nearer than that. So a standoff that reads
-	// 	as safe from the centre is not one from the front, and what that produced is soldiers killing
-	// 	themselves on tanks, reported from play.
+	// Every range here is measured to the middle of the tank, and a tank is a large box: the hull he
+	// actually detonates a rocket against is half a tank nearer than that. So a standoff that reads
+	// as safe from the centre is not one from the front, and what that produced is soldiers killing
+	// themselves on tanks, reported from play.
 	//
-	// 	Measured off the collision box rather than by making the centre distance bigger, because the
-	// 	box is the thing the rocket hits and it is the same answer whichever end of the tank he is
-	// 	standing at.
+	// Measured off the collision box rather than by making the centre distance bigger, because the
+	// box is the thing the rocket hits and it is the same answer whichever end of the tank he is
+	// standing at.
 	if (IsBlastWeapon(BaseCombatCharacter_GetActiveWeapon(actor)) && (RangeToTankHull(myEyePos, m_iTankTarget[actor]) < TANK_BLAST_SAFE_RANGE))
 	{
 		float away[3];

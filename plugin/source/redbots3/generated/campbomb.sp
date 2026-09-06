@@ -66,8 +66,8 @@ public Action CTFBotCampBomb_Update(BehaviorAction action, int actor, float inte
 			return action.Continue();
 		}
 	}
-	//  Guard from the dispenser when there is one on this ground and the bot has a reason to want
-	// 	it. Same bomb, same fight, and he heals and reloads without walking away from either
+	// Guard from the dispenser when there is one on this ground and the bot has a reason to want
+	// it. Same bomb, same fight, and he heals and reloads without walking away from either
 	float guardPosition[3];
 	guardPosition = bombPosition;
 	if (Feature(FEATURE_DISPENSER_GUARD) && WantsDispenser(actor))
