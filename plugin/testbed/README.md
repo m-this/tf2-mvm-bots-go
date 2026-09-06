@@ -134,6 +134,15 @@ go run ./cmd/testbed -map mvm_decoy \
   -arm off:sm_redbots_feature_medic_answers_call=0
 ```
 
+A decision that branches per class is not reached by one lineup: the default
+holds no sniper, spy or pyro, so an A/B on anything class-specific plays two.
+`-teams` takes several, space separated, and files each under its own tag:
+
+```
+go run ./cmd/testbed -arm on:... -arm off:... \
+  -teams "scout,soldier,demoman,heavyweapons,engineer,medic scout,sniper,spy,pyro,engineer,medic"
+```
+
 The lineup has to hold a medic, or there is no beam to measure and the run
 answers a question nobody asked.
 

@@ -31,3 +31,12 @@ func TestNoArmKeepsTheFirstSlot(t *testing.T) {
 		}
 	}
 }
+
+func TestOneLineupKeepsTheTagAsTyped(t *testing.T) {
+	if got := lineupTag("run", 0, 1); got != "run" {
+		t.Errorf("one lineup got %q", got)
+	}
+	if got := lineupTag("run", 1, 2); got != "run-lineup2" {
+		t.Errorf("the second of two got %q", got)
+	}
+}

@@ -91,6 +91,7 @@ func run() error {
 		jumpTo   = flag.Int("wave", 0, "start at this wave of the mission, 0 for the first")
 		down     = flag.Bool("down", false, "stop the server when the run is done")
 		maps     = flag.String("maps", "", "run every map in this list instead of -map, space separated")
+		teams    = flag.String("teams", "", "play every lineup in this list instead of -team, space separated, each a comma list of classes")
 		list     arms
 	)
 	/* The puppets, which is how a fault that needs a person on RED gets measured
@@ -190,6 +191,13 @@ func run() error {
 		played = []string{*mapName}
 	}
 
+	// Six seats and ten classes: a decision that branches per class is not
+	// reached by one lineup, so a comparison of one plays several. See mvm-z83.42.
+	lineups := strings.Fields(*teams)
+	if len(lineups) == 0 {
+		lineups = []string{*team}
+	}
+
 	for _, name := range played {
 		/* A map the server is not on is a fresh container on that map, never
 		   a changelevel. The changelevel dropped the connection under the exec
@@ -205,19 +213,32 @@ func run() error {
 				return err
 			}
 		}
-		results, err := playArms(ctx, l, list, options{
-			root: root, mapName: name, mission: *mission, waves: *waves,
-			attempts: *attempts, timeout: *timeout, team: *team, defenders: *defend,
-			out: filepath.Join(root, *out), tag: *tag, jump: *jumpTo, say: say,
-			puppets: seats, plugin: version,
-		})
-		// Reported whatever happened: what completed is data.
-		fmt.Print(report(*tag, name, *mission, results))
-		if err != nil {
-			return err
+		for i, lineup := range lineups {
+			// The lineup is set over rcon at every attempt, so the second
+			// one needs no new container: see playOnce.
+			results, err := playArms(ctx, l, list, options{
+				root: root, mapName: name, mission: *mission, waves: *waves,
+				attempts: *attempts, timeout: *timeout, team: lineup, defenders: *defend,
+				out: filepath.Join(root, *out), tag: lineupTag(*tag, i, len(lineups)), jump: *jumpTo, say: say,
+				puppets: seats, plugin: version,
+			})
+			// Reported whatever happened: what completed is data.
+			fmt.Print(report(lineupTag(*tag, i, len(lineups)), name, *mission, results))
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
+}
+
+// lineupTag keeps the results of two lineups in two sets of files. One
+// lineup keeps the tag as typed, so an old run and a new one read alike.
+func lineupTag(tag string, i, count int) string {
+	if count == 1 {
+		return tag
+	}
+	return fmt.Sprintf("%s-lineup%d", tag, i+1)
 }
 
 type options struct {
