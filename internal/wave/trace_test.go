@@ -59,7 +59,7 @@ func TestAHuddleNeedsThreeForTenSeconds(t *testing.T) {
 	}
 }
 
-func TestPathSharesCountFailedAndEmpty(t *testing.T) {
+func TestPathSharesCountRefusedAndDrifting(t *testing.T) {
 	var lines []string
 	for i := 0; i < 20; i++ {
 		failed := 0
@@ -68,15 +68,28 @@ func TestPathSharesCountFailedAndEmpty(t *testing.T) {
 		}
 		lines = append(lines, sample(float64(i)*0.5, "Lost", [3]float64{float64(i), 0, 0}, 100, "MainAction < TacticalMonitor < DefenderAttack", 1, failed, 0))
 		lines = append(lines, sample(float64(i)*0.5, "Fine", [3]float64{float64(i), 5, 0}, 100, "MainAction < TacticalMonitor < DefenderAttack", 1, 0, 400))
+		// Arrived: a zero length path held standing still is not drifting.
+		lines = append(lines, sample(float64(i)*0.5, "Parked", [3]float64{700, 700, 0}, 100, "MainAction < TacticalMonitor < DefenderEngineerIdle", 1, 0, 0))
 	}
 	got, err := Assert(writeTrace(t, lines))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got.Paths) != 2 || got.Paths[0].Who != "Lost" || got.Paths[0].Bad() != 1 || got.Paths[1].Bad() != 0 {
-		t.Fatalf("paths %+v", got.Paths)
+	byWho := map[string]PathShare{}
+	for _, p := range got.Paths {
+		byWho[p.Who] = p
 	}
-	if report := TraceReport(writeTrace(t, lines)); !strings.Contains(report, "Lost") || strings.Contains(report, "Fine") {
+	if lost := byWho["Lost"]; lost.Bad() != 1 || lost.Failed != 10 || lost.Drifting != 10 {
+		t.Errorf("Lost %+v; every sample is refused or moving with no path", lost)
+	}
+	if fine := byWho["Fine"]; fine.Bad() != 0 {
+		t.Errorf("Fine %+v", fine)
+	}
+	if parked := byWho["Parked"]; parked.Bad() != 0 || parked.Drifting != 0 {
+		t.Errorf("Parked %+v; a bot that has arrived is not drifting", parked)
+	}
+	report := TraceReport(writeTrace(t, lines))
+	if !strings.Contains(report, "Lost") || strings.Contains(report, "Fine") || strings.Contains(report, "Parked") {
 		t.Errorf("report:\n%s", report)
 	}
 }

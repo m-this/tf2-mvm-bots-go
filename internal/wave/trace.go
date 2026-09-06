@@ -50,19 +50,32 @@ type Huddle struct {
 	Seconds float64
 }
 
-// PathShare is how a bot's path requests went.
+/*
+PathShare is how a bot's path requests went.
+
+Drifting is a zero length path the bot is moving on, and it is not the same
+thing as a zero length path standing still: a bot that has arrived has nowhere
+left to go, and its path is empty for the right reason. Measured on Coaltown
+2026-09-06, an engineer wrenching his own sentry reads pathing with a zero
+length path in half his samples, which is him standing at it. So the position
+has to move for the sample to count, which is what mvm-zx0 describes: drifting
+on a zero length path until the pack expires.
+*/
 type PathShare struct {
-	Who, Class    string
-	Pathing       int
-	Failed, Empty int
+	Who, Class string
+	Pathing    int
+	// Failed is a path the engine refused outright.
+	Failed int
+	// Drifting is a zero length path the bot moved on anyway.
+	Drifting int
 }
 
-// Bad is the share of pathing samples that were failed or empty.
+// Bad is the share of pathing samples that were refused or drifted.
 func (p PathShare) Bad() float64 {
 	if p.Pathing == 0 {
 		return 0
 	}
-	return float64(p.Failed+p.Empty) / float64(p.Pathing)
+	return float64(p.Failed+p.Drifting) / float64(p.Pathing)
 }
 
 // Traces is what the three passes found in one file.
@@ -218,24 +231,31 @@ func distance(a, b []float64) float64 {
 }
 
 // pathShares counts, per bot, the samples taken while pathing and how many of
-// those came back failed or with no length at all.
+// those were refused or spent moving with no path.
 func pathShares(samples []Sample) []PathShare {
 	byBot := map[string]*PathShare{}
+	last := map[string][]float64{}
+
 	for _, s := range samples {
+		before := last[s.Who]
+		last[s.Who] = s.At
+
 		if s.Pathing == 0 {
 			continue
 		}
+
 		p := byBot[s.Who]
 		if p == nil {
 			p = &PathShare{Who: s.Who, Class: s.Class}
 			byBot[s.Who] = p
 		}
 		p.Pathing++
+
 		switch {
 		case s.PathFailed == 1:
 			p.Failed++
-		case s.PathLen == 0:
-			p.Empty++
+		case s.PathLen == 0 && before != nil && !samePlace(before, s.At):
+			p.Drifting++
 		}
 	}
 	out := make([]PathShare, 0, len(byBot))
@@ -266,8 +286,8 @@ func TraceReport(path string) string {
 		if p.Bad() < PathFailShareWorthReporting || p.Pathing < 10 {
 			continue
 		}
-		lines = append(lines, fmt.Sprintf("  %-20s %-8s %3.0f%% of %d pathing samples failed or measured nothing",
-			p.Who, p.Class, p.Bad()*100, p.Pathing))
+		lines = append(lines, fmt.Sprintf("  %-20s %-8s %3.0f%% of %d pathing samples refused or drifted (%d refused, %d drifting)",
+			p.Who, p.Class, p.Bad()*100, p.Pathing, p.Failed, p.Drifting))
 	}
 	if len(lines) == 0 {
 		return ""
