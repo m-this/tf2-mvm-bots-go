@@ -12,8 +12,16 @@ import (
 
 var update = flag.Bool("update", false, "rewrite the golden files")
 
-// TestGolden pins the generated text. The round-trip tests say the names are
-// right; this says a change to the layout is deliberate.
+/*
+	TestGolden pins the generated text a diff would otherwise never show
+
+The round-trip tests say the names are right; this says a change to the layout
+is deliberate. Only the two that land in gen/, which is gitignored: the
+SourcePawn tables are committed where the plugin includes them, so a change to
+features.sp or wave_write.sp already reads as a diff there and
+TestAdoptedFilesMatchTheGenerator is what holds them to the generator. A golden
+beside those would be the same bytes written down twice.
+*/
 func TestGolden(t *testing.T) {
 	t.Parallel()
 
@@ -21,9 +29,7 @@ func TestGolden(t *testing.T) {
 		name string
 		got  []byte
 	}{
-		{"features.sp", tables.SourcePawnFeatures()},
 		{"arms.go", tables.GoFeatureArms("arms")},
-		{"wave_write.sp", tables.SourcePawnWaveWriter()},
 		{"wave.go", tables.GoWaveParser("waveline")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
