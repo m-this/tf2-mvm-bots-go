@@ -95,7 +95,7 @@ mvm_mannhattan   SniperSpot 3     361 -2955 1                65    8/8          
 mvm_mannhattan   SniperSpot 4     -81 -1445 269              69    8/8          8      69 to 69     69
 mvm_mannhattan   SniperSpot 5     -1236 -1792 77             45    8/8          8      45 to 88     45
 mvm_mannhattan   SniperSpot 6     856 -512 277               45    8/8          8      45 to 45     45
-mvm_mannhattan   EngineerNest 1   214 -1319 204              19    8/8          1        4 to 4      4
+mvm_mannhattan   EngineerNest 1   213 -1292 200               0    8/8          3       -0 to 0     -0
 mvm_mannhattan   EngineerNest 2   -362 -1393 203              0    8/8          5       -0 to 3     -0
 mvm_mannhattan   EngineerNest 3   -152 -3319 -63              1    8/8          0        1 to 1      1
 mvm_mannhattan   EngineerNest 4   271 -2910 -63               1    8/8          0        1 to 1      1
@@ -103,8 +103,8 @@ mvm_mannhattan   TeleporterExit 1 -61 -1351 204               4    8/8          
 mvm_mannhattan   TeleporterExit 2 167 -3224 -235              5    8/8          0        5 to 5      5
 mvm_mannhattan   TeleporterExit 3 -131 -2058 -54              0    8/8          3       0 to 10      0
 mvm_mannhattan   DispenserSpot 1  926 -1777 -64               0    8/8          1       -0 to 0     -0
-mvm_mannhattan   DispenserSpot 2  -723 -629 -68              23    8/8          6      -5 to 13     -4
-mvm_mannhattan   DispenserSpot 3  -414 -3222 -240            14    8/8          3       -0 to 0     -0
+mvm_mannhattan   DispenserSpot 2  -693 -632 -65               0    8/8          5      -2 to 15     -1
+mvm_mannhattan   DispenserSpot 3  -392 -3221 -240             0    8/8          3       -0 to 0     -0
 mvm_mannworks    SniperSpot 1     -593 -402 577              65    8/8          8      65 to 65     65
 mvm_mannworks    SniperSpot 2     1191 -294 449              65    8/8          8     -47 to 65    -47
 mvm_mannworks    SniperSpot 3     1528 790 467               66    8/8          8      62 to 75     63
@@ -114,7 +114,7 @@ mvm_mannworks    SniperSpot 6     466 -775 446               65    8/8          
 mvm_mannworks    EngineerNest 1   -178 1131 249               2    8/8          6      -9 to 18     -9
 mvm_mannworks    EngineerNest 2   -236 1249 252               1    8/8          7      -7 to 18     -8
 mvm_mannworks    EngineerNest 3   223 1141 240                2    8/8          7     -24 to 25    -15
-mvm_mannworks    EngineerNest 4   1014 885 256               11    8/8          4      -1 to 11     -1
+mvm_mannworks    EngineerNest 4   1031 880 257                0    8/8          4      -0 to 10     -0
 mvm_mannworks    TeleporterExit 1 417 663 384                 0    8/8          0       -0 to 0     -0
 mvm_mannworks    DispenserSpot 1  -287 1480 284               2    8/8          6      -7 to 20     -6
 mvm_mannworks    DispenserSpot 2  999 551 256                 1    8/8          8      -27 to 2     -1
@@ -222,10 +222,6 @@ mvm_bigrock      EngineerNest 1   -552 4266 250: raised, 60 over the ground roun
 mvm_bigrock      EngineerNest 2   -423 4579 260: raised, 60 over the ground round it, nearest surface 96 away
 mvm_bigrock      TeleporterExit 1 -178 3921 318: raised, 62 over the ground round it, nearest surface 68 away
 mvm_coaltown     DispenserSpot 2  453 1092 494: area 5091, 375x300, 79 over the ground round it, 2 in 2 out, 1 stacked, 0 falls out
-mvm_mannhattan   EngineerNest 1   214 -1319 204: in a ground-level hole, 4 over the ground round it, nearest surface 19 away
-mvm_mannhattan   DispenserSpot 2  -723 -629 -68: in a ground-level hole, -4 over the ground round it, nearest surface 23 away
-mvm_mannhattan   DispenserSpot 3  -414 -3222 -240: in a ground-level hole, 0 over the ground round it, nearest surface 14 away
-mvm_mannworks    EngineerNest 4   1014 885 256: in a ground-level hole, -1 over the ground round it, nearest surface 11 away
 
 mvm-z83.25: the configs as a checked table
 ------------------------------------------
@@ -246,15 +242,11 @@ mvm_bigrock      degraded spot-relocated         EngineerNest 1   60 over the gr
 mvm_bigrock      degraded spot-relocated         EngineerNest 2   60 over the ground round it, all 5 accepted stand sides 58 to 60 below it
 mvm_bigrock      degraded spot-relocated         TeleporterExit 1 62 over the ground round it, all 8 accepted stand sides 60 to 92 below it
 mvm_coaltown     degraded spot-relocated         DispenserSpot 2  79 over the ground round it, all 7 accepted stand sides 73 to 82 below it
-mvm_mannhattan   broken   spot-in-hole           EngineerNest 1   no area under it, 4 over the ground round it, nearest surface 19 away
-mvm_mannhattan   broken   spot-in-hole           DispenserSpot 2  no area under it, -4 over the ground round it, nearest surface 23 away
-mvm_mannhattan   broken   spot-in-hole           DispenserSpot 3  no area under it, 0 over the ground round it, nearest surface 14 away
 mvm_mannhattan   note     spot-beside-fall       EngineerNest 2   267 down, which hurts
 mvm_mannhattan   note     exit-ring-beside-fall  EngineerNest 1   a fallback exit side has 282 down beside it
 mvm_mannhattan   note     exit-ring-beside-fall  EngineerNest 2   a fallback exit side has 272 down beside it
-mvm_mannworks    broken   spot-in-hole           EngineerNest 4   no area under it, -1 over the ground round it, nearest surface 11 away
 
-11 findings.
+7 findings.
 
 mvm-wb0 and mvm-ipf: the coordinate
 -----------------------------------

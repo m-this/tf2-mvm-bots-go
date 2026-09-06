@@ -25,15 +25,9 @@ var wantFindings = map[string][]string{
 		"degraded spot-relocated DispenserSpot 2",
 	},
 	"mvm_mannhattan": {
-		"broken spot-in-hole EngineerNest 1",
-		"broken spot-in-hole DispenserSpot 2",
-		"broken spot-in-hole DispenserSpot 3",
 		"note spot-beside-fall EngineerNest 2",
 		"note exit-ring-beside-fall EngineerNest 1",
 		"note exit-ring-beside-fall EngineerNest 2",
-	},
-	"mvm_mannworks": {
-		"broken spot-in-hole EngineerNest 4",
 	},
 }
 
@@ -44,6 +38,7 @@ var quietRules = map[Rule]string{
 	RuleNoSpots:     "every config declares sniper spots since mvm-tz9 was fixed on Decoy",
 	RuleTooFewExits: "every composition runs one engineer, and the maps that declare an exit declare one",
 	RuleSpotOffMesh: "Rottenburg SniperSpot 4 was written 213 units above its ground and sits on it since mvm-0dn",
+	RuleSpotInHole:  "the four ground-level holes of mvm-dx2 moved onto the surface beside them, eight units inside the nearest area",
 }
 
 func TestShippedConfigsCheck(t *testing.T) {
