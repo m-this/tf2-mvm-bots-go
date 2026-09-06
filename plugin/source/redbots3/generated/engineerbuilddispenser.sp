@@ -196,6 +196,7 @@ public Action CTFBotMvMEngineerBuildDispenser_Update(BehaviorAction action, int 
 	int dispenser = GetObjectOfType(actor, TFObject_Dispenser);
 	if (dispenser != INVALID_ENT_REFERENCE)
 	{
+		SayIfBuiltElsewhere(actor, dispenser, m_vDispenserSpot[actor], "dispenser");
 		SetPlayerReady(actor, true);
 		return action.Done("Built a dispenser");
 	}

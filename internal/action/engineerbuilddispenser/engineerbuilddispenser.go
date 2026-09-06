@@ -312,6 +312,7 @@ func Update(actor int32) engine.Outcome {
 	dispenser := engine.ObjectOfType(actor, engine.ObjectDispenser())
 
 	if dispenser != engine.InvalidEntReference() {
+		nestsetup.SayIfBuiltElsewhere(actor, dispenser, dispenserSpot[actor], "dispenser")
 		engine.SetPlayerReady(actor, true)
 
 		return engine.Done("Built a dispenser")

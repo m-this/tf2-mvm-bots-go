@@ -219,6 +219,7 @@ public Action CTFBotMvMEngineerBuildSentrygun_Update(BehaviorAction action, int 
 	{
 		return action.Continue();
 	}
+	SayIfBuiltElsewhere(actor, sentry, m_vSentrySpot[actor], "sentry");
 	SetPlayerReady(actor, true);
 	LogBuildFailure(actor, "sentry", "built one");
 	return action.Done("Built a sentry");

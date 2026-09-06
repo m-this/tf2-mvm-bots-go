@@ -350,6 +350,8 @@ func Update(actor int32) engine.Outcome {
 		return engine.Continue()
 	}
 
+	nestsetup.SayIfBuiltElsewhere(actor, sentry, sentrySpot[actor], "sentry")
+
 	engine.SetPlayerReady(actor, true)
 
 	engine.LogBuildFailure(actor, "sentry", "built one")
