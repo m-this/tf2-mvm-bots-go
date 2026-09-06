@@ -383,8 +383,19 @@ stock void AddBotsBasedOnPreferences(int amount)
 // for belong to bots that will never enter.
 stock void Config_LoadServerLoadout()
 {
+	// Closed and then forgotten, both of them
+	//
+	// A closed handle is not a null one, and this runs on every map change while
+	// the plugin stays loaded. Closing without forgetting left NoteBotSeatPending
+	// reading the length of a handle the engine had already taken away: its guard
+	// asks whether the list is null, which a stale handle is not. Reported by
+	// Cowser as a crash on loading a new map and not on a restart, which is
+	// exactly the difference: a restart makes these null again and a changelevel
+	// does not.
 	m_kvServerLoadout.Close();
+	m_kvServerLoadout = null;
 	m_adtPendingBotSeats.Close();
+	m_adtPendingBotSeats = null;
 	char filePath[512];
 	BuildPath(Path_SM, filePath, 512, "configs/defenderbots/loadout.cfg");
 	if (!FileExists(filePath))
@@ -396,6 +407,7 @@ stock void Config_LoadServerLoadout()
 	{
 		LogError("Config_LoadServerLoadout: Could not read %s!", filePath);
 		m_kvServerLoadout.Close();
+		m_kvServerLoadout = null;
 		return;
 	}
 	WarnAboutInvalidLoadoutSeats();
