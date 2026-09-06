@@ -14,10 +14,42 @@ STAGE="${STAGE:-/opt/mvmbots}"
 GAME="${GAME:-${STEAMAPPDIR}/${STEAMAPP}}"
 INTERVAL=30
 
+# Copies one staged tree over the game's, file by file, and only the files whose
+# size differs or whose source is newer.
+#
+# This runs every thirty seconds for as long as the server lives, and cp
+# truncates the destination before it writes. Truncating a file the running
+# server has mapped invalidates the pages under it: the next instruction the
+# game executes out of that extension is SIGBUS. So nothing that already
+# matches is touched. cp -u did that on the timestamp alone, and a copy cut
+# short by a full disk is newer than its source: actions.ext.2.tf2.so sat at
+# 917 KB of 9.5 MB for a day and every map load died in the loader (mvm-jcb).
+# The size is what tells a truncated copy from a finished one. Bounded by the
+# files in the staged tree.
+sync_tree() {
+	src=$1
+	dst=$2
+	(cd "$src" && find . -type f) | while IFS= read -r file; do
+		if [ ! -e "$dst/$file" ] || [ "$(stat -c %s "$src/$file")" != "$(stat -c %s "$dst/$file")" ] || [ "$src/$file" -nt "$dst/$file" ]; then
+			mkdir -p "$(dirname "$dst/$file")"
+			cp -f "$src/$file" "$dst/$file"
+		fi
+	done
+}
+
+# A core is six hundred megabytes and srcds_run restarts into another one every
+# thirty seconds while something is wrong. Forty-seven of them filled the disk,
+# which is what truncated the extension above. Two are enough to read.
+prune_cores() {
+	ls -t "$STEAMAPPDIR"/core.* 2>/dev/null | tail -n +3 | while IFS= read -r core; do
+		rm -f "$core"
+	done
+}
+
 install_addons() {
 	[ -d "$GAME/addons/sourcemod" ] || return 1
 
-	cp -ru "$STAGE/addons/." "$GAME/addons/"
+	sync_tree "$STAGE/addons" "$GAME/addons"
 	mkdir -p "$GAME/addons/sourcemod/logs"
 
 	# A seeded volume comes from a server that was running something. The
@@ -265,6 +297,7 @@ link_over_base() {
 # the same server line without the update; the base bed keeps the image's.
 run_over_base() {
 	link_over_base
+	prune_cores
 	supervise &
 	cd "${STEAMAPPDIR}"
 	exec bash "${STEAMAPPDIR}/srcds_run" -game "${STEAMAPP}" -console \
@@ -289,6 +322,7 @@ if [ ! -e "${STEAMAPPDIR}/srcds_run" ] && [ -e "$BASE/srcds_run" ]; then
 	run_over_base
 fi
 
+prune_cores
 supervise &
 
 # The image's own entrypoint owns the command line, and reads SRCDS_STARTMAP,
