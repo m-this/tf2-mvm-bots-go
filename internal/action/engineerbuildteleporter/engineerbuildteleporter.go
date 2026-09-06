@@ -523,6 +523,138 @@ func FallBackToNest(actor int32) bool {
 }
 
 /*
+	How far a player could fall stepping off the exit, and the side that avoids it
+
+A nest that relocates has its exit ring placed round it, eight sides at
+TELEPORTER_EXIT_RADIUS_SAFE, and nothing looked down. A player taking the
+teleporter is put somewhere the engineer never stood: mvm-1yo, and mvm-0am is
+the report of it on Rottenburg.
+
+Measured offline against the nav mesh, the declared nests are almost all clear:
+of seventeen on the seven maps with a mesh, only two Mannhattan nests have a
+side beside a hurting fall at all, and both keep a safe side. It is the
+relocated nest, on ground nobody declared, that this is for.
+
+A preference and never a refusal. The sides are walked from the one the attempt
+asked for, the first without a hurting fall wins, and a ring where every side
+falls keeps the side it would have had.
+*/
+
+// FallHurtHeight is the drop at which Team Fortress 2 starts charging fall
+// damage. It is internal/navmesh's FallDamageHeight, and a test holds the two
+// together.
+//
+//sp:name TELEPORTER_EXIT_FALL_HURT
+const FallHurtHeight = 264.0
+
+// ExitDropRadius is how far round the exit a player might step before falling,
+// and ExitDropDepth is how far down the trace looks. internal/navmesh uses the
+// same radius.
+//
+//sp:name TELEPORTER_EXIT_DROP_RADIUS
+const ExitDropRadius = 150.0
+
+// ExitDropDepth is the length of the ray, which has to outrun the worst fall a
+// map has rather than the worst that hurts.
+//
+//sp:name TELEPORTER_EXIT_DROP_DEPTH
+const ExitDropDepth = 2000.0
+
+// ExitDropEye is where the ray starts above the point, so it does not begin
+// inside the floor.
+//
+//sp:name TELEPORTER_EXIT_DROP_EYE
+const ExitDropEye = 36.0
+
+// SideWithoutAFall is the first ring side from wanted whose exit has no hurting
+// fall beside it, or wanted when every side has one.
+//
+//sp:name SideWithoutAFall
+func SideWithoutAFall(actor int32, nest [3]float32, wanted int32, radius float32) int32 {
+	for step := int32(0); step < tryPoints; step++ {
+		side := (wanted + step) % tryPoints
+
+		_, spot := engine.BuildStandPoint(nest, engine.AbsOriginOf(actor), side, tryPoints, radius)
+
+		if WorstDropAround(spot) < FallHurtHeight {
+			return side
+		}
+	}
+
+	return wanted
+}
+
+/*
+WorstDropAround is the deepest fall a player could take stepping off this point.
+
+Five rays: the point itself and four steps out at the radius a player could
+cover before the floor stops holding them. That is what internal/navmesh's
+CheckDrop reads off the mesh, done with the engine's own traces because a
+relocated nest is not in any config for the mesh model to have looked at.
+*/
+//
+//sp:name WorstDropAround
+//sp:const at
+func WorstDropAround(at [3]float32) float32 {
+	worst := float32(0)
+
+	for probe := int32(0); probe < 5; probe++ {
+		var from [3]float32
+
+		from[0] = at[0] + DropProbeX(probe)*ExitDropRadius
+		from[1] = at[1] + DropProbeY(probe)*ExitDropRadius
+		from[2] = at[2] + ExitDropEye
+
+		var to [3]float32
+
+		to[0] = from[0]
+		to[1] = from[1]
+		to[2] = from[2] - ExitDropDepth
+
+		engine.TraceRay(from, to, engine.MaskPlayerSolid(), engine.RayTypeEndPoint())
+
+		ground := engine.TraceEndPosition()
+		drop := from[2] - ground[2]
+
+		if drop > worst {
+			worst = drop
+		}
+	}
+
+	return worst
+}
+
+// DropProbeX and DropProbeY are the five probes: the point, then north, east,
+// south and west of it. Written as a switch because the subset has no table of
+// vectors to index.
+//
+//sp:name DropProbeX
+func DropProbeX(probe int32) float32 {
+	switch probe {
+	case 1:
+		return 1.0
+	case 3:
+		return -1.0
+	}
+
+	return 0.0
+}
+
+// DropProbeY is the other half of the same five.
+//
+//sp:name DropProbeY
+func DropProbeY(probe int32) float32 {
+	switch probe {
+	case 2:
+		return 1.0
+	case 4:
+		return -1.0
+	}
+
+	return 0.0
+}
+
+/*
 StandPoint is where this attempt puts the building, and where he stands to put it
 there.
 
@@ -559,7 +691,7 @@ func StandPoint(actor int32) bool {
 			radius = ExitRadiusSafe
 		}
 
-		angle := attempt % tryPoints
+		angle := SideWithoutAFall(actor, nest, attempt%tryPoints, radius)
 
 		// Both on the same ray out of the nest, so he stands a build's reach short of the spot
 		_, spot := engine.BuildStandPoint(nest, engine.AbsOriginOf(actor), angle,

@@ -33,6 +33,12 @@ const (
 	// PathFailShareWorthReporting is the share of a bot's pathing samples
 	// that may come back failed or empty before it is named.
 	PathFailShareWorthReporting = 0.25
+	// RootedUnits is how little ground a live defender may cover across a
+	// whole wave before it counts as never having left where it started.
+	RootedUnits = 300.0
+	// RootedSeconds is how long the wave has to have run for that to mean
+	// anything: a wave lost in twenty seconds moves nobody far.
+	RootedSeconds = 90.0
 )
 
 // Pin is one bot that did not move for a while.
@@ -89,11 +95,20 @@ func (p PathShare) Adrift() float64 {
 	return float64(p.Drifting) / float64(p.Pathing)
 }
 
-// Traces is what the three passes found in one file.
+// Rooted is one defender that covered almost no ground across a whole wave.
+type Rooted struct {
+	Who, Class string
+	Wave       int
+	Covered    float64
+	Seconds    float64
+}
+
+// Traces is what the passes found in one file.
 type Traces struct {
 	Pins    []Pin
 	Huddles []Huddle
 	Paths   []PathShare
+	Rooted  []Rooted
 }
 
 // Assert runs every pass over a results file.
@@ -102,7 +117,74 @@ func Assert(path string) (Traces, error) {
 	if err != nil {
 		return Traces{}, err
 	}
-	return Traces{Pins: pins(samples), Huddles: huddles(samples), Paths: pathShares(samples)}, nil
+	return Traces{
+		Pins:    pins(samples),
+		Huddles: huddles(samples),
+		Paths:   pathShares(samples),
+		Rooted:  rooted(samples),
+	}, nil
+}
+
+/*
+rooted finds a defender who never went anywhere for a whole wave.
+
+Reported on Area 52 and Thriller and seen on Valve maps too: the bots are
+prepared, they have shopped, and they stand in spawn while the mission runs.
+That is mvm-78m, and it leaves no other trace: no watchdog arms for it, the
+wave numbers read as a team that fought badly, and the samples are the only
+place it shows.
+
+Ground covered rather than distance from a spawn polygon, because the polygon
+would want the map's nav mesh and a results file does not carry one. A bot that
+holds a doorway all wave covers more than this; one that never left where it
+started covers almost nothing.
+*/
+func rooted(samples []Sample) []Rooted {
+	type track struct {
+		class       string
+		first, last float64
+		at          []float64
+		covered     float64
+		alive       bool
+	}
+	byBot := map[string]*track{}
+	var order []string
+
+	for _, s := range samples {
+		key := fmt.Sprintf("%d/%s", s.Wave, s.Who)
+
+		t := byBot[key]
+		if t == nil {
+			t = &track{class: s.Class, first: s.Time, at: s.At}
+			byBot[key] = t
+			order = append(order, key)
+		}
+		t.last = s.Time
+		if s.Health > 0 {
+			t.alive = true
+		}
+		t.covered += distance(t.at, s.At)
+		t.at = s.At
+	}
+
+	var found []Rooted
+	for _, key := range order {
+		t := byBot[key]
+		if !t.alive || t.last-t.first < RootedSeconds || t.covered >= RootedUnits {
+			continue
+		}
+
+		wave, who := 0, key
+		if n, name, ok := strings.Cut(key, "/"); ok {
+			who = name
+			_, _ = fmt.Sscanf(n, "%d", &wave)
+		}
+		found = append(found, Rooted{
+			Who: who, Class: t.class, Wave: wave,
+			Covered: t.covered, Seconds: t.last - t.first,
+		})
+	}
+	return found
 }
 
 func readSamples(path string) ([]Sample, error) {
@@ -292,6 +374,10 @@ func TraceReport(path string) string {
 	for _, h := range t.Huddles {
 		lines = append(lines, fmt.Sprintf("  %d bots within %.0f units at %.0f %.0f %.0f for %.0fs: %s",
 			len(h.Who), HuddleRadius, h.At[0], h.At[1], h.At[2], h.Seconds, strings.Join(h.Who, ", ")))
+	}
+	for _, r := range t.Rooted {
+		lines = append(lines, fmt.Sprintf("  %-20s %-8s covered %.0f units in %.0fs of wave %d, so it never left where it started",
+			r.Who, r.Class, r.Covered, r.Seconds, r.Wave))
 	}
 	for _, p := range t.Paths {
 		if p.Bad() < PathFailShareWorthReporting || p.Pathing < 10 {

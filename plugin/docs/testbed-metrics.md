@@ -131,6 +131,46 @@ way came back at the baseline. The arm that looked like a discovery had waves of
 Two arms of eight can see a wave lost sixteen times out of sixteen. They cannot
 see a change in how long it is held.
 
+### The floor: an arm against itself on Decoy
+
+Measured 2026-09-06. Two arms, both setting nothing at all, so they are the same
+build playing the same mission: three attempts of two waves each, six waves an
+arm, same bed and same lineup.
+
+The runner compared them and reported two differences:
+
+```
+defenders died                  3.0                5.5  outside 4 to 6
+held for                      146.8              119.2  outside 104 to 136
+```
+
+Both of those are an arm against itself. That is the floor, and it is what every
+threat priority reading on four waves an arm was inside.
+
+Per wave, three attempts an arm:
+
+| | wave 1, arm a | wave 1, arm b | wave 2, arm a | wave 2, arm b |
+| --- | --- | --- | --- | --- |
+| held for | 99, 139, 160 | 104, 104, 111 | 144, 150, 180 | 127, 136, 141 |
+| defenders died | 2, 2, 8 | 4, 5, 6 | 4, 12, 2 | 7, 4, 6 |
+| robots killed | 64, 64, 64 | 64, 64, 64 | 138, 140, 141 | 129, 134, 137 |
+
+Three things come out of it.
+
+- **Hold time is the loosest column.** Even paired by wave number, arm a's three
+  second waves are 144 to 180 and arm b's are 127 to 141, which barely overlap
+  between an arm and itself. Three attempts cannot read a hold time here.
+- **Deaths are looser still in shape.** 2, 12, 2 in one arm is a spread no
+  three-sample median survives.
+- **Robots killed on wave 1 is deterministic**, 64 every time in six runs, and
+  wave 2 is not, 129 to 141. A column being steady on one wave says nothing
+  about the next.
+
+So on Decoy: **six waves an arm is the floor for nothing, not the floor for
+something.** A difference in hold time or deaths at this sample size is the bed
+talking. Robots killed on a wave whose count is deterministic is the one column
+that can carry a small difference, and only on that wave.
+
 ### A band over two different waves hides what is in it
 
 Measured 2026-09-06 on Coaltown, the disposable sentry switch, two attempts of

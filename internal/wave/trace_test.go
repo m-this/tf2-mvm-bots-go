@@ -93,3 +93,48 @@ func TestPathSharesCountRefusedAndDrifting(t *testing.T) {
 		t.Errorf("report:\n%s", report)
 	}
 }
+
+func TestADefenderThatNeverLeftSpawnIsNamed(t *testing.T) {
+	var lines []string
+	for i := 0; i < 40; i++ {
+		at := float64(i) * 5.0
+		// Rooted: alive, a whole wave, and never more than a step from where it began.
+		lines = append(lines, sample(at, "Statue", [3]float64{100 + float64(i%2), 200, 50}, 125,
+			"MainAction < TacticalMonitor < DefenderMoveToFront", 0, 0, 0))
+		// Working: covers ground.
+		lines = append(lines, sample(at, "Runner", [3]float64{float64(i) * 120, 200, 50}, 125,
+			"MainAction < TacticalMonitor < DefenderAttack", 1, 0, 400))
+		// Dead all wave, which is a different fault and not this one.
+		lines = append(lines, sample(at, "Corpse", [3]float64{700, 700, 50}, 0,
+			"MainAction < TacticalMonitor < DefenderAttack", 0, 0, 0))
+	}
+	got, err := Assert(writeTrace(t, lines))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Rooted) != 1 || got.Rooted[0].Who != "Statue" {
+		t.Fatalf("rooted %+v", got.Rooted)
+	}
+	if got.Rooted[0].Seconds < RootedSeconds || got.Rooted[0].Covered >= RootedUnits {
+		t.Errorf("rooted %+v does not meet its own thresholds", got.Rooted[0])
+	}
+	report := TraceReport(writeTrace(t, lines))
+	if !strings.Contains(report, "Statue") || strings.Contains(report, "Runner") || strings.Contains(report, "Corpse") {
+		t.Errorf("report:\n%s", report)
+	}
+}
+
+func TestAShortWaveNamesNobodyAsRooted(t *testing.T) {
+	var lines []string
+	for i := 0; i < 5; i++ {
+		lines = append(lines, sample(float64(i)*5.0, "Statue", [3]float64{100, 200, 50}, 125,
+			"MainAction < TacticalMonitor < DefenderMoveToFront", 0, 0, 0))
+	}
+	got, err := Assert(writeTrace(t, lines))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Rooted) != 0 {
+		t.Errorf("a wave too short to say anything named %+v", got.Rooted)
+	}
+}

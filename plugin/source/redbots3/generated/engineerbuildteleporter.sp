@@ -34,6 +34,14 @@ BehaviorAction CTFBotMvMEngineerBuildTeleporter()
 #define TELEPORTER_TRY_POINTS (8)
 #define TELEPORTER_TRY_TIME (1.5)
 
+#define TELEPORTER_EXIT_FALL_HURT (264.0)
+
+#define TELEPORTER_EXIT_DROP_RADIUS (150.0)
+
+#define TELEPORTER_EXIT_DROP_DEPTH (2000.0)
+
+#define TELEPORTER_EXIT_DROP_EYE (36.0)
+
 #define TELEPORTER_EXIT_TAKEN_RANGE (200.0)
 
 float m_ctTeleporterGiveUp[65];
@@ -322,6 +330,90 @@ stock bool TeleporterFallBackToNest(int actor)
 	return TeleporterStandPoint(actor);
 }
 
+// SideWithoutAFall is the first ring side from wanted whose exit has no hurting
+// fall beside it, or wanted when every side has one.
+stock int SideWithoutAFall(int actor, float nest[3], int wanted, float radius)
+{
+	for (int step = 0; step < TELEPORTER_TRY_POINTS; step++)
+	{
+		int side = (wanted + step) % TELEPORTER_TRY_POINTS;
+		float spot[3];
+		BuildStandPoint(nest, GetAbsOrigin(actor), side, TELEPORTER_TRY_POINTS, radius, spot);
+		if (WorstDropAround(spot) < TELEPORTER_EXIT_FALL_HURT)
+		{
+			return side;
+		}
+	}
+	return wanted;
+}
+
+// WorstDropAround is the deepest fall a player could take stepping off this point.
+//
+// Five rays: the point itself and four steps out at the radius a player could
+// cover before the floor stops holding them. That is what internal/navmesh's
+// CheckDrop reads off the mesh, done with the engine's own traces because a
+// relocated nest is not in any config for the mesh model to have looked at.
+stock float WorstDropAround(const float at[3])
+{
+	float worst = 0.0;
+	for (int probe = 0; probe < 5; probe++)
+	{
+		float from[3];
+		from[0] = at[0] + (DropProbeX(probe) * TELEPORTER_EXIT_DROP_RADIUS);
+		from[1] = at[1] + (DropProbeY(probe) * TELEPORTER_EXIT_DROP_RADIUS);
+		from[2] = at[2] + TELEPORTER_EXIT_DROP_EYE;
+		float to[3];
+		to[0] = from[0];
+		to[1] = from[1];
+		to[2] = from[2] - TELEPORTER_EXIT_DROP_DEPTH;
+		TR_TraceRay(from, to, MASK_PLAYERSOLID, RayType_EndPoint);
+		float ground[3];
+		TR_GetEndPosition(ground);
+		float drop = from[2] - ground[2];
+		if (drop > worst)
+		{
+			worst = drop;
+		}
+	}
+	return worst;
+}
+
+// DropProbeX and DropProbeY are the five probes: the point, then north, east,
+// south and west of it. Written as a switch because the subset has no table of
+// vectors to index.
+stock float DropProbeX(int probe)
+{
+	switch (probe)
+	{
+		case 1:
+		{
+			return 1.0;
+		}
+		case 3:
+		{
+			return -1.0;
+		}
+	}
+	return 0.0;
+}
+
+// DropProbeY is the other half of the same five.
+stock float DropProbeY(int probe)
+{
+	switch (probe)
+	{
+		case 2:
+		{
+			return 1.0;
+		}
+		case 4:
+		{
+			return -1.0;
+		}
+	}
+	return 0.0;
+}
+
 // StandPoint is where this attempt puts the building, and where he stands to put it
 // there.
 //
@@ -353,7 +445,7 @@ stock bool TeleporterStandPoint(int actor)
 		{
 			radius = TELEPORTER_EXIT_RADIUS_SAFE;
 		}
-		int angle = attempt % TELEPORTER_TRY_POINTS;
+		int angle = SideWithoutAFall(actor, nest, attempt % TELEPORTER_TRY_POINTS, radius);
 		// Both on the same ray out of the nest, so he stands a build's reach short of the spot
 		float spot[3];
 		BuildStandPoint(nest, GetAbsOrigin(actor), angle, TELEPORTER_TRY_POINTS, radius, spot);
