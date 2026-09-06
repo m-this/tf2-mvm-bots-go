@@ -80,11 +80,17 @@ overtaken.
   regenerates clean and compiles.
 - `internal/runmap`, `cmd/mapview` — a run drawn over the nav mesh it was played
   on.
+- `internal/navmesh`, `internal/threat`, `internal/upgrade`, `internal/actionsel`
+  — the decisions that are ordinary Go rather than a body: the mesh a spot is
+  checked against, what a robot is worth killing first, what a bot buys, and
+  which behaviour it is handed. `internal/spgen` emits the last two as tables.
 - `cmd/testbed`, `cmd/rc`, `internal/lab`, `internal/rcon`, `internal/wave`,
-  `report`, `sweepreport` — the test-bed. It runs the mission, watches the
-  waves and reports what happened. It drives the plugin tree through
-  `internal/plugin`: build.sh, the compose file, the popfiles and the map
-  configs all live under `plugin/`, and none of them are code.
+  `internal/machine`, `report`, `sweepreport` — the test-bed. It runs the
+  mission, watches the waves and reports what happened. It drives the plugin
+  tree through `internal/plugin`: build.sh, the compose file, the popfiles and
+  the map configs all live under `plugin/`, and none of them are code.
+  `internal/machine` is what a run was played on, and two arms that differ on
+  it are not compared.
 
 ## Beads
 

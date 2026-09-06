@@ -55,6 +55,9 @@ down twice, and of the interesting code being unreachable from a test.
 - `internal/actionsel` — action selection as a total function over 1425408
   reachable combinations, with exhaustiveness asserted. It found a hole that
   was shipping.
+- `internal/machine` — what a run was played on: the host, the memory and load
+  it started with, and the extensions' checksums. Two arms that differ on any of
+  them are reported rather than compared.
 - `internal/spshell` — golden inputs through `spcomp` and SourcePawn's
   standalone VM, compared with the Go on `float32` bits, with no game server.
 - `cmd/testbed`, `cmd/rc`, `internal/lab`, `internal/rcon`, `internal/wave`,
