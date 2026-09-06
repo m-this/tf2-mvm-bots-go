@@ -436,6 +436,9 @@ func main() {
 		printDeaths(deaths)
 		printUpgradeTiers(upgrades)
 	}
+	if begins, err := loadWaveBegins(args[0]); err == nil {
+		printUberAtWaveStart(begins)
+	}
 
 	nowSetup, err := loadSetup(args[0])
 	if err == nil {

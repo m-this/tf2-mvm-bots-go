@@ -882,11 +882,31 @@ static void Event_WaveBegin(Event event, const char[] name, bool dontBroadcast)
 	if (cvFeatures != null)
 		cvFeatures.GetString(features, sizeof(features));
 	
+	/* The charge the medics bring into the wave
+	 *
+	 * Uber is built by healing and the break is the quiet time to build one, so a medic who
+	 * healed nobody during the break walks in empty, which is mvm-bk8. The highest charge on any
+	 * RED medigun at the moment the wave begins is the number that says so. */
+	float medicCharge = -1.0;
+	for (int medic = 1; medic <= MaxClients; medic++)
+	{
+		if (!IsClientInGame(medic) || TF2_GetClientTeam(medic) != TFTeam_Red || TF2_GetPlayerClass(medic) != TFClass_Medic)
+			continue;
+
+		int medigun = GetPlayerWeaponSlot(medic, 1);
+		if (medigun == -1 || !HasEntProp(medigun, Prop_Send, "m_flChargeLevel"))
+			continue;
+
+		float charge = GetEntPropFloat(medigun, Prop_Send, "m_flChargeLevel");
+		if (charge > medicCharge)
+			medicCharge = charge;
+	}
+
 	char line[STATS_LINE_LENGTH];
 	FormatEx(line, sizeof(line), "{\"event\":\"wave_begin\",\"map\":\"%s\",\"wave\":%d,\"red\":%d,\"bots\":%d,"
-		... "\"worst_frame_before_ms\":%.0f,\"worst_frame_at_s\":%.0f,\"features\":\"%s\"}",
+		... "\"worst_frame_before_ms\":%.0f,\"worst_frame_at_s\":%.0f,\"medic_charge\":%.2f,\"features\":\"%s\"}",
 		g_sMap, g_iWave, CountTeam(TFTeam_Red, false), CountTeam(TFTeam_Red, true),
-		g_flWorstFrameBetween, g_flWorstFrameAt, features);
+		g_flWorstFrameBetween, g_flWorstFrameAt, medicCharge, features);
 
 	WriteLine(line);
 
