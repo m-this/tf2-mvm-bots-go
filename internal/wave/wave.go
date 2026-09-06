@@ -173,6 +173,91 @@ func (a Arm) Quartiles(of func(Result) float64) (lo, hi float64) {
 	return values[len(values)/4], values[len(values)*3/4]
 }
 
+// Waves are the wave numbers this arm played, in ascending order and each once.
+func (a Arm) Waves() []int {
+	seen := map[int]bool{}
+	out := []int{}
+	for _, r := range a.Results {
+		if seen[r.Wave] {
+			continue
+		}
+		seen[r.Wave] = true
+		out = append(out, r.Wave)
+	}
+	sort.Ints(out)
+	return out
+}
+
+// AtWave is this arm holding one wave number, which is what a band belongs to.
+func (a Arm) AtWave(n int) Arm {
+	kept := Arm{Name: a.Name, Attempts: a.Attempts, Crashes: a.Crashes, Empty: a.Empty}
+	for _, r := range a.Results {
+		if r.Wave == n {
+			kept.Results = append(kept.Results, r)
+		}
+	}
+	return kept
+}
+
+/*
+foldHidesAFactor says two of the arm's waves never overlap.
+
+Wave 1 of a mission is not wave 2 of it, and a median over both is a median over
+two different problems. mvm-k57 is what that cost: defenders died read 9.0
+against 5.5 and was called inside the band, while wave 2 alone was 17 and 16
+against 9 and 8 and did not overlap at all.
+
+The test is each wave's own spread against the others, and not against the band
+the fold produced: the disagreement is what inflated that band, so measuring
+against it is measuring against itself. Ranges rather than quartiles, because
+three attempts a wave cannot carry quartiles and can still be plainly apart. Two
+attempts a wave is the floor: one is a point, and two points that differ at all
+would read as apart.
+
+Whether folding is honest is a property of the mission rather than of the switch
+being measured, so an arm is asked about itself.
+*/
+func foldHidesAFactor(a Arm, of func(Result) float64) bool {
+	waves := a.Waves()
+	if len(waves) < 2 {
+		return false
+	}
+
+	lows := make([]float64, 0, len(waves))
+	highs := make([]float64, 0, len(waves))
+	for _, w := range waves {
+		low, high, enough := spread(a.AtWave(w), of)
+		if !enough {
+			return false
+		}
+		lows, highs = append(lows, low), append(highs, high)
+	}
+
+	for i := range waves {
+		for j := i + 1; j < len(waves); j++ {
+			if highs[i] < lows[j] || highs[j] < lows[i] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// spread is the lowest and highest this arm read for a column, and whether
+// there were enough readings for the pair to mean anything.
+func spread(a Arm, of func(Result) float64) (low, high float64, enough bool) {
+	const readingsMin = 2
+	if len(a.Results) < readingsMin {
+		return 0, 0, false
+	}
+	low, high = math.Inf(1), math.Inf(-1)
+	for _, r := range a.Results {
+		v := of(r)
+		low, high = math.Min(low, v), math.Max(high, v)
+	}
+	return low, high, true
+}
+
 var columns = []struct {
 	name string
 	of   func(Result) float64
@@ -180,6 +265,28 @@ var columns = []struct {
 	{"robots killed", func(r Result) float64 { return float64(r.RobotKills) }},
 	{"defenders died", func(r Result) float64 { return float64(r.Deaths) }},
 	{"held for", func(r Result) float64 { return r.Duration }},
+}
+
+// verdict is the band rule read off the control, and the reasons there is no
+// verdict to read.
+func verdict(treated, control Arm, of func(Result) float64) string {
+	got, want := treated.Median(of), control.Median(of)
+	lo, hi := control.Quartiles(of)
+
+	switch {
+	case got == 0 && want == 0:
+		// A column nobody wrote to. Saying "inside the band" about two zeros
+		// reads as a verdict, and it is an empty column.
+		return "  (not recorded)"
+	case math.IsNaN(lo):
+		return "  (too few for a band)"
+	case foldHidesAFactor(control, of), foldHidesAFactor(treated, of):
+		return "  folded over waves whose spreads do not overlap, so nothing is claimed"
+	case got >= lo && got <= hi:
+		return fmt.Sprintf("  inside %.0f to %.0f, so nothing shown", lo, hi)
+	default:
+		return fmt.Sprintf("  outside %.0f to %.0f", lo, hi)
+	}
 }
 
 /*
@@ -198,24 +305,29 @@ func Compare(treated, control Arm) string {
 	fmt.Fprintf(&b, "%-16s %18d %18d\n", "crashes", treated.Crashes, control.Crashes)
 	fmt.Fprintf(&b, "%-16s %18d %18d\n", "empty runs", treated.Empty, control.Empty)
 
-	for _, c := range columns {
-		lo, hi := control.Quartiles(c.of)
-		got, want := treated.Median(c.of), control.Median(c.of)
+	waves := control.Waves()
 
-		var note string
-		switch {
-		case got == 0 && want == 0:
-			// A column nobody wrote to. Saying "inside the band" about two
-			// zeros reads as a verdict, and it is an empty column.
-			note = "  (not recorded)"
-		case math.IsNaN(lo):
-			note = "  (too few for a band)"
-		case got >= lo && got <= hi:
-			note = fmt.Sprintf("  inside %.0f to %.0f, so nothing shown", lo, hi)
-		default:
-			note = fmt.Sprintf("  outside %.0f to %.0f", lo, hi)
+	for _, c := range columns {
+		folded := verdict(treated, control, c.of)
+		fmt.Fprintf(&b, "%-16s %18.1f %18.1f%s\n",
+			c.name, treated.Median(c.of), control.Median(c.of), folded)
+
+		// The waves the fold was over. Once it is refused they carry the
+		// verdict instead, one band per wave, which is what a band belongs to.
+		// A column nobody wrote to is skipped: a row of zeros per wave is not
+		// a spread, it is noise on every report that does not use the column.
+		if len(waves) < 2 || strings.Contains(folded, "not recorded") {
+			continue
 		}
-		fmt.Fprintf(&b, "%-16s %18.1f %18.1f%s\n", c.name, got, want, note)
+		for _, w := range waves {
+			one, other := treated.AtWave(w), control.AtWave(w)
+			note := ""
+			if strings.Contains(folded, "nothing is claimed") {
+				note = verdict(one, other, c.of)
+			}
+			fmt.Fprintf(&b, "  %-14s %18.1f %18.1f%s\n",
+				fmt.Sprintf("wave %d", w), one.Median(c.of), other.Median(c.of), note)
+		}
 	}
 
 	if treated.Crashes == 0 && control.Crashes > 0 {

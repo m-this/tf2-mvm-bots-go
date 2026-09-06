@@ -85,7 +85,7 @@ func run() error {
 		timeout  = flag.Duration("timeout", 25*time.Minute, "how long one attempt may take")
 		team     = flag.String("team", "scout,soldier,demoman,heavyweapons,engineer,medic", "the RED lineup")
 		defend   = flag.Int("defenders", 6, "defenders RED must hold before a wave counts")
-		out      = flag.String("out", "results", "where to write the run")
+		out      = flag.String("out", "results", "where to write the run, under the plugin directory")
 		tag      = flag.String("tag", "run", "what to call this run")
 		build    = flag.Bool("build", true, "compile and restart the server before the first attempt")
 		jumpTo   = flag.Int("wave", 0, "start at this wave of the mission, 0 for the first")
@@ -102,10 +102,11 @@ func run() error {
 	puppetClass := flag.String("puppet-class", "", "the class they join as, empty for the plugin's own (scout)")
 	puppetCalls := flag.Bool("puppet-calls", false, "have them press MEDIC! at every poll while a wave runs")
 	replay := flag.String("replay", "", "a player's server.cfg, from a debug bundle, whose settings this run plays instead of the flags")
+	reread := flag.String("reread", "", "print the comparison for a finished run's tag, out of -out, and play nothing")
 	flag.Var(&list, "arm", "name:cvars, repeatable. Comma separated cvars, key=value")
 	flag.Parse()
 
-	if len(list) == 0 {
+	if *reread == "" && len(list) == 0 {
 		return errors.New("no arms: give at least one -arm name:cvars")
 	}
 	if *puppetCalls && *puppets == 0 {
@@ -125,6 +126,11 @@ func run() error {
 	root, err := repoRoot()
 	if err != nil {
 		return err
+	}
+
+	// Reading files, so no server is started and no arm has to be given.
+	if *reread != "" {
+		return printReread(filepath.Join(root, *out), *reread)
 	}
 
 	port, err := port()

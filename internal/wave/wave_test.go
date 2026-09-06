@@ -81,6 +81,67 @@ func results(kills ...int) []Result {
 	return out
 }
 
+// atWave is one arm's deaths, wave by wave: each pair is a wave number and the
+// deaths of one attempt at it.
+func atWave(pairs ...[2]int) []Result {
+	out := make([]Result, 0, len(pairs))
+	for _, p := range pairs {
+		out = append(out, Result{Event: "wave_end", Outcome: "lost", Wave: p[0], Deaths: p[1]})
+	}
+	return out
+}
+
+/*
+mvm-k57, in the numbers it was filed on.
+
+Coaltown, the disposable sentry switch: defenders died read 9.0 against 5.5 and
+was called inside the band, while wave 2 alone was 17 and 16 against 9 and 8 and
+did not overlap. Wave 1 costs nothing either way, so the median was over two
+different problems and the verdict was over neither.
+*/
+func TestCompareRefusesToFoldWavesThatDisagree(t *testing.T) {
+	control := Arm{Name: "off", Results: atWave(
+		[2]int{1, 2}, [2]int{1, 2}, [2]int{1, 3}, [2]int{1, 2},
+		[2]int{2, 9}, [2]int{2, 8}, [2]int{2, 9}, [2]int{2, 8},
+	)}
+	treated := Arm{Name: "on", Results: atWave(
+		[2]int{1, 2}, [2]int{1, 2},
+		[2]int{2, 17}, [2]int{2, 16},
+	)}
+
+	out := Compare(treated, control)
+	line := lineFor(out, "defenders died")
+	if !strings.Contains(line, "nothing is claimed") {
+		t.Errorf("a fold over waves whose spreads do not overlap produced a verdict: %q", line)
+	}
+	// The numbers the fold was hiding are on the page.
+	for _, want := range []string{"wave 1", "wave 2", "16.5", "8.5"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("the per-wave numbers do not show %q:\n%s", want, out)
+		}
+	}
+}
+
+// A mission whose waves cost the same is one problem, and folding it is honest.
+func TestCompareStillJudgesWavesThatAgree(t *testing.T) {
+	control := Arm{Name: "off", Results: atWave(
+		[2]int{1, 5}, [2]int{1, 6}, [2]int{1, 5}, [2]int{1, 6},
+		[2]int{2, 5}, [2]int{2, 6}, [2]int{2, 5}, [2]int{2, 6},
+	)}
+	treated := Arm{Name: "on", Results: atWave(
+		[2]int{1, 5}, [2]int{1, 6},
+		[2]int{2, 5}, [2]int{2, 6},
+	)}
+
+	line := lineFor(Compare(treated, control), "defenders died")
+	if strings.Contains(line, "nothing is claimed") {
+		t.Errorf("waves that agree were refused: %q", line)
+	}
+	if !strings.Contains(line, "nothing shown") {
+		t.Errorf("a median inside the band did not say so: %q", line)
+	}
+}
+
 // A column both arms left at zero is an empty column, not a verdict.
 func TestCompareDoesNotJudgeAnEmptyColumn(t *testing.T) {
 	control := Arm{Name: "off", Results: results(50, 55, 60, 65)}
