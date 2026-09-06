@@ -7,6 +7,11 @@ prose; a second file argument compares two runs.
 Facts go in the file, verdicts go in the report. Changing your mind about what
 counts as a useless dispenser should cost a recompile, not another run.
 
+`-reread <tag>` applies that to the arm comparison too. It reads a finished
+run's files back and prints the comparison again, under whatever the rule is
+now, and plays nothing. The files do not carry the runner's count of crashes and
+empty attempts, so those read as none and the report says so.
+
 ## The lines
 
 | `event` | One per | What it answers |
@@ -189,6 +194,14 @@ number the second waves do not overlap at all.
 So a band belongs to a mission **and a wave number**, which is why the one below
 names both. Comparing arms across a wave count greater than one means comparing
 each wave number separately or reading nothing.
+
+The runner does this itself now. It prints a line per wave number under every
+column. When two of an arm's waves have spreads that never overlap, it refuses
+the folded verdict. Each wave then reads against its own band instead.
+
+Ranges decide the overlap rather than quartiles. Three attempts a wave cannot
+carry quartiles and can still be plainly apart. Two attempts a wave is the
+floor, below which the runner claims nothing.
 
 ### The band for Bavarian Botbash wave 1
 
