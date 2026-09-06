@@ -164,17 +164,20 @@ func AddRandomDefenderBots(amount int32) {
 /*
 	MakePlayerDance is the send-off on the final wave
 
-The taunt itself is not written yet, so this is the shape and the aliveness test
-and nothing else. It stays as the shipped file has it: mvm-z83.41 says a port
-does not carry a fix, and filling this in is a fix.
-
+The mission is won and the players are looking at the scoreboard, so the bots
+are not kicked out from under them: the ones still standing taunt instead. The
+shipped file had the aliveness test and a TODO where the taunt goes, which is
+mvm-z83.70: on the last wave nothing happened and nobody left.
 */
 //
 //sp:name MakePlayerDance
 func MakePlayerDance(client int32) {
-	if engine.IsPlayerAlive(client) {
-		_ = client
+	if !engine.IsPlayerAlive(client) {
+		return
 	}
+
+	engine.FakeClientCommand(client, "taunt")
+	engine.LogMessage("Final wave: %N takes a bow", client)
 }
 
 /*

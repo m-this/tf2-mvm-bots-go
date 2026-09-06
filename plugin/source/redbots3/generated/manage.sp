@@ -139,14 +139,18 @@ stock void AddRandomDefenderBots(int amount)
 
 // 	MakePlayerDance is the send-off on the final wave
 //
-// The taunt itself is not written yet, so this is the shape and the aliveness test
-// and nothing else. It stays as the shipped file has it: mvm-z83.41 says a port
-// does not carry a fix, and filling this in is a fix.
+// The mission is won and the players are looking at the scoreboard, so the bots
+// are not kicked out from under them: the ones still standing taunt instead. The
+// shipped file had the aliveness test and a TODO where the taunt goes, which is
+// mvm-z83.70: on the last wave nothing happened and nobody left.
 stock void MakePlayerDance(int client)
 {
-	if (IsPlayerAlive(client))
+	if (!IsPlayerAlive(client))
 	{
+		return;
 	}
+	FakeClientCommand(client, "taunt");
+	LogMessage("Final wave: %N takes a bow", client);
 }
 
 // 	MakeRoomForHumanPlayer frees a defender seat for somebody who just connected
