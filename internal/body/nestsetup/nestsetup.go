@@ -239,15 +239,21 @@ func TopUpUpgrades(client int32) {
 }
 
 /*
-TopUpBuilding takes one building up a level.
+TopUpBuilding pays for the level the engineer is about to swing for.
 
-Through CBaseObject::StartUpgrading where the gamedata reaches it, which is the
-call that applies a level, model, health pool and firing rate with it; the
-level climbs one per think until it is at the top. Where it does not, the
-upgrade meter is filled so one wrench swing is worth a whole level, which is
-what shipped before and needs the engineer standing at it. A mini has no upgrade
-path and one that is still going up has not got a meter to fill yet: the game
-clears it when the construction finishes.
+The meter is filled first and always: that is what shipped, and one wrench swing
+is then worth a whole level. CBaseObject::StartUpgrading is asked for the level
+outright afterwards, where the gamedata reaches it, because writing
+m_iHighestUpgradeLevel does nothing at all.
+
+The call is not trusted on its own. Measured on Decoy 2026-09-06, one wave, the
+sentry read level 1 in all 22 samples with the call in place of the meter, so on
+this build it applied nothing and the meter is what works. It is called after
+the metal rather than instead of it, so a build where it does work loses no
+wrench swing and one where it does not loses nothing at all.
+
+A mini has no upgrade path and one that is still going up has not got a meter to
+fill yet: the game clears it when the construction finishes.
 */
 //
 //sp:name TopUpBuilding
@@ -264,10 +270,9 @@ func TopUpBuilding(building int32) {
 		return
 	}
 
+	engine.SetEntPropSend(building, engine.PropSend(), "m_iUpgradeMetal", setupUpgradeCost)
+
 	if engine.CallStartUpgrading() != engine.NoCall() {
 		engine.StartUpgrading(building)
-		return
 	}
-
-	engine.SetEntPropSend(building, engine.PropSend(), "m_iUpgradeMetal", setupUpgradeCost)
 }
