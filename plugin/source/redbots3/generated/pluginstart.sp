@@ -143,6 +143,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] errorText, int err
 	CreateNative("Defenderbots_PathFailures", Native_PathFailures);
 	CreateNative("Defenderbots_RangeRepairStalls", Native_RangeRepairStalls);
 	CreateNative("Defenderbots_GetAttackTarget", Native_GetAttackTarget);
+	RegisterFeatureNatives();
 	//  The one native this plugin asks for rather than offers, and it is
 	// 	allowed to be missing.
 	//

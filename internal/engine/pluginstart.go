@@ -24,6 +24,7 @@ type PluginStartCalls struct {
 	SetUpgradesAddress       func(address Address)
 	LateLoad                 func() bool
 	LoadFeatures             func()
+	RegisterFeatureNatives   func()
 	BluAssistInit            func()
 	DebugFaultsInit          func()
 	LoadLoadoutFuncs         func()
@@ -175,6 +176,12 @@ func LateLoad() bool { return pluginStarts.LateLoad() }
 //
 //sp:plugin LoadFeatures
 func LoadFeatures() { pluginStarts.LoadFeatures() }
+
+// RegisterFeatureNatives offers the feature fired counts to the statistics
+// plugin. Generated into features.sp from internal/tables.
+//
+//sp:plugin RegisterFeatureNatives
+func RegisterFeatureNatives() { pluginStarts.RegisterFeatureNatives() }
 
 // BluAssistInit prepares the BLU-side helper. Ported, bluassist.
 //

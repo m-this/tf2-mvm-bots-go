@@ -27,36 +27,40 @@ void WriteWaveResult(const char[] result)
 
 	float duration = GetGameTime() - g_flWaveStart;
 
+	char featuresFired[512];
+	FeaturesFiredSince(featuresFired, sizeof(featuresFired));
+
 	char line[STATS_LINE_LENGTH];
 	FormatEx(line, sizeof(line),
-		"{\"event\":\"wave_end\",\"map\":\"%s\",\"wave\":%d,\"result\":\"%s\",\"duration\":%.1f,"
-		... "\"robot_kills\":%d,\"giant_kills\":%d,\"tank_kills\":%d,\"sentry_kills\":%d,\"defender_deaths\":%d,"
-		... "\"backstabs\":%d,\"buster_detonations\":%d,\"sentries_lost\":%d,\"dispensers_lost\":%d,"
-		... "\"upgrades\":%d,\"upgrade_credits\":%d,\"credits_dropped\":%d,\"credits_picked_up\":%d,"
-		... "\"credits_bonus\":%d,\"credits_spent\":%d,\"credits_in_hand\":%d,\"damage\":%d,\"tank_damage\":%d,"
-		... "\"sentry_damage\":%d,\"healing\":%d,\"ubers\":%d,\"damage_scout\":%d,\"damage_sniper\":%d,"
-		... "\"damage_soldier\":%d,\"damage_demoman\":%d,\"damage_medic\":%d,\"damage_heavy\":%d,"
-		... "\"damage_pyro\":%d,\"damage_spy\":%d,\"damage_engineer\":%d,\"kills_scout\":%d,"
-		... "\"kills_soldier\":%d,\"kills_pyro\":%d,\"kills_demoman\":%d,\"kills_heavy\":%d,"
-		... "\"kills_engineer\":%d,\"kills_medic\":%d,\"kills_sniper\":%d,\"kills_spy\":%d,"
-		... "\"giantkills_scout\":%d,\"giantkills_soldier\":%d,\"giantkills_pyro\":%d,\"giantkills_demoman\":%d,"
-		... "\"giantkills_heavy\":%d,\"giantkills_engineer\":%d,\"giantkills_medic\":%d,"
-		... "\"giantkills_sniper\":%d,\"giantkills_spy\":%d,\"killedby_scout\":%d,\"killedby_soldier\":%d,"
-		... "\"killedby_pyro\":%d,\"killedby_demoman\":%d,\"killedby_heavy\":%d,\"killedby_engineer\":%d,"
-		... "\"killedby_medic\":%d,\"killedby_sniper\":%d,\"killedby_spy\":%d,\"killedby_sentry\":%d,"
-		... "\"killedby_tank\":%d,\"cause_bullet\":%d,\"cause_explosion\":%d,\"cause_fire\":%d,"
-		... "\"cause_melee\":%d,\"cause_backstab\":%d,\"cause_headshot\":%d,\"cause_fall\":%d,"
-		... "\"cause_other\":%d,\"selfdamage_scout\":%d,\"selfdamage_soldier\":%d,\"selfdamage_pyro\":%d,"
-		... "\"selfdamage_demoman\":%d,\"selfdamage_heavy\":%d,\"selfdamage_engineer\":%d,"
-		... "\"selfdamage_medic\":%d,\"selfdamage_sniper\":%d,\"selfdamage_spy\":%d,\"selfdeaths_scout\":%d,"
-		... "\"selfdeaths_soldier\":%d,\"selfdeaths_pyro\":%d,\"selfdeaths_demoman\":%d,\"selfdeaths_heavy\":%d,"
-		... "\"selfdeaths_engineer\":%d,\"selfdeaths_medic\":%d,\"selfdeaths_sniper\":%d,\"selfdeaths_spy\":%d,"
-		... "\"demo_pipe_damage\":%d,\"demo_sticky_damage\":%d,\"demo_melee_damage\":%d,"
-		... "\"soldier_rocket_damage\":%d,\"soldier_other_damage\":%d,\"fired_soldier\":%d,\"hit_soldier\":%d,"
-		... "\"fired_demoman\":%d,\"hit_demoman\":%d,\"jars_thrown\":%d,\"building_repaired\":%d,"
-		... "\"building_damage\":%d,\"healing_scoreboard\":%d,\"healing_scout\":%d,\"healing_sniper\":%d,"
-		... "\"healing_soldier\":%d,\"healing_demoman\":%d,\"healing_medic\":%d,\"healing_heavy\":%d,"
-		... "\"healing_pyro\":%d,\"healing_spy\":%d,\"healing_engineer\":%d}",
+		"{\"event\":\"wave_end\",\"features_fired\":\"%s\",\"map\":\"%s\",\"wave\":%d,\"result\":\"%s\","
+		... "\"duration\":%.1f,\"robot_kills\":%d,\"giant_kills\":%d,\"tank_kills\":%d,\"sentry_kills\":%d,"
+		... "\"defender_deaths\":%d,\"backstabs\":%d,\"buster_detonations\":%d,\"sentries_lost\":%d,"
+		... "\"dispensers_lost\":%d,\"upgrades\":%d,\"upgrade_credits\":%d,\"credits_dropped\":%d,"
+		... "\"credits_picked_up\":%d,\"credits_bonus\":%d,\"credits_spent\":%d,\"credits_in_hand\":%d,"
+		... "\"damage\":%d,\"tank_damage\":%d,\"sentry_damage\":%d,\"healing\":%d,\"ubers\":%d,"
+		... "\"damage_scout\":%d,\"damage_sniper\":%d,\"damage_soldier\":%d,\"damage_demoman\":%d,"
+		... "\"damage_medic\":%d,\"damage_heavy\":%d,\"damage_pyro\":%d,\"damage_spy\":%d,"
+		... "\"damage_engineer\":%d,\"kills_scout\":%d,\"kills_soldier\":%d,\"kills_pyro\":%d,"
+		... "\"kills_demoman\":%d,\"kills_heavy\":%d,\"kills_engineer\":%d,\"kills_medic\":%d,"
+		... "\"kills_sniper\":%d,\"kills_spy\":%d,\"giantkills_scout\":%d,\"giantkills_soldier\":%d,"
+		... "\"giantkills_pyro\":%d,\"giantkills_demoman\":%d,\"giantkills_heavy\":%d,"
+		... "\"giantkills_engineer\":%d,\"giantkills_medic\":%d,\"giantkills_sniper\":%d,\"giantkills_spy\":%d,"
+		... "\"killedby_scout\":%d,\"killedby_soldier\":%d,\"killedby_pyro\":%d,\"killedby_demoman\":%d,"
+		... "\"killedby_heavy\":%d,\"killedby_engineer\":%d,\"killedby_medic\":%d,\"killedby_sniper\":%d,"
+		... "\"killedby_spy\":%d,\"killedby_sentry\":%d,\"killedby_tank\":%d,\"cause_bullet\":%d,"
+		... "\"cause_explosion\":%d,\"cause_fire\":%d,\"cause_melee\":%d,\"cause_backstab\":%d,"
+		... "\"cause_headshot\":%d,\"cause_fall\":%d,\"cause_other\":%d,\"selfdamage_scout\":%d,"
+		... "\"selfdamage_soldier\":%d,\"selfdamage_pyro\":%d,\"selfdamage_demoman\":%d,\"selfdamage_heavy\":%d,"
+		... "\"selfdamage_engineer\":%d,\"selfdamage_medic\":%d,\"selfdamage_sniper\":%d,\"selfdamage_spy\":%d,"
+		... "\"selfdeaths_scout\":%d,\"selfdeaths_soldier\":%d,\"selfdeaths_pyro\":%d,\"selfdeaths_demoman\":%d,"
+		... "\"selfdeaths_heavy\":%d,\"selfdeaths_engineer\":%d,\"selfdeaths_medic\":%d,"
+		... "\"selfdeaths_sniper\":%d,\"selfdeaths_spy\":%d,\"demo_pipe_damage\":%d,\"demo_sticky_damage\":%d,"
+		... "\"demo_melee_damage\":%d,\"soldier_rocket_damage\":%d,\"soldier_other_damage\":%d,"
+		... "\"fired_soldier\":%d,\"hit_soldier\":%d,\"fired_demoman\":%d,\"hit_demoman\":%d,\"jars_thrown\":%d,"
+		... "\"building_repaired\":%d,\"building_damage\":%d,\"healing_scoreboard\":%d,\"healing_scout\":%d,"
+		... "\"healing_sniper\":%d,\"healing_soldier\":%d,\"healing_demoman\":%d,\"healing_medic\":%d,"
+		... "\"healing_heavy\":%d,\"healing_pyro\":%d,\"healing_spy\":%d,\"healing_engineer\":%d}",
+		featuresFired,
 		g_sMap,
 		g_iWave,
 		result,
@@ -189,4 +193,61 @@ void WriteWaveResult(const char[] result)
 	WriteEngineers("end");
 
 	g_flWaveStart = 0.0;
+}
+
+/* Which features ran during the wave, and how many times each answered true
+ *
+ * Read from the bots plugin, which counts since it loaded. The difference since the last line
+ * written is what the wave gets, so the break before it counts too: a feature that only fires
+ * between waves is a feature that fired. */
+native int Defenderbots_FeatureCount();
+native int Defenderbots_FeatureFired(int id);
+native int Defenderbots_FeatureName(int id, char[] name, int maxlen);
+
+#define FEATURES_FIRED_MAX 64
+
+static int g_iFeaturesFiredAtLastLine[FEATURES_FIRED_MAX];
+static bool g_bHasFeatureNatives;
+
+// From AskPluginLoad2: the plugin has to load on a server without the mod.
+void FeaturesFiredMarkOptional()
+{
+	MarkNativeAsOptional("Defenderbots_FeatureCount");
+	MarkNativeAsOptional("Defenderbots_FeatureFired");
+	MarkNativeAsOptional("Defenderbots_FeatureName");
+}
+
+// From OnAllPluginsLoaded.
+void FeaturesFiredFind()
+{
+	g_bHasFeatureNatives = GetFeatureStatus(FeatureType_Native, "Defenderbots_FeatureFired") == FeatureStatus_Available
+		&& GetFeatureStatus(FeatureType_Native, "Defenderbots_FeatureCount") == FeatureStatus_Available
+		&& GetFeatureStatus(FeatureType_Native, "Defenderbots_FeatureName") == FeatureStatus_Available;
+}
+
+void FeaturesFiredSince(char[] out, int maxlen)
+{
+	out[0] = '\0';
+	if (!g_bHasFeatureNatives)
+		return;
+
+	int count = Defenderbots_FeatureCount();
+	if (count > FEATURES_FIRED_MAX)
+		count = FEATURES_FIRED_MAX;
+
+	for (int id = 0; id < count; id++)
+	{
+		int fired = Defenderbots_FeatureFired(id);
+		int since = fired - g_iFeaturesFiredAtLastLine[id];
+		g_iFeaturesFiredAtLastLine[id] = fired;
+		if (since <= 0)
+			continue;
+
+		char name[64];
+		Defenderbots_FeatureName(id, name, sizeof(name));
+		if (out[0] != '\0')
+			StrCat(out, maxlen, ",");
+
+		Format(out, maxlen, "%s%s:%d", out, name, since);
+	}
 }

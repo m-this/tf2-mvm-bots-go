@@ -343,6 +343,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	MarkNativeAsOptional("Defenderbots_PathFailed");
 	MarkNativeAsOptional("Defenderbots_PathFailures");
 	MarkNativeAsOptional("Defenderbots_RangeRepairStalls");
+	FeaturesFiredMarkOptional();
 
 	return APLRes_Success;
 }
@@ -355,6 +356,8 @@ public void OnAllPluginsLoaded()
 
 	if (!g_bHasPathNatives)
 		LogMessage("mvmbots_stats: the bots plugin is not exporting its path state, so path_len will read -1");
+
+	FeaturesFiredFind();
 }
 
 public void OnPluginStart()

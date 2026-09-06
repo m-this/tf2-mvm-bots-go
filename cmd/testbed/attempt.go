@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	features "github.com/m-this/tf2-mvm-bots-go/gen/go/arms"
 	"github.com/m-this/tf2-mvm-bots-go/internal/lab"
 	"github.com/m-this/tf2-mvm-bots-go/internal/machine"
 	"github.com/m-this/tf2-mvm-bots-go/internal/wave"
@@ -32,7 +33,7 @@ shared out instead of being paid by one arm.
 func playArms(ctx context.Context, l lab.Lab, list arms, o options) ([]wave.Arm, error) {
 	got := make([]wave.Arm, len(list))
 	for i, a := range list {
-		got[i] = wave.Arm{Name: a.name}
+		got[i] = wave.Arm{Name: a.name, Armed: armedFeatures(a.cvars)}
 	}
 
 	for round := 1; round <= o.attempts; round++ {
@@ -345,4 +346,22 @@ func copyStats(ctx context.Context, _, to string) error {
 	cmd := exec.CommandContext(ctx, "docker", "cp", container()+":"+remoteStats, to)
 	cmd.Stderr = nil
 	return cmd.Run()
+}
+
+// armedFeatures is every feature the arm's cvars switch on, by the table's
+// convar names, so an arm that arms a switch the mod does not have arms nothing.
+func armedFeatures(cvars string) []string {
+	var out []string
+	for pair := range strings.SplitSeq(cvars, ",") {
+		key, value, found := strings.Cut(strings.TrimSpace(pair), "=")
+		if !found || strings.TrimSpace(value) != "1" {
+			continue
+		}
+		for _, a := range features.Arms {
+			if a.ConVar == strings.TrimSpace(key) {
+				out = append(out, a.Name)
+			}
+		}
+	}
+	return out
 }

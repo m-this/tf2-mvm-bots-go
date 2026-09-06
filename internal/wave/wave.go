@@ -11,6 +11,7 @@ import (
 	"math"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/machine"
@@ -18,14 +19,17 @@ import (
 
 // Result is one wave, as the statistics plugin wrote it.
 type Result struct {
-	Event      string `json:"event"`
-	Map        string `json:"map"`
-	Wave       int    `json:"wave"`
-	Outcome    string `json:"result"`
-	Duration   float64
-	RobotKills int `json:"robot_kills"`
-	Deaths     int `json:"defender_deaths"`
-	Damage     int `json:"damage"`
+	Event    string `json:"event"`
+	Map      string `json:"map"`
+	Wave     int    `json:"wave"`
+	Outcome  string `json:"result"`
+	Duration float64
+	// FeaturesFired is name:count pairs, comma separated: which features
+	// answered true during the wave and the break before it.
+	FeaturesFired string `json:"features_fired"`
+	RobotKills    int    `json:"robot_kills"`
+	Deaths        int    `json:"defender_deaths"`
+	Damage        int    `json:"damage"`
 }
 
 // Begun reports whether the plugin has written a wave_begin, which is the only
@@ -91,6 +95,39 @@ type Arm struct {
 	// Machines is what each attempt was played on, in order. Two arms
 	// whose machines differ are refused a comparison: see machine.Comparable.
 	Machines []machine.Machine
+	// Armed is the features this arm switched on. One that never fired in
+	// any of the arm's waves makes the arm a refusal rather than a result.
+	Armed []string
+}
+
+// Fired is how many times the named feature answered true over the arm's waves.
+func (a Arm) Fired(feature string) int {
+	total := 0
+	for _, r := range a.Results {
+		for pair := range strings.SplitSeq(r.FeaturesFired, ",") {
+			name, count, found := strings.Cut(pair, ":")
+			if !found || name != feature {
+				continue
+			}
+			n, err := strconv.Atoi(count)
+			if err == nil {
+				total += n
+			}
+		}
+	}
+	return total
+}
+
+// NeverFired is every armed feature with no firing in any wave, which is an
+// arm that did not run the code it was testing.
+func (a Arm) NeverFired() []string {
+	var out []string
+	for _, feature := range a.Armed {
+		if a.Fired(feature) == 0 {
+			out = append(out, feature)
+		}
+	}
+	return out
 }
 
 // Cleared is how many of the arm's waves ended in a win.

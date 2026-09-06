@@ -54,6 +54,7 @@ const WaveEvent = "wave_end"
 // one entry here and one more counter in the plugin; nothing else moves.
 var WaveRecord = []WaveField{
 	{JSON: "event", Literal: "wave_end"},
+	{JSON: "features_fired", Verb: "\"%s\"", SP: "featuresFired"},
 	{JSON: "map", Verb: "\"%s\"", SP: "g_sMap"},
 	{JSON: "wave", Verb: "%d", SP: "g_iWave"},
 	{JSON: "result", Verb: "\"%s\"", SP: "result"},

@@ -85,6 +85,14 @@ static const char FEATURE_NAME[FEATURE_COUNT][] =
 static ConVar g_arrFeatureConVars[FEATURE_COUNT];
 static ConVar g_cvFeaturesActive;
 
+/* How many times each feature answered true since the plugin loaded
+
+A switch that is on and a switch whose code ran are two different facts, and a
+results file that records only the first has been read as the second: two arms
+were measured where the armed feature never fired. The count is monotonic; the
+statistics plugin takes the difference between two of its own reads. */
+static int g_iFeatureFired[FEATURE_COUNT];
+
 static ConVar MakeFeature(int id, const char[] description, bool on = true)
 {
 	char name[64]; Format(name, sizeof(name), "sm_redbots_feature_%s", FEATURE_NAME[id]);
@@ -259,7 +267,43 @@ bool Feature(int id)
 	if (id < 0 || id >= FEATURE_COUNT || g_arrFeatureConVars[id] == null)
 		return true;
 
-	return g_arrFeatureConVars[id].BoolValue;
+	if (!g_arrFeatureConVars[id].BoolValue)
+		return false;
+
+	g_iFeatureFired[id]++;
+	return true;
+}
+
+// The counts, offered to the statistics plugin. Registered from AskPluginLoad2.
+void RegisterFeatureNatives()
+{
+	CreateNative("Defenderbots_FeatureCount", Native_FeatureCount);
+	CreateNative("Defenderbots_FeatureFired", Native_FeatureFired);
+	CreateNative("Defenderbots_FeatureName", Native_FeatureName);
+}
+
+public any Native_FeatureCount(Handle plugin, int numParams)
+{
+	return FEATURE_COUNT;
+}
+
+public any Native_FeatureFired(Handle plugin, int numParams)
+{
+	int id = GetNativeCell(1);
+	if (id < 0 || id >= FEATURE_COUNT)
+		return -1;
+
+	return g_iFeatureFired[id];
+}
+
+public any Native_FeatureName(Handle plugin, int numParams)
+{
+	int id = GetNativeCell(1);
+	if (id < 0 || id >= FEATURE_COUNT)
+		return 0;
+
+	SetNativeString(2, FEATURE_NAME[id], GetNativeCell(3));
+	return 1;
 }
 
 /* Publish the set that is on

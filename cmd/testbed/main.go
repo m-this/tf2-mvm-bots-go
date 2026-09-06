@@ -24,6 +24,9 @@ believed. What it refuses to do is the point:
   - arms played on different machines. Each attempt records the host, the
     memory and load it started with and the extensions' checksums, and two
     arms that differ on any of them are reported and not compared.
+  - an arm whose feature never fired. Every feature counts the times it
+    answered true, the wave line carries the counts, and an arm that switched
+    a feature on and never ran it is reported and not compared.
 */
 package main
 
@@ -260,6 +263,13 @@ func report(tag, mapName, mission string, got []wave.Arm) string {
 		for _, treated := range got[:len(got)-1] {
 			if err := machine.Comparable(treated.Machines, control.Machines); err != nil {
 				fmt.Fprintf(&b, "\n%s against %s is not compared: %v\n", treated.Name, control.Name, err)
+				continue
+			}
+			// An arm that did not run the code it was testing is not a
+			// result, whatever its numbers say.
+			if never := treated.NeverFired(); len(never) > 0 && len(treated.Results) > 0 {
+				fmt.Fprintf(&b, "\n%s against %s is not compared: %s armed %s and it never fired\n",
+					treated.Name, control.Name, treated.Name, strings.Join(never, ", "))
 				continue
 			}
 			b.WriteString(wave.Compare(treated, control))

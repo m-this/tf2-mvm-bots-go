@@ -27,6 +27,21 @@ type Feature struct {
 // Enum is the SourcePawn constant for this feature.
 func (f Feature) Enum() string { return "FEATURE_" + strings.ToUpper(f.Name) }
 
+/*
+The natives the statistics plugin reads the firings through.
+
+A feature counts every time Feature() answers true for it, so a wave line can
+say which features ran rather than which were switched on: mvm-2uj was built on
+an absent log line and mvm-666 measured two arms where the feature provably
+never fired. The names are here so the bots side that registers them and the
+stats side that declares them are written from one place.
+*/
+const (
+	FeatureCountNative = "Defenderbots_FeatureCount"
+	FeatureFiredNative = "Defenderbots_FeatureFired"
+	FeatureNameNative  = "Defenderbots_FeatureName"
+)
+
 // ConVar is the console variable a config sets to turn this feature off.
 func (f Feature) ConVar() string { return "sm_redbots_feature_" + f.Name }
 

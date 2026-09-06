@@ -41,6 +41,9 @@ void WriteWaveResult(const char[] result)
 
 	float duration = GetGameTime() - g_flWaveStart;
 
+	char featuresFired[512];
+	FeaturesFiredSince(featuresFired, sizeof(featuresFired));
+
 	char line[STATS_LINE_LENGTH];
 	FormatEx(line, sizeof(line),
 `)
@@ -106,7 +109,72 @@ void WriteWaveResult(const char[] result)
 	g_flWaveStart = 0.0;
 }
 `)
+	b.WriteString(spFeaturesFired())
 	return []byte(b.String())
+}
+
+// spFeaturesFired is the stats plugin's half of the fired counters: the natives
+// the bots plugin registers, declared optional so this plugin loads without it,
+// and the difference since the last wave line as name:count pairs.
+func spFeaturesFired() string {
+	return fmt.Sprintf(`
+/* Which features ran during the wave, and how many times each answered true
+ *
+ * Read from the bots plugin, which counts since it loaded. The difference since the last line
+ * written is what the wave gets, so the break before it counts too: a feature that only fires
+ * between waves is a feature that fired. */
+native int %[1]s();
+native int %[2]s(int id);
+native int %[3]s(int id, char[] name, int maxlen);
+
+#define FEATURES_FIRED_MAX 64
+
+static int g_iFeaturesFiredAtLastLine[FEATURES_FIRED_MAX];
+static bool g_bHasFeatureNatives;
+
+// From AskPluginLoad2: the plugin has to load on a server without the mod.
+void FeaturesFiredMarkOptional()
+{
+	MarkNativeAsOptional(%[1]q);
+	MarkNativeAsOptional(%[2]q);
+	MarkNativeAsOptional(%[3]q);
+}
+
+// From OnAllPluginsLoaded.
+void FeaturesFiredFind()
+{
+	g_bHasFeatureNatives = GetFeatureStatus(FeatureType_Native, %[2]q) == FeatureStatus_Available
+		&& GetFeatureStatus(FeatureType_Native, %[1]q) == FeatureStatus_Available
+		&& GetFeatureStatus(FeatureType_Native, %[3]q) == FeatureStatus_Available;
+}
+
+void FeaturesFiredSince(char[] out, int maxlen)
+{
+	out[0] = '\0';
+	if (!g_bHasFeatureNatives)
+		return;
+
+	int count = %[1]s();
+	if (count > FEATURES_FIRED_MAX)
+		count = FEATURES_FIRED_MAX;
+
+	for (int id = 0; id < count; id++)
+	{
+		int fired = %[2]s(id);
+		int since = fired - g_iFeaturesFiredAtLastLine[id];
+		g_iFeaturesFiredAtLastLine[id] = fired;
+		if (since <= 0)
+			continue;
+
+		char name[64];
+		%[3]s(id, name, sizeof(name));
+		if (out[0] != '\0')
+			StrCat(out, maxlen, ",");
+
+		Format(out, maxlen, "%%s%%s:%%d", out, name, since);
+	}
+}
+`, FeatureCountNative, FeatureFiredNative, FeatureNameNative)
 }
 
 // spFormatLines is the escaped format string, already quoted and broken up.

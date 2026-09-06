@@ -10,6 +10,7 @@ const Event = "wave_end"
 // Record is one wave, as the statistics plugin wrote it.
 type Record struct {
 	Event               string  `json:"event"`
+	FeaturesFired       string  `json:"features_fired"`
 	Map                 string  `json:"map"`
 	Wave                int     `json:"wave"`
 	Result              string  `json:"result"`
