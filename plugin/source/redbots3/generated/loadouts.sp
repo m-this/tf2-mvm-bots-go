@@ -780,64 +780,65 @@ public Action Timer_GiveCustomLoadout(Handle timer, int client)
 	int melee = -1;
 	if (m_iWeaponPrimary[client] > Go_ItemDefDefault)
 	{
-		TF2_RemoveWeaponSlot(client, TFWeaponSlot_Primary);
 		char itemClassname[512];
 		bool named = TF2Econ_GetItemClassName(m_iWeaponPrimary[client], itemClassname, 512);
 		if (named)
 		{
-			TF2Econ_TranslateWeaponEntForClass(itemClassname, 512, TF2_GetPlayerClass(client));
-			primary = GiveItemToPlayer(client, itemClassname, m_iWeaponPrimary[client], 1, 6);
-			if (!g_bHasBoughtUpgrades[client])
-			{
-				switch (m_iWeaponPrimary[client])
-				{
-					case 730:
-					{
-						// Beggar's Bazooka: prevent overloading.
-						TF2Attrib_SetByName(primary, "auto fires when full", 1.0);
-					}
-					case 996:
-					{
-						// Loose Cannon: prevent charging.
-						TF2Attrib_SetByName(primary, "grenade launcher mortar mode", 0.0);
-					}
-				}
-			}
+			primary = Go_GiveNamedOrKeepStock(client, TFWeaponSlot_Primary, m_iWeaponPrimary[client], itemClassname, "primary");
 		}
 		else
 		{
-			LogError("Timer_GiveCustomLoadout: Could not add primary %d to %N!", m_iWeaponPrimary[client], client);
+			LogError("Timer_GiveCustomLoadout: Could not add primary %d to %N: the schema has no class for it", m_iWeaponPrimary[client], client);
+		}
+		if ((primary != -1) && !g_bHasBoughtUpgrades[client])
+		{
+			switch (m_iWeaponPrimary[client])
+			{
+				case 730:
+				{
+					// Beggar's Bazooka: prevent overloading.
+					TF2Attrib_SetByName(primary, "auto fires when full", 1.0);
+				}
+				case 996:
+				{
+					// Loose Cannon: prevent charging.
+					TF2Attrib_SetByName(primary, "grenade launcher mortar mode", 0.0);
+				}
+			}
 		}
 	}
 	if ((m_iWeaponSecondary[client] > Go_ItemDefDefault) && !TF2_IsShieldEquipped(client))
 	{
-		TF2_RemoveWeaponSlot(client, TFWeaponSlot_Secondary);
 		char itemClassname[512];
 		bool named = TF2Econ_GetItemClassName(m_iWeaponSecondary[client], itemClassname, 512);
 		if (named)
 		{
-			TF2Econ_TranslateWeaponEntForClass(itemClassname, 512, TF2_GetPlayerClass(client));
-			secondary = GiveItemToPlayer(client, itemClassname, m_iWeaponSecondary[client], 1, 6);
-			if (!g_bHasBoughtUpgrades[client] && StrEqual(itemClassname, "tf_weapon_pipebomblauncher"))
-			{
-				// Instant fire stickies.
-				TF2Attrib_SetByName(secondary, "stickybomb charge rate", 0.0);
-			}
+			secondary = Go_GiveNamedOrKeepStock(client, TFWeaponSlot_Secondary, m_iWeaponSecondary[client], itemClassname, "secondary");
 		}
 		else
 		{
-			LogError("Timer_GiveCustomLoadout: Could not add secondary %d to %N!", m_iWeaponSecondary[client], client);
+			LogError("Timer_GiveCustomLoadout: Could not add secondary %d to %N: the schema has no class for it", m_iWeaponSecondary[client], client);
+		}
+		if ((secondary != -1) && !g_bHasBoughtUpgrades[client] && StrEqual(itemClassname, "tf_weapon_pipebomblauncher"))
+		{
+			// Instant fire stickies.
+			TF2Attrib_SetByName(secondary, "stickybomb charge rate", 0.0);
 		}
 	}
 	if (m_iWeaponMelee[client] > Go_ItemDefDefault)
 	{
-		TF2_RemoveWeaponSlot(client, TFWeaponSlot_Melee);
 		char itemClassname[512];
 		bool named = TF2Econ_GetItemClassName(m_iWeaponMelee[client], itemClassname, 512);
 		if (named)
 		{
-			TF2Econ_TranslateWeaponEntForClass(itemClassname, 512, TF2_GetPlayerClass(client));
-			melee = GiveItemToPlayer(client, itemClassname, m_iWeaponMelee[client], 1, 6);
+			melee = Go_GiveNamedOrKeepStock(client, TFWeaponSlot_Melee, m_iWeaponMelee[client], itemClassname, "melee");
+		}
+		else
+		{
+			LogError("Timer_GiveCustomLoadout: Could not add melee %d to %N: the schema has no class for it", m_iWeaponMelee[client], client);
+		}
+		if (melee != -1)
+		{
 			switch (m_iWeaponMelee[client])
 			{
 				case 1071:
@@ -851,23 +852,18 @@ public Action Timer_GiveCustomLoadout(Handle timer, int client)
 				}
 			}
 		}
-		else
-		{
-			LogError("Timer_GiveCustomLoadout: Could not add melee %d to %N!", m_iWeaponMelee[client], client);
-		}
 	}
 	if (m_iWeaponPDA2[client] > Go_ItemDefDefault)
 	{
-		TF2_RemoveWeaponSlot(client, TFWeaponSlot_Building);
 		char itemClassname[512];
 		bool named = TF2Econ_GetItemClassName(m_iWeaponPDA2[client], itemClassname, 512);
 		if (named)
 		{
-			GiveItemToPlayer(client, itemClassname, m_iWeaponPDA2[client], 1, 6);
+			Go_GiveNamedOrKeepStock(client, TFWeaponSlot_Building, m_iWeaponPDA2[client], itemClassname, "pda2");
 		}
 		else
 		{
-			LogError("Timer_GiveCustomLoadout: Could not add pda2 %d to %N!", m_iWeaponPDA2[client], client);
+			LogError("Timer_GiveCustomLoadout: Could not add pda2 %d to %N: the schema has no class for it", m_iWeaponPDA2[client], client);
 		}
 	}
 	if (g_bHasBoughtUpgrades[client])
@@ -895,5 +891,25 @@ public Action Timer_GiveCustomLoadout(Handle timer, int client)
 		PrintToChatAll("[Timer_GiveCustomLoadout] %N's ammo: %d/%d", client, BaseCombatCharacter_GetAmmoCount(client, TF_AMMO_PRIMARY), TF2Util_GetPlayerMaxAmmo(client, TF_AMMO_PRIMARY));
 	}
 	return Plugin_Stop;
+}
+
+// GiveNamedOrKeepStock puts the item in the slot, or leaves the stock one.
+//
+// The slot used to be emptied before the schema was asked whether the item had a
+// class name, and left empty when the give came back with nothing: a Heavy
+// joined RED on Rottenburg with no weapon at all, which is mvm-gkv. The callers
+// look the name up first now and only reach this with one, and a give that
+// fails hands the bot its stock loadout back.
+stock int Go_GiveNamedOrKeepStock(int client, int slot, int itemDefinition, char[] itemClassname, const char[] what)
+{
+	TF2_RemoveWeaponSlot(client, slot);
+	TF2Econ_TranslateWeaponEntForClass(itemClassname, 512, TF2_GetPlayerClass(client));
+	int weapon = GiveItemToPlayer(client, itemClassname, itemDefinition, 1, 6);
+	if (weapon == -1)
+	{
+		LogError("Timer_GiveCustomLoadout: Could not add %s %d to %N: the give failed, so he keeps stock", what, itemDefinition, client);
+		TF2_RegeneratePlayer(client);
+	}
+	return weapon;
 }
 

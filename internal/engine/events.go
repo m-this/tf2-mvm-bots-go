@@ -23,6 +23,7 @@ type EventCalls struct {
 	SetDefenderBotFlag           func(client int32, ours bool)
 	SetRandomNameOnBot           func(client int32)
 	RespawnPlayer                func(client int32)
+	RegeneratePlayer func(client int32)
 	AddBotAttribute              func(client int32, attribute int32)
 	MarkNeedsNamePurge           func(client int32)
 	SetCurrencyWithBundles       func(client int32, credits int32)
@@ -136,6 +137,12 @@ it.
 //
 //sp:native TF2_RespawnPlayer
 func RespawnPlayer(client int32) { events.RespawnPlayer(client) }
+
+// RegeneratePlayer hands the bot its stock loadout again, which is what an
+// emptied slot falls back to when the item it was emptied for cannot be given.
+//
+//sp:native TF2_RegeneratePlayer
+func RegeneratePlayer(client int32) { events.RegeneratePlayer(client) }
 
 // AddBotAttribute turns one of the game's own bot flags on.
 //
