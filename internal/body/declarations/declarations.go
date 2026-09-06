@@ -517,6 +517,10 @@ var getBonePosition engine.Call
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
 var hasAmmo engine.Call
 
+//sp:name m_hStartUpgrading
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var startUpgrading engine.Call
+
 //sp:name m_hClip1
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
 var clip1 engine.Call

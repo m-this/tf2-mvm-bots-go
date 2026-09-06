@@ -65,6 +65,16 @@ func InitSDKCalls(hGamedata engine.GameData) bool {
 		iFailCount++
 	}
 
+	/* Optional: the gamedata names the Linux symbol and no Windows signature yet.
+	A build without it fills the upgrade meter instead, so a missing call is
+	said and not counted as a failure. See mvm-9nu. */
+	engine.StartPrepSDKCall(engine.SdkCallEntity())
+	engine.PrepSetFromConf(hGamedata, engine.SdkConfSignature(), "CBaseObject::StartUpgrading")
+	engine.SetCallStartUpgrading(engine.EndPrepSDKCall())
+	if engine.CallStartUpgrading() == engine.NoCall() {
+		engine.LogMessage("No SDKCall for CBaseObject::StartUpgrading on this platform; setup fills the upgrade meter instead")
+	}
+
 	engine.StartPrepSDKCall(engine.SdkCallEntity())
 	engine.PrepSetFromConf(hGamedata, engine.SdkConfVirtual(), "CBaseCombatWeapon::Clip1")
 	engine.PrepSetReturnInfo(engine.SdkTypePlain(), engine.SdkPassPlain())

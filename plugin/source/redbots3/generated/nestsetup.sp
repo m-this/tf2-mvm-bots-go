@@ -151,10 +151,15 @@ stock void TopUpUpgrades(int client)
 	TopUpBuilding(GetObjectOfType(client, TFObject_Teleporter, TFObjectMode_Exit));
 }
 
-// TopUpBuilding fills one building's upgrade meter.
+// TopUpBuilding takes one building up a level.
 //
-// A mini has no upgrade path and one that is still going up has not got a meter to
-// fill yet: the game clears it when the construction finishes.
+// Through CBaseObject::StartUpgrading where the gamedata reaches it, which is the
+// call that applies a level, model, health pool and firing rate with it; the
+// level climbs one per think until it is at the top. Where it does not, the
+// upgrade meter is filled so one wrench swing is worth a whole level, which is
+// what shipped before and needs the engineer standing at it. A mini has no upgrade
+// path and one that is still going up has not got a meter to fill yet: the game
+// clears it when the construction finishes.
 stock void TopUpBuilding(int building)
 {
 	if ((building == INVALID_ENT_REFERENCE) || !IsValidEntity(building))
@@ -167,6 +172,11 @@ stock void TopUpBuilding(int building)
 	}
 	if (TF2_GetUpgradeLevel(building) >= TF2_GetMaxUpgradeLevel())
 	{
+		return;
+	}
+	if (m_hStartUpgrading != null)
+	{
+		SDKCall(m_hStartUpgrading, building);
 		return;
 	}
 	SetEntProp(building, Prop_Send, "m_iUpgradeMetal", SETUP_UPGRADE_COST);

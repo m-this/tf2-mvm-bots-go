@@ -52,6 +52,16 @@ stock bool InitSDKCalls(GameData hGamedata)
 		LogError("Failed to create SDKCall for CBaseCombatWeapon::HasAmmo!");
 		iFailCount++;
 	}
+	//  Optional: the gamedata names the Linux symbol and no Windows signature yet.
+	// 	A build without it fills the upgrade meter instead, so a missing call is
+	// 	said and not counted as a failure. See mvm-9nu.
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(hGamedata, SDKConf_Signature, "CBaseObject::StartUpgrading");
+	m_hStartUpgrading = EndPrepSDKCall();
+	if (m_hStartUpgrading == null)
+	{
+		LogMessage("No SDKCall for CBaseObject::StartUpgrading on this platform; setup fills the upgrade meter instead");
+	}
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGamedata, SDKConf_Virtual, "CBaseCombatWeapon::Clip1");
 	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);

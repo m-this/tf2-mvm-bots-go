@@ -163,6 +163,7 @@ Handle m_hSetMission;
 Handle m_hLookupBone;
 Handle m_hGetBonePosition;
 Handle m_hHasAmmo;
+Handle m_hStartUpgrading;
 Handle m_hClip1;
 Handle m_hGetProjectileSpeed;
 Handle m_hAimHeadTowards;

@@ -11,6 +11,7 @@ port owns, and the generator refuses the same name being owned twice.
 
 // EngineerCalls are the answers.
 type EngineerCalls struct {
+	StartUpgrading         func(building int32)
 	PickBusterRetreatArea  func(sentry int32, buster int32) Area
 	DetonateObjectOfType   func(client int32, objectType Object)
 	CarriedObject          func(client int32) int32
@@ -208,6 +209,13 @@ func UpgradeLevel(building int32) int32 { return engineers.UpgradeLevel(building
 //
 //sp:library TF2_GetMaxUpgradeLevel
 func MaxUpgradeLevel() int32 { return engineers.MaxUpgradeLevel() }
+
+// StartUpgrading is CBaseObject::StartUpgrading: the next level applied
+// outright, model, health pool and firing rate with it, which writing the
+// level does not do. Only when CallStartUpgrading is not NoCall.
+//
+//sp:sdkcall m_hStartUpgrading
+func StartUpgrading(building int32) { engineers.StartUpgrading(building) }
 
 // EntityHealth is what it has left.
 //

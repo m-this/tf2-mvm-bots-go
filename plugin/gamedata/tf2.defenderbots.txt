@@ -52,6 +52,14 @@
 		}
 		"Signatures"
 		{
+			"CBaseObject::StartUpgrading"
+			{
+				// Applies the next level outright: model, health pool and firing rate. Linux
+				// reads the symbol out of the binary; the Windows signature is not known yet,
+				// and a build without it falls back to filling the upgrade meter.
+				"library"	"server"
+				"linux"		"@_ZN11CBaseObject14StartUpgradingEv"
+			}
 			"CTFGameRules::SetCustomUpgradesFile"
 			{
 				//Only used to get g_MannVsMachineUpgrades address on windows

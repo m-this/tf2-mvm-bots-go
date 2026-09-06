@@ -249,6 +249,17 @@ func SetCallHasAmmo(c Call) { sdkCalls.set("m_hHasAmmo", c) }
 //sp:global m_hHasAmmo
 func CallHasAmmo() Call { return sdkCalls.get("m_hHasAmmo") }
 
+// SetCallStartUpgrading writes m_hStartUpgrading.
+//
+//sp:globalset m_hStartUpgrading
+func SetCallStartUpgrading(c Call) { sdkCalls.set("m_hStartUpgrading", c) }
+
+// CallStartUpgrading reads it. NoCall on a build whose gamedata has no
+// signature for it, which is Windows today.
+//
+//sp:global m_hStartUpgrading
+func CallStartUpgrading() Call { return sdkCalls.get("m_hStartUpgrading") }
+
 // SetCallClip1 writes m_hClip1.
 //
 //sp:globalset m_hClip1
