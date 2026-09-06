@@ -180,6 +180,25 @@ The cvars are `mvmbots_puppet_count`, `mvmbots_puppet_name` and
 host, the humans and the mod's own bots, because a puppet read as a defender is
 a run that thinks it measured six bots and measured five.
 
+**The break a losing team takes.** A player's team sits in the ready-up after a
+loss, and that is where the launcher's Bot Team tab saves a new lineup. The host
+readies the instant a round ends, so that window never existed here and the
+fault reported in it (mvm-tcc) could not be played. `-ready-delay` holds the
+host and the puppets in the ready-up for that long after every round, and
+`-relineup-after-loss` types a lineup into the first such break the way the
+launcher does, the four convars then `sm_redbots_reseat`:
+
+```sh
+go run ./cmd/testbed -map mvm_rottenburg -waves 2 \
+  -ready-delay 60s -relineup-after-loss "pyro,soldier,demoman,heavyweapons,engineer,medic" \
+  -arm plain:
+```
+
+The runner says what RED holds at every poll after the retype, and the next
+`wave_begin` line says how many bots the wave started with. The watcher allows
+RED to stand empty for the delay plus two polls before it calls the run off, so
+a team that never comes back is reported by name rather than waited on.
+
 A puppet reproduces what a player does, not what a player feels. It has no
 input timing, no interpolation and no packet loss, so "the medic feels
 unresponsive" is still a play-test question.

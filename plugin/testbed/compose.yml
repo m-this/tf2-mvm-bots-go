@@ -59,6 +59,7 @@ services:
       BOT_CVARS: ${TESTBED_BOT_CVARS:-}
       STATS_FILE: ${TESTBED_STATS_FILE:-mvmbots_stats.jsonl}
       TESTBED_HOST: ${TESTBED_HOST:-1}
+      TESTBED_HOST_READY_DELAY: ${TESTBED_HOST_READY_DELAY:-0}
       # Bodies on RED that stand in for players, for a fault that needs a person
       # on the team. Each takes a defender's seat, so BOT_TEAM_SIZE comes down
       # by one for each.

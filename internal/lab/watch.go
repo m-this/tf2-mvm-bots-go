@@ -46,6 +46,12 @@ type Watcher struct {
 	// gone rather than a quiet moment.
 	PatienceSilent int
 
+	// PatienceEmpty is how many polls RED may stand empty before it is called
+	// out. Nought calls it out at once. A team that lost sits in the ready-up
+	// with the game having kicked every defender, and a host told to wait
+	// there keeps RED at nought for as long as it waits: see mvm-tcc.
+	PatienceEmpty int
+
 	// PatienceQuiet is how many rcon reads in a row may fail before the server
 	// is called dead. One is not enough: a long frame makes a read time out on
 	// a server that is still there, and a run once reported a crash the
@@ -55,6 +61,7 @@ type Watcher struct {
 	noRobots int
 	silent   int
 	quiet    int
+	empty    int
 	lastSeen int
 }
 
@@ -99,13 +106,19 @@ func (w *Watcher) check(roster Roster, samples int, begun bool) Health {
 		w.noRobots = 0
 	}
 
+	if roster.Defenders == 0 {
+		w.empty++
+	} else {
+		w.empty = 0
+	}
+
 	switch {
 	case w.PatienceSilent > 0 && w.silent >= w.PatienceSilent:
 		h.Reason = fmt.Sprintf("nothing has been written down for %d polls, so the statistics plugin is not running", w.silent)
 	case w.PatienceRobots > 0 && w.noRobots >= w.PatienceRobots:
 		h.Reason = fmt.Sprintf("no robot has been on BLU for %d polls, so the mission is loaded and not playing", w.noRobots)
-	case w.WantDefenders > 0 && roster.Defenders == 0:
-		h.Reason = "RED holds no defenders, so whatever this wave measures it is not the lineup asked for"
+	case w.WantDefenders > 0 && w.empty > w.PatienceEmpty:
+		h.Reason = fmt.Sprintf("RED has held no defenders for %d poll(s), so whatever this wave measures it is not the lineup asked for", w.empty)
 	}
 	return h
 }

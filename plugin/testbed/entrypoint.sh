@@ -17,16 +17,6 @@ INTERVAL=30
 install_addons() {
 	[ -d "$GAME/addons/sourcemod" ] || return 1
 
-	# -u, and the whole test-bed depends on it. This runs every thirty seconds
-	# for as long as the server lives, and cp truncates the destination before
-	# it writes. Truncating a file the running server has mapped invalidates
-	# the pages under it: the next instruction the game executes out of that
-	# extension is SIGBUS, or SIGSEGV once a half written one is executing.
-	#
-	# It reads as a crash in whichever extension happened to be rewritten, on a
-	# stripped binary, every thirty to sixty seconds, with no plugin loaded and
-	# nobody connected. It cost a day. -u compares the timestamp, the staged
-	# tree never changes, so nothing is rewritten after the first copy.
 	cp -ru "$STAGE/addons/." "$GAME/addons/"
 	mkdir -p "$GAME/addons/sourcemod/logs"
 
@@ -195,6 +185,10 @@ install_server_cfg() {
 	// nothing ever starts a wave: the mod adds its bots in response to a human
 	// pressing F4, and the game will not begin a wave with nobody ready.
 	mvmbots_host_enabled ${TESTBED_HOST:-1}
+	// How long the host sits in the ready-up after a round ends before it
+	// readies again. Nought is the host as it was; a run that needs the break
+	// a losing team takes sets it: see mvm-tcc.
+	mvmbots_host_ready_delay ${TESTBED_HOST_READY_DELAY:-0}
 
 	// The puppets, which stand where a player stands. Nought unless a run asks,
 	// because each one takes a seat off the lineup being measured. The mod only

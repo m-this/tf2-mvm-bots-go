@@ -101,6 +101,10 @@ func run() error {
 	puppets := flag.Int("puppets", 0, "bodies to seat on RED standing in for players, each taking a defender's seat")
 	puppetClass := flag.String("puppet-class", "", "the class they join as, empty for the plugin's own (scout)")
 	puppetCalls := flag.Bool("puppet-calls", false, "have them press MEDIC! at every poll while a wave runs")
+	/* The break a losing team takes, which is where a player saves a new lineup.
+	The host readies at once, so without these the window does not exist here: mvm-tcc. */
+	readyDelay := flag.Duration("ready-delay", 0, "how long the host sits in the ready-up after a round ends before it readies again")
+	relineup := flag.String("relineup-after-loss", "", "a lineup to type, as the launcher would, in the break after the first lost wave")
 	replay := flag.String("replay", "", "a player's server.cfg, from a debug bundle, whose settings this run plays instead of the flags")
 	reread := flag.String("reread", "", "print the comparison for a finished run's tag, out of -out, and play nothing")
 	flag.Var(&list, "arm", "name:cvars, repeatable. Comma separated cvars, key=value")
@@ -113,6 +117,10 @@ func run() error {
 		return errors.New("-puppet-calls with no puppets: nothing would press the call")
 	}
 	seats := puppet{count: *puppets, class: *puppetClass, calls: *puppetCalls}
+	if *relineup != "" && *readyDelay < 2*pollEvery {
+		return fmt.Errorf("-relineup-after-loss needs a -ready-delay of at least %s, or the host readies before the poll that types it", 2*pollEvery)
+	}
+	pause := lossBreak{readyDelay: *readyDelay, lineup: *relineup}
 
 	replayed := map[string]string{}
 	if *replay != "" {
@@ -172,7 +180,7 @@ func run() error {
 			return err
 		}
 		say("restarting the server onto it")
-		if err := lab.Compose(ctx, compose, containerEnv(*mapName, *team, *defend, port, seats, replayed), "up", "-d", "--force-recreate"); err != nil {
+		if err := lab.Compose(ctx, compose, containerEnv(*mapName, *team, *defend, port, seats, pause, replayed), "up", "-d", "--force-recreate"); err != nil {
 			return err
 		}
 	}
@@ -212,7 +220,7 @@ func run() error {
 		   with RED at nought. Recreating is what a first map already does. */
 		if current, err := l.CurrentMap(); err != nil || current != name {
 			say("recreating the server on %s", name)
-			if err := lab.Compose(ctx, compose, containerEnv(name, *team, *defend, port, seats, replayed), "up", "-d", "--force-recreate"); err != nil {
+			if err := lab.Compose(ctx, compose, containerEnv(name, *team, *defend, port, seats, pause, replayed), "up", "-d", "--force-recreate"); err != nil {
 				return err
 			}
 			if err := l.WaitForRcon(ctx, 20*time.Minute); err != nil {
@@ -226,7 +234,7 @@ func run() error {
 				root: root, mapName: name, mission: *mission, waves: *waves,
 				attempts: *attempts, timeout: *timeout, team: lineup, defenders: *defend,
 				out: filepath.Join(root, *out), tag: lineupTag(*tag, i, len(lineups)), jump: *jumpTo, say: say,
-				puppets: seats, plugin: version,
+				puppets: seats, pause: pause, plugin: version,
 			})
 			// Reported whatever happened: what completed is data.
 			fmt.Print(report(lineupTag(*tag, i, len(lineups)), name, *mission, results))
@@ -253,8 +261,23 @@ type options struct {
 	timeout                                time.Duration
 	say                                    func(string, ...any)
 	puppets                                puppet
+	pause                                  lossBreak
 	// The plugin version the server has loaded, for the results file
 	plugin string
+}
+
+/*
+lossBreak is the break a losing team takes before it readies again, and what
+the run does inside it.
+
+A player's team sits in the ready-up after a loss and saves a new lineup there.
+The host readying at once left no such window, so the fault reported in it
+could never be played here: mvm-tcc. readyDelay opens the window, and lineup is
+what gets typed into it, once, after the first lost wave.
+*/
+type lossBreak struct {
+	readyDelay time.Duration
+	lineup     string
 }
 
 /*
@@ -352,16 +375,17 @@ func sortedPairs(of map[string]string) []string {
 	return out
 }
 
-func containerEnv(mapName, team string, size int, port string, p puppet, replayed map[string]string) []string {
+func containerEnv(mapName, team string, size int, port string, p puppet, pause lossBreak, replayed map[string]string) []string {
 	env := map[string]string{
-		"TESTBED_MAP":           mapName,
-		"TESTBED_BOT_TEAM_COMP": team,
-		"TESTBED_BOT_TEAM_SIZE": strconv.Itoa(size),
-		"TESTBED_HOST":          "1",
-		"TESTBED_PUPPETS":       strconv.Itoa(p.count),
-		"TESTBED_PROJECT":       bed(),
-		"TESTBED_PORT":          port,
-		"TESTBED_RCONPW":        envOr("TESTBED_RCONPW", "testbed"),
+		"TESTBED_MAP":              mapName,
+		"TESTBED_BOT_TEAM_COMP":    team,
+		"TESTBED_BOT_TEAM_SIZE":    strconv.Itoa(size),
+		"TESTBED_HOST":             "1",
+		"TESTBED_HOST_READY_DELAY": strconv.Itoa(int(pause.readyDelay.Seconds())),
+		"TESTBED_PUPPETS":          strconv.Itoa(p.count),
+		"TESTBED_PROJECT":          bed(),
+		"TESTBED_PORT":             port,
+		"TESTBED_RCONPW":           envOr("TESTBED_RCONPW", "testbed"),
 	}
 
 	// The class only when it was asked for, so an empty flag leaves the

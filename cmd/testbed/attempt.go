@@ -162,6 +162,27 @@ func checkPuppets(l lab.Lab, o options) error {
 	return nil
 }
 
+// pollEvery is how often a running wave is looked at. Named because the
+// ready-delay window and the watcher's patience are both counted in polls.
+const pollEvery = 20 * time.Second
+
+func readyDelayRecord(pause lossBreak) string {
+	if pause.readyDelay == 0 {
+		return ""
+	}
+	return pause.readyDelay.String()
+}
+
+func lost(results []wave.Result) int {
+	n := 0
+	for _, r := range results {
+		if r.Outcome == "lost" {
+			n++
+		}
+	}
+	return n
+}
+
 func cleared(results []wave.Result) int {
 	n := 0
 	for _, r := range results {
@@ -197,6 +218,9 @@ func playOnce(ctx context.Context, l lab.Lab, a arm, o options, path string, pla
 	   the last word, so a run comparing the nextbot player test against itself
 	   can still turn it off in one of its arms. */
 	if err := l.SeatPuppets(o.puppets.count); err != nil {
+		return nil, false, err
+	}
+	if err := l.ReadyDelay(o.pause.readyDelay); err != nil {
 		return nil, false, err
 	}
 
@@ -249,6 +273,7 @@ func playOnce(ctx context.Context, l lab.Lab, a arm, o options, path string, pla
 		Team: o.team, Defenders: o.defenders, Puppets: o.puppets.count, PuppetCalls: o.puppets.calls,
 		Waves: o.waves, StartWave: max(o.jump, 1), Plugin: o.plugin, At: time.Now().UTC().Format(time.RFC3339),
 		Machine: played, Injectors: injectors.Armed(a.cvars),
+		ReadyDelay: readyDelayRecord(o.pause), RelineupAfterLoss: o.pause.lineup,
 	}); err != nil {
 		return results, crashed, err
 	}
@@ -281,13 +306,36 @@ func waitForWaves(ctx context.Context, l lab.Lab, o options) ([]wave.Result, boo
 		// Three reads apart, so a crash is called after a minute of silence
 		// rather than on one long frame.
 		PatienceQuiet: 3,
+		// The host waiting in the ready-up keeps RED empty for that long on
+		// purpose; two polls past it is the mod failing to refill.
+		PatienceEmpty: int(o.pause.readyDelay/pollEvery) + 2,
 	}
 
+	retyped := false
 	var found []wave.Result
-	health, err := l.Wait(ctx, watcher, 20*time.Second, o.timeout, func() (int, int, bool) {
+	health, err := l.Wait(ctx, watcher, pollEvery, o.timeout, func() (int, int, bool) {
 		lines, results := readStagedWithLines(ctx, o.root, staged)
 		found = results
 		begun := wave.Begun(staged)
+
+		/* The lineup change lands in the break after the first loss, once.
+
+		The launcher sends it when a player saves a new team, and a team that
+		just lost is sitting in the ready-up when it does: mvm-tcc. The host
+		is holding that break open for -ready-delay, which is checked to be
+		longer than a poll, so this poll finds the loss before the host readies. */
+		if o.pause.lineup != "" && !retyped && lost(results) > 0 {
+			retyped = true
+			o.say("wave lost, typing the new lineup %q in the break", o.pause.lineup)
+			if err := l.RetypeLineup(o.pause.lineup, o.defenders); err != nil {
+				o.say("the lineup did not reach the server: %v", err)
+			}
+		}
+		if retyped {
+			if roster, err := l.Roster(); err == nil {
+				o.say("after the retype: RED holds %d defenders, BLU %d robots", roster.Defenders, roster.Robots)
+			}
+		}
 
 		/* The call rides on the poll rather than on a clock of its own.
 

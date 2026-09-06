@@ -40,7 +40,7 @@ public Plugin myinfo =
 	name = "MvM Defender Bots: test-bed host",
 	author = "m-this",
 	description = "Holds the seats a run puts on RED: the host that readies up, and the puppets that stand in for players",
-	version = "1.1.0",
+	version = "1.2.0",
 	url = "https://github.com/m-this/tf2-mvm-bots"
 };
 
@@ -71,9 +71,13 @@ ConVar g_cvName;
 ConVar g_cvPuppets;
 ConVar g_cvPuppetName;
 ConVar g_cvPuppetClass;
+ConVar g_cvReadyDelay;
 
 int g_iHost = -1;
 int g_arrPuppets[MAX_PUPPETS];
+
+//When the last round ended, in game time. The ready delay counts from here.
+float g_flRoundOver;
 
 public void OnPluginStart()
 {
@@ -106,6 +110,14 @@ public void OnPluginStart()
 	g_cvPuppetClass = CreateConVar("mvmbots_puppet_class", "scout",
 		"The class they join as. Scout by default: the smallest body, so it only takes the medic beam for being a player.");
 
+	/* A team that just lost sits in the ready-up before it readies again, and
+	   that is where a player saves a new lineup. The host readying at once
+	   left no such window here, so a fault that lives in it could not be
+	   played: mvm-tcc. */
+	g_cvReadyDelay = CreateConVar("mvmbots_host_ready_delay", "0",
+		"Seconds the host and the puppets wait after a round ends before they ready up again. Nought readies at once.",
+		_, true, 0.0, true, 600.0);
+
 	RegServerCmd("mvmbots_puppet_call", Command_PuppetCall,
 		"Press MEDIC!, as a player's key does. Takes a puppet index, or nothing for all of them.");
 	RegServerCmd("mvmbots_puppet_status", Command_PuppetStatus,
@@ -126,6 +138,8 @@ public void OnPluginStart()
  * the ready off is what makes the watch press it again. */
 static void Event_RoundOver(Event event, const char[] name, bool dontBroadcast)
 {
+	g_flRoundOver = GetGameTime();
+
 	DropReady(g_iHost);
 
 	//The puppets sit in the same seats and go stale the same way
@@ -194,10 +208,19 @@ static Action Timer_WatchHost(Handle timer)
 		return Plugin_Continue;
 	}
 
-	if (GameRules_GetRoundState() == RoundState_BetweenRounds && !IsPlayerReady(g_iHost))
+	if (ReadyIsDue() && !IsPlayerReady(g_iHost))
 		PressReady(g_iHost);
 
 	return Plugin_Continue;
+}
+
+//Between rounds, and the delay a run asked for has passed since the last one ended
+static bool ReadyIsDue()
+{
+	if (GameRules_GetRoundState() != RoundState_BetweenRounds)
+		return false;
+
+	return GetGameTime() - g_flRoundOver >= g_cvReadyDelay.FloatValue;
 }
 
 /* Press ready, and press it again a second later
@@ -343,7 +366,7 @@ static void WatchPuppets()
 			continue;
 		}
 
-		if (GameRules_GetRoundState() == RoundState_BetweenRounds && !IsPlayerReady(g_arrPuppets[n]))
+		if (ReadyIsDue() && !IsPlayerReady(g_arrPuppets[n]))
 			PressReady(g_arrPuppets[n]);
 	}
 }

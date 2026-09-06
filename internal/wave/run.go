@@ -27,10 +27,14 @@ type Run struct {
 	Defenders   int    `json:"defenders"`
 	Puppets     int    `json:"puppets"`
 	PuppetCalls bool   `json:"puppet_calls"`
-	Waves       int    `json:"waves"`
-	StartWave   int    `json:"start_wave"`
-	Plugin      string `json:"plugin"`
-	At          string `json:"at"`
+	// ReadyDelay is how long the host sat in the ready-up after each round,
+	// and RelineupAfterLoss the lineup typed in the first such break: mvm-tcc.
+	ReadyDelay        string `json:"ready_delay,omitempty"`
+	RelineupAfterLoss string `json:"relineup_after_loss,omitempty"`
+	Waves             int    `json:"waves"`
+	StartWave         int    `json:"start_wave"`
+	Plugin            string `json:"plugin"`
+	At                string `json:"at"`
 	// Injectors is the faults this arm turned on, by name. A file whose arm
 	// is not written down is one nobody can read afterwards: mvm-81n.
 	Injectors []string        `json:"injectors,omitempty"`

@@ -61,6 +61,25 @@ func TestAnEmptyRedIsCalledOut(t *testing.T) {
 	}
 }
 
+// A team that lost sits in the ready-up with nobody on RED until the host
+// readies again. With a delay on the host that is the run, not a fault, for as
+// many polls as the delay lasts.
+func TestAWaitingHostIsNotAnEmptyRed(t *testing.T) {
+	w := &Watcher{WantDefenders: 6, PatienceEmpty: 3}
+
+	for i := 0; i < 3; i++ {
+		if h := w.check(Roster{Defenders: 0, Robots: 0}, 10+i, true); h.Reason != "" {
+			t.Fatalf("an empty RED was called out after %d polls: %q", i+1, h.Reason)
+		}
+	}
+	if h := w.check(Roster{Defenders: 0, Robots: 0}, 13, true); !strings.Contains(h.Reason, "no defenders") {
+		t.Errorf("an empty RED past the patience read as %q", h.Reason)
+	}
+	if h := w.check(Roster{Defenders: 6, Robots: 0}, 14, true); h.Reason != "" {
+		t.Errorf("RED refilling did not clear the count: %q", h.Reason)
+	}
+}
+
 // A break has no robots on purpose, and the bots spend it shopping. Counting
 // that as a stalled mission stopped a healthy run after a hundred seconds.
 func TestABreakIsNotAStall(t *testing.T) {

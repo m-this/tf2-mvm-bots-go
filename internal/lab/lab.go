@@ -173,6 +173,38 @@ func (l Lab) CallForMedic() (int, error) {
 	return n, nil
 }
 
+/*
+RetypeLineup sends what the launcher sends when a player saves a new team:
+the four convars, then sm_redbots_reseat, in that order. The same commands,
+because the fault under measurement is what the mod does with them: mvm-tcc.
+*/
+func (l Lab) RetypeLineup(team string, size int) error {
+	commands := []string{
+		"sm_redbots_manager_defender_team_size " + strconv.Itoa(size),
+		`sm_redbots_manager_class_blacklist ""`,
+		`sm_redbots_manager_team_composition "` + team + `"`,
+		"sm_redbots_manager_use_custom_loadouts 1",
+		"sm_redbots_reseat",
+	}
+	for _, command := range commands {
+		out, err := l.Do(command)
+		if err != nil {
+			return err
+		}
+		if reply := trim(out); reply != "" {
+			l.say("%s: %s", command, reply)
+		}
+	}
+	return nil
+}
+
+// ReadyDelay tells the host and the puppets how long to sit in the ready-up
+// after a round ends. Nought is the host as it was.
+func (l Lab) ReadyDelay(d time.Duration) error {
+	_, err := l.Do("mvmbots_host_ready_delay " + strconv.Itoa(int(d.Seconds())))
+	return err
+}
+
 // PuppetStatus is what the puppets are doing right now, one line each, which is
 // how a call is watched while the wave runs rather than read afterwards.
 func (l Lab) PuppetStatus() (string, error) {
