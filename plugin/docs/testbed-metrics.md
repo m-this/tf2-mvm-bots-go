@@ -131,6 +131,25 @@ way came back at the baseline. The arm that looked like a discovery had waves of
 Two arms of eight can see a wave lost sixteen times out of sixteen. They cannot
 see a change in how long it is held.
 
+### A band over two different waves hides what is in it
+
+Measured 2026-09-06 on Coaltown, the disposable sentry switch, two attempts of
+two waves an arm. The runner read defenders died as 9.0 against 5.5 and called
+it inside its band, which was right about the band and wrong about the run:
+
+| | wave 1 | wave 2 |
+| --- | --- | --- |
+| disposable on | 2, 2 | 17, 16 |
+| disposable off | 3, 3 | 9, 8 |
+
+Wave 1 of that mission costs nothing either way and wave 2 is where it bites, so
+a median over both is a median over two different problems. Paired by wave
+number the second waves do not overlap at all.
+
+So a band belongs to a mission **and a wave number**, which is why the one below
+names both. Comparing arms across a wave count greater than one means comparing
+each wave number separately or reading nothing.
+
 ### The band for Bavarian Botbash wave 1
 
 Twenty four attempts on the unchanged build, `mvm_rottenburg_advanced1` wave 1,
