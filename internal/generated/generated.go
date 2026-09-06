@@ -41,6 +41,7 @@ func Files(root string) (map[string][]byte, error) {
 		"go/arms/arms.go":                  tables.GoFeatureArms("arms"),
 		"go/attr/attr.go":                  tables.GoAttributes("attr"),
 		"go/wave/wave.go":                  tables.GoWaveParser("wave"),
+		"go/injectors/injectors.go":        tables.GoInjectors("injectors"),
 	}
 	for name, source := range bodies {
 		if _, taken := out[name]; taken {

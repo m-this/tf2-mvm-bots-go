@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/m-this/tf2-mvm-bots-go/gen/go/injectors"
 	"github.com/m-this/tf2-mvm-bots-go/internal/machine"
 	"github.com/m-this/tf2-mvm-bots-go/internal/wave"
 )
@@ -57,5 +58,13 @@ func TestArmedFeaturesComeFromTheTable(t *testing.T) {
 	got := armedFeatures("sm_redbots_feature_threat_priority=1, sm_redbots_feature_spy_glance=0,sm_redbots_manager_extra=1")
 	if len(got) != 1 || got[0] != "threat_priority" {
 		t.Fatalf("armed %v", got)
+	}
+}
+
+func TestTheRunRecordNamesTheInjectorsTheArmArmed(t *testing.T) {
+	got := injectors.Armed("sm_redbots_debug_wedge_seconds=60,sm_redbots_debug_wedge_class=engineer," +
+		"sm_redbots_debug_unreachable_goal=0,sm_redbots_feature_path_length_cap=1")
+	if len(got) != 1 || got[0] != "wedge_seconds" {
+		t.Fatalf("armed %v; the class selects, the zero is off, and the feature is not an injector", got)
 	}
 }

@@ -17,21 +17,24 @@ The event name keeps it out of every reader: Read counts wave_begin and
 wave_end and nothing else, and the report loaders each look for their own.
 */
 type Run struct {
-	Event       string          `json:"event"`
-	Tag         string          `json:"tag"`
-	Arm         string          `json:"arm"`
-	Cvars       string          `json:"cvars"`
-	Map         string          `json:"map"`
-	Mission     string          `json:"mission"`
-	Team        string          `json:"team"`
-	Defenders   int             `json:"defenders"`
-	Puppets     int             `json:"puppets"`
-	PuppetCalls bool            `json:"puppet_calls"`
-	Waves       int             `json:"waves"`
-	StartWave   int             `json:"start_wave"`
-	Plugin      string          `json:"plugin"`
-	At          string          `json:"at"`
-	Machine     machine.Machine `json:"machine"`
+	Event       string `json:"event"`
+	Tag         string `json:"tag"`
+	Arm         string `json:"arm"`
+	Cvars       string `json:"cvars"`
+	Map         string `json:"map"`
+	Mission     string `json:"mission"`
+	Team        string `json:"team"`
+	Defenders   int    `json:"defenders"`
+	Puppets     int    `json:"puppets"`
+	PuppetCalls bool   `json:"puppet_calls"`
+	Waves       int    `json:"waves"`
+	StartWave   int    `json:"start_wave"`
+	Plugin      string `json:"plugin"`
+	At          string `json:"at"`
+	// Injectors is the faults this arm turned on, by name. A file whose arm
+	// is not written down is one nobody can read afterwards: mvm-81n.
+	Injectors []string        `json:"injectors,omitempty"`
+	Machine   machine.Machine `json:"machine"`
 }
 
 // RunEvent is the event name the record carries.

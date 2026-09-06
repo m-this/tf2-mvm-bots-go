@@ -12,6 +12,7 @@ import (
 	"time"
 
 	features "github.com/m-this/tf2-mvm-bots-go/gen/go/arms"
+	"github.com/m-this/tf2-mvm-bots-go/gen/go/injectors"
 	"github.com/m-this/tf2-mvm-bots-go/internal/lab"
 	"github.com/m-this/tf2-mvm-bots-go/internal/machine"
 	"github.com/m-this/tf2-mvm-bots-go/internal/wave"
@@ -247,7 +248,7 @@ func playOnce(ctx context.Context, l lab.Lab, a arm, o options, path string, pla
 		Tag: o.tag, Arm: a.name, Cvars: a.cvars, Map: o.mapName, Mission: o.mission,
 		Team: o.team, Defenders: o.defenders, Puppets: o.puppets.count, PuppetCalls: o.puppets.calls,
 		Waves: o.waves, StartWave: max(o.jump, 1), Plugin: o.plugin, At: time.Now().UTC().Format(time.RFC3339),
-		Machine: played,
+		Machine: played, Injectors: injectors.Armed(a.cvars),
 	}); err != nil {
 		return results, crashed, err
 	}
