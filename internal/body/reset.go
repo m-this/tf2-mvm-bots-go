@@ -155,7 +155,6 @@ var unreviewed = []string{
 	"internal/action/engineeridle.carryDeadline",
 	"internal/action/engineeridle.sentryUnderFire",
 	"internal/action/engineeridle.stallReportAt",
-	"internal/action/engineeridle.rangeRepairStalls",
 	"internal/action/getammo.ammoAsk",
 	"internal/action/getammo.ammoPossible",
 	"internal/action/gethealth.healthAsk",

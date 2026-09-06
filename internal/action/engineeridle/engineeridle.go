@@ -898,6 +898,21 @@ func NoteRangeRepair(actor int32, sentry int32) {
 	engine.LogBuildFailure(actor, "repairing at range", "three seconds of bolts and the sentry gained nothing")
 }
 
+/*
+ForgetRangeRepairStalls clears a seat's stall count, which the next bot in it
+did not earn.
+
+The count is read per client by Native_RangeRepairStalls and nothing else, so
+carrying it across a seat costs a wrong measurement rather than a wrong move.
+The action's own reset is the wrong place: it runs at every OnStart, which is
+several times a wave, and a counter reset that often counts nothing.
+*/
+//
+//sp:name Go_ForgetRangeRepairStalls
+func ForgetRangeRepairStalls(client int32) {
+	rangeRepairStalls[client] = 0
+}
+
 // ForgetRangeRepair starts the count again.
 //
 //sp:name ForgetRangeRepair
