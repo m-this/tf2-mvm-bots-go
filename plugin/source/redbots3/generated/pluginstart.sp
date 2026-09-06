@@ -98,7 +98,7 @@ public void OnPluginStart()
 		{
 			bFailed = true;
 		}
-		hGamedata.Close();
+		delete hGamedata;
 		if (bFailed)
 		{
 			SetFailState("Gamedata failed!");

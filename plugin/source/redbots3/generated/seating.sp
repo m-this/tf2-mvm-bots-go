@@ -201,7 +201,7 @@ stock void ChooseBotClassesFromLineupMode(int count)
 					g_adtChosenBotClasses.PushString(g_sRawPlayerClassNames[GetRandomInt(TFClass_Scout, TFClass_Engineer)]);
 				}
 			}
-			adtClassPref.Close();
+			delete adtClassPref;
 		}
 		default:
 		{

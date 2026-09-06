@@ -112,7 +112,7 @@ stock int MenuHandler_DefenderBotTeamSetup(Menu menu, MenuAction action, int par
 		}
 		case MenuAction_End:
 		{
-			menu.Close();
+			delete menu;
 		}
 	}
 	return 0;
@@ -178,7 +178,7 @@ stock int MenuHandler_DefenderBotTeamConfirmation(Menu menu, MenuAction action, 
 		}
 		case MenuAction_End:
 		{
-			menu.Close();
+			delete menu;
 		}
 	}
 	return 0;

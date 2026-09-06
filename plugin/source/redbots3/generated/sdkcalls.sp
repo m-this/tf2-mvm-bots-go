@@ -174,7 +174,7 @@ stock bool InitSDKCalls(GameData hGamedata)
 		LogError("Failed to create SDKCall for CBaseEntity::ShouldCollide from file %s.txt", sTempConfFileName);
 		iFailCount++;
 	}
-	hTempConf.Close();
+	delete hTempConf;
 	if (iFailCount > 0)
 	{
 		LogError("InitSDKCalls: GameData file has %d problems!", iFailCount);

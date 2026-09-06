@@ -88,7 +88,7 @@ stock int MenuHandler_ClassPreference(Menu menu, MenuAction action, int param1, 
 		}
 		case MenuAction_End:
 		{
-			menu.Close();
+			delete menu;
 		}
 		case MenuAction_Cancel:
 		{
@@ -187,12 +187,12 @@ stock int MenuHandler_BotPreferenceMain(Menu menu, MenuAction action, int param1
 // was there.
 stock void CreateBotPreferenceMenu()
 {
-	g_hBotPreferenceMenu.Close();
+	delete g_hBotPreferenceMenu;
 	g_hBotPreferenceMenu = CreateMenu(MenuHandler_BotPreferenceMain);
 	SetMenuTitle(g_hBotPreferenceMenu, "Teammate Bot Preferences");
 	AddMenuItem(g_hBotPreferenceMenu, "0", "Class");
 	AddMenuItem(g_hBotPreferenceMenu, "1", "Weapons");
-	m_hWeaponPrefClassMenu.Close();
+	delete m_hWeaponPrefClassMenu;
 	m_hWeaponPrefClassMenu = CreateMenu(MenuHandler_WeaponPreferenceClassList);
 	SetMenuExitBackButton(m_hWeaponPrefClassMenu, true);
 	AddMenuItem(m_hWeaponPrefClassMenu, "0", "Scout");
@@ -321,7 +321,7 @@ stock int MenuHandler_WeaponPreference(Menu menu, MenuAction action, int param1,
 		}
 		case MenuAction_End:
 		{
-			menu.Close();
+			delete menu;
 		}
 		case MenuAction_Cancel:
 		{
@@ -385,7 +385,7 @@ stock int MenuHandler_WeaponPreferenceItemList(Menu menu, MenuAction action, int
 		}
 		case MenuAction_End:
 		{
-			menu.Close();
+			delete menu;
 		}
 		case MenuAction_Cancel:
 		{

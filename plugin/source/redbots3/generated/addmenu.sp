@@ -74,7 +74,7 @@ stock int MenuHandler_AddDefenderBots(Menu menu, MenuAction action, int param1, 
 		}
 		case MenuAction_End:
 		{
-			menu.Close();
+			delete menu;
 			return 0;
 		}
 	}

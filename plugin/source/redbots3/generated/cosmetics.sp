@@ -392,7 +392,7 @@ stock ArrayList BuildHatPool(TFClassType playerClass)
 		}
 		pool.Push(itemDefinition);
 	}
-	items.Close();
+	delete items;
 	return pool;
 }
 

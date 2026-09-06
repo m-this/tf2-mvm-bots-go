@@ -190,8 +190,8 @@ stock int AddBotsFromTeamComposition(int count)
 		NoteBotSeatPending(seats.Get(i));
 		AddDefenderTFBot(1, class, "red", "expert");
 	}
-	classes.Close();
-	seats.Close();
+	delete classes;
+	delete seats;
 	if (added > 0)
 	{
 		PrintToChatAll("%s Adding %d bot(s)...", PLUGIN_PREFIX, added);
@@ -266,7 +266,7 @@ stock int ReseatDefenderBots()
 		ClearBuildingsBeforeKick(client);
 		KickClient(client, "BotManager3: the lineup changed");
 	}
-	bots.Close();
+	delete bots;
 	if (kicked > 0)
 	{
 		LogMessage("Reseat: the lineup wants %d seat(s) nobody holds, kicked %d bot(s) for them", missing, kicked);

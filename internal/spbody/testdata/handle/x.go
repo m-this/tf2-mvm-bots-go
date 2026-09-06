@@ -45,3 +45,25 @@ func Missing(origin [3]float32) int32 {
 
 	return count
 }
+
+/*
+Reload closes by hand rather than by defer, which is the shape that crashed.
+
+A closed handle keeps the number it had, and SourceMod hands that number out
+again. The variable then reads as neither null nor its own, so the guard that
+asks whether it is null lets the next call through and the call throws. delete
+is SourcePawn's close that writes null over the variable, so the golden pins
+that a close written by hand comes out as delete and not as a call to Close.
+*/
+func Reload(origin [3]float32) int32 {
+	kept.Close()
+	kept = engine.CollectAreasInRadius(origin, 100.0)
+
+	return kept.Count()
+}
+
+// kept outlives the function that fills it, which is why closing it by hand is
+// the only way to close it at all.
+//
+//sp:writable
+var kept engine.Areas

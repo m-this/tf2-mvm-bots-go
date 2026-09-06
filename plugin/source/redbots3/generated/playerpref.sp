@@ -265,11 +265,11 @@ stock int GetPreferredWeaponForClass(const char[] class, const char[] slot, int 
 	// No preferences found, probably no human red players.
 	if (weaponPref.Length < 1)
 	{
-		weaponPref.Close();
+		delete weaponPref;
 		return GetRandomWeaponForClass(class, slot);
 	}
 	int itemDefIndex = weaponPref.Get(GetRandomInt(0, weaponPref.Length - 1));
-	weaponPref.Close();
+	delete weaponPref;
 	return itemDefIndex;
 }
 
@@ -374,7 +374,7 @@ stock void AddBotsBasedOnPreferences(int amount)
 		// Nobody had preferences, just add random bots.
 		AddRandomDefenderBots(amount);
 	}
-	classPref.Close();
+	delete classPref;
 }
 
 // ConfigLoadServerLoadout reads the server's own loadout file, if it wrote one.
@@ -392,9 +392,9 @@ stock void Config_LoadServerLoadout()
 	// Cowser as a crash on loading a new map and not on a restart, which is
 	// exactly the difference: a restart makes these null again and a changelevel
 	// does not.
-	m_kvServerLoadout.Close();
+	delete m_kvServerLoadout;
 	m_kvServerLoadout = null;
-	m_adtPendingBotSeats.Close();
+	delete m_adtPendingBotSeats;
 	m_adtPendingBotSeats = null;
 	char filePath[512];
 	BuildPath(Path_SM, filePath, 512, "configs/defenderbots/loadout.cfg");
@@ -406,7 +406,7 @@ stock void Config_LoadServerLoadout()
 	if (!m_kvServerLoadout.ImportFromFile(filePath))
 	{
 		LogError("Config_LoadServerLoadout: Could not read %s!", filePath);
-		m_kvServerLoadout.Close();
+		delete m_kvServerLoadout;
 		m_kvServerLoadout = null;
 		return;
 	}
