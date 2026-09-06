@@ -11,33 +11,34 @@ mod; each package clears its own now and this is how the reset reaches them.
 
 // ResetCalls are the answers.
 type ResetCalls struct {
-	ResetMarkGiant         func(client int32)
-	ResetGotoUpgrade       func(client int32)
-	ResetGetAmmo           func(client int32)
-	ResetMoveToFront       func(client int32)
-	ResetGetHealth         func(client int32)
-	ResetSpySap            func(client int32)
-	ResetSpySapPlayer      func(client int32)
-	ResetAttackForUber     func(client int32)
-	ResetAttackTank        func(client int32)
-	ResetDestroyTeleporter func(client int32)
-	ResetBuildTeleporter   func(client int32)
-	ResetNestSetup         func(client int32)
-	ResetGuardPoint        func(client int32)
-	ResetAttack            func(client int32)
-	ResetCollectMoney      func(client int32)
-	ResetScoutJump         func(client int32)
-	ResetBottle            func(client int32)
-	ResetSpyCheck          func(client int32)
-	ResetStickyTrap        func(client int32)
-	SetNextUpgrade         func(client int32, when float32)
-	SetPurchasedUpgrades   func(client int32, count int32)
-	SetUpgradingTime       func(client int32, when float32)
-	PluginBotReset         func(b PluginBot)
-	NewRoutePath           func(ignoreActors int32, onlyActors int32) Path
-	NewChasePath           func(lead int32, cost int32, ignoreActors int32, onlyActors int32) Path
-	SetPath                func(actor int32, path Path)
-	SetChasePath           func(actor int32, path Path)
+	ResetMarkGiant          func(client int32)
+	ResetGotoUpgrade        func(client int32)
+	ResetGetAmmo            func(client int32)
+	ResetMoveToFront        func(client int32)
+	ResetGetHealth          func(client int32)
+	ResetSpySap             func(client int32)
+	ResetSpySapPlayer       func(client int32)
+	ResetAttackForUber      func(client int32)
+	ResetAttackTank         func(client int32)
+	ResetDestroyTeleporter  func(client int32)
+	ResetBuildTeleporter    func(client int32)
+	ResetNestSetup          func(client int32)
+	ForgetRangeRepairStalls func(client int32)
+	ResetGuardPoint         func(client int32)
+	ResetAttack             func(client int32)
+	ResetCollectMoney       func(client int32)
+	ResetScoutJump          func(client int32)
+	ResetBottle             func(client int32)
+	ResetSpyCheck           func(client int32)
+	ResetStickyTrap         func(client int32)
+	SetNextUpgrade          func(client int32, when float32)
+	SetPurchasedUpgrades    func(client int32, count int32)
+	SetUpgradingTime        func(client int32, when float32)
+	PluginBotReset          func(b PluginBot)
+	NewRoutePath            func(ignoreActors int32, onlyActors int32) Path
+	NewChasePath            func(lead int32, cost int32, ignoreActors int32, onlyActors int32) Path
+	SetPath                 func(actor int32, path Path)
+	SetChasePath            func(actor int32, path Path)
 }
 
 var resets ResetCalls
@@ -111,6 +112,12 @@ func ResetBuildTeleporter(client int32) { resets.ResetBuildTeleporter(client) }
 //
 //sp:body Go_ResetNestSetup
 func ResetNestSetup(client int32) { resets.ResetNestSetup(client) }
+
+// ForgetRangeRepairStalls is engineeridle's stall count, which is a
+// measurement of the bot that earned it and not of the seat.
+//
+//sp:body Go_ForgetRangeRepairStalls
+func ForgetRangeRepairStalls(client int32) { resets.ForgetRangeRepairStalls(client) }
 
 // ResetGuardPoint is guardpoint's own. Ported, guardpoint.
 //
