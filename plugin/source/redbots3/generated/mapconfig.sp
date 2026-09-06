@@ -151,11 +151,11 @@ stock eMissionDifficulty Config_GetMissionDifficultyFromName(char[] missionName)
 			TrimString(currentLine);
 			if (StrEqual(currentLine, missionName))
 			{
-				hOpenedFile.Close();
+				delete hOpenedFile;
 				return i;
 			}
 		}
-		hOpenedFile.Close();
+		delete hOpenedFile;
 	}
 	return MISSION_UNKNOWN;
 }

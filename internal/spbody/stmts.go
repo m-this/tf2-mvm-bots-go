@@ -31,7 +31,9 @@ func (e *emitter) stmt(s ast.Stmt) {
 	case *ast.DeclStmt:
 		e.localDecl(n.Decl.(*ast.GenDecl))
 	case *ast.ExprStmt:
-		e.line("%s;", e.expr(n.X))
+		if !e.deleteStmt(n.X) {
+			e.line("%s;", e.expr(n.X))
+		}
 	case *ast.AssignStmt:
 		e.assign(n)
 	case *ast.IncDecStmt:
@@ -293,6 +295,43 @@ func (e *emitter) arrayCall(define bool, lhs, rhs ast.Expr) bool {
 		}
 	}
 	e.line("%s;", e.callWith(call, extra))
+	return true
+}
+
+/*
+	deleteStmt writes SourcePawn's delete rather than a call to Close
+
+delete frees the handle and writes null over the variable that held it. Close
+frees it and leaves the number behind, which SourceMod hands out again: the
+variable then reads as neither null nor its own, and the next call on it
+throws. That is mvm-fjz, where a map change closed the loadout and the pending
+seats, left both variables holding a handle somebody else had since been given,
+and threw on the first bot the new map asked for.
+
+Only a plain name, because delete nulls what it is given and an expression has
+nothing to null. Only the close that is delete: a handle with a teardown of its
+own is called by the name its directive gives it.
+*/
+func (e *emitter) deleteStmt(x ast.Expr) bool {
+	call, ok := x.(*ast.CallExpr)
+	if !ok || len(call.Args) != 0 {
+		return false
+	}
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return false
+	}
+	extern, _, isMethod := e.externMethod(sel)
+	if !isMethod || !extern.Delete {
+		return false
+	}
+	id, ok := sel.X.(*ast.Ident)
+	if !ok || e.closerFor(id) != "" {
+		return false
+	}
+	// e.expr rather than the name as written: a global carries the name the
+	// plugin gave it, and a delete of the Go name would not compile.
+	e.line("delete %s;", e.expr(id))
 	return true
 }
 

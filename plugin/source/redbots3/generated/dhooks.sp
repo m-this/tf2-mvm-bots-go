@@ -70,11 +70,11 @@ stock bool RegisterDetour(GameData gd, const char[] fnName, DHookCallback pre = 
 	}
 	else
 	{
-		hDetour.Close();
+		delete hDetour;
 		LogError("Failed to detour \"%s\"!", fnName);
 		return false;
 	}
-	hDetour.Close();
+	delete hDetour;
 	return true;
 }
 
