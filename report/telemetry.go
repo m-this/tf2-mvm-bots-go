@@ -20,6 +20,14 @@ import (
 	"strings"
 )
 
+// The events the two sample lines carry. Named once, because the selector in
+// report/select.go picks lines by them too and a second spelling is a filter
+// that silently matches nothing.
+const (
+	botEvent      = "bot"
+	buildingEvent = "building"
+)
+
 type botSample struct {
 	Event        string    `json:"event"`
 	Wave         int       `json:"wave"`
@@ -294,12 +302,12 @@ func loadTelemetry(path string) ([]botSample, []buildingSample, error) {
 		}
 
 		switch {
-		case strings.Contains(line, `"event":"bot"`):
+		case strings.Contains(line, `"event":"`+botEvent+`"`):
 			var s botSample
 			if json.Unmarshal([]byte(line), &s) == nil && s.Wave > 0 {
 				bots = append(bots, s)
 			}
-		case strings.Contains(line, `"event":"building"`):
+		case strings.Contains(line, `"event":"`+buildingEvent+`"`):
 			var s buildingSample
 			if json.Unmarshal([]byte(line), &s) == nil && s.Wave > 0 {
 				buildings = append(buildings, s)

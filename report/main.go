@@ -13,6 +13,8 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"sort"
@@ -405,22 +407,48 @@ func printSpread(waves []wave) {
 }
 
 func main() {
-	args := os.Args[1:]
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
 
+func run() error {
+	/* Two readings of the same files, and the prose one is the one to read.
+
+	-json is the same figures without the words, and -field is one column out
+	of the raw lines. Both exist because every question narrower than the prose
+	was answered with a throwaway Python script: mvm-1ro. */
+	asJSON := flag.Bool("json", false, "write the report as JSON instead of prose")
+	field := flag.String("field", "", "one field out of the raw lines: the series, the count and the quartiles")
+	var where filters
+	flag.Var(&where, "where", "field=value, repeatable, narrowing which lines -field reads")
+	flag.Parse()
+
+	args := flag.Args()
 	if len(args) == 0 || len(args) > 2 {
-		fmt.Fprintln(os.Stderr, "usage: report <after.jsonl> [before.jsonl]")
-		return
+		return errors.New("usage: report [-json] [-field name [-where field=value]] <after.jsonl> [before.jsonl]")
+	}
+
+	if *field != "" {
+		got, err := selectField(args[0], *field, where)
+		if err != nil {
+			return err
+		}
+		return printSelection(got, *asJSON)
+	}
+	if *asJSON {
+		return printJSON(args)
 	}
 
 	after, err := load(args[0])
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return err
 	}
 
 	if len(after) == 0 {
 		fmt.Printf("%s\n  no wave results in this file\n", args[0])
-		return
+		return nil
 	}
 
 	now := summarise(after)
@@ -456,43 +484,92 @@ func main() {
 	printSpread(after)
 
 	if len(args) == 1 {
-		return
+		return nil
 	}
 
 	before, err := load(args[1])
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return err
 	}
 
 	then := summarise(before)
 	report(args[1], then)
-	if err := sameMachine(args[0], args[1]); err != nil {
-		fmt.Printf("\nnot compared: %v\n", err)
-		os.Exit(1)
+	note, err := sameMachine(args[0], args[1])
+	if err != nil {
+		return fmt.Errorf("not compared: %w", err)
+	}
+	if note != "" {
+		fmt.Printf("\n%s\n", note)
 	}
 	compare(now, then)
 
 	if thenSetup, err := loadSetup(args[1]); err == nil {
 		compareSetup(nowSetup, thenSetup)
 	}
+	return nil
 }
 
-// sameMachine refuses to read two files against each other when their run
-// records say they were played on different things. A file with no record
-// predates the record, and is said so rather than refused.
-func sameMachine(after, before string) error {
+/*
+printJSON is the report without the words, over one file or two.
+
+A comparison the machine refuses is still emitted, with the reason on it: a
+reader that gets nothing back cannot tell a refusal from a crash.
+*/
+func printJSON(args []string) error {
+	after, err := load(args[0])
+	if err != nil {
+		return err
+	}
+	one := asSummary(args[0], summarise(after))
+	if len(args) == 1 {
+		return writeJSON(one)
+	}
+
+	before, err := load(args[1])
+	if err != nil {
+		return err
+	}
+	both := Comparison{After: one, Before: asSummary(args[1], summarise(before))}
+	note, err := sameMachine(args[0], args[1])
+	switch {
+	case err != nil:
+		both.NotCompared = err.Error()
+	case note != "":
+		both.NotCompared = note
+	}
+	return writeJSON(both)
+}
+
+// filters is -where, repeated. Named rather than a comma list, so a value with
+// a comma in it is still one filter.
+type filters []string
+
+func (f *filters) String() string { return strings.Join(*f, " and ") }
+
+func (f *filters) Set(value string) error {
+	*f = append(*f, value)
+	return nil
+}
+
+/*
+sameMachine refuses to read two files against each other when their run records
+say they were played on different things.
+
+A file with no record predates the record, and is said rather than refused. The
+note is returned instead of printed because the caller may be writing JSON, and
+a line of prose in the middle of that is not something a reader can parse.
+*/
+func sameMachine(after, before string) (note string, err error) {
 	var machines [][]machine.Machine
 	for _, path := range []string{after, before} {
 		run, found, err := runs.ReadRun(path)
 		if err != nil {
-			return err
+			return "", err
 		}
 		if !found {
-			fmt.Printf("\n%s has no run record, so the machine it was played on is unknown\n", path)
-			return nil
+			return path + " has no run record, so the machine it was played on is unknown", nil
 		}
 		machines = append(machines, []machine.Machine{run.Machine})
 	}
-	return machine.Comparable(machines...)
+	return "", machine.Comparable(machines...)
 }
