@@ -90,8 +90,17 @@ type Arm struct {
 	Name     string
 	Results  []Result
 	Attempts int // runs started, which is not the number of waves they produced
-	Crashes  int
-	Empty    int // attempts that produced no wave at all
+	/* The crash columns, and why there are two of them.
+
+	The same argument was had in four sessions: an arm crashed, the other did
+	not, and nobody could say whether the change or the bed did it. This bed has
+	a crash rate of its own, so a crashed attempt is replayed once on the same
+	arm. Crashes is the ones that crashed again, which are the arm's. BedCrashes
+	is the ones that did not, which are the bed's and are not charged to
+	anybody. See mvm-9yn. */
+	Crashes    int
+	BedCrashes int
+	Empty      int // attempts that produced no wave at all
 	// Machines is what each attempt was played on, in order. Two arms
 	// whose machines differ are refused a comparison: see machine.Comparable.
 	Machines []machine.Machine
@@ -303,7 +312,13 @@ func Compare(treated, control Arm) string {
 	fmt.Fprintf(&b, "%-16s %18d %18d\n", "waves", len(treated.Results), len(control.Results))
 	fmt.Fprintf(&b, "%-16s %18d %18d\n", "waves cleared", treated.Cleared(), control.Cleared())
 	fmt.Fprintf(&b, "%-16s %18d %18d\n", "crashes", treated.Crashes, control.Crashes)
+	if treated.BedCrashes+control.BedCrashes > 0 {
+		fmt.Fprintf(&b, "%-16s %18d %18d\n", "bed crashes", treated.BedCrashes, control.BedCrashes)
+	}
 	fmt.Fprintf(&b, "%-16s %18d %18d\n", "empty runs", treated.Empty, control.Empty)
+	if treated.BedCrashes+control.BedCrashes > 0 {
+		b.WriteString("\nThe bed crashes did not crash again on their replay, so they are the bed's and are charged to neither arm.\n")
+	}
 
 	waves := control.Waves()
 

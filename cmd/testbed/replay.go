@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -39,9 +41,18 @@ readServerCfg pulls the replayable settings out of a player's server.cfg.
 
 Returns them keyed by the compose variable that carries each, so the caller can
 hand them straight to containerEnv without knowing which convar is which.
+
+The file is refused before it is opened if git would commit it. That is not
+theoretical: a player's cfg was copied into plugin/testbed/ so a run could name
+it, a later `git add -A testbed/` swept it in, and his rcon_password and
+sv_password went to a public repository. Removing the file from the tip did not
+remove it from the history. See mvm-2xs.
 */
 func readServerCfg(path string) (map[string]string, error) {
-	file, err := os.Open(path)
+	if err := refuseIfTracked(path); err != nil {
+		return nil, err
+	}
+	file, err := os.Open(path) //nolint:gosec // the path the caller named, checked above
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +77,58 @@ func readServerCfg(path string) (map[string]string, error) {
 		return nil, fmt.Errorf("%s names none of the settings a run replays", path)
 	}
 	return found, nil
+}
+
+/*
+refuseIfTracked stops a replay whose cfg is somewhere git would commit it.
+
+Asked of git rather than guessed at: a path git already ignores is fine wherever
+it is, a path outside any working tree is fine, and anything else is a file one
+`git add -A` away from being published. The check is the same one a person would
+run, which is why it is git's answer and not a list of directory names here.
+*/
+func refuseIfTracked(path string) error {
+	full, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	dir := filepath.Dir(full)
+
+	// No working tree above it: the file is the caller's own business.
+	if !ran("git", "-C", dir, "rev-parse", "--is-inside-work-tree") {
+		return nil
+	}
+	// Ignored, so git will not carry it however the tree is staged.
+	if ran("git", "-C", dir, "check-ignore", "-q", full) {
+		return nil
+	}
+	return fmt.Errorf("%s is inside a git working tree and is not ignored, and a server.cfg carries the player's rcon_password: put it under %s, which is ignored, or outside the tree",
+		full, filepath.Join("plugin", "testbed", "replays"))
+}
+
+// ran is whether a command answered yes. git says both of the things above
+// through its exit status, and the difference between "no" and "git is broken"
+// does not change the answer here: either way the path is not known-ignored.
+func ran(name string, args ...string) bool {
+	return exec.Command(name, args...).Run() == nil //nolint:gosec // the name is a constant at every call site
+}
+
+/*
+credentials never leave the cfg, and this is the assertion that says so.
+
+settingsReplayed is a whitelist, so a password is not read in the first place;
+this refuses the mistake of widening that list to something that carries one.
+*/
+var credentials = []string{"password", "steamaccount", "token"}
+
+func init() {
+	for convar := range settingsReplayed {
+		for _, mark := range credentials {
+			if strings.Contains(convar, mark) {
+				panic("settingsReplayed carries " + convar + ", which is a credential: a replayed cfg must not leave the player's machine")
+			}
+		}
+	}
 }
 
 // settingLine splits "name value", dropping comments and the quotes around a

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -40,6 +39,11 @@ func playArms(ctx context.Context, l lab.Lab, list arms, o options) ([]wave.Arm,
 	for round := 1; round <= o.attempts; round++ {
 		for _, at := range roundOrder(len(list), round) {
 			o.say("=== %s attempt %d of %d", list[at].name, round, o.attempts)
+			o.record.update(func(s *State) {
+				s.Arm, s.Round = list[at].name, round
+				s.WavesSeen, s.Samples, s.Reason = 0, 0, ""
+				s.Deadline = stamp(time.Now().Add(o.timeout))
+			})
 			if err := playInto(ctx, l, list[at], o, round, &got[at]); err != nil {
 				/* What completed is reported with the refusal.
 
@@ -71,41 +75,55 @@ func roundOrder(count, round int) []int {
 	return order
 }
 
+/*
+playInto plays one attempt, replaying it once if the server died under it.
+
+The replay is what keeps the bed's own crash rate off an arm. Four sessions
+argued the same argument from the same evidence — an arm crashed, the other did
+not — and every one of them settled it with a re-run typed by hand, whose
+reasoning was lost when the session ended. One retry per attempt, on the same
+arm and the same round, and the crash counts as the arm's only if it happens
+again. See mvm-9yn.
+*/
 func playInto(ctx context.Context, l lab.Lab, a arm, o options, round int, got *wave.Arm) error {
 	got.Attempts++
 
 	path := filepath.Join(o.out, fmt.Sprintf("%s-%s-%d.jsonl", o.tag, a.name, round))
 
-	// Read before the attempt, so what is recorded is the machine the wave
-	// started on rather than the machine the wave left behind.
-	played, err := machine.Snapshot(extensionsDir(o.root))
+	results, record, err := attemptOnce(ctx, l, a, o, round, path, got)
 	if err != nil {
 		return err
 	}
-	got.Machines = append(got.Machines, played)
 
-	results, crashed, err := playOnce(ctx, l, a, o, path, played)
-	switch {
-	case errors.Is(err, context.Canceled):
-		return err
-	case errors.Is(err, lab.ErrPrecondition):
-		// Loud, and the run stops: a precondition that fails once fails the
-		// same way every time, and grinding through the rest wastes an hour
-		// to produce nothing.
-		return err
-	case err != nil:
-		o.say("attempt %d did not finish: %v", round, err)
+	if record.Outcome == wave.AttemptCrashed {
+		o.say("replaying %s round %d: a crash the bed may own is not charged to an arm until it happens again", a.name, round)
+		record.Retried = true
+
+		second, again, err := attemptOnce(ctx, l, a, o, round, path, got)
+		if err != nil {
+			return err
+		}
+		record.Reproduced = again.Outcome == wave.AttemptCrashed
+		// The replay is the attempt that counts: it is the one whose waves,
+		// machine and reason describe what is in the file now.
+		results, again.Retried, again.Reproduced = second, true, record.Reproduced
+		record = again
 	}
 
-	if crashed {
+	switch {
+	case record.Reproduced || (record.Outcome == wave.AttemptCrashed && !record.Retried):
 		got.Crashes++
-		if words := lastWords(ctx); words != "" {
-			o.say("the server's last words:\n%s", words)
-		}
+	case record.Outcome == wave.AttemptCrashed:
+		got.BedCrashes++
+	}
+	if record.Outcome == wave.AttemptEmpty || record.Outcome == wave.AttemptCrashed {
+		got.Empty++
+	}
+
+	if err := writeAttemptRecord(path, record); err != nil {
+		return err
 	}
 	if len(results) == 0 {
-		got.Empty++
-		o.say("attempt %d produced no wave result", round)
 		return nil
 	}
 	got.Results = append(got.Results, results...)
@@ -128,6 +146,61 @@ func playInto(ctx context.Context, l lab.Lab, a arm, o options, round int, got *
 	}
 
 	return nil
+}
+
+/*
+attemptOnce plays the mission once and says what happened, in the record that
+goes into the file.
+
+The machine is read before the attempt, so what is recorded is the machine the
+wave started on rather than the machine the wave left behind. The crash window
+starts at the same moment, so nothing the container remembers from an earlier
+attempt is counted against this one: that mistake is mvm-427.
+*/
+func attemptOnce(ctx context.Context, l lab.Lab, a arm, o options, round int, path string, got *wave.Arm) ([]wave.Result, wave.Attempt, error) {
+	began := time.Now()
+	played, err := machine.Snapshot(extensionsDir(o.root))
+	if err != nil {
+		return nil, wave.Attempt{}, err
+	}
+	got.Machines = append(got.Machines, played)
+
+	record := wave.Attempt{
+		Tag: o.tag, Arm: a.name, Round: round,
+		StartedAt: began.UTC().Format(time.RFC3339), Machine: played,
+	}
+
+	results, crashed, reason, err := playOnce(ctx, l, a, o, path, played)
+	record.EndedAt = time.Now().UTC().Format(time.RFC3339)
+	record.WavesSeen, record.Reason = len(results), reason
+
+	switch {
+	case errors.Is(err, context.Canceled):
+		return nil, record, err
+	case errors.Is(err, lab.ErrPrecondition):
+		// Loud, and the run stops: a precondition that fails once fails the
+		// same way every time, and grinding through the rest wastes an hour
+		// to produce nothing.
+		record.Outcome, record.Refusal = wave.AttemptRefused, err.Error()
+		_ = writeAttemptRecord(path, record)
+		return nil, record, err
+	case err != nil:
+		o.say("attempt %d did not finish: %v", round, err)
+	}
+
+	switch {
+	case crashed:
+		record.Outcome = wave.AttemptCrashed
+		fault := crashesSince(ctx, o.bed, began)
+		record.CrashKind = fault.Kind()
+		fault.say(o.say)
+	case len(results) == 0:
+		record.Outcome = wave.AttemptEmpty
+		o.say("attempt %d produced no wave result", round)
+	default:
+		record.Outcome = wave.AttemptFinished
+	}
+	return results, record, nil
 }
 
 /*
@@ -199,29 +272,29 @@ func extensionsDir(root string) string {
 	return filepath.Join(root, "testbed", "build", "package", "addons", "sourcemod", "extensions")
 }
 
-func playOnce(ctx context.Context, l lab.Lab, a arm, o options, path string, played machine.Machine) ([]wave.Result, bool, error) {
-	if err := clearStats(ctx, o.root); err != nil {
-		return nil, false, err
+func playOnce(ctx context.Context, l lab.Lab, a arm, o options, path string, played machine.Machine) ([]wave.Result, bool, string, error) {
+	if err := o.bed.ClearStats(ctx); err != nil {
+		return nil, false, "", err
 	}
 	if err := l.LoadMission(ctx, o.mapName, o.mission); err != nil {
-		return nil, false, err
+		return nil, false, "", err
 	}
 
 	/* The arm goes on after the map load, not before.
 	   A map load execs server.cfg, and that file puts the container's own values back: an arm set
 	   first is an arm the server has forgotten by the time the wave starts. */
 	if _, err := l.Do("sm_redbots_manager_team_composition \"" + o.team + "\""); err != nil {
-		return nil, false, err
+		return nil, false, "", err
 	}
 
 	/* Before the arm cvars, not after: the arm is what is under test and gets
 	   the last word, so a run comparing the nextbot player test against itself
 	   can still turn it off in one of its arms. */
 	if err := l.SeatPuppets(o.puppets.count); err != nil {
-		return nil, false, err
+		return nil, false, "", err
 	}
 	if err := l.ReadyDelay(o.pause.readyDelay); err != nil {
-		return nil, false, err
+		return nil, false, "", err
 	}
 
 	for _, pair := range strings.Split(a.cvars, ",") {
@@ -230,10 +303,10 @@ func playOnce(ctx context.Context, l lab.Lab, a arm, o options, path string, pla
 		}
 		key, value, found := strings.Cut(pair, "=")
 		if !found {
-			return nil, false, fmt.Errorf("an arm cvar is key=value, not %q", pair)
+			return nil, false, "", fmt.Errorf("an arm cvar is key=value, not %q", pair)
 		}
 		if _, err := l.Do(key + " " + value); err != nil {
-			return nil, false, err
+			return nil, false, "", err
 		}
 	}
 
@@ -249,24 +322,24 @@ func playOnce(ctx context.Context, l lab.Lab, a arm, o options, path string, pla
 	start := max(o.jump, 1)
 	o.say("starting at wave %d", start)
 	if err := l.JumpToWave(ctx, start); err != nil {
-		return nil, false, err
+		return nil, false, "", err
 	}
 	if err := l.Settle(ctx, o.defenders, 3*time.Minute); err != nil {
-		return nil, false, err
+		return nil, false, "", err
 	}
 	if err := checkPuppets(l, o); err != nil {
-		return nil, false, err
+		return nil, false, "", err
 	}
 	if o.jump > 0 {
 		o.say("jumping to wave %d", o.jump)
 		if err := l.JumpToWave(ctx, o.jump); err != nil {
-			return nil, false, err
+			return nil, false, "", err
 		}
 	}
 
 	results, crashed, reason := waitForWaves(ctx, l, o)
-	if err := copyStats(ctx, o.root, path); err != nil {
-		return results, crashed, err
+	if err := o.bed.CopyStats(ctx, path); err != nil {
+		return results, crashed, reason, err
 	}
 	if err := writeRunRecord(path, wave.Run{
 		Tag: o.tag, Arm: a.name, Cvars: a.cvars, Map: o.mapName, Mission: o.mission,
@@ -275,14 +348,14 @@ func playOnce(ctx context.Context, l lab.Lab, a arm, o options, path string, pla
 		Machine: played, Injectors: injectors.Armed(a.cvars),
 		ReadyDelay: readyDelayRecord(o.pause), RelineupAfterLoss: o.pause.lineup,
 	}); err != nil {
-		return results, crashed, err
+		return results, crashed, reason, err
 	}
 	if len(results) == 0 && reason != "" && !crashed {
 		// A run that produced nothing for a reason the watcher can name is
 		// worth saying out loud, and worth keeping out of the numbers.
 		o.say("nothing usable from this attempt: %s", reason)
 	}
-	return results, crashed, nil
+	return results, crashed, reason, nil
 }
 
 /*
@@ -295,7 +368,7 @@ and an empty file.
 */
 func waitForWaves(ctx context.Context, l lab.Lab, o options) ([]wave.Result, bool, string) {
 	// Named for the bed: two beds staging into one file read each other's waves.
-	staged := filepath.Join(os.TempDir(), bed()+"-stats.jsonl")
+	staged := filepath.Join(os.TempDir(), bedName()+"-stats.jsonl")
 
 	watcher := &lab.Watcher{
 		WantDefenders: o.defenders,
@@ -314,9 +387,12 @@ func waitForWaves(ctx context.Context, l lab.Lab, o options) ([]wave.Result, boo
 	retyped := false
 	var found []wave.Result
 	health, err := l.Wait(ctx, watcher, pollEvery, o.timeout, func() (int, int, bool) {
-		lines, results := readStagedWithLines(ctx, o.root, staged)
+		lines, results := readStagedWithLines(ctx, o.bed, staged)
 		found = results
 		begun := wave.Begun(staged)
+		// The record is what a second shell reads, and it is written from the
+		// same poll the watcher judges on rather than from a clock of its own.
+		o.record.update(func(s *State) { s.WavesSeen, s.Samples = len(results), lines })
 
 		/* The lineup change lands in the break after the first loss, once.
 
@@ -364,12 +440,13 @@ func waitForWaves(ctx context.Context, l lab.Lab, o options) ([]wave.Result, boo
 		return found, false, ""
 	}
 	o.say("%s", health.Reason)
+	o.record.update(func(s *State) { s.Reason = health.Reason })
 	return found, health.Fatal, health.Reason
 }
 
 // The line count is what tells a quiet wave from a dead plugin.
-func readStagedWithLines(ctx context.Context, root, staged string) (int, []wave.Result) {
-	if err := copyStats(ctx, root, staged); err != nil {
+func readStagedWithLines(ctx context.Context, on server, staged string) (int, []wave.Result) {
+	if err := on.CopyStats(ctx, staged); err != nil {
 		return 0, nil
 	}
 	body, err := os.ReadFile(staged)
@@ -383,24 +460,6 @@ func readStagedWithLines(ctx context.Context, root, staged string) (int, []wave.
 		return lines, nil
 	}
 	return lines, results
-}
-
-const remoteStats = "/home/steam/tf-dedicated/tf/addons/sourcemod/logs/mvmbots_stats.jsonl"
-
-func clearStats(ctx context.Context, _ string) error {
-	return exec.CommandContext(ctx, "docker", "exec", container(),
-		"sh", "-c", "rm -f "+remoteStats).Run()
-}
-
-func copyStats(ctx context.Context, _, to string) error {
-	// 0o750: the results are this developer's own, and nothing else on the
-	// machine reads them.
-	if err := os.MkdirAll(filepath.Dir(to), 0o750); err != nil {
-		return err
-	}
-	cmd := exec.CommandContext(ctx, "docker", "cp", container()+":"+remoteStats, to)
-	cmd.Stderr = nil
-	return cmd.Run()
 }
 
 // armedFeatures is every feature the arm's cvars switch on, by the table's

@@ -20,7 +20,7 @@ func envOr(key, fallback string) string {
 }
 
 /*
-bed is which test-bed this runner drives.
+bedName is which test-bed this runner drives.
 
 One machine can run two: each is a compose project with a port of its own, and
 the second builds its tree over the first's game volume rather than downloading
@@ -30,12 +30,12 @@ runner reading the wrong one.
 */
 const firstBed = "mvmbots-testbed"
 
-func bed() string { return envOr("TESTBED_PROJECT", firstBed) }
+func bedName() string { return envOr("TESTBED_PROJECT", firstBed) }
 
 func port() (string, error) {
 	p := os.Getenv("TESTBED_PORT")
-	if p == "" && bed() != firstBed {
-		return "", fmt.Errorf("TESTBED_PROJECT=%s needs a TESTBED_PORT of its own; the first bed has 27025", bed())
+	if p == "" && bedName() != firstBed {
+		return "", fmt.Errorf("TESTBED_PROJECT=%s needs a TESTBED_PORT of its own; the first bed has 27025", bedName())
 	}
 	if p == "" {
 		return "27025", nil
@@ -47,7 +47,7 @@ func address(port string) string { return "127.0.0.1:" + port }
 
 func password() string { return envOr("TESTBED_RCONPW", "testbed") }
 
-func container() string { return envOr("TESTBED_CONTAINER", bed()+"-srcds-1") }
+func container() string { return envOr("TESTBED_CONTAINER", bedName()+"-srcds-1") }
 
 /*
 	repoRoot is the plugin tree, not this repository's root
@@ -86,22 +86,30 @@ hold takes the test-bed, and says who has it rather than waiting.
 Two runners is not a slow run, it is two runs measuring each other's map
 changes. That happened three times in one session before this existed, and each
 time the results looked ordinary.
+
+The refusal used to be a bare pid, which was a dead end ten times over: it says
+nothing about what is being played, which bed it is, or when it will be free,
+and nothing about whether the process is still there. What that invited was
+worse than the wait. A session that could not read the lock reached for a
+compose command by hand, and compose.yml defaults its project name to the first
+bed, so a line typed without TESTBED_PROJECT recreates somebody else's server.
+So the refusal reads the run record and names the run, the map, the arm and the
+deadline, and points at the other beds. See mvm-d84.
 */
 func hold(path string) (func(), error) {
-	// 0o600: the lock holds a pid so the message can name who has the bed,
-	// and nobody else needs to read it.
+	// 0o600: the lock is this developer's own, and the run record beside it is
+	// what anybody else reads.
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o600)
 	if err != nil {
 		return nil, err
 	}
 	if err := syscall.Flock(int(file.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
-		held, _ := os.ReadFile(path)
 		_ = file.Close()
-		return nil, fmt.Errorf("the test-bed is already in use by %s", strings.TrimSpace(string(held)))
+		return nil, fmt.Errorf("%s is already in use.\n%s", bedName(), heldBy())
 	}
 	if err := file.Truncate(0); err == nil {
-		// Best effort: the lock is the flock, and the pid in the file is
-		// only there so the message names who has it.
+		// Best effort: the lock is the flock. The pid is here so a reader with
+		// no run record still has something to look at.
 		_, _ = fmt.Fprintf(file, "pid %d", os.Getpid())
 	}
 	return func() {
@@ -109,4 +117,25 @@ func hold(path string) (func(), error) {
 		_ = file.Close()
 		_ = os.Remove(path)
 	}, nil
+}
+
+/*
+heldBy is what the runner holding the bed is doing, and what to do instead.
+
+A flock the kernel has already dropped cannot be the one refusing here, so the
+holder is alive whatever its record says; a record that looks stale next to a
+live lock is a runner that has not written a poll yet.
+*/
+func heldBy() string {
+	var b strings.Builder
+	s, found, err := readState(bedName())
+	switch {
+	case err != nil || !found:
+		b.WriteString("  there is no run record for it, so it was started by something older than mvm-c4a\n")
+	default:
+		b.WriteString(describe(s))
+	}
+	b.WriteString("  a second bed is TESTBED_PROJECT with a TESTBED_PORT of its own; `testbed -bed list` says which exist\n")
+	b.WriteString("  do not run compose against this tree by hand: it defaults to " + firstBed + " and would recreate the server above\n")
+	return b.String()
 }

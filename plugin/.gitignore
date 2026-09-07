@@ -11,4 +11,10 @@
 
 # The runner's single-instance lock, which is state and not source
 testbed/.lock
-testbed/peppy-server.cfg
+
+# Somebody else's server.cfg, replayed with -replay. Named by shape rather than
+# by one player's file: a player's cfg was swept in by `git add -A testbed/`
+# once and his rcon_password went to a public repository. mvm-2xs.
+testbed/replays/*
+!testbed/replays/README.md
+testbed/*server*.cfg

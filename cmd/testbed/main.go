@@ -69,6 +69,11 @@ func (a *arms) Set(value string) error {
 	return nil
 }
 
+// isRefusal is a precondition the runner would not play through, as against a
+// run that broke. The two get different verdicts in the run record and
+// different exit stories for a caller reading it.
+func isRefusal(err error) bool { return errors.Is(err, lab.ErrPrecondition) }
+
 func main() {
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "\ntestbed: %v\n", err)
@@ -76,7 +81,7 @@ func main() {
 	}
 }
 
-func run() error {
+func run() (err error) {
 	var (
 		mapName  = flag.String("map", "mvm_decoy", "the map to play")
 		mission  = flag.String("mission", "", "the popfile to play, empty for the map's own")
@@ -107,10 +112,72 @@ func run() error {
 	relineup := flag.String("relineup-after-loss", "", "a lineup to type, as the launcher would, in the break after the first lost wave")
 	replay := flag.String("replay", "", "a player's server.cfg, from a debug bundle, whose settings this run plays instead of the flags")
 	reread := flag.String("reread", "", "print the comparison for a finished run's tag, out of -out, and play nothing")
+	/* Reading the bed instead of playing it. None of these takes the lock and
+	   none of them starts a wave, so a second shell can ask what is going on
+	   while a run is in flight. See mvm-c4a, mvm-dqs, mvm-d84 and mvm-4jz. */
+	status := flag.Bool("status", false, "print what this bed is doing and exit")
+	waitFor := flag.Bool("wait", false, "block until this bed's run ends, printing each transition, and exit with its verdict")
+	following := flag.Bool("follow", false, "print wave results as they land, until the run ends")
+	crashes := flag.Bool("crashes", false, "classify what the container log says killed the server, over -since")
+	since := flag.Duration("since", time.Hour, "how far back -crashes reads the container log")
+	bedCmd := flag.String("bed", "", "up, down or list: start this bed, stop it, or say what beds this machine has")
+	/* The native path, which is a mode and not a second program.
+
+	A native server is reported to crash far more often than the same mod under
+	Docker (mvm-y7e), and the run that would settle it is the one the runner
+	could not vouch for while it was a shell script of its own: mvm-tjb. */
+	native := flag.Bool("native", false, "play on srcds as a process under TESTBED_NATIVE_ROOT rather than in the container")
+	asJSON := flag.Bool("json", false, "write -status, -follow, -bed list and -crashes as JSON")
 	flag.Var(&list, "arm", "name:cvars, repeatable. Comma separated cvars, key=value")
 	flag.Parse()
 
-	if *reread == "" && len(list) == 0 {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	root, err := repoRoot()
+	if err != nil {
+		return err
+	}
+	port, err := port()
+	if err != nil {
+		return err
+	}
+	bed := serverFor(*native, root, port)
+	if *native {
+		// A crash with no core is a crash nobody can look into, and the soft
+		// limit is nought on most machines. Docker sets its own.
+		if err := raiseCoreLimit(); err != nil {
+			fmt.Printf("[testbed] the core limit could not be raised, so a native crash will leave nothing to symbolise: %v\n", err)
+		}
+	}
+
+	/* The readers come first, and they play nothing.
+
+	Each one replaces something a session used to type by hand against the bed:
+	a sleep and a tail, a pgrep loop, a docker exec wc -l over the statistics
+	file, a docker logs | grep for the word "core". */
+	switch {
+	case *reread != "":
+		return printReread(filepath.Join(root, *out), *reread)
+	case *status:
+		return printStatus(bedName(), *asJSON)
+	case *waitFor:
+		return waitForRun(ctx, bedName())
+	case *following:
+		return follow(ctx, bedName(), *asJSON)
+	case *crashes:
+		return printCrashes(ctx, bed, *since, *asJSON)
+	}
+
+	if *bedCmd != "" {
+		if *native {
+			return errors.New("-bed is the container bed; a native server lives as long as the run that started it")
+		}
+		return bedAction(ctx, *bedCmd, root,
+			containerEnv(*mapName, *team, *defend, port, puppet{}, lossBreak{}, nil), *asJSON)
+	}
+
+	if len(list) == 0 {
 		return errors.New("no arms: give at least one -arm name:cvars")
 	}
 	if *puppetCalls && *puppets == 0 {
@@ -131,18 +198,13 @@ func run() error {
 		replayed = found
 	}
 
-	root, err := repoRoot()
-	if err != nil {
-		return err
+	say := func(format string, args ...any) {
+		fmt.Printf("[testbed] "+format+"\n", args...)
 	}
 
-	// Reading files, so no server is started and no arm has to be given.
-	if *reread != "" {
-		return printReread(filepath.Join(root, *out), *reread)
-	}
-
-	port, err := port()
-	if err != nil {
+	/* Before the lock and before the build, because the numbers that refuse a
+	   comparison at the end are known at the start: mvm-076. */
+	if err := preflight(ctx, bed, say); err != nil {
 		return err
 	}
 
@@ -150,18 +212,18 @@ func run() error {
 	   one container per bed for the whole machine. A lock under the checkout
 	   let a worktree or a second clone take a different file and recreate the
 	   same container out from under the first runner. */
-	release, err := hold(filepath.Join(os.TempDir(), bed()+".lock"))
+	release, err := hold(filepath.Join(os.TempDir(), bedName()+".lock"))
 	if err != nil {
 		return err
 	}
 	defer release()
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
-	say := func(format string, args ...any) {
-		fmt.Printf("[testbed] "+format+"\n", args...)
-	}
+	record := newTracker(State{
+		Bed: bedName(), Port: port, Container: containerOf(*native), PID: os.Getpid(),
+		Tag: *tag, Map: *mapName, Mission: *mission,
+		Attempts: *attempts, WavesWanted: *waves,
+	}, say)
+	defer func() { record.done(err) }()
 
 	// Said out loud, because a run that quietly played settings other than the
 	// ones on the command line is the whole fault this flag exists for.
@@ -173,14 +235,13 @@ func run() error {
 		Say:    say,
 	}
 
-	compose := filepath.Join(root, "testbed", "compose.yml")
 	if *build {
 		say("building")
 		if err := compile(ctx, root); err != nil {
 			return err
 		}
 		say("restarting the server onto it")
-		if err := lab.Compose(ctx, compose, containerEnv(*mapName, *team, *defend, port, seats, pause, replayed), "up", "-d", "--force-recreate"); err != nil {
+		if err := bed.Recreate(ctx, *mapName, containerEnv(*mapName, *team, *defend, port, seats, pause, replayed)); err != nil {
 			return err
 		}
 	}
@@ -192,10 +253,17 @@ func run() error {
 		return err
 	}
 
-	if *down {
+	/* A native server is always stopped, whatever -down says.
+
+	The container outlives the run on purpose: the next run reuses it and skips
+	a recreate. A process does not, and one left behind holds the port against
+	the next run and keeps writing into the game copy. */
+	if *down || *native {
 		defer func() {
 			say("stopping the server")
-			_ = lab.Compose(context.Background(), filepath.Join(root, "testbed", "compose.yml"), nil, "stop")
+			if err := bed.Stop(context.Background()); err != nil {
+				say("the server did not stop: %v", err)
+			}
 		}()
 	}
 
@@ -219,8 +287,9 @@ func run() error {
 		   and waits to be started again: every second map of a sweep refused
 		   with RED at nought. Recreating is what a first map already does. */
 		if current, err := l.CurrentMap(); err != nil || current != name {
+			record.update(func(s *State) { s.Map = name })
 			say("recreating the server on %s", name)
-			if err := lab.Compose(ctx, compose, containerEnv(name, *team, *defend, port, seats, pause, replayed), "up", "-d", "--force-recreate"); err != nil {
+			if err := bed.Recreate(ctx, name, containerEnv(name, *team, *defend, port, seats, pause, replayed)); err != nil {
 				return err
 			}
 			if err := l.WaitForRcon(ctx, 20*time.Minute); err != nil {
@@ -234,7 +303,7 @@ func run() error {
 				root: root, mapName: name, mission: *mission, waves: *waves,
 				attempts: *attempts, timeout: *timeout, team: lineup, defenders: *defend,
 				out: filepath.Join(root, *out), tag: lineupTag(*tag, i, len(lineups)), jump: *jumpTo, say: say,
-				puppets: seats, pause: pause, plugin: version,
+				puppets: seats, pause: pause, plugin: version, record: record, bed: bed,
 			})
 			// Reported whatever happened: what completed is data.
 			fmt.Print(report(lineupTag(*tag, i, len(lineups)), name, *mission, results))
@@ -264,6 +333,12 @@ type options struct {
 	pause                                  lossBreak
 	// The plugin version the server has loaded, for the results file
 	plugin string
+	// bed is how the server is started and read: a container, or srcds as a
+	// process. It is the only thing a native run differs by: mvm-tjb.
+	bed server
+	// record is the run record under TMPDIR, kept current so a second shell
+	// can read the run without a log or a pgrep: mvm-c4a.
+	record *tracker
 }
 
 /*
@@ -383,7 +458,7 @@ func containerEnv(mapName, team string, size int, port string, p puppet, pause l
 		"TESTBED_HOST":             "1",
 		"TESTBED_HOST_READY_DELAY": strconv.Itoa(int(pause.readyDelay.Seconds())),
 		"TESTBED_PUPPETS":          strconv.Itoa(p.count),
-		"TESTBED_PROJECT":          bed(),
+		"TESTBED_PROJECT":          bedName(),
 		"TESTBED_PORT":             port,
 		"TESTBED_RCONPW":           envOr("TESTBED_RCONPW", "testbed"),
 	}
