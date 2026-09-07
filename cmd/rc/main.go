@@ -1,5 +1,5 @@
 // Command rc sends one console command to the test-bed server and prints the
-// reply. It is rcon.py, without the Python. TESTBED_PORT picks the bed, as it
+// reply. It replaced the test-bed's Python client. TESTBED_PORT picks the bed, as it
 // does for the runner; the first bed is on 27025.
 package main
 

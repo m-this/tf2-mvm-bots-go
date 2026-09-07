@@ -1,7 +1,7 @@
 # One Team Fortress 2 server, running this working tree's bots, with nobody
 # playing on it.
 #
-# Run it with testbed/run.sh rather than by hand: the run script sends the
+# Run it with `go run ./cmd/testbed` rather than by hand: the runner sends the
 # mission, waits for the waves and reads the results out.
 #
 # The project name is pinned so the game volume survives a rebuild.

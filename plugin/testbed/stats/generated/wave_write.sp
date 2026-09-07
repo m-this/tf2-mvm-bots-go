@@ -14,7 +14,7 @@ void WriteWaveResult(const char[] result)
 	/* A wave nobody played is not a result
 	 *
 	 * The game ends a wave when the round resets, which it does when the server restarts, so a
-	 * restart wrote a row of zeros into the file. run.sh counts rows, so that row was the run: it
+	 * restart wrote a row of zeros into the file. The runner counts rows, so that row was the run: it
 	 * stopped twenty seconds in and reported a wave lost that never began. Only a wave with a
 	 * beginning is written.
 	 */

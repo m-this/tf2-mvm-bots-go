@@ -226,6 +226,27 @@ Which of those to read depends on what changed:
 | stickies, scout jumps  | `robot_kills`, `duration`                   |
 | anything at all        | `result` and `duration`                     |
 
+The file carries two more records the server did not write. A **run record**
+says what was played and on what machine, so a file found a week later is
+self-describing. An **attempt record** says what the runner made of it:
+finished, crashed, empty or refused, the crash kind, the watcher's reason, and
+whether a crash happened again on its replay. Without that second one, a run
+that had crashed twice read back as a clean one and the measurement was taken
+again.
+
+For a question narrower than the report prints, ask for the field rather than
+writing a script over the file:
+
+```sh
+go run ./report results/x-on-1.jsonl -json                 # the report's numbers, without the words
+go run ./report results/x-on-1.jsonl -field robot_kills    # the series, count and quartiles
+go run ./report results/x-on-1.jsonl -field action -where class=engineer
+```
+
+The names come from the generated record, which is the same table the plugin's
+`FormatEx` is generated from, so a field that is not written is a refusal rather
+than a column of zeros.
+
 ## Every map, and A against B
 
 One map says whether a change works on that map. Most of what an engineer does
@@ -270,15 +291,23 @@ srcds by itself, so a crash there reads as a hiccup while the same crash
 natively ends the session.
 
 ```sh
-testbed/seed-native.sh                 # once: copies the game out of the container
-testbed/run-native.sh --waves 6        # the native path, still shell
-testbed/symbolise-core.sh core.1234    # a backtrace with names in it
+testbed/seed-native.sh                          # once: copies the game out of the container
+go run ./cmd/testbed -native -waves 6 -arm x:   # the native path
+testbed/symbolise-core.sh core.1234             # a backtrace with names in it
 ```
+
+`-native` is a mode of the runner and not a second program. It was a shell
+script of its own, with none of the guards the runner exists for: no check of
+the loaded plugin against the source, no interleaved arms, no machine record, no
+watcher, no bed lock. It wrote results files the reports could not tell apart
+from a real run's, which made the one measurement that would settle this the one
+measurement nothing could vouch for. The runner refuses a native run for the
+same reasons it refuses a container one.
 
 It runs `srcds_linux` directly rather than through `srcds_run`, so a crash stays
 crashed and leaves a core instead of being restarted underneath the measurement.
-Cores are enabled by the script, land beside the binary, and are symbolised and
-removed at the end of a run unless `--keep-core`.
+The runner raises the core limit for the server it starts, and `-crashes` names
+the core and prints the `symbolise-core.sh` line for it.
 
 It writes the same `server.cfg` as the container, by sourcing `entrypoint.sh`
 rather than by keeping a second copy: two copies of that file would drift, and a
@@ -293,7 +322,7 @@ crashing rather than at a copy of the container's. tf2-archipelago's launcher
 keeps its server at `<install root>/tf-dedicated`, so:
 
 ```sh
-TESTBED_NATIVE_ROOT=~/path/to/tf2ap/tf-dedicated testbed/run-native.sh --waves 12
+TESTBED_NATIVE_ROOT=~/path/to/tf2ap/tf-dedicated go run ./cmd/testbed -native -waves 12 -arm x:
 ```
 
 That runs the mission against the same tree, the same plugins and the same
@@ -308,25 +337,62 @@ plain name or a path you can write, not a pipe to a crash handler.
 
 ## When the server crashes
 
-The runner notices a server that stops answering rcon and stops
-with a message rather than waiting out the timeout, because from outside a
-crashing server and a slow one look the same: no new results either way.
+The runner notices a server that stops answering rcon and stops with a message
+rather than waiting out the timeout, because from outside a crashing server and
+a slow one look the same: no new results either way.
 
 The first thing the test-bed ever found was a crash in the branch it was built
 to measure. That is what it is for. To chase one:
 
 ```sh
-docker compose -f testbed/compose.yml logs srcds | grep -iE 'core dumped|Segmentation'
+go run ./cmd/testbed -crashes                # the last hour, classified
+go run ./cmd/testbed -crashes -since 20m     # or a window of your own
 ```
 
-For a backtrace rather than a guess, run the server by hand with `-debug`,
-which writes `tf/debug.log` inside the game volume:
+That reads the container log scoped to the window and says which of the faults
+it was, because they are not variations on one thing: a watchdog kill means
+something was slow, a `SIGSEGV` means something is corrupt, and a `SIGBUS` means
+a file was rewritten under the running server. It also names the newest core and
+prints the `symbolise-core.sh` line for it, which is the difference between a
+backtrace and two sessions of guessing.
+
+Do not read the log by hand. `docker logs` with no `--since` keeps the whole
+life of the container across restarts, so a count taken over that window charges
+this attempt with crashes from hours ago; a bead was filed on exactly that
+inference and closed as one. And `srcds_run` prints its "add -debug" restart
+line every thirty seconds for the whole of an install, so a `grep -c` over it
+reads dozens of restarts as dozens of crashes.
+
+A crash that happened in one arm and not the other is not evidence yet. The
+runner replays a crashed attempt once on the same arm, and only a crash that
+happens again is charged to the arm; the rest are the bed's and are reported as
+`bed crashes`.
+
+## Watching a run
+
+A run in flight writes what it is doing to `$TMPDIR/<bed>-run.json` at every
+poll, so a second shell can read it without a log path, `pgrep` or `docker`:
 
 ```sh
-docker compose -f testbed/compose.yml run --rm srcds \
-  bash -c 'cd $STEAMAPPDIR && ./srcds_run -game tf -console -debug \
-           -port 27025 -usercon +maxplayers 32 +map mvm_decoy'
+go run ./cmd/testbed -status        # what the bed is playing, and until when
+go run ./cmd/testbed -follow        # each wave result as it lands, with a running tally
+go run ./cmd/testbed -wait          # block until it ends, exit with its verdict
+go run ./cmd/testbed -bed list      # every bed on this machine and who holds it
 ```
+
+All four play nothing and take no lock, and all four follow a bed rather than a
+process, so they can be pointed at a run somebody else started. `-json` on any
+of them is for a reader that is not a person.
+
+`-follow` is worth the habit on a long mission: a six-wave Mannhattan takes
+forty minutes to say anything otherwise, and a run whose first two waves already
+say what the change did is a run that can be stopped at attempt two.
+
+Never bring a bed up or down with `docker compose` by hand. `compose.yml`
+defaults its project name to the first bed, so a compose line typed without
+`TESTBED_PROJECT` recreates somebody else's server, and `pkill -f` on a test-bed
+pattern kills their runner. `-bed up` and `-bed down` exist so the project name
+cannot be left off.
 
 ## How much to believe it
 
@@ -354,15 +420,19 @@ does not say whether the bots look right, and somebody still has to watch them.
 | `cmd/testbed`           | brings the server up, runs the arms, reads results     |
 | `report/`               | turns a results file into a table, and compares two    |
 | `sweepreport/`          | reads a whole sweep, or one A/B arm against the other  |
-| `checkspots.py`         | which dispenser spot each authored nest would take     |
+| `cmd/checkspots`        | which dispenser spot each authored nest would take     |
 | `build.sh`              | compiles the mod on the host, into `build/package`     |
-| `seed-volume.sh`        | copies an existing game install into the test-bed's    |
+| `seed-volume.sh`        | copies an existing game install into the bed's volume  |
+| `install-game.sh`       | downloads the game from Steam, when there is none to copy |
+| `seed-native.sh`        | copies the game out of the volume for `-native`        |
 | `compose.yml`           | one service, loopback only                             |
 | `entrypoint.sh`         | installs into the game volume, writes `server.cfg`     |
 | `stats/mvmbots_stats.sp`| the plugin that counts                                 |
 | `stats/mvmbots_host.sp` | the fake client that holds a seat and readies up       |
 | `loadouts/`             | a loadout to run instead of the shipped one, via `TESTBED_LOADOUT` |
-| `rcon.py`               | Source RCON client, from tf2-archipelago               |
+| `replays/`              | somebody's `server.cfg` for `-replay`; ignored by git   |
+| `cmd/rc`                | one console command over rcon                          |
+| `symbolise-core.sh`     | turns a core into a backtrace with names in it         |
 | `versions.env`          | every pinned version                                   |
 
 `build/` and `results/` are working directories and are not committed.

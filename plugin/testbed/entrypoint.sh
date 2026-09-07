@@ -8,7 +8,7 @@
 # SourceMod can be reinstalled under it.
 set -eu
 
-# Defaulted rather than fixed, because run-native.sh sources this to write the
+# Defaulted rather than fixed, because the runner's native mode sources this to write the
 # same server.cfg into a game tree on the host rather than in the image.
 STAGE="${STAGE:-/opt/mvmbots}"
 GAME="${GAME:-${STEAMAPPDIR}/${STEAMAPP}}"
@@ -245,7 +245,7 @@ supervise() {
 	done
 }
 
-# run-native.sh sources this for the installers above and runs the server itself,
+# The runner's native mode sources this for the installers above and starts the server itself,
 # so that the native test-bed and the container write the same server.cfg. Two
 # copies of that file would drift, and a difference between the two beds is the
 # one thing this is for.
@@ -327,5 +327,5 @@ supervise &
 
 # The image's own entrypoint owns the command line, and reads SRCDS_STARTMAP,
 # SRCDS_MAXPLAYERS and the rest from the environment. The mission is not set
-# here: tf_mvm_popfile only works once a map is loaded, so run.sh sends it.
+# here: tf_mvm_popfile only works once a map is loaded, so the runner sends it.
 exec bash "${HOMEDIR}/entry.sh"

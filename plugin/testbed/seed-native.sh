@@ -19,7 +19,7 @@ dest=$(dirname "$TESTBED_NATIVE_ROOT")
 
 docker inspect "$TESTBED_SEED_FROM" >/dev/null 2>&1 || {
 	echo "no container called $TESTBED_SEED_FROM to copy from"
-	echo "bring the container bed up once with testbed/run.sh, or name another with TESTBED_SEED_FROM"
+	echo "bring the container bed up once with go run ./cmd/testbed -bed up, or name another with TESTBED_SEED_FROM"
 	exit 1
 }
 

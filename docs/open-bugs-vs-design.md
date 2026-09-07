@@ -70,7 +70,7 @@ is a table problem: "results carry no record of the arm, the build or the
 preconditions". That is `internal/tables` work, one Go declaration for the run
 record emitting both the writer and the reader, the same shape as the wave
 record already generated. The other three, crash detection by container log,
-map verification, `run-native.sh` drift, are runner work with no generator in
+map verification, the native path's drift, are runner work with no generator in
 them. Helps, narrowly.
 
 ### mvm-0lo, the test-bed cannot reproduce the faults the fixes target

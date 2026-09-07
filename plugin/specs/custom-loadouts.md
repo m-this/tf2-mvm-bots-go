@@ -102,7 +102,7 @@ the weapon.
 
 ## Testing
 
-Everything above is a testbed run, not a judgement. `testbed/run.sh` plays a
+Everything above is a testbed run, not a judgement. `go run ./cmd/testbed` plays a
 mission and `go run ./testbed/report` compares two. The Gas Passer work needs a
 mission with tight approaches; the dispenser rank needs one where the engineer
 is under pressure, which is what made it a report in the first place.

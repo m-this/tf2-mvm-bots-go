@@ -57,7 +57,7 @@ One line each. The spec has the detail and the reasoning.
 - The exit's reach clock is priced by the walk, and a stand side level with
   the spot is tried before one a storey under it. Rottenburg's exit went from
   the nest ring, 350 units off, to 52 to 102 from its spot.
-- `testbed/sweep.sh` plays every installed map and `testbed/sweepreport` reads a
+- `go run ./cmd/testbed -maps` plays every installed map and `sweepreport` reads a
   whole sweep. See `specs/sweep-2026-08-22.md`.
 - The loadout file can name a seat of `sm_redbots_manager_team_composition` and
   not only a class, so seat 1 holds the wrangler and seat 2 need not.

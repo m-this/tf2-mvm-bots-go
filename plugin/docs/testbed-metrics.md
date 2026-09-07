@@ -1,16 +1,18 @@
 # What the testbed measures
 
-`go run ./testbed/cmd/testbed` plays a mission with nobody in it and writes one JSON object
-per line to `testbed/results/`. `go run ./testbed/report <file>` turns that into
-prose; a second file argument compares two runs.
+`go run ./cmd/testbed` plays a mission with nobody in it and writes one JSON
+object per line to `plugin/results/`. `go run ./report <file>` turns that into
+prose; a second file argument compares two runs, and `-json` or `-field` asks
+for a number rather than the prose.
 
 Facts go in the file, verdicts go in the report. Changing your mind about what
 counts as a useless dispenser should cost a recompile, not another run.
 
 `-reread <tag>` applies that to the arm comparison too. It reads a finished
 run's files back and prints the comparison again, under whatever the rule is
-now, and plays nothing. The files do not carry the runner's count of crashes and
-empty attempts, so those read as none and the report says so.
+now, and plays nothing. The runner's own verdict is in the files as well, one
+attempt record each, so a re-read says what crashed and what produced nothing
+instead of reading a run nobody should trust as a clean one.
 
 ## The lines
 
@@ -313,12 +315,19 @@ this file exists to find and briefly invented instead.
   nothing and looks like a measurement.
 - **`docker logs` retains history across container restarts.** One crash in the
   morning read as a crash in every run for the rest of the day until the check
-  grew a `--since`.
+  grew a `--since`. Do not read the log by hand at all: `-crashes` scopes the
+  window to the attempt and names which fault it was, and `srcds_run`'s "add
+  -debug" restart line prints every thirty seconds during an install, so a
+  `grep -c` over an unbounded log reads restarts as crashes.
 - **A run measured under paging measures the machine.** A session went from six
   clean waves to four failed runs in a row with no code change: 200 MB free, 5 GB
   swapped, swap-in at 20 MB/s. To a watchdog that measures frame time, a page
-  fault is an infinite loop. The runner refuses to start below 1500 MB available
-  now; `TESTBED_MIN_FREE_MB=0` overrides it.
+  fault is an infinite loop. The runner reads it before the lock is taken and
+  refuses under one gibibyte, which is the floor `machine.Comparable` would have
+  refused the comparison on at the end anyway; `TESTBED_MIN_FREE_MB=0` overrides
+  it. Free space is checked the same way, on `TMPDIR` and on the game tree,
+  because a full volume truncates an extension copy and every map load then dies
+  on `SIGBUS`; `TESTBED_MIN_DISK_MB=0` overrides that one.
 - **A popfile the game refuses leaves the map's own mission running.** Three
   sessions of "Bavarian Botbash wave 3" were measured against Rottenburg's
   default intermediate mission. The runner reads `tf_mvm_popfile` back now. The
@@ -329,3 +338,18 @@ this file exists to find and briefly invented instead.
   has no such buffer.
 - **Do not edit a shell script while it is running.** `sh` resumes at a byte
   offset; the tail of the old file becomes a new command.
+- **A crash in one arm and not the other is not evidence.** The bed has a crash
+  rate of its own, and four sessions argued the same argument from the same
+  shape of evidence. The runner replays a crashed attempt once on the same arm;
+  only a crash that happens again is the arm's, and the rest are reported as bed
+  crashes and charged to nobody.
+- **Do not drive the bed with `docker compose` or `pkill -f`.** `compose.yml`
+  defaults its project name to the first bed, so a compose line typed without
+  `TESTBED_PROJECT` recreates another session's server, and `pkill -f` on a
+  test-bed pattern kills their runner. `-bed list`, `-bed up` and `-bed down`
+  exist so the project name cannot be left off.
+- **Do not watch a run with `sleep` and `tail`.** srcds stops printing to stdout
+  just after the Steam init lines and says nothing more until the map is up, so
+  a log that has stopped moving is not a hung server. `-status`, `-follow` and
+  `-wait` read the record the runner writes off its own rcon poll, which is the
+  thing that actually knows.
