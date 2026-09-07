@@ -131,40 +131,9 @@ func (p projection) at(x, y float64) (int, int) {
 	return px, py
 }
 
-/*
-Draw renders one wave over the mesh it was played on.
-
-The order is deliberate: the mesh first, then buildings, then the bots on top.
-A bot standing on his own sentry is the interesting case and he should not be
-hidden by it.
-*/
+// Draw renders one wave over the whole mesh it was played on.
 func Draw(mesh *navmesh.Mesh, wave Wave, size int) *image.RGBA {
-	if size <= 4*margin {
-		size = DefaultSize
-	}
-
-	proj, bounds := project(mesh, size)
-	img := image.NewRGBA(bounds)
-
-	fill(img, colourVoid)
-
-	for _, area := range mesh.Areas {
-		x0, y0 := proj.at(float64(area.NorthWest.X), float64(area.NorthWest.Y))
-		x1, y1 := proj.at(float64(area.SouthEast.X), float64(area.SouthEast.Y))
-		rectangle(img, x0, y0, x1, y1, colourArea, colourAreaEdge)
-	}
-
-	for _, b := range wave.Buildings {
-		x, y := proj.at(b.At[0], b.At[1])
-		marker(img, x, y, colourBuilding)
-	}
-
-	for _, track := range wave.Tracks {
-		colour, _ := ClassColour(track.Class)
-		drawTrack(img, proj, track, colour)
-	}
-
-	return img
+	return DrawView(mesh, wave, View{Size: size})
 }
 
 /*
