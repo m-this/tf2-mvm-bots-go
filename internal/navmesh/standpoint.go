@@ -1,7 +1,6 @@
 package navmesh
 
 import (
-	"fmt"
 	"math"
 )
 
@@ -181,19 +180,6 @@ func (v SnapVerdict) Wrong() bool { return v.Accepted > 0 && v.OnIntended == 0 }
 // with the spot and he builds where he was told. Wrong on its own does not
 // separate the two, which is the mvm-z83.32 blind spot in its third instance.
 func (v SnapVerdict) Relocated() bool { return v.Wrong() && v.LeastDrop > RaisedStep }
-
-// Stranded reports whether no side was accepted at all.
-func (v SnapVerdict) Stranded() bool { return v.Accepted == 0 }
-
-// String is the verdict as one report line.
-func (v SnapVerdict) String() string {
-	intended := "off mesh"
-	if v.Intended != nil {
-		intended = fmt.Sprintf("area %d", v.Intended.ID)
-	}
-	return fmt.Sprintf("%s: intended %s, %d/%d sides accepted, %d elsewhere, drop %.0f to %.0f",
-		v.Spot, intended, v.Accepted, len(v.Sides), v.Elsewhere, v.LeastDrop, v.WorstDrop)
-}
 
 // CheckSnap runs the whole ring of BuildStandPoint attempts against one spot and
 // reports where they land.

@@ -132,7 +132,6 @@ compile() {
 compile "$root/source/tf2_defenderbots.sp"
 compile "$root/testbed/stats/mvmbots_stats.sp"
 compile "$root/testbed/stats/mvmbots_host.sp"
-compile "$root/testbed/stats/mvmbots_refund.sp"
 compile "$src/tf2attributes/scripting/tf2attributes.sp"
 compile "$src/tf_econ_data/scripting/tf_econ_data.sp"
 compile "$src/tf2utils/scripting/tf2utils.sp"

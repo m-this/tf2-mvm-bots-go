@@ -2,7 +2,6 @@ package spgen
 
 import (
 	"fmt"
-	"strings"
 )
 
 // Walk is the Go twin of the loop the plugin runs: it asks for a predicate
@@ -55,10 +54,4 @@ func IsSubsequence[T comparable](short, long []T) bool {
 		}
 	}
 	return i == len(short)
-}
-
-func (t Table) String() string {
-	var b strings.Builder
-	fmt.Fprintf(&b, "%d nodes, %d roots\n", len(t.Predicate), len(t.Roots))
-	return b.String()
 }

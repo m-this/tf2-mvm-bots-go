@@ -18,9 +18,7 @@ package bindgen
 
 import (
 	"fmt"
-	"maps"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/bindings"
@@ -171,9 +169,4 @@ func (r *Result) declaredMember(name string) bool {
 		}
 	}
 	return false
-}
-
-// PackageScope lists the identifiers the package declares at top level.
-func (r *Result) PackageScope() []string {
-	return slices.Sorted(maps.Keys(r.Names[""]))
 }

@@ -58,7 +58,6 @@ func TestThePluginCompiles(t *testing.T) {
 		filepath.Join("source", "tf2_defenderbots.sp"),
 		filepath.Join("testbed", "stats", "mvmbots_stats.sp"),
 		filepath.Join("testbed", "stats", "mvmbots_host.sp"),
-		filepath.Join("testbed", "stats", "mvmbots_refund.sp"),
 	} {
 		t.Run(filepath.Base(name), func(t *testing.T) {
 			path := filepath.Join(dir, name)

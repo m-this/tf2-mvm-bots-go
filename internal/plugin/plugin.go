@@ -55,15 +55,6 @@ func Path(parts ...string) (string, error) {
 	return filepath.Join(append([]string{dir}, parts...)...), nil
 }
 
-// Read is one file's contents.
-func Read(parts ...string) ([]byte, error) {
-	path, err := Path(parts...)
-	if err != nil {
-		return nil, err
-	}
-	return os.ReadFile(path) //nolint:gosec // the path is this repository's own tree
-}
-
 // repoRoot walks up for the go.mod, which is the one landmark that does not
 // move with the caller.
 func repoRoot() (string, error) {
@@ -108,9 +99,3 @@ func SkipOrFail(t testing.TB) string {
 // RequireEnv turns a missing plugin tree from a skip into a failure. make check
 // sets it.
 const RequireEnv = "MVMBOTS_REQUIRE_PLUGIN"
-
-// ReadPath is Read taking the path in pieces.
-func ReadPath(parts ...string) (string, error) {
-	body, err := Read(parts...)
-	return string(body), err
-}

@@ -39,17 +39,5 @@ func Bands() []Band {
 	return all
 }
 
-func (b Band) String() string {
-	switch b {
-	case BandUrgent:
-		return "Urgent"
-	case BandPriority:
-		return "Priority"
-	case BandTooFar:
-		return "TooFar"
-	}
-	return "Band(?)"
-}
-
 // NumBands is how many bands there are, for a table that indexes on one.
 const NumBands = int(numBands)

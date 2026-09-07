@@ -11,7 +11,7 @@ SPENV := SPCOMP=$(SPROOT)/objdir/spcomp/linux-x86_64/spcomp \
 	SPSHELL=$(SPROOT)/objdir/spshell/linux-x86_64/spshell \
 	SPINCLUDE=$(SPROOT)/include/core
 
-.PHONY: help gen adopt check test lint vet toolchain clean
+.PHONY: help gen adopt check test lint vet deadcode toolchain clean
 
 help:
 	@grep -E '^[a-z-]+:' Makefile | cut -d: -f1 | grep -v help
@@ -28,7 +28,7 @@ adopt:
 # the whole point: the gate runs the same tests and refuses to skip the ones
 # that need spcomp.
 check: REQUIRE := MVMBOTS_REQUIRE_SPSHELL=1 MVMBOTS_REQUIRE_PLUGIN=1
-check: toolchain gen vet lint test
+check: toolchain gen vet lint deadcode test
 	$(GO) run ./cmd/gen -plugin $(PLUGIN) -out gen
 	@cp -r gen .gen.first && $(GO) run ./cmd/gen -plugin $(PLUGIN) -out gen \
 		&& diff -r .gen.first gen >/dev/null \
@@ -56,6 +56,12 @@ vet: gen
 
 lint: gen
 	$(GO) run $(GOLANGCI) run ./cmd/... ./internal/... ./report/... ./sweepreport/...
+
+# Functions nothing reaches, minus the packages that become SourcePawn and are
+# therefore called from no Go main. It refuses a new one rather than printing a
+# list, because a check with two thousand known findings is a check nobody runs.
+deadcode: gen
+	$(GO) run ./cmd/deadsweep
 
 clean:
 	rm -rf gen bin toolchain

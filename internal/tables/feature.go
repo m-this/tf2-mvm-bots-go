@@ -45,18 +45,6 @@ const (
 // ConVar is the console variable a config sets to turn this feature off.
 func (f Feature) ConVar() string { return "sm_redbots_feature_" + f.Name }
 
-// Default is the value CreateConVar is given.
-//
-// A feature ships on once it has been measured and off until then: a behaviour
-// that has not cleared the spread of the arm it was measured against is not a
-// behaviour this mod claims.
-func (f Feature) Default() string {
-	if f.On {
-		return "1"
-	}
-	return "0"
-}
-
 // FeaturesActiveConVar is written by the mod and read by the statistics plugin,
 // so a file of numbers says which mod produced it.
 const FeaturesActiveConVar = "sm_redbots_features_active"

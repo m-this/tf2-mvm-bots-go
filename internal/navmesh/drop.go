@@ -361,14 +361,6 @@ func (v DropVerdict) Hurts() bool { return v.Worst.Descent >= FallDamageHeight }
 // light class.
 func (v DropVerdict) Kills() bool { return v.Worst.Descent >= FallLethalHeight }
 
-// String is the verdict as one report line.
-func (v DropVerdict) String() string {
-	if v.Worst.Descent == 0 {
-		return fmt.Sprintf("%s: no fall over %.0f units within %.0f", v.Spot, StepHeight, v.Radius)
-	}
-	return fmt.Sprintf("%s: %s", v.Spot, v.Worst)
-}
-
 // CheckDrop reports the falls around one declared spot.
 //
 // radius is how far from the spot counts as beside it. A teleporter exit puts a

@@ -283,16 +283,6 @@ type Generated struct {
 	Skipped []string
 }
 
-// Emitted are the SourcePawn names this emission declares, so a caller can hold
-// them against what is still declared as an extern.
-func (g Generated) Emitted() []string {
-	names := make([]string, 0, len(g.Declares))
-	for _, d := range g.Declares {
-		names = append(names, d.SP)
-	}
-	return names
-}
-
 // GenerateDir type checks every non-test .go file directly under dir as one
 // package and translates it.
 //
