@@ -5,7 +5,7 @@ import (
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/body"
 	"github.com/m-this/tf2-mvm-bots-go/internal/plugin"
-	"github.com/m-this/tf2-mvm-bots-go/internal/spshell"
+	"github.com/m-this/tf2-mvm-bots-go/spshell"
 )
 
 /*

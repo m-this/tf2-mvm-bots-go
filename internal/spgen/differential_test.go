@@ -6,7 +6,7 @@ import (
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/actionsel"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spgen"
-	"github.com/m-this/tf2-mvm-bots-go/internal/spshell"
+	"github.com/m-this/tf2-mvm-bots-go/spshell"
 )
 
 // TestGeneratedSourcePawnAgreesWithGo is the deliverable. Every combination

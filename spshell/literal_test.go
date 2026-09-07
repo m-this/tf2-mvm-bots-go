@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/m-this/tf2-mvm-bots-go/internal/spshell"
+	"github.com/m-this/tf2-mvm-bots-go/spshell"
 )
 
 /*

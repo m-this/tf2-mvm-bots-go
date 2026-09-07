@@ -8,8 +8,8 @@ import (
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/plugin"
 	"github.com/m-this/tf2-mvm-bots-go/internal/spgen"
-	"github.com/m-this/tf2-mvm-bots-go/internal/spshell"
 	"github.com/m-this/tf2-mvm-bots-go/internal/threat"
+	"github.com/m-this/tf2-mvm-bots-go/spshell"
 )
 
 // threatEnv is the generated threat file plus the probe ranges, injected the

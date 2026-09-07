@@ -62,7 +62,7 @@ a narrower aim and says so where it has been overtaken.
 - `internal/sp`, `internal/tf` — the shared vocabulary. `sp` is what SourcePawn's
   syntax requires of emitted text, `tf` is the game's own enums in the plugin's
   order, so two decisions that branch on a class branch on the same class.
-- `internal/spshell`, `tools/spshell.sh` — generated SourcePawn run under
+- `spshell`, `tools/spshell.sh` — generated SourcePawn run under
   SourcePawn's standalone VM, so a generated function can be compared with the Go
   it came from on golden inputs. The script clones and builds SourcePawn at a
   pinned commit into `toolchain/`: `make toolchain`, cached, gitignored.

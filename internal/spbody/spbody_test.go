@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/m-this/tf2-mvm-bots-go/internal/spbody"
-	"github.com/m-this/tf2-mvm-bots-go/internal/spshell"
+	"github.com/m-this/tf2-mvm-bots-go/spshell"
 )
 
 var update = flag.Bool("update", false, "rewrite the golden files")

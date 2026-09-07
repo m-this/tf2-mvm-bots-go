@@ -7,7 +7,7 @@ import (
 	"github.com/m-this/tf2-mvm-bots-go/internal/body"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/roster"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
-	"github.com/m-this/tf2-mvm-bots-go/internal/spshell"
+	"github.com/m-this/tf2-mvm-bots-go/spshell"
 )
 
 // goCells runs the Go the bodies were written as, in the order the probe runs

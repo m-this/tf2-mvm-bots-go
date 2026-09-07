@@ -27,4 +27,16 @@
 //
 // Point the tests at the toolchain with SPSHELL, SPCOMP and SPINCLUDE; without
 // them the tests skip.
+//
+// # Why this is not internal
+//
+// Nothing here is about the defender bots. It compiles a .sp and reads back the
+// cells it printed, which is what any repository with hand-written SourcePawn
+// needs to test one without a game server. tf2-archipelago imports it for its
+// plugin, so it sits outside internal/ and its exported surface is a contract:
+// Toolchain, Run, Compile, GoldenTable and ForTestRequiring.
+//
+// It still reads internal/sp for the float literal rules, which is allowed and
+// invisible to an importer: the internal rule is about where the import is
+// written, and that one is written inside this module.
 package spshell

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/m-this/tf2-mvm-bots-go/internal/spshell"
+	"github.com/m-this/tf2-mvm-bots-go/spshell"
 )
 
 // threatScore is the Go side of the differential test: the same arithmetic as
