@@ -19,3 +19,6 @@
 plugin/results/
 /testbed
 /rc
+/checkspots
+/deadsweep
+/mapview
