@@ -147,17 +147,18 @@ var Features = []Feature{
 		Name:        "path_length_cap",
 		Description: "Stop a path search that has walked far enough, instead of letting an unreachable goal cost the whole mesh.",
 		On:          false,
-		Note: "Off until a run says otherwise. An unreachable goal makes NavAreaBuildPath walk the whole\n" +
-			"nav mesh, and Mannhattan produced an 1833 ms frame where Decoy never passed 153. See\n" +
-			"mvm-cf3.",
+		Note: "Off. Tried on 2026-09-07 against three watchdog crashes in NavAreaBuildPath (mvm-cf3): at\n" +
+			"6000 it pinned Rottenburg's engineer in spawn, every path refused, because the walk to the\n" +
+			"nest is longer than that. The cap bounds a route, not a search: an unreachable goal still\n" +
+			"costs the mesh inside it. What stops the search is not asking for it, in pathing.go.",
 	},
 	{
 		Name:        "engineer_climbs",
-		Description: "The engineer crouch jumps onto a teleporter spot above him, and falls back to the nest ring rather than to his feet.",
-		On:          false,
-		Note: "Off until a Bigrock run says otherwise. The exit spot there is 70 units up a rock the\n" +
-			"engineer cannot walk onto, so he gives up and builds where he stands, in the bot lane.\n" +
-			"This is the first jump in the mod aimed at a piece of ground. See mvm-fgs.",
+		Description: "The engineer crouch jumps onto a spot above him, is lifted there when the jumps run out, and the exit falls back to the nest ring rather than to his feet.",
+		On:          true,
+		Note: "Bigrock puts both nests and the exit 60 to 70 units up rocks with no nav on top, so he\n" +
+			"built at the foot of them and could not wrench a sentry standing above him. Measured on\n" +
+			"2026-09-06: the jump lands, and the exit stood 55 units from its spot. See mvm-fgs.",
 	},
 	{
 		Name:        "watch_idle_bots",

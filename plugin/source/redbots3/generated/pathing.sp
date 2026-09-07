@@ -8,6 +8,9 @@
 
 #define PATHS_PER_FRAME (2)
 
+#define PATH_TARGET_SEARCH (120.0)
+#define PATH_TARGET_STEP (24.0)
+
 #define PATH_RETRY_INTERVAL (0.5)
 
 #define PATH_REFRESH_INTERVAL (0.2)
@@ -77,9 +80,29 @@ stock void NudgeTowardsGoal(int client, INextBot myBot, const float goal[3])
 	myLoco.Approach(step);
 }
 
+// TargetHasGround is whether a route to the target can exist at all.
+stock bool TargetHasGround(int target)
+{
+	float origin[3];
+	origin = GetAbsOrigin(target);
+	CNavArea area = TheNavMesh.GetNearestNavArea(origin, false, PATH_TARGET_SEARCH, false, true, TEAM_ANY);
+	if (area == NULL_AREA)
+	{
+		return false;
+	}
+	float ground[3];
+	area.GetClosestPointOnArea(origin, ground);
+	return FloatAbs(ground[2] - origin[2]) <= PATH_TARGET_STEP;
+}
+
 // RepathToTarget asks for a route to an entity, measured and counted.
 stock void RepathToTarget(int actor, INextBot myBot, int target)
 {
+	if (!TargetHasGround(target))
+	{
+		NotePathResult(actor, false);
+		return;
+	}
 	float began = GetEngineTime();
 	bool built = m_pPath[actor].ComputeToTarget(myBot, target, PathLengthCap());
 	SayIfSlow(actor, began, "to a target");
@@ -190,7 +213,12 @@ stock void PluginBot_SimulateFrame(int client)
 				}
 				else
 				{
-					built = m_pPath[client].ComputeToTarget(myBot, g_arrPluginBot[client].iPathGoalEntity, PathLengthCap());
+					// A target with no ground under it is refused before the search, not after it
+					built = false;
+					if (TargetHasGround(g_arrPluginBot[client].iPathGoalEntity))
+					{
+						built = m_pPath[client].ComputeToTarget(myBot, g_arrPluginBot[client].iPathGoalEntity, PathLengthCap());
+					}
 				}
 				bool failed = !built || (m_pPath[client].GetLength() <= 0.0);
 				if (failed && !m_bPathFailed[client])

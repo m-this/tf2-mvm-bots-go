@@ -28,7 +28,7 @@ var Arms = []Arm{
 	{Name: "hold_the_nest", ConVar: "sm_redbots_feature_hold_the_nest", Default: false, About: "Wait for the wave beside the engineer's sentry instead of at the robots' gate."},
 	{Name: "medic_shield", ConVar: "sm_redbots_feature_medic_shield", Default: true, About: "Let the medic put up the projectile shield, and buy the rage that fills it."},
 	{Name: "path_length_cap", ConVar: "sm_redbots_feature_path_length_cap", Default: false, About: "Stop a path search that has walked far enough, instead of letting an unreachable goal cost the whole mesh."},
-	{Name: "engineer_climbs", ConVar: "sm_redbots_feature_engineer_climbs", Default: false, About: "The engineer crouch jumps onto a teleporter spot above him, and falls back to the nest ring rather than to his feet."},
+	{Name: "engineer_climbs", ConVar: "sm_redbots_feature_engineer_climbs", Default: true, About: "The engineer crouch jumps onto a spot above him, is lifted there when the jumps run out, and the exit falls back to the nest ring rather than to his feet."},
 	{Name: "watch_idle_bots", ConVar: "sm_redbots_feature_watch_idle_bots", Default: false, About: "The stuck watchdog also rescues a bot that has no behaviour at all, not only one that cannot reach its goal."},
 	{Name: "watch_lurking_snipers", ConVar: "sm_redbots_feature_watch_lurking_snipers", Default: true, About: "The stuck watchdog also rescues a sniper parked nowhere near a spot, which is the one it used to miss."},
 	{Name: "ammo_failover", ConVar: "sm_redbots_feature_ammo_failover", Default: false, About: "A bot whose path to the ammo it picked keeps failing takes the next pack, then gives up, rather than walking at a wall."},

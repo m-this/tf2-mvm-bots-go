@@ -60,6 +60,7 @@ func ResetNextBot(client int32) {
 	engine.ResetDestroyTeleporter(client)
 	engine.ResetBuildTeleporter(client)
 	engine.ResetNestSetup(client)
+	engine.ResetClimb(client)
 	engine.ForgetRangeRepairStalls(client)
 	engine.ResetGuardPoint(client)
 

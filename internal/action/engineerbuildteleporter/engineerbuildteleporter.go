@@ -19,6 +19,7 @@ top of it.
 package engineerbuildteleporter
 
 import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/climb"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/nestsetup"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
@@ -51,37 +52,6 @@ gives up rather than settling.
 //
 //sp:name TELEPORTER_EXIT_REACH_TIME
 const exitReachTime = 12.0
-
-/*
-Getting up onto the ground the map named, instead of building at the bottom of it
-
-Bigrock's exit spot is on a rock about seventy units above the floor beside it.
-Nothing in this mod has ever pressed a jump at a piece of ground, so the walk
-stopped at the foot of the rock, all eight placements were refused from down there,
-and the exit went down where he stood, which is the lane every robot walks.
-Reported from play twice: "wtf is this exit spot", then "IT'S STILL IN MAIN BOT
-PATH".
-
-A rise of more than a step and no more than a crouch jump, from close enough to land
-on it: he looks at the spot, walks into it and crouch jumps, which is what a person
-does. Bounded by a count as well as by the reach clock above, because a spot that is
-not actually a ledge would otherwise be an engineer hopping at a wall until the wave
-starts.
-*/
-const (
-	//sp:name TELEPORTER_CLIMB_RISE_MIN
-	climbRiseMin = 24.0
-	//sp:name TELEPORTER_CLIMB_RISE_MAX
-	climbRiseMax = 72.0
-	//sp:name TELEPORTER_CLIMB_RANGE
-	climbRange = 140.0
-	//sp:name TELEPORTER_CLIMB_INTERVAL
-	climbInterval = 0.7
-	//sp:name TELEPORTER_CLIMB_HOLD
-	climbHold = 0.3
-	//sp:name TELEPORTER_CLIMB_LIMIT
-	climbLimit = 6
-)
 
 // He stands a build's reach short of where it goes, because a building lands in front of the man
 //
@@ -153,10 +123,6 @@ var (
 	reachDeadline [slots.Count]float32
 	//sp:name m_ctTeleporterTryDeadline
 	tryDeadline [slots.Count]float32
-	//sp:name m_ctTeleporterClimb
-	climbAt [slots.Count]float32
-	//sp:name m_iTeleporterClimbs
-	climbs [slots.Count]int32
 	//sp:name m_iTeleporterTry
 	tryIndex [slots.Count]int32
 	//sp:name m_nTeleporterMode
@@ -214,8 +180,7 @@ func OnStart(actor int32) engine.Outcome {
 	giveUp[actor] = engine.GameTime() + buildMaxTime
 	reachDeadline[actor] = engine.GameTime() + exitReachTime
 	tryDeadline[actor] = engine.GameTime() + tryTime
-	climbAt[actor] = 0.0
-	climbs[actor] = 0
+	climb.Begin(actor)
 	tryIndex[actor] = 0
 	routePoints[actor] = 0
 
@@ -299,25 +264,35 @@ func Update(actor int32) engine.Outcome {
 	myNextbot := engine.NextBotOf(actor)
 	myBody := myNextbot.Body()
 
-	/* Say when the climb is not even asked for, so silence means one thing
-
-	Three candidates for why the jump never lands, and the third is that this branch never runs.
-	Without a line here that reads the same as the debug being off. */
-	if engine.DebugActions().Bool() && engine.Feature(engine.FeatureEngineerClimbs()) &&
-		(outOfTime || !namedSpot[actor]) {
-		engine.PrintToServer("[teleclimb] %N not asked: out of time %d, named spot %d",
-			actor, outOfTime, namedSpot[actor])
-	}
-
 	// The map put the spot on top of something, so he gets on top of it rather than building below it
-	if engine.Feature(engine.FeatureEngineerClimbs()) && !outOfTime && namedSpot[actor] &&
-		ClimbToSpot(actor, myBody, spot) {
-		engine.PluginBotOf(actor).SetPathing(false)
+	if !outOfTime && namedSpot[actor] {
+		climbed := climb.ToSpot(actor, myBody, spot, "teleporter spot")
 
-		return engine.Continue()
+		if climbed == climb.Busy {
+			engine.PluginBotOf(actor).SetPathing(false)
+
+			return engine.Continue()
+		}
+
+		/* The reach clock starts again on landing, because six jumps and a lift are most of it: on
+		Rottenburg the exit was lifted onto its spot and then fell back to the nest ring on a clock
+		that had run out while he was jumping. */
+		if climbed == climb.Landed {
+			reachDeadline[actor] = engine.GameTime() + exitReachTime
+		}
+
+		// Up on the rock nothing is pathed to: where he stands is the stand point, stepped off the spot
+		if climb.OnTop(actor) && climb.Beside(actor, spot) {
+			standOf[actor] = engine.AbsOriginOf(actor)
+
+			if climb.StepBack(actor, myBody, spot) {
+				engine.PluginBotOf(actor).SetPathing(false)
+
+				return engine.Continue()
+			}
+		}
 	}
 
-	// Read after the climb, which moves it to where he landed
 	stand := standOf[actor]
 
 	if outOfTime {
@@ -411,98 +386,6 @@ func TryLimit(actor int32) int32 {
 }
 
 /*
-SayClimb says why a climb was refused, or that it was tried.
-
-Measured on Bigrock the jump never landed: no sample under 100 units from the spot,
-and the minimum equal to the median. Three candidates were left and one line
-separates them, because each writes a different reason here: the 24 to 72 window not
-matching the real rise, the jump not carrying, or the branch never being reached at
-all. See mvm-fgs.
-*/
-//
-//sp:name SayClimb
-func SayClimb(actor int32, why string, rise float32, flat float32) {
-	if !engine.DebugActions().Bool() {
-		return
-	}
-
-	engine.PrintToServer("[teleclimb] %N %s, rise %.0f of %.0f to %.0f, out %.0f of %.0f, climb %d of %d",
-		actor, why, rise, climbRiseMin, climbRiseMax,
-		flat, climbRange, climbs[actor], climbLimit)
-}
-
-/*
-ClimbToSpot crouch jumps onto the ground the spot sits on, and is false when there
-is nothing to climb.
-
-The stand point comes off the nav mesh, so for a spot on a rock the mesh does not
-cover it is the floor underneath: he arrives, the spot is over his head, and every
-placement from down there is refused. This puts him on top instead.
-
-Once he is up, where he stands is where he stands. Recomputing the ring point from up
-there asks the nav mesh again and the nav mesh answers with the floor he just left,
-which is the walk back down. He climbed from within a build's reach, so the spot is
-already in front of him.
-
-The count resets when he makes it, so falling off and climbing again costs another
-six attempts rather than none. The reach clock is what bounds the pair of them.
-*/
-//
-//sp:name TeleporterClimbToSpot
-func ClimbToSpot(actor int32, myBody engine.Body, spot [3]float32) bool {
-	origin := engine.AbsOriginOf(actor)
-
-	rise := spot[2] - origin[2]
-
-	reach := engine.SubtractVectors(spot, origin)
-
-	reach[2] = 0.0
-
-	out := engine.VectorLength(reach)
-
-	if rise < climbRiseMin {
-		SayClimb(actor, "nothing to climb", rise, out)
-
-		if climbs[actor] > 0 {
-			climbs[actor] = 0
-			standOf[actor] = origin
-		}
-
-		return false
-	}
-
-	// Higher than a crouch jump is not a ledge, it is a wall, and no number of jumps will do it
-	if rise > climbRiseMax || climbs[actor] >= climbLimit {
-		SayClimb(actor, engine.Choose(rise > climbRiseMax, "too high to climb", "out of climbs"), rise, out)
-
-		return false
-	}
-
-	// Far enough out and the jump lands on the wall rather than on top of it
-	if out > climbRange {
-		SayClimb(actor, "too far out to climb", rise, out)
-
-		return false
-	}
-
-	SayClimb(actor, "climbing", rise, out)
-
-	engine.AimHeadTowards(myBody, spot, engine.AimMandatory(), 0.2, engine.NoAddress(), "Climbing to the teleporter spot")
-
-	if climbAt[actor] > engine.GameTime() {
-		return true
-	}
-
-	climbAt[actor] = engine.GameTime() + climbInterval
-	climbs[actor]++
-
-	// Forward is along where he is looking, which is the spot, so the three together are a person
-	engine.ExtraButtonsOf(actor).PressButtons(engine.InForward()|engine.InJump()|engine.InDuck(), climbHold)
-
-	return true
-}
-
-/*
 FallBackToNest is the named exit spot having beaten him, so he takes the ring round
 his own nest instead.
 
@@ -519,7 +402,7 @@ func FallBackToNest(actor int32) bool {
 
 	namedSpot[actor] = false
 	tryIndex[actor] = 0
-	climbs[actor] = 0
+	climb.Begin(actor)
 	reachDeadline[actor] = engine.GameTime() + exitReachTime
 
 	return StandPoint(actor)

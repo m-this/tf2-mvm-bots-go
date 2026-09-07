@@ -52,6 +52,7 @@ public Action CTFBotMvMEngineerBuildDispenser_OnStart(BehaviorAction action, int
 			m_vDispenserSpot[actor] = GetAbsOrigin(actor);
 		}
 	}
+	ClimbBegin(actor);
 	// Sides he cannot stand on are skipped here rather than walked at and waited out
 	float stand[3];
 	bool ok = DispenserStandPoint(actor, m_iDispenserTry[actor], stand);
@@ -59,6 +60,12 @@ public Action CTFBotMvMEngineerBuildDispenser_OnStart(BehaviorAction action, int
 	if (!ok)
 	{
 		NextDispenserStandPoint(actor);
+	}
+	// Level with a spot on a rock already, so the stand point is not the floor below it
+	if (ClimbBeside(actor, m_vDispenserSpot[actor]))
+	{
+		ClimbMarkOnTop(actor, m_vDispenserStand[actor]);
+		m_vDispenserStand[actor] = GetAbsOrigin(actor);
 	}
 	// Claimed and jumped to, so the walk from the upgrade station is not paid twice
 	if (Feature(FEATURE_ENGINEER_SETUP_PHASE))
@@ -123,6 +130,29 @@ public Action CTFBotMvMEngineerBuildDispenser_Update(BehaviorAction action, int 
 	spot = m_vDispenserSpot[actor];
 	float stand[3];
 	stand = m_vDispenserStand[actor];
+	IBody myBody = CBaseNPC_GetNextBotOfEntity(actor).GetBodyInterface();
+	// The spot is on a rock and he is at the foot of it, so he gets on top before the clocks are read
+	int climbed = ClimbToSpot(actor, myBody, spot, "dispenser spot");
+	if (climbed == 1)
+	{
+		g_arrPluginBot[actor].bPathing = false;
+		return action.Continue();
+	}
+	if (climbed == 2)
+	{
+		m_ctDispenserReachDeadline[actor] = GetGameTime() + BuildReachTime(spot, spot);
+	}
+	// Up on the rock nothing is pathed to: where he stands is the stand point, stepped off the spot
+	if (ClimbOnTop(actor) && ClimbBeside(actor, spot))
+	{
+		m_vDispenserStand[actor] = GetAbsOrigin(actor);
+		stand = m_vDispenserStand[actor];
+		if (ClimbStepBack(actor, myBody, spot))
+		{
+			g_arrPluginBot[actor].bPathing = false;
+			return action.Continue();
+		}
+	}
 	// The walk ran out of time, so he builds from where he stands and aims at the spot anyway
 	//
 	// Only while he is somewhere near his nest. Settling where he stands is a trade of accuracy for a
@@ -148,8 +178,6 @@ public Action CTFBotMvMEngineerBuildDispenser_Update(BehaviorAction action, int 
 		return action.Done("Cannot reach the dispenser spot");
 	}
 	float rangeToStand = GetVectorDistance(GetAbsOrigin(actor), stand);
-	INextBot myNextbot = CBaseNPC_GetNextBotOfEntity(actor);
-	IBody myBody = myNextbot.GetBodyInterface();
 	if (rangeToStand < 200.0)
 	{
 		if (!IsBuilderSetTo(actor, TFObject_Dispenser))

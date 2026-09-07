@@ -23,6 +23,7 @@ type ResetCalls struct {
 	ResetDestroyTeleporter  func(client int32)
 	ResetBuildTeleporter    func(client int32)
 	ResetNestSetup          func(client int32)
+	ResetClimb              func(client int32)
 	ForgetRangeRepairStalls func(client int32)
 	ResetMedicRevive        func(client int32)
 	ResetGuardPoint         func(client int32)
@@ -113,6 +114,11 @@ func ResetBuildTeleporter(client int32) { resets.ResetBuildTeleporter(client) }
 //
 //sp:body Go_ResetNestSetup
 func ResetNestSetup(client int32) { resets.ResetNestSetup(client) }
+
+// ResetClimb is climb's own: the jumps a seat had made at a rock.
+//
+//sp:body Go_ResetClimb
+func ResetClimb(client int32) { resets.ResetClimb(client) }
 
 // ForgetRangeRepairStalls is engineeridle's stall count, which is a
 // measurement of the bot that earned it and not of the seat.

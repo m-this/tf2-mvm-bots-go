@@ -172,17 +172,18 @@ void LoadFeatures()
 	g_arrFeatureConVars[FEATURE_MEDIC_SHIELD] = MakeFeature(FEATURE_MEDIC_SHIELD,
 		"Let the medic put up the projectile shield, and buy the rage that fills it.");
 
-	/* Off until a run says otherwise. An unreachable goal makes NavAreaBuildPath walk the whole
-	nav mesh, and Mannhattan produced an 1833 ms frame where Decoy never passed 153. See
-	mvm-cf3. */
+	/* Off. Tried on 2026-09-07 against three watchdog crashes in NavAreaBuildPath (mvm-cf3): at
+	6000 it pinned Rottenburg's engineer in spawn, every path refused, because the walk to the
+	nest is longer than that. The cap bounds a route, not a search: an unreachable goal still
+	costs the mesh inside it. What stops the search is not asking for it, in pathing.go. */
 	g_arrFeatureConVars[FEATURE_PATH_LENGTH_CAP] = MakeFeature(FEATURE_PATH_LENGTH_CAP,
 		"Stop a path search that has walked far enough, instead of letting an unreachable goal cost the whole mesh.", false);
 
-	/* Off until a Bigrock run says otherwise. The exit spot there is 70 units up a rock the
-	engineer cannot walk onto, so he gives up and builds where he stands, in the bot lane.
-	This is the first jump in the mod aimed at a piece of ground. See mvm-fgs. */
+	/* Bigrock puts both nests and the exit 60 to 70 units up rocks with no nav on top, so he
+	built at the foot of them and could not wrench a sentry standing above him. Measured on
+	2026-09-06: the jump lands, and the exit stood 55 units from its spot. See mvm-fgs. */
 	g_arrFeatureConVars[FEATURE_ENGINEER_CLIMBS] = MakeFeature(FEATURE_ENGINEER_CLIMBS,
-		"The engineer crouch jumps onto a teleporter spot above him, and falls back to the nest ring rather than to his feet.", false);
+		"The engineer crouch jumps onto a spot above him, is lifted there when the jumps run out, and the exit falls back to the nest ring rather than to his feet.");
 
 	/* Off until a run says otherwise. The stuck watchdog only armed for a bot that was pathing, so
 	an engineer frozen with an empty action stack was invisible to it: 45 seconds at one spot on

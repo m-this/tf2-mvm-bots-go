@@ -106,6 +106,28 @@ find. Four separate rules have now quietly discarded them — a distance bound, 
 ownership rule, a height test, and a reachability query — and in every case the
 only symptom was a player noticing a building in the wrong place weeks later.
 
+A fifth case was the ground itself. Bigrock's two nests and its teleporter exit
+sit on rocks 60 to 70 units above the floor, with no nav area on top. The path
+finder took the engineer to the foot, every side was refused from down there, and
+he built in the lane below; a sentry that did go up on the rock could not be
+wrenched from below either. `internal/body/climb` is the answer for all four
+places that walk at a spot: a crouch jump when the spot is between a step and a
+crouch jump above him and within 140 units, a lift onto it when six jumps have
+not landed, and a stand point taken at the spot's own height once he is up,
+because the mesh answers with the floor he just left and a man standing on the
+spot looks at his own feet. Measured on Bigrock: sentry 22 units from its spot
+and 7 above it, exit 45 and 27.
+
+What the rock cost elsewhere: three server watchdog crashes in one night, every
+backtrace inside `NavAreaBuildPath` under `ComputeToTarget` with no length cap.
+A bot on ground the mesh does not have is an unreachable target, and every bot
+pathing to him walked the whole mesh per repath. `path_length_cap` was tried and
+pinned Rottenburg's engineer in spawn, every path refused, because it bounds the
+route and not the search. What stops the search is not asking for it:
+`TargetHasGround` in `pathing.go` refuses a target whose nearest area is more
+than a step from its feet before the search runs, and up on the rock the engineer
+is not pathed at all, he looks where he is going and presses forward.
+
 The rule that came out of it: **an authored spot may be refused only by
 something permanent.** Another engineer's building standing on it is permanent.
 A path query that answered no once, from wherever the engineer happened to be

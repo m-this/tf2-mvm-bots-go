@@ -58,7 +58,18 @@ public Action CTFBotMvMEngineerBuildSentrygun_OnStart(BehaviorAction action, int
 			}
 		}
 	}
+	ClimbBegin(actor);
 	SentryStandPoint(actor);
+	// The teleport put him level with a spot on a rock, so he builds from up here
+	//
+	// The stand point comes off the mesh and the mesh has nothing on the rock, so it is the floor
+	// below, and walking to it is walking off the ground the break just put him on. Bigrock's two
+	// nests are this.
+	if (ClimbBeside(actor, m_vSentrySpot[actor]))
+	{
+		ClimbMarkOnTop(actor, m_vSentryStand[actor]);
+		m_vSentryStand[actor] = GetAbsOrigin(actor);
+	}
 	// After the teleport above, so a between-rounds walk is priced from where he actually starts it
 	m_ctSentryReachDeadline[actor] = GetGameTime() + BuildReachTime(GetAbsOrigin(actor), m_vSentryStand[actor]);
 	LogBuildFailure(actor, "sentry", "started");
@@ -103,6 +114,36 @@ public Action CTFBotMvMEngineerBuildSentrygun_Update(BehaviorAction action, int 
 	spot = m_vSentrySpot[actor];
 	float stand[3];
 	stand = m_vSentryStand[actor];
+	IBody myBody = CBaseNPC_GetNextBotOfEntity(actor).GetBodyInterface();
+	// The spot is on a rock and he is at the foot of it, so he gets on top before anything else
+	//
+	// Before the clocks below, because a jump in flight is not a walk that ran out. Where he lands, the
+	// stand point is a short reach from the spot up here: asking the mesh answers with the floor he
+	// just left, and standing on the spot itself is looking at his own feet.
+	int climbed = ClimbToSpot(actor, myBody, spot, "sentry spot");
+	if (climbed == 1)
+	{
+		g_arrPluginBot[actor].bPathing = false;
+		return action.Continue();
+	}
+	if (climbed == 2)
+	{
+		m_ctSentryReachDeadline[actor] = GetGameTime() + SENTRY_REACH_TIME;
+	}
+	// Up on the rock, where he stands is the stand point and nothing is pathed to
+	//
+	// A point up here is off the mesh, and a path asked for to it is a search the watchdog ends. He is
+	// steered a short reach off the spot instead, so that he is not looking at his own feet.
+	if (ClimbOnTop(actor) && ClimbBeside(actor, spot))
+	{
+		m_vSentryStand[actor] = GetAbsOrigin(actor);
+		stand = m_vSentryStand[actor];
+		if (ClimbStepBack(actor, myBody, spot))
+		{
+			g_arrPluginBot[actor].bPathing = false;
+			return action.Continue();
+		}
+	}
 	// The walk ran out, so he builds from where he got to rather than into whatever stopped him
 	//
 	// And he puts it beside himself rather than pointing it at the nest he could not reach. Aiming at
@@ -127,6 +168,7 @@ public Action CTFBotMvMEngineerBuildSentrygun_Update(BehaviorAction action, int 
 		m_aSentryStuckArea[actor] = m_aNestArea[actor];
 		m_aNestArea[actor] = PickBuildArea(actor);
 		m_iSentryTry[actor] = 0;
+		ClimbBegin(actor);
 		SentryStandPoint(actor);
 		m_ctSentryReachDeadline[actor] = GetGameTime() + SENTRY_REACH_TIME;
 		LogBuildFailure(actor, "sentry", "could not reach the spot, took another");
@@ -139,9 +181,7 @@ public Action CTFBotMvMEngineerBuildSentrygun_Update(BehaviorAction action, int 
 	}
 	float rangeToStand = GetVectorDistance(GetAbsOrigin(actor), stand);
 	int myWeapon = BaseCombatCharacter_GetActiveWeapon(actor);
-	INextBot myNextbot = CBaseNPC_GetNextBotOfEntity(actor);
-	IBody myBody = myNextbot.GetBodyInterface();
-	ILocomotion myLoco = myNextbot.GetLocomotionInterface();
+	ILocomotion myLoco = CBaseNPC_GetNextBotOfEntity(actor).GetLocomotionInterface();
 	if (rangeToStand < 200.0)
 	{
 		if (!IsBuilderSetTo(actor, TFObject_Sentry))
@@ -204,8 +244,15 @@ public Action CTFBotMvMEngineerBuildSentrygun_Update(BehaviorAction action, int 
 			{
 				m_aNestArea[actor] = PickBuildArea(actor);
 				m_iSentryTry[actor] = 0;
+				ClimbBegin(actor);
 			}
 			SentryStandPoint(actor);
+			// Still level with the spot, so the next side is looked at from up here rather than from below
+			if (ClimbBeside(actor, m_vSentrySpot[actor]))
+			{
+				ClimbMarkOnTop(actor, m_vSentryStand[actor]);
+				m_vSentryStand[actor] = GetAbsOrigin(actor);
+			}
 			m_ctSentryTryDeadline[actor] = GetGameTime() + SENTRY_TRY_TIME;
 			m_ctSentryReachDeadline[actor] = GetGameTime() + SENTRY_REACH_TIME;
 			return action.Continue();

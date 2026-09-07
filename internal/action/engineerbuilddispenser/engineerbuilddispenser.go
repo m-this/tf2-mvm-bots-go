@@ -26,6 +26,7 @@ engineer being unable to walk there.
 package engineerbuilddispenser
 
 import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/climb"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/nestsetup"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
@@ -152,6 +153,8 @@ func OnStart(actor int32) engine.Outcome {
 		}
 	}
 
+	climb.Begin(actor)
+
 	// Sides he cannot stand on are skipped here rather than walked at and waited out
 	ok, stand := StandPoint(actor, tryIndex[actor])
 
@@ -159,6 +162,12 @@ func OnStart(actor int32) engine.Outcome {
 
 	if !ok {
 		NextStandPoint(actor)
+	}
+
+	// Level with a spot on a rock already, so the stand point is not the floor below it
+	if climb.Beside(actor, dispenserSpot[actor]) {
+		climb.MarkOnTop(actor, dispenserStand[actor])
+		dispenserStand[actor] = engine.AbsOriginOf(actor)
 	}
 
 	// Claimed and jumped to, so the walk from the upgrade station is not paid twice
@@ -225,6 +234,33 @@ func Update(actor int32) engine.Outcome {
 	spot := dispenserSpot[actor]
 	stand := dispenserStand[actor]
 
+	myBody := engine.NextBotOf(actor).Body()
+
+	// The spot is on a rock and he is at the foot of it, so he gets on top before the clocks are read
+	climbed := climb.ToSpot(actor, myBody, spot, "dispenser spot")
+
+	if climbed == climb.Busy {
+		engine.PluginBotOf(actor).SetPathing(false)
+
+		return engine.Continue()
+	}
+
+	if climbed == climb.Landed {
+		reachDeadline[actor] = engine.GameTime() + engine.BuildReachTime(spot, spot)
+	}
+
+	// Up on the rock nothing is pathed to: where he stands is the stand point, stepped off the spot
+	if climb.OnTop(actor) && climb.Beside(actor, spot) {
+		dispenserStand[actor] = engine.AbsOriginOf(actor)
+		stand = dispenserStand[actor]
+
+		if climb.StepBack(actor, myBody, spot) {
+			engine.PluginBotOf(actor).SetPathing(false)
+
+			return engine.Continue()
+		}
+	}
+
 	/* The walk ran out of time, so he builds from where he stands and aims at the spot anyway
 
 	Only while he is somewhere near his nest. Settling where he stands is a trade of accuracy for a
@@ -254,9 +290,6 @@ func Update(actor int32) engine.Outcome {
 	}
 
 	rangeToStand := engine.VectorDistance(engine.AbsOriginOf(actor), stand)
-
-	myNextbot := engine.NextBotOf(actor)
-	myBody := myNextbot.Body()
 
 	if rangeToStand < 200.0 {
 		if !engine.IsBuilderSetTo(actor, engine.ObjectDispenser()) {

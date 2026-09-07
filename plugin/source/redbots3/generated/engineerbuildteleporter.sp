@@ -13,13 +13,6 @@ BehaviorAction CTFBotMvMEngineerBuildTeleporter()
 
 #define TELEPORTER_EXIT_REACH_TIME (12.0)
 
-#define TELEPORTER_CLIMB_RISE_MIN (24.0)
-#define TELEPORTER_CLIMB_RISE_MAX (72.0)
-#define TELEPORTER_CLIMB_RANGE (140.0)
-#define TELEPORTER_CLIMB_INTERVAL (0.7)
-#define TELEPORTER_CLIMB_HOLD (0.3)
-#define TELEPORTER_CLIMB_LIMIT (6)
-
 #define TELEPORTER_BUILD_REACH (90.0)
 
 #define TELEPORTER_SPAWN_OFFSET (200.0)
@@ -47,8 +40,6 @@ BehaviorAction CTFBotMvMEngineerBuildTeleporter()
 float m_ctTeleporterGiveUp[65];
 float m_ctTeleporterReachDeadline[65];
 float m_ctTeleporterTryDeadline[65];
-float m_ctTeleporterClimb[65];
-int m_iTeleporterClimbs[65];
 int m_iTeleporterTry[65];
 TFObjectMode m_nTeleporterMode[65];
 float m_vTeleporterSpot[65][3];
@@ -70,8 +61,7 @@ public Action CTFBotMvMEngineerBuildTeleporter_OnStart(BehaviorAction action, in
 	m_ctTeleporterGiveUp[actor] = GetGameTime() + TELEPORTER_BUILD_MAX_TIME;
 	m_ctTeleporterReachDeadline[actor] = GetGameTime() + TELEPORTER_EXIT_REACH_TIME;
 	m_ctTeleporterTryDeadline[actor] = GetGameTime() + TELEPORTER_TRY_TIME;
-	m_ctTeleporterClimb[actor] = 0.0;
-	m_iTeleporterClimbs[actor] = 0;
+	ClimbBegin(actor);
 	m_iTeleporterTry[actor] = 0;
 	m_iTeleporterRoutePoints[actor] = 0;
 	// From the nest towards spawn when he stands at the nest, from spawn towards the nest when he
@@ -146,21 +136,33 @@ public Action CTFBotMvMEngineerBuildTeleporter_Update(BehaviorAction action, int
 	bool outOfTime = (m_nTeleporterMode[actor] == TFObjectMode_Exit) && (GetGameTime() > m_ctTeleporterReachDeadline[actor]);
 	INextBot myNextbot = CBaseNPC_GetNextBotOfEntity(actor);
 	IBody myBody = myNextbot.GetBodyInterface();
-	// Say when the climb is not even asked for, so silence means one thing
-	//
-	// Three candidates for why the jump never lands, and the third is that this branch never runs.
-	// Without a line here that reads the same as the debug being off.
-	if (redbots_manager_debug_actions.BoolValue && Feature(FEATURE_ENGINEER_CLIMBS) && (outOfTime || !m_bTeleporterNamedSpot[actor]))
-	{
-		PrintToServer("[teleclimb] %N not asked: out of time %d, named spot %d", actor, outOfTime, m_bTeleporterNamedSpot[actor]);
-	}
 	// The map put the spot on top of something, so he gets on top of it rather than building below it
-	if (Feature(FEATURE_ENGINEER_CLIMBS) && !outOfTime && m_bTeleporterNamedSpot[actor] && TeleporterClimbToSpot(actor, myBody, spot))
+	if (!outOfTime && m_bTeleporterNamedSpot[actor])
 	{
-		g_arrPluginBot[actor].bPathing = false;
-		return action.Continue();
+		int climbed = ClimbToSpot(actor, myBody, spot, "teleporter spot");
+		if (climbed == 1)
+		{
+			g_arrPluginBot[actor].bPathing = false;
+			return action.Continue();
+		}
+		// The reach clock starts again on landing, because six jumps and a lift are most of it: on
+		// Rottenburg the exit was lifted onto its spot and then fell back to the nest ring on a clock
+		// that had run out while he was jumping.
+		if (climbed == 2)
+		{
+			m_ctTeleporterReachDeadline[actor] = GetGameTime() + TELEPORTER_EXIT_REACH_TIME;
+		}
+		// Up on the rock nothing is pathed to: where he stands is the stand point, stepped off the spot
+		if (ClimbOnTop(actor) && ClimbBeside(actor, spot))
+		{
+			m_vTeleporterStand[actor] = GetAbsOrigin(actor);
+			if (ClimbStepBack(actor, myBody, spot))
+			{
+				g_arrPluginBot[actor].bPathing = false;
+				return action.Continue();
+			}
+		}
 	}
-	// Read after the climb, which moves it to where he landed
 	float stand[3];
 	stand = m_vTeleporterStand[actor];
 	if (outOfTime)
@@ -239,80 +241,6 @@ stock int TeleporterTryLimit(int actor)
 	return TELEPORTER_TRY_POINTS;
 }
 
-// SayClimb says why a climb was refused, or that it was tried.
-//
-// Measured on Bigrock the jump never landed: no sample under 100 units from the spot,
-// and the minimum equal to the median. Three candidates were left and one line
-// separates them, because each writes a different reason here: the 24 to 72 window not
-// matching the real rise, the jump not carrying, or the branch never being reached at
-// all. See mvm-fgs.
-stock void SayClimb(int actor, const char[] why, float rise, float flat)
-{
-	if (!redbots_manager_debug_actions.BoolValue)
-	{
-		return;
-	}
-	PrintToServer("[teleclimb] %N %s, rise %.0f of %.0f to %.0f, out %.0f of %.0f, climb %d of %d", actor, why, rise, TELEPORTER_CLIMB_RISE_MIN, TELEPORTER_CLIMB_RISE_MAX, flat, TELEPORTER_CLIMB_RANGE, m_iTeleporterClimbs[actor], TELEPORTER_CLIMB_LIMIT);
-}
-
-// ClimbToSpot crouch jumps onto the ground the spot sits on, and is false when there
-// is nothing to climb.
-//
-// The stand point comes off the nav mesh, so for a spot on a rock the mesh does not
-// cover it is the floor underneath: he arrives, the spot is over his head, and every
-// placement from down there is refused. This puts him on top instead.
-//
-// Once he is up, where he stands is where he stands. Recomputing the ring point from up
-// there asks the nav mesh again and the nav mesh answers with the floor he just left,
-// which is the walk back down. He climbed from within a build's reach, so the spot is
-// already in front of him.
-//
-// The count resets when he makes it, so falling off and climbing again costs another
-// six attempts rather than none. The reach clock is what bounds the pair of them.
-stock bool TeleporterClimbToSpot(int actor, IBody myBody, float spot[3])
-{
-	float origin[3];
-	origin = GetAbsOrigin(actor);
-	float rise = spot[2] - origin[2];
-	float reach[3];
-	SubtractVectors(spot, origin, reach);
-	reach[2] = 0.0;
-	float out = GetVectorLength(reach);
-	if (rise < TELEPORTER_CLIMB_RISE_MIN)
-	{
-		SayClimb(actor, "nothing to climb", rise, out);
-		if (m_iTeleporterClimbs[actor] > 0)
-		{
-			m_iTeleporterClimbs[actor] = 0;
-			m_vTeleporterStand[actor] = origin;
-		}
-		return false;
-	}
-	// Higher than a crouch jump is not a ledge, it is a wall, and no number of jumps will do it
-	if ((rise > TELEPORTER_CLIMB_RISE_MAX) || (m_iTeleporterClimbs[actor] >= TELEPORTER_CLIMB_LIMIT))
-	{
-		SayClimb(actor, (rise > TELEPORTER_CLIMB_RISE_MAX ? "too high to climb" : "out of climbs"), rise, out);
-		return false;
-	}
-	// Far enough out and the jump lands on the wall rather than on top of it
-	if (out > TELEPORTER_CLIMB_RANGE)
-	{
-		SayClimb(actor, "too far out to climb", rise, out);
-		return false;
-	}
-	SayClimb(actor, "climbing", rise, out);
-	AimHeadTowards(myBody, spot, MANDATORY, 0.2, Address_Null, "Climbing to the teleporter spot");
-	if (m_ctTeleporterClimb[actor] > GetGameTime())
-	{
-		return true;
-	}
-	m_ctTeleporterClimb[actor] = GetGameTime() + TELEPORTER_CLIMB_INTERVAL;
-	m_iTeleporterClimbs[actor]++;
-	// Forward is along where he is looking, which is the spot, so the three together are a person
-	g_arrExtraButtons[actor].PressButtons(IN_FORWARD | IN_JUMP | IN_DUCK, TELEPORTER_CLIMB_HOLD);
-	return true;
-}
-
 // FallBackToNest is the named exit spot having beaten him, so he takes the ring round
 // his own nest instead.
 //
@@ -327,7 +255,7 @@ stock bool TeleporterFallBackToNest(int actor)
 	}
 	m_bTeleporterNamedSpot[actor] = false;
 	m_iTeleporterTry[actor] = 0;
-	m_iTeleporterClimbs[actor] = 0;
+	ClimbBegin(actor);
 	m_ctTeleporterReachDeadline[actor] = GetGameTime() + TELEPORTER_EXIT_REACH_TIME;
 	return TeleporterStandPoint(actor);
 }

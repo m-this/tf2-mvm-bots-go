@@ -25,6 +25,7 @@ which tries again three seconds later with a freshly scored nest.
 package engineerbuildsentrygun
 
 import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/climb"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/nestsetup"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
@@ -166,7 +167,19 @@ func OnStart(actor int32) engine.Outcome {
 		}
 	}
 
+	climb.Begin(actor)
+
 	StandPoint(actor)
+
+	/* The teleport put him level with a spot on a rock, so he builds from up here
+
+	The stand point comes off the mesh and the mesh has nothing on the rock, so it is the floor
+	below, and walking to it is walking off the ground the break just put him on. Bigrock's two
+	nests are this. */
+	if climb.Beside(actor, sentrySpot[actor]) {
+		climb.MarkOnTop(actor, sentryStand[actor])
+		sentryStand[actor] = engine.AbsOriginOf(actor)
+	}
 
 	// After the teleport above, so a between-rounds walk is priced from where he actually starts it
 	reachDeadline[actor] = engine.GameTime() + engine.BuildReachTime(engine.AbsOriginOf(actor), sentryStand[actor])
@@ -214,6 +227,40 @@ func Update(actor int32) engine.Outcome {
 	spot := sentrySpot[actor]
 	stand := sentryStand[actor]
 
+	myBody := engine.NextBotOf(actor).Body()
+
+	/* The spot is on a rock and he is at the foot of it, so he gets on top before anything else
+
+	Before the clocks below, because a jump in flight is not a walk that ran out. Where he lands, the
+	stand point is a short reach from the spot up here: asking the mesh answers with the floor he
+	just left, and standing on the spot itself is looking at his own feet. */
+	climbed := climb.ToSpot(actor, myBody, spot, "sentry spot")
+
+	if climbed == climb.Busy {
+		engine.PluginBotOf(actor).SetPathing(false)
+
+		return engine.Continue()
+	}
+
+	if climbed == climb.Landed {
+		reachDeadline[actor] = engine.GameTime() + reachTime
+	}
+
+	/* Up on the rock, where he stands is the stand point and nothing is pathed to
+
+	A point up here is off the mesh, and a path asked for to it is a search the watchdog ends. He is
+	steered a short reach off the spot instead, so that he is not looking at his own feet. */
+	if climb.OnTop(actor) && climb.Beside(actor, spot) {
+		sentryStand[actor] = engine.AbsOriginOf(actor)
+		stand = sentryStand[actor]
+
+		if climb.StepBack(actor, myBody, spot) {
+			engine.PluginBotOf(actor).SetPathing(false)
+
+			return engine.Continue()
+		}
+	}
+
 	/* The walk ran out, so he builds from where he got to rather than into whatever stopped him
 
 	And he puts it beside himself rather than pointing it at the nest he could not reach. Aiming at
@@ -240,6 +287,7 @@ func Update(actor int32) engine.Outcome {
 
 		engine.SetNestArea(actor, engine.PickBuildArea(actor))
 		tryIndex[actor] = 0
+		climb.Begin(actor)
 		StandPoint(actor)
 		reachDeadline[actor] = engine.GameTime() + reachTime
 
@@ -257,9 +305,7 @@ func Update(actor int32) engine.Outcome {
 
 	rangeToStand := engine.VectorDistance(engine.AbsOriginOf(actor), stand)
 	myWeapon := engine.ActiveWeapon(actor)
-	myNextbot := engine.NextBotOf(actor)
-	myBody := myNextbot.Body()
-	myLoco := myNextbot.Locomotion()
+	myLoco := engine.NextBotOf(actor).Locomotion()
 
 	if rangeToStand < 200.0 {
 		if !engine.IsBuilderSetTo(actor, engine.ObjectSentry()) {
@@ -329,9 +375,16 @@ func Update(actor int32) engine.Outcome {
 			if tryIndex[actor] >= tryPoints {
 				engine.SetNestArea(actor, engine.PickBuildArea(actor))
 				tryIndex[actor] = 0
+				climb.Begin(actor)
 			}
 
 			StandPoint(actor)
+
+			// Still level with the spot, so the next side is looked at from up here rather than from below
+			if climb.Beside(actor, sentrySpot[actor]) {
+				climb.MarkOnTop(actor, sentryStand[actor])
+				sentryStand[actor] = engine.AbsOriginOf(actor)
+			}
 
 			tryDeadline[actor] = engine.GameTime() + tryTime
 			reachDeadline[actor] = engine.GameTime() + reachTime

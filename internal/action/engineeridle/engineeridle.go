@@ -15,6 +15,7 @@ it.
 package engineeridle
 
 import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/climb"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/nestsetup"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
@@ -674,6 +675,35 @@ func Update(actor int32) engine.Outcome {
 	if sentry != engine.InvalidEntReference() {
 		dist := engine.VectorDistance(engine.AbsOriginOf(actor), engine.AbsOriginOf(sentry))
 
+		/* A sentry on a rock is wrenched from the rock
+
+		The walk below ends at the foot of it, ninety units away as the crow flies and seventy of
+		them straight up, and a sentry he can place but never reach again is not a nest. So the same
+		climb the builders use, once he is near enough that it is the height and not the walk that
+		keeps him off. Far from it the count starts again, because leaving the rock for ammo and
+		coming back is a new climb. */
+		if dist > 2.0*climb.Range {
+			climb.Begin(actor)
+		}
+
+		if SentryNeedsMetal(sentry) && dist >= 90.0 &&
+			climb.ToSpot(actor, myBody, engine.AbsOriginOf(sentry), "sentry") == climb.Busy {
+			engine.PluginBotOf(actor).SetPathing(false)
+
+			return engine.Continue()
+		}
+
+		/* At the foot of the sentry's rock, or up on it, nothing is pathed
+
+		The goal below is a point beside the sentry and then the sentry itself, and on the rock both
+		are ground the mesh does not have. A path asked for to either walks the whole mesh before it
+		fails, every repath, and that is the frame the server's watchdog killed three times in one
+		night. He is here, so the walk is over: the climb above or the wrench below is what is left. */
+		if climb.AtFoot(actor, engine.AbsOriginOf(sentry)) {
+			engine.PluginBotOf(actor).SetPathing(false)
+			recomputePath[actor] = engine.GameTime() + 1.0
+		}
+
 		/* A finished sentry is not a job
 		The wrench does nothing to a level three at full health and full shells, and the engineer
 		swinging it is an engineer not shooting at the robots walking into his nest */
@@ -717,6 +747,11 @@ func Update(actor int32) engine.Outcome {
 		}
 
 		if dist < 90.0 && SentryNeedsMetal(sentry) {
+			// The path goal is on the floor he climbed off, so up here it is not followed
+			if climb.OnTop(actor) {
+				engine.PluginBotOf(actor).SetPathing(false)
+			}
+
 			if !myLoco.IsStuck() {
 				engine.ExtraButtonsOf(actor).PressButtons(engine.InDuck(), 0.1)
 			}

@@ -61,6 +61,7 @@ Author: ★ Officer Spy ★
 #include "redbots3/generated/nestpick.sp"
 #include "redbots3/generated/nesthint.sp"
 #include "redbots3/generated/buildarea.sp"
+#include "redbots3/generated/climb.sp"
 #include "redbots3/generated/nestsetup.sp"
 #include "redbots3/generated/nestmove.sp"
 #include "redbots3/generated/bombinfo.sp"

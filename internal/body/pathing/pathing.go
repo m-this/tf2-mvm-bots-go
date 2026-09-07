@@ -129,10 +129,51 @@ func NudgeTowardsGoal(client int32, myBot engine.Bot, goal [3]float32) {
 	myLoco.Approach(step)
 }
 
+/*
+TargetSearch and TargetStep say when a target stands on ground the mesh has: an
+area within the search radius whose surface is within a step of the target's
+feet.
+
+The sentry on Bigrock's nest is 60 to 90 above the nearest area, and a path
+asked for to it is a search of the whole mesh that ends in failure, every
+repath, for every bot that wants it. Three server watchdog crashes in one night
+had that search on the main thread (mvm-cf3, mvm-fgs). A target off the mesh is
+refused before the search, and the nudge below walks at it instead, which is
+what gets the engineer to the foot of the rock he then climbs.
+*/
+const (
+	//sp:name PATH_TARGET_SEARCH
+	TargetSearch = 120.0
+	//sp:name PATH_TARGET_STEP
+	TargetStep = 24.0
+)
+
+// TargetHasGround is whether a route to the target can exist at all.
+//
+//sp:name TargetHasGround
+func TargetHasGround(target int32) bool {
+	origin := engine.AbsOriginOf(target)
+
+	area := engine.NearestNavArea(origin, false, TargetSearch, false, true, engine.TeamAny())
+
+	if area == engine.NullArea() {
+		return false
+	}
+
+	ground := area.ClosestPointOnArea(origin)
+
+	return engine.FloatAbs(ground[2]-origin[2]) <= TargetStep
+}
+
 // RepathToTarget asks for a route to an entity, measured and counted.
 //
 //sp:name RepathToTarget
 func RepathToTarget(actor int32, myBot engine.Bot, target int32) {
+	if !TargetHasGround(target) {
+		NotePathResult(actor, false)
+		return
+	}
+
 	began := engine.WallClock()
 	built := engine.PathOf(actor).ComputeToTargetBuilt(myBot, target, PathLengthCap())
 
@@ -266,7 +307,12 @@ func PluginBotSimulateFrame(client int32) {
 					vecGoal := engine.PluginBotOf(client).PathGoalVector()
 					built = engine.PathOf(client).ComputeToPosBuilt(myBot, vecGoal, PathLengthCap())
 				} else {
-					built = engine.PathOf(client).ComputeToTargetBuilt(myBot, engine.PluginBotOf(client).PathGoalEntity(), PathLengthCap())
+					// A target with no ground under it is refused before the search, not after it
+					built = false
+
+					if TargetHasGround(engine.PluginBotOf(client).PathGoalEntity()) {
+						built = engine.PathOf(client).ComputeToTargetBuilt(myBot, engine.PluginBotOf(client).PathGoalEntity(), PathLengthCap())
+					}
 				}
 
 				failed := !built || engine.PathOf(client).Length() <= 0.0

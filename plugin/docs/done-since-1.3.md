@@ -50,6 +50,10 @@ One line each. The spec has the detail and the reasoning.
   what left him standing on Bigrock for most of a wave.
 - The sentry stands in front of the engineer like the other two buildings, and
   every part of building one has a clock on it.
+- The engineer climbs onto a spot the map put on a rock, is lifted there when
+  six jumps have not landed, and wrenches his sentry from up there. Bigrock's
+  two nests and its exit went from the foot of the rock to 22 and 45 units off
+  their spots.
 - `testbed/sweep.sh` plays every installed map and `testbed/sweepreport` reads a
   whole sweep. See `specs/sweep-2026-08-22.md`.
 - The loadout file can name a seat of `sm_redbots_manager_team_composition` and
