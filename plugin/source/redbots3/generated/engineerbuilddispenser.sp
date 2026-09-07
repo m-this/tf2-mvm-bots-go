@@ -249,7 +249,10 @@ stock bool DispenserStandPoint(int actor, int attempt, float stand[3])
 	{
 		stand[i] = 0.0;
 	}
-	ok = BuildStandPoint(m_vDispenserSpot[actor], GetAbsOrigin(actor), attempt, DISPENSER_TRY_POINTS, DISPENSER_BUILD_REACH, stand);
+	// A side level with the spot before a side a storey under it, see LevelStandPoint
+	int side;
+	ok = LevelStandPoint(m_vDispenserSpot[actor], GetAbsOrigin(actor), attempt, DISPENSER_TRY_POINTS, DISPENSER_BUILD_REACH, side, stand);
+	m_iDispenserTry[actor] = side;
 	return ok;
 }
 

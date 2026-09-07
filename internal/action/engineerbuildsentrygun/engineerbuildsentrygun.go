@@ -27,6 +27,7 @@ package engineerbuildsentrygun
 import (
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/climb"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/nestsetup"
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/nestspot"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
 )
@@ -423,9 +424,11 @@ func StandPoint(actor int32) {
 	sentrySpot[actor] = engine.NestBuildPosition(engine.NestAreaOf(actor))
 
 	for skipped := int32(0); skipped < tryPoints; skipped++ {
-		ok, stand := engine.BuildStandPoint(sentrySpot[actor], engine.AbsOriginOf(actor), tryIndex[actor],
+		// A side level with the spot before a side a storey under it, see LevelStandPoint
+		ok, side, stand := nestspot.LevelStandPoint(sentrySpot[actor], engine.AbsOriginOf(actor), tryIndex[actor],
 			tryPoints, buildReach)
 
+		tryIndex[actor] = side
 		sentryStand[actor] = stand
 
 		if ok {

@@ -54,6 +54,9 @@ One line each. The spec has the detail and the reasoning.
   six jumps have not landed, and wrenches his sentry from up there. Bigrock's
   two nests and its exit went from the foot of the rock to 22 and 45 units off
   their spots.
+- The exit's reach clock is priced by the walk, and a stand side level with
+  the spot is tried before one a storey under it. Rottenburg's exit went from
+  the nest ring, 350 units off, to 52 to 102 from its spot.
 - `testbed/sweep.sh` plays every installed map and `testbed/sweepreport` reads a
   whole sweep. See `specs/sweep-2026-08-22.md`.
 - The loadout file can name a seat of `sm_redbots_manager_team_composition` and

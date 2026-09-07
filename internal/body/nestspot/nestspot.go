@@ -182,6 +182,44 @@ func BuildStandPoint(spot [3]float32, from [3]float32, attempt int32, attempts i
 	return true, stand
 }
 
+// standLevel is how far off the spot's height a side's ground may be and still
+// count as level with it: a step, so a ramp passes and a ledge does not.
+//
+//sp:name BUILD_STAND_LEVEL
+const standLevel = 24.0
+
+/*
+LevelStandPoint is BuildStandPoint with the sides that are level with the spot
+tried first.
+
+Rottenburg's exit spot is on the floor and one of its eight sides is a ledge 61
+units below it, inside the storey BuildStandPoint allows. An engineer arriving
+from that side stood a storey under the spot, jumped at the wall six times and
+was lifted, where the next side round would have let him walk up and build. So
+the sides are walked from the one asked for, the first level one wins, and
+when none is level the side asked for is answered as before, which is what a
+spot on a rock gets.
+*/
+//
+//sp:name LevelStandPoint
+//sp:const spot
+//sp:const from
+func LevelStandPoint(spot [3]float32, from [3]float32, attempt int32, attempts int32, reach float32) (ok bool, side int32, stand [3]float32) {
+	for step := int32(0); step < attempts; step++ {
+		side = (attempt + step) % attempts
+
+		ok, stand = BuildStandPoint(spot, from, side, attempts, reach)
+
+		if ok && engine.FloatAbs(stand[2]-spot[2]) <= standLevel {
+			return ok, side, stand
+		}
+	}
+
+	ok, stand = BuildStandPoint(spot, from, attempt, attempts, reach)
+
+	return ok, attempt, stand
+}
+
 // RandomPointIn is somewhere inside the area, on its own surface rather than
 // inside the box that bounds it.
 //

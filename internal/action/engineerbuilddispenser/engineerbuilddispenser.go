@@ -28,6 +28,7 @@ package engineerbuilddispenser
 import (
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/climb"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/nestsetup"
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/nestspot"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
 )
@@ -370,8 +371,11 @@ one.
 //
 //sp:name DispenserStandPoint
 func StandPoint(actor int32, attempt int32) (ok bool, stand [3]float32) {
-	ok, stand = engine.BuildStandPoint(dispenserSpot[actor], engine.AbsOriginOf(actor), attempt,
+	// A side level with the spot before a side a storey under it, see LevelStandPoint
+	ok, side, stand := nestspot.LevelStandPoint(dispenserSpot[actor], engine.AbsOriginOf(actor), attempt,
 		tryPoints, buildReach)
+
+	tryIndex[actor] = side
 
 	return ok, stand
 }

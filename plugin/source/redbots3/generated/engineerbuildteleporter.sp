@@ -82,6 +82,12 @@ public Action CTFBotMvMEngineerBuildTeleporter_OnStart(BehaviorAction action, in
 		TeleporterGiveUp(actor);
 		return TeleporterDone(action, actor, "No route out of spawn to walk");
 	}
+	// Priced by the walk, because the exit is built after the entrance and the entrance is at spawn
+	//
+	// Rottenburg's exit spot is 3300 units from its spawn door, which is more than the flat twelve
+	// seconds, so the clock ran out on the way and the exit went to the nest ring every time. The
+	// dispenser learned the same lesson on Coaltown.
+	m_ctTeleporterReachDeadline[actor] = GetGameTime() + BuildReachTime(GetAbsOrigin(actor), m_vTeleporterStand[actor]);
 	// The half he is about to build is claimed, and the walk to it is a jump
 	//
 	// This is the walk the whole complaint was about: the entrance is at the far end of the map from
@@ -360,8 +366,11 @@ stock bool TeleporterStandPoint(int actor)
 	int attempt = m_iTeleporterTry[actor];
 	if (m_bTeleporterNamedSpot[actor])
 	{
+		// A side level with the spot before a side a storey under it, see LevelStandPoint
+		int side;
 		float stand[3];
-		BuildStandPoint(m_vTeleporterSpot[actor], GetAbsOrigin(actor), attempt, TELEPORTER_TRY_POINTS, TELEPORTER_BUILD_REACH, stand);
+		LevelStandPoint(m_vTeleporterSpot[actor], GetAbsOrigin(actor), attempt, TELEPORTER_TRY_POINTS, TELEPORTER_BUILD_REACH, side, stand);
+		m_iTeleporterTry[actor] = side;
 		m_vTeleporterStand[actor] = stand;
 		return true;
 	}

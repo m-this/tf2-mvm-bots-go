@@ -281,8 +281,11 @@ stock void SentryStandPoint(int actor)
 	NestBuildPosition(m_aNestArea[actor], m_vSentrySpot[actor]);
 	for (int skipped = 0; skipped < SENTRY_TRY_POINTS; skipped++)
 	{
+		// A side level with the spot before a side a storey under it, see LevelStandPoint
+		int side;
 		float stand[3];
-		bool ok = BuildStandPoint(m_vSentrySpot[actor], GetAbsOrigin(actor), m_iSentryTry[actor], SENTRY_TRY_POINTS, SENTRY_BUILD_REACH, stand);
+		bool ok = LevelStandPoint(m_vSentrySpot[actor], GetAbsOrigin(actor), m_iSentryTry[actor], SENTRY_TRY_POINTS, SENTRY_BUILD_REACH, side, stand);
+		m_iSentryTry[actor] = side;
 		m_vSentryStand[actor] = stand;
 		if (ok)
 		{

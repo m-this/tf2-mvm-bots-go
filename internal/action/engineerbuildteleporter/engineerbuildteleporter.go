@@ -21,6 +21,7 @@ package engineerbuildteleporter
 import (
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/climb"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/nestsetup"
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/nestspot"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
 )
@@ -201,6 +202,13 @@ func OnStart(actor int32) engine.Outcome {
 
 		return Ended(engine.ThisAction(), actor, "No route out of spawn to walk")
 	}
+
+	/* Priced by the walk, because the exit is built after the entrance and the entrance is at spawn
+
+	Rottenburg's exit spot is 3300 units from its spawn door, which is more than the flat twelve
+	seconds, so the clock ran out on the way and the exit went to the nest ring every time. The
+	dispenser learned the same lesson on Coaltown. */
+	reachDeadline[actor] = engine.GameTime() + engine.BuildReachTime(engine.AbsOriginOf(actor), standOf[actor])
 
 	/* The half he is about to build is claimed, and the walk to it is a jump
 
@@ -559,9 +567,11 @@ func StandPoint(actor int32) bool {
 	attempt := tryIndex[actor]
 
 	if namedSpot[actor] {
-		_, stand := engine.BuildStandPoint(spotOf[actor], engine.AbsOriginOf(actor), attempt,
+		// A side level with the spot before a side a storey under it, see LevelStandPoint
+		_, side, stand := nestspot.LevelStandPoint(spotOf[actor], engine.AbsOriginOf(actor), attempt,
 			tryPoints, buildReach)
 
+		tryIndex[actor] = side
 		standOf[actor] = stand
 
 		return true

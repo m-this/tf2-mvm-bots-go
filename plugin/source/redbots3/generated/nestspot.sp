@@ -5,6 +5,8 @@
 #define BUILD_STAND_SEARCH (120.0)
 #define BUILD_STAND_STOREY (100.0)
 
+#define BUILD_STAND_LEVEL (24.0)
+
 // NestBuildPosition is where a nest area's building actually goes: the coordinate
 // somebody walked the map to find when there is one, and the area's own centre when
 // there is not.
@@ -143,6 +145,38 @@ stock bool BuildStandPoint(const float spot[3], const float from[3], int attempt
 	}
 	stand = ground;
 	return true;
+}
+
+// LevelStandPoint is BuildStandPoint with the sides that are level with the spot
+// tried first.
+//
+// Rottenburg's exit spot is on the floor and one of its eight sides is a ledge 61
+// units below it, inside the storey BuildStandPoint allows. An engineer arriving
+// from that side stood a storey under the spot, jumped at the wall six times and
+// was lifted, where the next side round would have let him walk up and build. So
+// the sides are walked from the one asked for, the first level one wins, and
+// when none is level the side asked for is answered as before, which is what a
+// spot on a rock gets.
+stock bool LevelStandPoint(const float spot[3], const float from[3], int attempt, int attempts, float reach, int &side, float stand[3])
+{
+	bool ok;
+	side = 0;
+	for (int i = 0; i < 3; i++)
+	{
+		stand[i] = 0.0;
+	}
+	for (int step = 0; step < attempts; step++)
+	{
+		side = (attempt + step) % attempts;
+		ok = BuildStandPoint(spot, from, side, attempts, reach, stand);
+		if (ok && (FloatAbs(stand[2] - spot[2]) <= BUILD_STAND_LEVEL))
+		{
+			return ok;
+		}
+	}
+	ok = BuildStandPoint(spot, from, attempt, attempts, reach, stand);
+	side = attempt;
+	return ok;
 }
 
 // RandomPointIn is somewhere inside the area, on its own surface rather than
