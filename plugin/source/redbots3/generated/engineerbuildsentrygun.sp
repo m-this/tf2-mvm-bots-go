@@ -46,15 +46,31 @@ public Action CTFBotMvMEngineerBuildSentrygun_OnStart(BehaviorAction action, int
 	{
 		if (m_aNestArea[actor] != NULL_AREA)
 		{
-			// Teleport ourselves to the nest area for a faster setup
-			float vNestPosition[3];
-			NestBuildPosition(m_aNestArea[actor], vNestPosition);
-			vNestPosition[2] += TFBOT_STEP_HEIGHT;
-			CBaseEntity(actor).SetAbsOrigin(vNestPosition);
+			float nest[3];
+			NestBuildPosition(m_aNestArea[actor], nest);
 			// The nest is the first claim of the break, and the one the other three are placed around
 			if (Feature(FEATURE_ENGINEER_SETUP_PHASE))
 			{
-				ClaimSetupSpot(actor, 0, vNestPosition);
+				ClaimSetupSpot(actor, 0, nest);
+			}
+			// Through the checked jump, because a raw SetAbsOrigin writes two engineers to one point
+			//
+			// Two engineers holding one nest area were both written to the spot plus a step height, and a
+			// step height is the same eighteen units for both of them. Neither could then move. The
+			// watchdog reset the behaviour, this ran again, and it put them back on that point every
+			// twelve seconds until the wedge recovery threw one of them out, so a break went by with no
+			// sentry from either man.
+			//
+			// Cowser's Mannworks log has Soulless and Divide by Zero reported at 1031 880 275 in the same
+			// second, three times over. That is EngineerNest 4 at 1031 880 257 plus a step, and nothing
+			// but a teleport puts two players on one coordinate. It is also mvm-wb0, which had been read
+			// as bad geometry and had the spot moved twice looking for it.
+			//
+			// SetupJump traces for room to stand before it moves anybody, and it is the same jump the
+			// dispenser and both teleporters already go through. The second engineer walks instead.
+			if (!SetupJump(actor, nest))
+			{
+				LogBuildFailure(actor, "sentry", "no room to jump onto the nest, so he walks to it");
 			}
 		}
 	}
