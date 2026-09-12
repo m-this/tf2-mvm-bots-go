@@ -111,12 +111,17 @@ func selectRoundRunning(class Class, f Facts) Action {
 
 // shouldTakeUpPosition is ShouldTakeUpPosition: whether the break ends with
 // this one walking to where the robots come out.
+//
+// The medic's answer is a switch, because the walk to the front costs him the
+// charge he would have built healing. See mvm-z83.95.
 func shouldTakeUpPosition(class Class, f Facts) bool {
 	switch class {
 	case ClassEngineer, ClassSpy:
 		return false
 	case ClassSniper:
 		return !f.Ask(HasSniperRifle)
+	case ClassMedic:
+		return !f.Ask(MedicHealsInBreak)
 	}
 	return true
 }

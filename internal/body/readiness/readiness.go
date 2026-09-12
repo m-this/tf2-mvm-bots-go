@@ -40,6 +40,25 @@ func IsBuildingFinished(building int32) bool {
 	return engine.EntProp(building, engine.PropSend(), "m_iUpgradeLevel") >= BuildingMaxLevel
 }
 
+/*
+IsMedicCharged is the medigun full, or there being nothing to fill.
+
+A medic with no medigun is not building a charge and is not worth waiting for,
+and neither is one whose patient has just died: what stops that wait is the
+grace, not this.
+*/
+//
+//sp:name IsMedicCharged
+func IsMedicCharged(client int32) bool {
+	medigun := engine.PlayerWeaponSlot(client, engine.WeaponSlotSecondary())
+
+	if medigun == -1 || !engine.HasEntProp(medigun, engine.PropSend(), "m_flChargeLevel") {
+		return true
+	}
+
+	return engine.EntPropFloat(medigun, engine.PropSend(), "m_flChargeLevel") >= 1.0
+}
+
 // IsEngineerNestFinished is the sentry and the dispenser both done.
 //
 //sp:name IsEngineerNestFinished
@@ -61,6 +80,11 @@ The engineer's teleporter counts only while nobody is being made to wait for it.
 On a team of nothing but bots the between-rounds time left after the nest is
 nothing at all, so requiring the teleporter meant no engineer ever finished one;
 with a player on the server their shopping is already the time he needs.
+
+The medic's charge is what this feature's own description has always claimed and
+the code never did. It only asks once he has been left in the break to build one,
+because a medic sent to the front is not building anything and waiting on him
+would be waiting on nothing. ReadyGrace is the bound either way.
 */
 //
 //sp:name IsDefenderPrepared
@@ -73,6 +97,10 @@ func IsDefenderPrepared(client int32) bool {
 
 	if engine.ShouldTakeUpPosition(client) {
 		return engine.IsWaitingAtTheFront(client)
+	}
+
+	if engine.PlayerClass(client) == engine.ClassMedic() {
+		return IsMedicCharged(client)
 	}
 
 	if engine.PlayerClass(client) != engine.ClassEngineer() {

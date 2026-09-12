@@ -31,6 +31,7 @@ stock void ResetNextBot(int client)
 	Go_ResetMoveToFront(client);
 	Go_ResetGetHealth(client);
 	Go_ResetMedicRevive(client);
+	Go_ResetMedicNudge(client);
 	// The engineer's own state is reset inside its action.
 	Go_ResetSpySap(client);
 	Go_ResetSpySapPlayer(client);

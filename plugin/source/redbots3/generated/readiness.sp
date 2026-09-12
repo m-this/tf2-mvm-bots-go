@@ -20,6 +20,21 @@ stock bool IsBuildingFinished(int building)
 	return GetEntProp(building, Prop_Send, "m_iUpgradeLevel") >= BUILDING_MAX_LEVEL;
 }
 
+// IsMedicCharged is the medigun full, or there being nothing to fill.
+//
+// A medic with no medigun is not building a charge and is not worth waiting for,
+// and neither is one whose patient has just died: what stops that wait is the
+// grace, not this.
+stock bool IsMedicCharged(int client)
+{
+	int medigun = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
+	if ((medigun == -1) || !HasEntProp(medigun, Prop_Send, "m_flChargeLevel"))
+	{
+		return true;
+	}
+	return GetEntPropFloat(medigun, Prop_Send, "m_flChargeLevel") >= 1.0;
+}
+
 // IsEngineerNestFinished is the sentry and the dispenser both done.
 stock bool IsEngineerNestFinished(int client)
 {
@@ -38,6 +53,11 @@ stock bool IsEngineerNestFinished(int client)
 // On a team of nothing but bots the between-rounds time left after the nest is
 // nothing at all, so requiring the teleporter meant no engineer ever finished one;
 // with a player on the server their shopping is already the time he needs.
+//
+// The medic's charge is what this feature's own description has always claimed and
+// the code never did. It only asks once he has been left in the break to build one,
+// because a medic sent to the front is not building anything and waiting on him
+// would be waiting on nothing. ReadyGrace is the bound either way.
 stock bool IsDefenderPrepared(int client)
 {
 	// Credits in a pocket are worth nothing, and the whole break exists for
@@ -49,6 +69,10 @@ stock bool IsDefenderPrepared(int client)
 	if (ShouldTakeUpPosition(client))
 	{
 		return IsWaitingAtTheFront(client);
+	}
+	if (TF2_GetPlayerClass(client) == TFClass_Medic)
+	{
+		return IsMedicCharged(client);
 	}
 	if (TF2_GetPlayerClass(client) != TFClass_Engineer)
 	{

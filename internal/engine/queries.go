@@ -54,6 +54,7 @@ type QueryCalls struct {
 	MedigunType                 func(medigun int32) int32
 	ResistType                  func(medigun int32) int32
 	BiggestBodyFor              func(medic int32, current int32) int32
+	WantedPatientOf             func(client int32) int32
 	ApplyNextFrameCell          func(data int32)
 	UpdatePosition              func(k Known)
 	ShouldUpgradeMidRoundNow    func(client int32) bool
@@ -298,6 +299,26 @@ func AnyHumanReadyOnRed() bool { return queries.AnyHumanReadyOnRed() }
 //
 //sp:global FEATURE_MEDIC_ANSWERS_CALL
 func FeatureMedicAnswersCall() int32 { return 20 }
+
+// FeatureMedicRanksHurt is FEATURE_MEDIC_RANKS_HURT.
+//
+//sp:global FEATURE_MEDIC_RANKS_HURT
+func FeatureMedicRanksHurt() int32 { return 26 }
+
+// FeatureMedicRanksRange is FEATURE_MEDIC_RANKS_RANGE.
+//
+//sp:global FEATURE_MEDIC_RANKS_RANGE
+func FeatureMedicRanksRange() int32 { return 27 }
+
+// FeatureMedicRanksCallersOnly is FEATURE_MEDIC_RANKS_CALLERS_ONLY.
+//
+//sp:global FEATURE_MEDIC_RANKS_CALLERS_ONLY
+func FeatureMedicRanksCallersOnly() int32 { return 28 }
+
+// FeatureMedicHealsInBreak is FEATURE_MEDIC_HEALS_IN_BREAK.
+//
+//sp:global FEATURE_MEDIC_HEALS_IN_BREAK
+func FeatureMedicHealsInBreak() int32 { return 25 }
 
 // FeatureBotTestByNextbot is FEATURE_BOT_TEST_BY_NEXTBOT.
 //
@@ -620,6 +641,12 @@ func ResistType(medigun int32) int32 { return queries.ResistType(medigun) }
 //
 //sp:body BiggestBody
 func BiggestBodyFor(medic int32, current int32) int32 { return queries.BiggestBodyFor(medic, current) }
+
+// WantedPatientOf is who the ranking last chose for this medic, which is not
+// who the beam reached. Ported, medicnudge.
+//
+//sp:body WantedPatient
+func WantedPatientOf(client int32) int32 { return queries.WantedPatientOf(client) }
 
 // Cell is SourcePawn's any: one untyped cell, which is what RequestFrame
 // carries and what a frame callback is handed.

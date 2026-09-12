@@ -26,6 +26,7 @@ type ResetCalls struct {
 	ResetClimb              func(client int32)
 	ForgetRangeRepairStalls func(client int32)
 	ResetMedicRevive        func(client int32)
+	ResetMedicNudge         func(client int32)
 	ResetGuardPoint         func(client int32)
 	ResetAttack             func(client int32)
 	ResetCollectMoney       func(client int32)
@@ -131,6 +132,12 @@ func ForgetRangeRepairStalls(client int32) { resets.ForgetRangeRepairStalls(clie
 //
 //sp:body Go_ResetMedicRevive
 func ResetMedicRevive(client int32) { resets.ResetMedicRevive(client) }
+
+// ResetMedicNudge is medicnudge's own: the nudge clock and the patient a
+// releasing charge was started on. Ported, medicnudge.
+//
+//sp:body Go_ResetMedicNudge
+func ResetMedicNudge(client int32) { resets.ResetMedicNudge(client) }
 
 // ResetGuardPoint is guardpoint's own. Ported, guardpoint.
 //

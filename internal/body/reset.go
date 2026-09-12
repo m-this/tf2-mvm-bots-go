@@ -167,7 +167,6 @@ var unreviewed = []string{
 	"internal/body/loadouts.attrValPrimary",
 	"internal/body/loadouts.attrValSecondary",
 	"internal/body/loadouts.attrValMelee",
-	"internal/body/medicnudge.nextPatientNudge",
 	"internal/body/pathing.pathFailed",
 	"internal/body/pathing.pathFailures",
 	"internal/body/pluginbot.pluginBot",

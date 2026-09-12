@@ -88,7 +88,7 @@ enum ActionSel_RoundState
  * A node with ActionSel_NodePredicate of -1 answers: ActionSel_NodeWhenTrue
  * holds the outcome.
  */
-#define ActionSel_PredicateCount 14
+#define ActionSel_PredicateCount 15
 
 enum
 {
@@ -105,10 +105,11 @@ enum
 	ActionSel_PredTankTargetFound = 10,
 	ActionSel_PredGiantToMark = 11,
 	ActionSel_PredNearbyMoney = 12,
-	ActionSel_PredStickyTrapPossible = 13
+	ActionSel_PredStickyTrapPossible = 13,
+	ActionSel_PredMedicHealsInBreak = 14
 };
 
-#define ActionSel_NodeCount 93
+#define ActionSel_NodeCount 99
 
 int ActionSel_NodePredicate[ActionSel_NodeCount] = {
 	-1, -1, -1, 1, 6, 5, 4, -1,
@@ -122,7 +123,8 @@ int ActionSel_NodePredicate[ActionSel_NodeCount] = {
 	1, 6, 5, 4, -1, -1, -1, 3,
 	-1, -1, 4, 3, 2, 1, 0, -1,
 	3, 8, 7, 8, 7, 3, 2, 1,
-	0, 3, 2, 1, 0
+	0, 14, 14, 3, 2, 1, 0, 3,
+	2, 1, 0
 };
 
 int ActionSel_NodeWhenTrue[ActionSel_NodeCount] = {
@@ -137,7 +139,8 @@ int ActionSel_NodeWhenTrue[ActionSel_NodeCount] = {
 	63, 64, 65, 66, 1, 18, 4, 69,
 	2, 3, 72, 69, 71, 71, 68, 19,
 	69, 71, 81, 69, 83, 84, 82, 82,
-	68, 83, 81, 81, 68
+	68, 81, 83, 90, 89, 89, 68, 83,
+	81, 81, 68
 };
 
 int ActionSel_NodeWhenFalse[ActionSel_NodeCount] = {
@@ -152,7 +155,8 @@ int ActionSel_NodeWhenFalse[ActionSel_NodeCount] = {
 	2, 63, 64, 63, -1, -1, -1, 70,
 	-1, -1, 73, 74, 75, 76, 77, -1,
 	79, 80, 71, 69, 69, 74, 85, 86,
-	87, 74, 89, 90, 91
+	87, 71, 69, 74, 91, 92, 93, 74,
+	95, 96, 97
 };
 
 int ActionSel_Root[11][10] = {
@@ -166,5 +170,5 @@ int ActionSel_Root[11][10] = {
 	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-	{78, 78, 88, 78, 78, 78, 78, 78, 92, 92}
+	{78, 78, 88, 78, 78, 94, 78, 78, 98, 98}
 };

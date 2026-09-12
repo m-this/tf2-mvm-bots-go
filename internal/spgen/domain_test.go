@@ -14,7 +14,7 @@ import (
 const (
 	stateCount = 11
 	classCount = 10
-	predCount  = 14
+	predCount  = 15
 )
 
 // flagsOf turns a bit pattern into the struct, in the order the edge lists the
@@ -36,6 +36,7 @@ func flagsOf(bits uint32) actionsel.Flags {
 		GiantToMark:        on(11),
 		NearbyMoney:        on(12),
 		StickyTrapPossible: on(13),
+		MedicHealsInBreak:  on(14),
 	}
 }
 

@@ -176,6 +176,7 @@ func AskPluginLoad2(myself engine.Timer, late bool, errorText engine.Text, errMa
 	engine.CreateNative("Defenderbots_PathFailures", engine.NativePathFailures)
 	engine.CreateNative("Defenderbots_RangeRepairStalls", engine.NativeRangeRepairStalls)
 	engine.CreateNative("Defenderbots_GetAttackTarget", engine.NativeGetAttackTarget)
+	engine.CreateNative("Defenderbots_GetMedicPatient", engine.NativeGetMedicPatient)
 	engine.RegisterFeatureNatives()
 
 	/* The one native this plugin asks for rather than offers, and it is

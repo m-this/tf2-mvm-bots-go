@@ -9,9 +9,29 @@
 #define UBER_PANIC_HEALTH_RATIO (0.5)
 #define UBER_MEGAHEAL_HEALTH_RATIO (0.7)
 
+#define UBER_PRESSED_HEALTH_RATIO (1.0)
+#define UBER_PRESSED_ENEMIES (4)
+
+#define UBER_GIANT_RANGE (500.0)
+
 #define UBER_RESIST_CHARGE (0.25)
 
 #define SHIELD_FIGHT_RANGE (1200.0)
+
+// IsChargeReleasing says the medigun is spending its charge right now.
+//
+// Asked in four places and worth one name: the deploy must not press a button that
+// is already down, the ranking must not move the beam off the man the charge is
+// going into, the revive must not take the medic away mid-charge, and a sample in a
+// results file is worth nothing without it.
+stock bool IsChargeReleasing(int medigun)
+{
+	if ((medigun == -1) || !HasEntProp(medigun, Prop_Send, "m_bChargeRelease"))
+	{
+		return false;
+	}
+	return GetEntProp(medigun, Prop_Send, "m_bChargeRelease") != 0;
+}
 
 // ShouldDeployUber is whether to fire the charge now.
 //
@@ -25,7 +45,7 @@ stock bool ShouldDeployUber(int client, int medigun, int patient)
 		return false;
 	}
 	// Already spending it
-	if (GetEntProp(medigun, Prop_Send, "m_bChargeRelease") != 0)
+	if (IsChargeReleasing(medigun))
 	{
 		return false;
 	}
@@ -39,7 +59,12 @@ stock bool ShouldDeployUber(int client, int medigun, int patient)
 	{
 		return false;
 	}
-	// A charge spent on a patient the medic is not connected to is a charge spent on the medic alone
+	// The caller's precondition, asserted rather than trusted
+	//
+	// A charge spent on a patient the medic is not connected to is a charge spent on the medic
+	// alone. The shipped caller reads the patient off this same field, so this never fires there;
+	// it is what stops a second caller reintroducing the bug by handing over the man the medic is
+	// walking towards instead of the man the beam is on.
 	if (GetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget") != patient)
 	{
 		return false;
@@ -82,7 +107,48 @@ stock bool ShouldDeployUber(int client, int medigun, int patient)
 	// Stock, and the one case where the game's own rule is nearly right. It is kept, and moved
 	// off the floor: waiting for the last of the patient's health spends the charge on the retreat
 	// rather than on the fight it was built for
-	return (HealthRatio(patient) < UBER_PANIC_HEALTH_RATIO) || (HealthRatio(client) < UBER_PANIC_HEALTH_RATIO);
+	if ((HealthRatio(patient) < UBER_PANIC_HEALTH_RATIO) || (HealthRatio(client) < UBER_PANIC_HEALTH_RATIO))
+	{
+		return true;
+	}
+	return IsPatientUnderPressure(client, patient, enemies);
+}
+
+// IsPatientUnderPressure is the fight that kills a patient without ever showing him
+// at half health.
+//
+// Half health is a threshold, and a giant does not respect one: it takes a patient
+// from whole to dead between two thinks, so the charge is still full when the body
+// lands. Measured over every results file here, 74 of 155 waves deployed no charge
+// at all and 173 defenders died with a full one behind them.
+//
+// A giant closing on the patient goes first and is not asked about health at all,
+// because health is the one thing a medic is already fixing. The beam puts back 24
+// to 72 a second and overheals on top, so the patient reads whole right up to the
+// point a giant removes him: over 127 heavy samples he sat at or above his maximum
+// in 80 per cent of them. Gating on health behind a live beam is gating on a state
+// the beam exists to prevent, and it measured as exactly that. With the gate in
+// front, medic_ubers_early was reached 24 times in a wave and still deployed one
+// charge, the same as the arm without it.
+//
+// The crowd keeps the health test, because a crowd is not a deadline. Robots near
+// an overhealed patient are robots he is walking past, and a charge spent on that
+// is the charge missing from the fight after it.
+stock bool IsPatientUnderPressure(int client, int patient, int enemies)
+{
+	if (!Feature(FEATURE_MEDIC_UBERS_EARLY))
+	{
+		return false;
+	}
+	if (FindEnemyNearestToMe(patient, UBER_GIANT_RANGE, true, false, false, TFClass_Unknown) != -1)
+	{
+		return true;
+	}
+	if ((HealthRatio(patient) >= UBER_PRESSED_HEALTH_RATIO) && (HealthRatio(client) >= UBER_PRESSED_HEALTH_RATIO))
+	{
+		return false;
+	}
+	return enemies >= UBER_PRESSED_ENEMIES;
 }
 
 // MedicProjectileShield puts it up when it is full and there is something to put

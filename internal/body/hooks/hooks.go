@@ -158,7 +158,12 @@ func MedicHealUpdatePost(action engine.Behaviour, actor int32, interval float32,
 		return engine.SuspendFor(engine.AttackUber(), "Seek uber")
 	}
 
-	if engine.MedicReviveIsPossible(actor) {
+	/* A charge already going off keeps him, and the revive waits
+
+	A revive is a walk to a marker and a hold on it. Eight seconds of invulnerability spent
+	getting somebody back on his feet is eight seconds the man it was built for fights without
+	it, and the marker does not expire in that time. */
+	if engine.MedicReviveIsPossible(actor) && !engine.IsChargeReleasing(secondary) {
 		return engine.SuspendFor(engine.MedicRevive(), "Revive teammate")
 	}
 
@@ -172,8 +177,15 @@ func MedicHealUpdatePost(action engine.Behaviour, actor int32, interval float32,
 
 	myWeapon := engine.ActiveWeapon(actor)
 
+	/* The patient comes off the medigun and not off the action
+
+	They are the same man whenever the beam is connected, and the medigun is the half of that
+	the game maintains. The action's is read out of a hardcoded offset into one of the game's own
+	objects, which is a number that is right until a game update, and the charge decision and the
+	shield both want the man the beam is on rather than the man the walk is towards. */
 	if myWeapon != -1 && engine.WeaponID(myWeapon) == engine.WeaponMedigun() {
-		engine.MedicUberAndResistNow(actor, myWeapon, action.HandleEntity(engine.ActionHealPatientOffset()))
+		engine.MedicUberAndResistNow(actor, myWeapon,
+			engine.EntPropEnt(myWeapon, engine.PropSend(), "m_hHealingTarget"))
 	}
 
 	return engine.PluginContinue()

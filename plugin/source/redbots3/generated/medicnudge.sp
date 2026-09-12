@@ -3,6 +3,73 @@
 #define MEDIC_PATIENT_INTERVAL (2.0)
 
 float m_ctNextPatientNudge[65];
+int m_iUberPatient[65];
+int m_iWantedPatient[65];
+
+// WantedPatient is the ranking's own answer, for the statistics plugin.
+stock int WantedPatient(int client)
+{
+	return m_iWantedPatient[client];
+}
+
+// HoldTheUberPatient keeps the beam where the charge started, and says it did.
+//
+// A charge is spent on one body. The nudge asks every couple of seconds who the
+// medigun is worth the most on, and a giant walking past is enough to move the beam
+// mid-uber: the rest of the charge goes into somebody who was not in the fight it
+// was spent on, and the man who was keeps the half he already had. So while the
+// charge is releasing the ranking is not asked at all, and the patient is written
+// back if anything else has moved it.
+//
+// The man it started on is latched here rather than at the button, because Valve's
+// own panic rule deploys too and a charge this mod did not press is still a charge.
+// His dying ends the hold: a live charge with a dead patient is worth pointing at
+// somebody, and the ranking is the thing that knows who.
+stock bool HoldTheUberPatient(BehaviorAction action, int actor)
+{
+	int medigun = GetPlayerWeaponSlot(actor, TFWeaponSlot_Secondary);
+	if (!IsChargeReleasing(medigun))
+	{
+		m_iUberPatient[actor] = -1;
+		return false;
+	}
+	if (m_iUberPatient[actor] <= 0)
+	{
+		m_iUberPatient[actor] = GetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget");
+	}
+	int want = m_iUberPatient[actor];
+	// Everything SetHandleEntity was promised, asked again here
+	//
+	// The write into the action's own field is the one operation in this mod that has faulted a
+	// server, and what makes it safe is that the value is a checked, living, same team, non medic
+	// client. BiggestBody returns one by construction; m_hHealingTarget is the game's handle and is
+	// only a player by convention, so the same questions are asked of it rather than assumed. A man
+	// who fails them ends the hold, which puts the ranking back in charge of a live charge.
+	if (!IsValidClientIndex(want) || !IsPlayerAlive(want))
+	{
+		return false;
+	}
+	if ((GetClientTeam(want) != GetClientTeam(actor)) || (TF2_GetPlayerClass(want) == TFClass_Medic))
+	{
+		return false;
+	}
+	if (action.GetHandleEntity(ACTION_HEAL_PATIENT_OFFSET) != want)
+	{
+		action.SetHandleEntity(ACTION_HEAL_PATIENT_OFFSET, want);
+	}
+	return true;
+}
+
+// ResetMedicNudge forgets the clock and the charge's patient.
+//
+// A bot leaving takes its seat's state with it, and the next bot in that seat is
+// a different bot.
+stock void Go_ResetMedicNudge(int client)
+{
+	m_ctNextPatientNudge[client] = 0.0;
+	m_iUberPatient[client] = -1;
+	m_iWantedPatient[client] = -1;
+}
 
 // PointMedicAtBiggestBody writes the patient handle from inside the action's own
 // callback.
@@ -14,6 +81,10 @@ float m_ctNextPatientNudge[65];
 // when it differs from what is already there.
 stock void PointMedicAtBiggestBody(BehaviorAction action, int actor)
 {
+	if (HoldTheUberPatient(action, actor))
+	{
+		return;
+	}
 	if (m_ctNextPatientNudge[actor] > GetGameTime())
 	{
 		return;
@@ -21,6 +92,7 @@ stock void PointMedicAtBiggestBody(BehaviorAction action, int actor)
 	m_ctNextPatientNudge[actor] = GetGameTime() + MEDIC_PATIENT_INTERVAL;
 	int have = action.GetHandleEntity(ACTION_HEAL_PATIENT_OFFSET);
 	int want = BiggestBody(actor, have);
+	m_iWantedPatient[actor] = want;
 	if (want <= 0)
 	{
 		return;

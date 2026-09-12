@@ -36,4 +36,9 @@ var Arms = []Arm{
 	{Name: "engineer_entrance_first", ConVar: "sm_redbots_feature_engineer_entrance_first", Default: false, About: "The engineer puts his teleporter entrance up in spawn before he walks out to build the nest."},
 	{Name: "bot_test_by_nextbot", ConVar: "sm_redbots_feature_bot_test_by_nextbot", Default: false, About: "A seat is one of the game's own bots when it has a nextbot, rather than whenever it is a fake client."},
 	{Name: "engineer_setup_phase", ConVar: "sm_redbots_feature_engineer_setup_phase", Default: true, About: "Between waves the engineer claims his spots, jumps to each of them, and what he builds comes up finished."},
+	{Name: "medic_heals_in_break", ConVar: "sm_redbots_feature_medic_heals_in_break", Default: true, About: "The medic heals through the break rather than standing at the front, so he brings a charge into the wave."},
+	{Name: "medic_ranks_hurt", ConVar: "sm_redbots_feature_medic_ranks_hurt", Default: false, About: "A teammate missing health is worth more medigun than the same man whole."},
+	{Name: "medic_ranks_range", ConVar: "sm_redbots_feature_medic_ranks_range", Default: false, About: "The walk to a teammate is charged against what the medigun is worth on him."},
+	{Name: "medic_ranks_callers_only", ConVar: "sm_redbots_feature_medic_ranks_callers_only", Default: true, About: "Only a player who called outranks the rest. A player who has not asked takes his turn with everybody else."},
+	{Name: "medic_ubers_early", ConVar: "sm_redbots_feature_medic_ubers_early", Default: false, About: "The charge goes off when the patient is in a fight that can kill him, not when he is already at half health."},
 }

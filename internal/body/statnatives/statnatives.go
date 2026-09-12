@@ -116,6 +116,29 @@ func NativeGetAttackTarget(plugin engine.Timer, numParams int32) engine.Cell {
 	return engine.Cell(engine.AttackTargetOf(client))
 }
 
+/*
+NativeGetMedicPatient is who this medic's ranking chose, which is not who the
+medigun reached.
+
+The beam wants line of sight and four hundred and fifty units; the ranking wants
+neither. Reading only the beam cannot tell a ranking that picked the wrong man
+from one that picked the right man the medic cannot get to, and those are two
+different faults.
+*/
+//
+//sp:name Native_GetMedicPatient
+//
+//nolint:revive // unused-parameter: SourceMod hands every native the plugin and the count
+func NativeGetMedicPatient(plugin engine.Timer, numParams int32) engine.Cell {
+	client := engine.NativeCell(1)
+
+	if client < 1 || client > engine.MaxClients() || !engine.IsClientInGame(client) || !engine.DefenderBotFlag(client) {
+		return engine.Cell(-1)
+	}
+
+	return engine.Cell(engine.WantedPatientOf(client))
+}
+
 // NativeIsPathing says the bot is walking somewhere under the mod's own
 // pathing rather than the game's.
 //

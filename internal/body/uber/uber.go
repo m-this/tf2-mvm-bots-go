@@ -49,10 +49,57 @@ const (
 	megahealHealthRatio = 0.7
 )
 
+/*
+What a fight the patient can lose looks like before he reads as half dead.
+
+Health first, because it is what says the robots in front of him are hitting him
+rather than being walked past. The threshold is his maximum and not a fraction of
+it: a man under a beam is overhealed, so any health at all missing means the
+damage is outrunning the 24 to 72 a second the medigun puts back. Measured over
+127 heavy samples on Decoy, 80 per cent sat at or above maximum health and only 3
+per cent fell in the band between 85 per cent and whole, which is why asking for
+a fraction asked for almost nothing.
+
+Then either a giant, which takes a patient from whole to dead while he is still
+reading as healthy, or a crowd large enough to add up to the same thing. The
+crowd is one robot wider than the Kritzkrieg's: crits are spent on a target the
+patient is already shooting, and invulnerability is spent on damage that would
+otherwise land.
+*/
+const (
+	//sp:name UBER_PRESSED_HEALTH_RATIO
+	pressedHealthRatio = 1.0
+	//sp:name UBER_PRESSED_ENEMIES
+	pressedEnemies = 4
+)
+
+// A giant this close to the patient is committed to him rather than walking past
+//
+//sp:name UBER_GIANT_RANGE
+const giantRange = 500.0
+
 // The Vaccinator spends a quarter of its meter, so a quarter is a full charge as far as this goes
 //
 //sp:name UBER_RESIST_CHARGE
 const resistCharge = 0.25
+
+/*
+IsChargeReleasing says the medigun is spending its charge right now.
+
+Asked in four places and worth one name: the deploy must not press a button that
+is already down, the ranking must not move the beam off the man the charge is
+going into, the revive must not take the medic away mid-charge, and a sample in a
+results file is worth nothing without it.
+*/
+//
+//sp:name IsChargeReleasing
+func IsChargeReleasing(medigun int32) bool {
+	if medigun == -1 || !engine.HasEntProp(medigun, engine.PropSend(), "m_bChargeRelease") {
+		return false
+	}
+
+	return engine.EntProp(medigun, engine.PropSend(), "m_bChargeRelease") != 0
+}
 
 /*
 ShouldDeployUber is whether to fire the charge now.
@@ -69,7 +116,7 @@ func ShouldDeployUber(client int32, medigun int32, patient int32) bool {
 	}
 
 	// Already spending it
-	if engine.EntProp(medigun, engine.PropSend(), "m_bChargeRelease") != 0 {
+	if IsChargeReleasing(medigun) {
 		return false
 	}
 
@@ -84,7 +131,12 @@ func ShouldDeployUber(client int32, medigun int32, patient int32) bool {
 		return false
 	}
 
-	// A charge spent on a patient the medic is not connected to is a charge spent on the medic alone
+	/* The caller's precondition, asserted rather than trusted
+
+	A charge spent on a patient the medic is not connected to is a charge spent on the medic
+	alone. The shipped caller reads the patient off this same field, so this never fires there;
+	it is what stops a second caller reintroducing the bug by handing over the man the medic is
+	walking towards instead of the man the beam is on. */
 	if engine.EntPropEnt(medigun, engine.PropSend(), "m_hHealingTarget") != patient {
 		return false
 	}
@@ -121,7 +173,51 @@ func ShouldDeployUber(client int32, medigun int32, patient int32) bool {
 	/* Stock, and the one case where the game's own rule is nearly right. It is kept, and moved
 	off the floor: waiting for the last of the patient's health spends the charge on the retreat
 	rather than on the fight it was built for */
-	return HealthRatio(patient) < panicHealthRatio || HealthRatio(client) < panicHealthRatio
+	if HealthRatio(patient) < panicHealthRatio || HealthRatio(client) < panicHealthRatio {
+		return true
+	}
+
+	return IsPatientUnderPressure(client, patient, enemies)
+}
+
+/*
+IsPatientUnderPressure is the fight that kills a patient without ever showing him
+at half health.
+
+Half health is a threshold, and a giant does not respect one: it takes a patient
+from whole to dead between two thinks, so the charge is still full when the body
+lands. Measured over every results file here, 74 of 155 waves deployed no charge
+at all and 173 defenders died with a full one behind them.
+
+A giant closing on the patient goes first and is not asked about health at all,
+because health is the one thing a medic is already fixing. The beam puts back 24
+to 72 a second and overheals on top, so the patient reads whole right up to the
+point a giant removes him: over 127 heavy samples he sat at or above his maximum
+in 80 per cent of them. Gating on health behind a live beam is gating on a state
+the beam exists to prevent, and it measured as exactly that. With the gate in
+front, medic_ubers_early was reached 24 times in a wave and still deployed one
+charge, the same as the arm without it.
+
+The crowd keeps the health test, because a crowd is not a deadline. Robots near
+an overhealed patient are robots he is walking past, and a charge spent on that
+is the charge missing from the fight after it.
+*/
+//
+//sp:name IsPatientUnderPressure
+func IsPatientUnderPressure(client int32, patient int32, enemies int32) bool {
+	if !engine.Feature(engine.FeatureMedicUbersEarly()) {
+		return false
+	}
+
+	if engine.EnemyNearestToMe(patient, giantRange, true, false, false, engine.ClassUnknown()) != -1 {
+		return true
+	}
+
+	if HealthRatio(patient) >= pressedHealthRatio && HealthRatio(client) >= pressedHealthRatio {
+		return false
+	}
+
+	return enemies >= pressedEnemies
 }
 
 /*

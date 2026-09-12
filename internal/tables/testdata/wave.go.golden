@@ -122,4 +122,5 @@ type Record struct {
 	HealingPyro         int     `json:"healing_pyro"`
 	HealingSpy          int     `json:"healing_spy"`
 	HealingEngineer     int     `json:"healing_engineer"`
+	UbersHeld           int     `json:"ubers_held"`
 }

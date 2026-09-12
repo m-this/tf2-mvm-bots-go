@@ -76,6 +76,10 @@ static bool ActionSel_Ask(int client, int predicate)
 		{
 			return CTFBotStickyTrap_IsPossible(client);
 		}
+		case ActionSel_PredMedicHealsInBreak:
+		{
+			return Feature(FEATURE_MEDIC_HEALS_IN_BREAK);
+		}
 	}
 
 	return false;

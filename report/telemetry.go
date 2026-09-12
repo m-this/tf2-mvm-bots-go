@@ -40,7 +40,11 @@ type botSample struct {
 	MaxHP        int       `json:"maxhp"`
 	Weapon       string    `json:"weapon"`
 	Slot         int       `json:"slot"`
+	Charge       float64   `json:"charge"`
+	Deploying    int       `json:"deploying"`
+	Between      int       `json:"between"`
 	Healing      string    `json:"healing"`
+	Wants        string    `json:"wants"`
 	Action       string    `json:"action"`
 	NearestEnemy float64   `json:"nearest_enemy"`
 	Aim          string    `json:"aim"`
@@ -83,6 +87,18 @@ type botRollup struct {
 	beaming  int // medic only: samples with the medigun actually on somebody
 	trigger  int // medic only: samples with the trigger held, connected or not
 	patients map[string]int
+	wanted   map[string]int // medic only: who the ranking chose, which is not who the beam reached
+	reached  int            // samples where the ranking's choice and the beam agree
+	chose    int            // samples where the ranking chose anybody at all
+
+	// What the medigun had in it. A wave total of zero ubers cannot say whether
+	// the medic never had a charge or never spent one, and these two say which:
+	// held counts a full charge doing nothing, and spent counts it going off.
+	charged  int // samples with a full charge in the medigun
+	chargeOn int // full charge and a patient on the beam, which is a charge going unspent
+	spent    int // samples inside a deploy
+	breakOn  int // samples during a break with the beam on somebody
+	breakAll int // samples during a break
 	hurt     int // samples below four fifths health
 	stillFor map[string]int
 }
@@ -112,7 +128,7 @@ func rollupBots(samples []botSample) map[string]*botRollup {
 			r = &botRollup{
 				class: s.Class, slots: map[int]int{},
 				actions: map[string]int{}, stillFor: map[string]int{},
-				patients: map[string]int{},
+				patients: map[string]int{}, wanted: map[string]int{},
 			}
 			out[s.Who] = r
 		}
@@ -126,8 +142,37 @@ func rollupBots(samples []botSample) map[string]*botRollup {
 			r.patients[s.Healing]++
 		}
 
+		if s.Wants != "" {
+			r.chose++
+			r.wanted[s.Wants]++
+
+			if s.Wants == s.Healing {
+				r.reached++
+			}
+		}
+
 		if s.Firing != 0 {
 			r.trigger++
+		}
+
+		if s.Between != 0 {
+			r.breakAll++
+
+			if s.Healing != "" {
+				r.breakOn++
+			}
+		}
+
+		if s.Deploying != 0 {
+			r.spent++
+		}
+
+		if s.Charge >= 1.0 {
+			r.charged++
+
+			if s.Healing != "" {
+				r.chargeOn++
+			}
 		}
 
 		if s.MaxHP > 0 && float64(s.HP) < 0.8*float64(s.MaxHP) {
@@ -355,6 +400,39 @@ func printTelemetry(bots []botSample, buildings []buildingSample) {
 				if len(r.patients) > 0 {
 					fmt.Printf("    %-16s %-9s beam went to %s\n",
 						"", "", topShares(r.patients, r.beaming))
+				}
+
+				/* The ranking's own answer, and how often the beam got there
+
+				Who the medigun is worth the most on and who it reached are two questions, and only
+				the second is visible in the line above. A choice the beam never reaches is a medic
+				stood in the wrong place rather than a ranking that picked the wrong man, and the
+				two want different fixes. See mvm-eil. */
+				if len(r.wanted) > 0 {
+					fmt.Printf("    %-16s %-9s ranking chose %s, and the beam was on that man in %d%% of those\n",
+						"", "", topShares(r.wanted, r.chose), pct(r.reached, r.chose))
+				}
+
+				/* What was in the medigun, which is the half "ubers: 0" cannot say
+
+				A full charge sitting on a live beam is inventory: the medic had one, had somebody
+				to spend it on, and did not. A wave total of zero cannot tell that from never having
+				built one, and they are different faults with different fixes.
+
+				The two shares do not add up and must not be read as if they did. m_flChargeLevel
+				drains while the charge releases, so a deploying sample is almost never a full
+				charge as well; counting "full and deploying" reads as nearly zero however eager the
+				rule is, which is a metric that cannot move. Whether the charge goes off at all is
+				the wave line's ubers, counted off the game's own event.
+
+				The break line is the other end of it, because uber is built by healing and the
+				break is the quiet time to build one. */
+				fmt.Printf("    %-16s %-9s a full charge sat on a live beam through %d%% of the wave, and he was inside a charge for %d%%\n",
+					"", "", pct(r.chargeOn, r.samples), pct(r.spent, r.samples))
+
+				if r.breakAll > 0 {
+					fmt.Printf("    %-16s %-9s between waves: beam on somebody %d%% of %d samples\n",
+						"", "", pct(r.breakOn, r.breakAll), r.breakAll)
 				}
 			}
 

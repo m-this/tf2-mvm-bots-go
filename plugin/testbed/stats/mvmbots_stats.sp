@@ -185,6 +185,12 @@ enum struct WaveCounters
 	int healingByClass[view_as<int>(TFClass_Engineer) + 1];
 	int healingScoreboard;
 	int ubersDeployed;
+	/* Charges that were there and were not spent
+	 *
+	 * A defender dying with a full medigun behind him is the other half of ubersDeployed: zero
+	 * ubers in a wave is one number for "he never built one" and for "he built one and sat on it".
+	 * The uber_held line says which body and which charge; this counts them. See mvm-z83.96. */
+	int ubersHeldAtDeath;
 	int damageByClass[view_as<int>(TFClass_Engineer) + 1];
 	/* What the defenders did to themselves, which nothing has ever counted
 
@@ -285,6 +291,7 @@ enum struct WaveCounters
 		for (int c = 0; c <= view_as<int>(TFClass_Engineer); c++)
 			this.healingByClass[c] = 0;
 		this.ubersDeployed = 0;
+		this.ubersHeldAtDeath = 0;
 		
 		this.demoPipeDamage = 0;
 		this.demoStickyDamage = 0;
@@ -327,6 +334,7 @@ WaveCounters g_Wave;
  */
 native float Defenderbots_GetPathLength(int client);
 native int Defenderbots_GetAttackTarget(int client);
+native int Defenderbots_GetMedicPatient(int client);
 native bool Defenderbots_IsPathing(int client);
 native bool Defenderbots_PathFailed(int client);
 native int Defenderbots_PathFailures(int client);
@@ -334,6 +342,7 @@ native int Defenderbots_RangeRepairStalls(int client);
 
 static bool g_bHasPathNatives;
 static bool g_bHasTargetNative;
+static bool g_bHasPatientNative;
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
@@ -351,6 +360,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 public void OnAllPluginsLoaded()
 {
 	g_bHasTargetNative = GetFeatureStatus(FeatureType_Native, "Defenderbots_GetAttackTarget") == FeatureStatus_Available;
+	g_bHasPatientNative = GetFeatureStatus(FeatureType_Native, "Defenderbots_GetMedicPatient") == FeatureStatus_Available;
 	g_bHasPathNatives = GetFeatureStatus(FeatureType_Native, "Defenderbots_GetPathLength") == FeatureStatus_Available
 		&& GetFeatureStatus(FeatureType_Native, "Defenderbots_IsPathing") == FeatureStatus_Available;
 
@@ -1121,6 +1131,8 @@ static void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 
 		if (charge < 1.0)
 			continue;
+
+		g_Wave.ubersHeldAtDeath++;
 
 		char line[ENGINEER_LINE_LENGTH];
 		char who[MAX_NAME_LENGTH]; GetClientName(victim, who, sizeof(who));
@@ -1961,6 +1973,18 @@ static void WriteBotTelemetry(int client, float when, float clock)
 			GetClientName(patient, healing, sizeof(healing));
 	}
 
+	/* Who the ranking chose, beside who the beam reached
+	 *
+	 * They come apart, and the gap is the interesting part: the beam wants line of sight and about
+	 * 450 units, and the ranking wants neither. A medic pointed at the right man and stood too far
+	 * from him reads identically to a ranking that picked the wrong man, unless both are written
+	 * down. See mvm-eil and mvm-z83.97. */
+	char wants[MAX_NAME_LENGTH] = "";
+	int wanted = g_bHasPatientNative ? Defenderbots_GetMedicPatient(client) : -1;
+
+	if (wanted > 0 && wanted <= MaxClients && IsClientInGame(wanted))
+		GetClientName(wanted, wants, sizeof(wants));
+
 	char aim[64]; float aimRange;
 	AimTrace(client, aim, sizeof(aim), aimRange);
 
@@ -1997,18 +2021,35 @@ static void WriteBotTelemetry(int client, float when, float clock)
 
 	bool firing = (GetEntProp(client, Prop_Data, "m_nButtons") & IN_ATTACK) != 0;
 
+	/* What is in the medigun, beside who the beam is on
+	 *
+	 * "Ubers deployed" is a wave total, and a total of zero cannot say whether the medic had no
+	 * charge to spend or had a full one and never pressed the button. Those are two different
+	 * faults with two different fixes. The charge every few seconds, against the beam and against
+	 * how many robots were near him, tells them apart. See mvm-z83.95 and mvm-z83.96. */
+	float charge = -1.0;
+	bool deploying = false;
+
+	if (medigun != -1 && HasEntProp(medigun, Prop_Send, "m_flChargeLevel"))
+	{
+		charge = GetEntPropFloat(medigun, Prop_Send, "m_flChargeLevel");
+		deploying = GetEntProp(medigun, Prop_Send, "m_bChargeRelease") != 0;
+	}
+
 	char line[TELEMETRY_LINE_LENGTH];
 	FormatEx(line, sizeof(line),
 		"{\"event\":\"bot\",\"map\":\"%s\",\"wave\":%d,\"t\":%.1f,\"clock\":%.1f,\"who\":\"%s\",\"class\":\"%s\","
 		... "\"at\":[%.0f,%.0f,%.0f],\"hp\":%d,\"maxhp\":%d,\"weapon\":\"%s\",\"slot\":%d,"
 		... "\"nearest_enemy\":%.0f,\"aim\":\"%s\",\"aim_range\":%.0f,\"firing\":%d,"
 		... "\"path_len\":%.0f,\"pathing\":%d,\"path_failed\":%d,\"path_failures\":%d,\"repair_stalls\":%d,"
-		... "\"healing\":\"%s\",\"picked\":\"%s\",\"action\":\"%s\"}",
+		... "\"charge\":%.2f,\"deploying\":%d,\"between\":%d,"
+		... "\"healing\":\"%s\",\"wants\":\"%s\",\"picked\":\"%s\",\"action\":\"%s\"}",
 		g_sMap, g_iWave, when, clock, name, ClassName(TF2_GetPlayerClass(client)),
 		at[0], at[1], at[2], GetClientHealth(client), TF2Util_GetEntityMaxHealth(client),
 		weaponClass, slot, RangeToNearestEnemy(client), aim, aimRange, firing ? 1 : 0,
 		pathLength, pathing ? 1 : 0, pathFailed ? 1 : 0, pathFailures, repairStalls,
-		healing, picked, stack);
+		charge, deploying ? 1 : 0, GameRules_GetRoundState() == RoundState_BetweenRounds ? 1 : 0,
+		healing, wants, picked, stack);
 
 	WriteLine(line);
 }

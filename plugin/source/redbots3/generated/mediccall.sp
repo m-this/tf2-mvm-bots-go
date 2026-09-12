@@ -2,6 +2,15 @@
 
 #define MEDIC_PATIENT_MARGIN (25)
 
+#define MEDIC_SEAT_BOT (0)
+#define MEDIC_SEAT_PLAYER (1)
+#define MEDIC_SEAT_CALLING (2)
+
+#define MEDIC_PATIENT_HEAVY_WORTH (1000)
+
+#define MEDIC_PATIENT_RANGE_UNITS (10.0)
+#define MEDIC_PATIENT_RANGE_WORST (200)
+
 #define MEDIC_CALL_ANSWER_TIME (10.0)
 
 float m_ctMedicCalled[65];
@@ -24,38 +33,94 @@ stock bool IsCallingForMedic(int client)
 	return m_ctMedicCalled[client] > GetGameTime();
 }
 
-// BiggestBody is which teammate a medigun is worth the most on.
+// MedicPatientSeat is where a teammate stands in the queue for the beam.
 //
-// A medigun is worth what the body in front of it is worth, so it belongs on the
-// biggest one: the Heavy, and failing that whoever has the most health to work
-// with. Maximum health rather than a class table, because that follows the health
+// A seat rather than a special case, so the worth below still decides inside one
+// and the beam does not flicker between two players who both called. See mvm-w9b.
+//
+// Asking is what lifts a person out of the queue. mvm-w9b shipped a second lift,
+// the player who has not asked standing above every bot, and Mathis's call is that
+// it is the call and not the body behind it that should move a medic: a person
+// happy where he is has no more claim on the beam than the Heavy walking into the
+// wave. Behind medic_ranks_callers_only, because it is the half of a measured
+// decision that is being taken back.
+stock int MedicPatientSeat(int patient)
+{
+	if (!Feature(FEATURE_MEDIC_ANSWERS_CALL) || IsTFBotPlayer(patient))
+	{
+		return MEDIC_SEAT_BOT;
+	}
+	if (IsCallingForMedic(patient))
+	{
+		return MEDIC_SEAT_CALLING;
+	}
+	if (Feature(FEATURE_MEDIC_RANKS_CALLERS_ONLY))
+	{
+		return MEDIC_SEAT_BOT;
+	}
+	return MEDIC_SEAT_PLAYER;
+}
+
+// MedicPatientWorth is what the medigun is worth on this body, in health points.
+//
+// A medigun is worth what the body in front of it is worth, so the Heavy is worth
+// more than the arithmetic says and the rest are worth their maximum health.
+// Maximum health rather than a class table, because that follows the health
 // upgrades the team buys without anybody keeping a list up to date.
 //
-// A player outranks every body, and a player who called outranks a player who did
-// not; ranked rather than special-cased, so the tie-break at the bottom still
-// applies and the beam does not flicker between two players who both called. See
-// mvm-w9b.
+// The other two terms are what the shipped ranking had no way to say, and they
+// carry a switch each rather than one between them: measured together they cost
+// robots killed and the run could not say which of them did it.
 //
-// Where anybody is standing is deliberately not in this: the last ranking had a
-// "nearby wins outright" bucket and that bucket was a fixed point. The walking is
-// the game's job again. This only has to answer who.
+// Missing health is what a medigun undoes, so a man who is down two hundred is
+// worth two hundred more than the same man whole, and a man already overhealed is
+// worth less than one who is not.
+//
+// The walk is charged against the worth rather than allowed to win a bucket of its
+// own. The last ranking had a "nearby wins outright" bucket and that bucket was a
+// fixed point, so the medic never left whoever he happened to be stood beside. The
+// cap is what keeps it a term rather than a bucket, so distance decides between
+// comparable bodies and never between a Scout at the medic's feet and a Heavy
+// across the map.
+stock int MedicPatientWorth(int medic, int patient)
+{
+	int maxHealth = TF2Util_GetEntityMaxHealth(patient);
+	int worth = maxHealth;
+	if (TF2_GetPlayerClass(patient) == TFClass_Heavy)
+	{
+		worth += MEDIC_PATIENT_HEAVY_WORTH;
+	}
+	if (Feature(FEATURE_MEDIC_RANKS_HURT))
+	{
+		worth += maxHealth - GetClientHealth(patient);
+	}
+	if (!Feature(FEATURE_MEDIC_RANKS_RANGE))
+	{
+		return worth;
+	}
+	int walk = RoundToFloor(GetVectorDistance(GetAbsOrigin(medic), GetAbsOrigin(patient)) / MEDIC_PATIENT_RANGE_UNITS);
+	if (walk > MEDIC_PATIENT_RANGE_WORST)
+	{
+		walk = MEDIC_PATIENT_RANGE_WORST;
+	}
+	return worth - walk;
+}
+
+// BiggestBody is which teammate a medigun is worth the most on: the best seat,
+// and inside the seat the best worth.
 //
 // A patient he already has keeps the beam unless somebody is plainly worth more:
 // a switch costs the walk to the new one and the healing that is not happening
-// during it, so a tie keeps the man he has, and neither half of the ask can churn.
-// Whether somebody is a player does not flip, and a call runs down a clock and
-// does not come back on its own.
+// during it, so a tie keeps the man he has. A seat does not churn either, because
+// whether somebody is a player does not flip and a call runs down a clock and does
+// not come back on its own.
 stock int BiggestBody(int medic, int current = -1)
 {
 	int best = -1;
-	int bestHealth = 0;
-	bool bestIsHeavy = false;
-	bool bestIsPlayer = false;
-	bool bestIsCalling = false;
-	int currentHealth = 0;
-	bool currentIsHeavy = false;
-	bool currentIsPlayer = false;
-	bool currentIsCalling = false;
+	int bestSeat = 0;
+	int bestWorth = 0;
+	int currentSeat = 0;
+	int currentWorth = 0;
 	bool currentStands = false;
 	for (int i = 1; i <= MaxClients; i++)
 	{
@@ -72,38 +137,24 @@ stock int BiggestBody(int medic, int current = -1)
 		{
 			continue;
 		}
-		bool isHeavy = TF2_GetPlayerClass(i) == TFClass_Heavy;
-		int health = TF2Util_GetEntityMaxHealth(i);
-		bool isPlayer = Feature(FEATURE_MEDIC_ANSWERS_CALL) && !IsTFBotPlayer(i);
-		bool isCalling = isPlayer && IsCallingForMedic(i);
+		int seat = MedicPatientSeat(i);
+		int worth = MedicPatientWorth(medic, i);
 		if (i == current)
 		{
 			currentStands = true;
-			currentHealth = health;
-			currentIsHeavy = isHeavy;
-			currentIsPlayer = isPlayer;
-			currentIsCalling = isCalling;
+			currentSeat = seat;
+			currentWorth = worth;
 		}
-		bool better = (best <= 0) || (isCalling && !bestIsCalling) || ((isCalling == bestIsCalling) && isPlayer && !bestIsPlayer) || ((isCalling == bestIsCalling) && (isPlayer == bestIsPlayer) && isHeavy && !bestIsHeavy) || ((isCalling == bestIsCalling) && (isPlayer == bestIsPlayer) && (isHeavy == bestIsHeavy) && (health > bestHealth));
-		if (better)
+		if ((best <= 0) || (seat > bestSeat) || ((seat == bestSeat) && (worth > bestWorth)))
 		{
 			best = i;
-			bestHealth = health;
-			bestIsHeavy = isHeavy;
-			bestIsPlayer = isPlayer;
-			bestIsCalling = isCalling;
+			bestSeat = seat;
+			bestWorth = worth;
 		}
 	}
-	if (currentStands && (best > 0) && (best != current))
+	if (currentStands && (best > 0) && (best != current) && (bestSeat == currentSeat) && (bestWorth <= (currentWorth + MEDIC_PATIENT_MARGIN)))
 	{
-		bool answersCall = bestIsCalling && !currentIsCalling;
-		bool betterSeat = (bestIsCalling == currentIsCalling) && bestIsPlayer && !currentIsPlayer;
-		bool betterClass = (bestIsCalling == currentIsCalling) && (bestIsPlayer == currentIsPlayer) && bestIsHeavy && !currentIsHeavy;
-		bool betterBody = (bestIsCalling == currentIsCalling) && (bestIsPlayer == currentIsPlayer) && (bestIsHeavy == currentIsHeavy) && (bestHealth > (currentHealth + MEDIC_PATIENT_MARGIN));
-		if (!answersCall && !betterSeat && !betterClass && !betterBody)
-		{
-			return current;
-		}
+		return current;
 	}
 	return best;
 }

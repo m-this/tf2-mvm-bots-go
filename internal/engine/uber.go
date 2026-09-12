@@ -3,6 +3,7 @@ package engine
 // UberCalls are the answers for what a medic does with a full meter.
 type UberCalls struct {
 	MedigunType              func(weapon int32) int32
+	IsChargeReleasing        func(medigun int32) bool
 	CountEnemiesNearPosition func(client int32, origin [3]float32, radius float32) int32
 	RageMeter                func(client int32) float32
 	IsRageDraining           func(client int32) bool
@@ -40,10 +41,22 @@ func MedigunResist() int32 { return 3 }
 //sp:global FEATURE_MEDIC_SHIELD
 func FeatureMedicShield() int32 { return 14 }
 
+// FeatureMedicUbersEarly is the switch on spending the charge on the fight
+// rather than on the retreat.
+//
+//sp:global FEATURE_MEDIC_UBERS_EARLY
+func FeatureMedicUbersEarly() int32 { return 29 }
+
 // MedigunType is which of the four this medigun is.
 //
 //sp:body GetMedigunType
 func MedigunType(weapon int32) int32 { return ubers.MedigunType(weapon) }
+
+// IsChargeReleasing says the medigun is spending its charge right now. Ported,
+// uber.
+//
+//sp:body IsChargeReleasing
+func IsChargeReleasing(medigun int32) bool { return ubers.IsChargeReleasing(medigun) }
 
 // CountEnemiesNearPosition is how many robots are in the fight at that spot.
 //

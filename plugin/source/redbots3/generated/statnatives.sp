@@ -73,6 +73,23 @@ stock any Native_GetAttackTarget(Handle plugin, int numParams)
 	return view_as<any>(m_iAttackTarget[client]);
 }
 
+// NativeGetMedicPatient is who this medic's ranking chose, which is not who the
+// medigun reached.
+//
+// The beam wants line of sight and four hundred and fifty units; the ranking wants
+// neither. Reading only the beam cannot tell a ranking that picked the wrong man
+// from one that picked the right man the medic cannot get to, and those are two
+// different faults.
+stock any Native_GetMedicPatient(Handle plugin, int numParams)
+{
+	int client = GetNativeCell(1);
+	if ((client < 1) || (client > MaxClients) || !IsClientInGame(client) || !g_bIsDefenderBot[client])
+	{
+		return -1;
+	}
+	return view_as<any>(WantedPatient(client));
+}
+
 // NativeIsPathing says the bot is walking somewhere under the mod's own
 // pathing rather than the game's.
 stock any Native_IsPathing(Handle plugin, int numParams)

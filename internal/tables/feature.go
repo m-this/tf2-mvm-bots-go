@@ -222,4 +222,81 @@ var Features = []Feature{
 			"level and an engineer who jumps has less time swinging. See mvm-dn5, and mvm-9nu for\n" +
 			"upgrading a building outright, which is what removes the trade.",
 	},
+	{
+		Name:        "medic_heals_in_break",
+		Description: "The medic heals through the break rather than standing at the front, so he brings a charge into the wave.",
+		On:          true,
+		Note: "On, measured 2026-09-12 on Decoy advanced, three attempts each of two waves. Every\n" +
+			"number beat the other arm's own spread: robots killed 57.5 against 39.5 over a 30 to 53\n" +
+			"spread, defenders died 9.5 against 13.5 over 10 to 18, the team held 112s against 84s\n" +
+			"over 73 to 92, one wave cleared against none, no crash in either arm.\n" +
+			"\n" +
+			"The charge is the mechanism and it is not close. medic_charge at the wave start read 1.00\n" +
+			"on all six waves with this on and 0.00 on all six without, and the telemetry says why: off,\n" +
+			"the medic spends 50% of his samples in DefenderMoveToFront and the beam is on somebody in\n" +
+			"0% of 29 break samples. CTFBotMoveToFront does not end when it arrives, on purpose, so the\n" +
+			"game's heal action stays suspended under it for the whole break. On, he is on Heal for 80%\n" +
+			"of samples and the beam is on somebody through 68% of the break. See mvm-z83.95.",
+	},
+	{
+		Name:        "medic_ranks_hurt",
+		Description: "A teammate missing health is worth more medigun than the same man whole.",
+		On:          false,
+		Note: "Off, and it has nothing to decide while a Heavy is alive. MEDIC_PATIENT_HEAVY_WORTH is\n" +
+			"1000, more than any maximum health the station sells, so the Heavy wins every worth\n" +
+			"comparison he is in and this term only reorders the rest in the windows he is dead.\n" +
+			"Turning it on means lowering that bonus to about a class gap in the same change, and\n" +
+			"measuring the two together. See mvm-z83.97.",
+	},
+	{
+		Name:        "medic_ranks_range",
+		Description: "The walk to a teammate is charged against what the medigun is worth on him.",
+		On:          false,
+		Note: "Off, and like medic_ranks_hurt it has nothing to decide while a Heavy is alive, for the\n" +
+			"same reason: the Heavy's 1000 outranks a walk capped at MEDIC_PATIENT_RANGE_WORST. The\n" +
+			"cap itself is deliberate and stops distance being the fixed point the ranking before last\n" +
+			"had, where whoever the medic stood beside won outright and he never left. It cannot break\n" +
+			"the ranking capture in mvm-z83.98 either, because that capture is a seat and this is a\n" +
+			"worth, and the seat is compared first. See mvm-z83.97 and mvm-z83.98.",
+	},
+	{
+		Name:        "medic_ranks_callers_only",
+		Description: "Only a player who called outranks the rest. A player who has not asked takes his turn with everybody else.",
+		On:          true,
+		Note: "Off, and it is the only one of the three terms that can change who the ranking picks while\n" +
+			"a Heavy is alive: the seat is compared before the worth, and the Heavy's bonus is 1000\n" +
+			"against a hurt term worth at most a body and a walk capped at 200.\n" +
+			"\n" +
+			"It fixes mvm-z83.98 outright. Measured 2026-09-12 with a quiet puppet, the ranking chose\n" +
+			"that puppet in 98 to 100 per cent of samples with this off and the beam reached him in 1\n" +
+			"per cent; with it on the ranking chose the Heavy in 93 to 100 per cent and the beam\n" +
+			"reached him in 33 and 53 per cent.\n" +
+			"\n" +
+			"What it costs is not settled, and the headline number in that run is not usable: the arms\n" +
+			"did not play the same waves, because the off arm cleared wave 1 once and went on to a\n" +
+			"wave 2 the on arm never saw. On wave 1 it is 50.0 robots killed against 59.0, with\n" +
+			"per-attempt values of 39 to 77 against 34 to 92. It also takes back half of mvm-w9b, on\n" +
+			"Mathis's call that it is the call and not the body behind it that should move a medic.\n" +
+			"See mvm-z83.97 and mvm-z83.98.",
+	},
+	{
+		Name:        "medic_ubers_early",
+		Description: "The charge goes off when the patient is in a fight that can kill him, not when he is already at half health.",
+		On:          false,
+		Note: "Off, and three arms say the button was never the problem. The wave total it was written\n" +
+			"for, 74 of 155 waves with no uber at all, turned out to be a medic with nothing to spend:\n" +
+			"medic_heals_in_break moved ubers from 1 across six waves to 7 across six, and once he\n" +
+			"carries a charge the shipped rule already spends about one a wave, which is close to what\n" +
+			"a wave has time to rebuild.\n" +
+			"\n" +
+			"Measured 2026-09-12 on Decoy advanced. At UBER_PRESSED_HEALTH_RATIO 0.85 nothing moved:\n" +
+			"every number sat inside the other arm's spread. Raised to the patient's maximum health,\n" +
+			"still nothing, and defenders died 16.5 against 8.5 on four waves against six. The giant\n" +
+			"going first with no health test is in the code and unmeasured: one arm of it held ubers at\n" +
+			"1 a wave with the rule reached 51 and 34 times in single waves.\n" +
+			"\n" +
+			"features_fired is what settled it. The rule is reached 23 to 69 times a wave, so the whole\n" +
+			"chain before it passes; a patient under a beam is overhealed 80 per cent of the time, so\n" +
+			"any test on his health is a test on the state the beam exists to prevent. See mvm-z83.96.",
+	},
 }

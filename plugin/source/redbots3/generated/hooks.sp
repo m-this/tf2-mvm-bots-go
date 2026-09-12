@@ -114,7 +114,12 @@ public Action CTFBotMedicHeal_UpdatePost(BehaviorAction action, int actor, float
 	{
 		return action.SuspendFor(CTFBotAttackUber(), "Seek uber");
 	}
-	if (CTFBotMedicRevive_IsPossible(actor))
+	// A charge already going off keeps him, and the revive waits
+	//
+	// A revive is a walk to a marker and a hold on it. Eight seconds of invulnerability spent
+	// getting somebody back on his feet is eight seconds the man it was built for fights without
+	// it, and the marker does not expire in that time.
+	if (CTFBotMedicRevive_IsPossible(actor) && !IsChargeReleasing(secondary))
 	{
 		return action.SuspendFor(CTFBotMedicRevive(), "Revive teammate");
 	}
@@ -127,9 +132,15 @@ public Action CTFBotMedicHeal_UpdatePost(BehaviorAction action, int actor, float
 		PointMedicAtBiggestBody(action, actor);
 	}
 	int myWeapon = BaseCombatCharacter_GetActiveWeapon(actor);
+	// The patient comes off the medigun and not off the action
+	//
+	// They are the same man whenever the beam is connected, and the medigun is the half of that
+	// the game maintains. The action's is read out of a hardcoded offset into one of the game's own
+	// objects, which is a number that is right until a game update, and the charge decision and the
+	// shield both want the man the beam is on rather than the man the walk is towards.
 	if ((myWeapon != -1) && (TF2Util_GetWeaponID(myWeapon) == TF_WEAPON_MEDIGUN))
 	{
-		MedicUberAndResist(actor, myWeapon, action.GetHandleEntity(ACTION_HEAL_PATIENT_OFFSET));
+		MedicUberAndResist(actor, myWeapon, GetEntPropEnt(myWeapon, Prop_Send, "m_hHealingTarget"));
 	}
 	return Plugin_Continue;
 }

@@ -8,8 +8,18 @@ package dispatch
 
 import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
 
-// ShouldTakeUpPosition says this bot's class walks to the front before the wave
-// rather than waiting where it shopped.
+/*
+ShouldTakeUpPosition says this bot's class walks to the front before the wave
+rather than waiting where it shopped.
+
+The medic's answer is a switch because the walk costs him the wave's opening
+charge. CTFBotMoveToFront does not end when it arrives, on purpose, so a medic
+sent to the front spends the whole break with the game's heal action suspended
+under it and the beam on nobody; uber is built by healing, and 36 of 46 recorded
+wave 1 starts read no charge at all. Refusing the walk leaves him on the heal
+action, which follows the patient, and the patient is walking to the front
+anyway. See mvm-z83.95.
+*/
 //
 //sp:name ShouldTakeUpPosition
 func ShouldTakeUpPosition(client int32) bool {
@@ -19,6 +29,9 @@ func ShouldTakeUpPosition(client int32) bool {
 
 	case engine.ClassSniper():
 		return !engine.HasSniperRifle(client)
+
+	case engine.ClassMedic():
+		return !engine.Feature(engine.FeatureMedicHealsInBreak())
 	}
 
 	return true

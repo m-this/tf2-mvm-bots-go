@@ -166,4 +166,5 @@ var WaveRecord = []WaveField{
 	{JSON: "healing_pyro", Verb: "%d", SP: "g_Wave.healingByClass[view_as<int>(TFClass_Pyro)]"},
 	{JSON: "healing_spy", Verb: "%d", SP: "g_Wave.healingByClass[view_as<int>(TFClass_Spy)]"},
 	{JSON: "healing_engineer", Verb: "%d", SP: "g_Wave.healingByClass[view_as<int>(TFClass_Engineer)]"},
+	{JSON: "ubers_held", Verb: "%d", SP: "g_Wave.ubersHeldAtDeath"},
 }

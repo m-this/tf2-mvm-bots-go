@@ -59,6 +59,10 @@ stock bool CTFBotMarkGiant_IsPossible(int client) { return client > 0; }
 stock bool CTFBotCollectNearMoney_SelectTarget(int client) { return client > 0; }
 stock bool CTFBotStickyTrap_IsPossible(int client) { return client > 0; }
 
+// The feature switches the decision reads, and the one it reads today.
+#define FEATURE_MEDIC_HEALS_IN_BREAK (25)
+stock bool Feature(int id) { return id >= 0; }
+
 stock BehaviorAction CTFBotCollectMoney() { return view_as<BehaviorAction>(1); }
 stock BehaviorAction CTFBotGotoUpgrade() { return view_as<BehaviorAction>(1); }
 stock BehaviorAction CTFBotMoveToFront() { return view_as<BehaviorAction>(1); }

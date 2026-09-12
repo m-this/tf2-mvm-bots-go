@@ -29,6 +29,7 @@ const (
 	GiantToMark
 	NearbyMoney
 	StickyTrapPossible
+	MedicHealsInBreak
 	numPredicates
 )
 
@@ -49,6 +50,7 @@ var call = map[Predicate]string{
 	GiantToMark:        "CTFBotMarkGiant_IsPossible(client)",
 	NearbyMoney:        "CTFBotCollectNearMoney_SelectTarget(client)",
 	StickyTrapPossible: "CTFBotStickyTrap_IsPossible(client)",
+	MedicHealsInBreak:  "Feature(FEATURE_MEDIC_HEALS_IN_BREAK)",
 }
 
 // name is what the predicate is called in Go and in a failure message.
@@ -60,6 +62,7 @@ var predicateName = map[Predicate]string{
 	SniperStalled: "SniperStalled", AttackTargetFound: "AttackTargetFound",
 	TankTargetFound: "TankTargetFound", GiantToMark: "GiantToMark",
 	NearbyMoney: "NearbyMoney", StickyTrapPossible: "StickyTrapPossible",
+	MedicHealsInBreak: "MedicHealsInBreak",
 }
 
 func (p Predicate) String() string {
@@ -110,6 +113,7 @@ type Flags struct {
 	GiantToMark        bool
 	NearbyMoney        bool
 	StickyTrapPossible bool
+	MedicHealsInBreak  bool
 }
 
 // field points at each answer, so Ask and FromBits share one ordering and
@@ -144,6 +148,8 @@ func (f *Flags) field(p Predicate) *bool {
 		return &f.NearbyMoney
 	case StickyTrapPossible:
 		return &f.StickyTrapPossible
+	case MedicHealsInBreak:
+		return &f.MedicHealsInBreak
 	}
 	panic(fmt.Sprintf("actionsel: no field for %v", p))
 }

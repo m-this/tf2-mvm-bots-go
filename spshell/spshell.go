@@ -126,9 +126,24 @@ func (t Toolchain) compile(ctx context.Context, sourcePath, smx, includeDir stri
 	return nil
 }
 
+/*
+run executes the compiled script, with SourcePawn's own watchdog off.
+
+That watchdog fires on wall clock, and the scripts here are exhaustive sweeps
+rather than anything that could run away: the actionsel table walks every round
+state, class and answer set, which is over a million combinations and grew past
+the watchdog's patience the moment a fifteenth predicate doubled it. It failed
+under `go test -race ./...`, where every package competes for four cores, and
+passed on its own, which is a gate that reports the load rather than the table.
+
+The bound is not lost, it moves outward: the command runs under the caller's
+context, so a script that genuinely does not terminate is still killed by the
+test's own deadline, and by a number a reader can see rather than one compiled
+into the VM.
+*/
 func (t Toolchain) run(ctx context.Context, smx string) ([]int32, error) {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, t.Spshell, smx)
+	cmd := exec.CommandContext(ctx, t.Spshell, "--disable-watchdog", smx)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
