@@ -28,6 +28,9 @@ func PickBusterRetreatArea(sentry int32, buster int32) engine.Area {
 	best := engine.NullArea()
 
 	areas := engine.CollectAreasInRadius(sentryOrigin, haulSearchRange)
+	if areas == engine.NoAreas() {
+		return best
+	}
 	defer areas.Close()
 
 	count := areas.Count()

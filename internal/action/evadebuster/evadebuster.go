@@ -110,6 +110,9 @@ func FindEscape(actor int32, busterOrigin [3]float32) (found bool, escape [3]flo
 	myOrigin := engine.Origin(actor)
 
 	hAreas := engine.CollectAreasInRadius(myOrigin, escapeSearchRange)
+	if hAreas == engine.NoAreas() {
+		return false, escape
+	}
 	defer hAreas.Close()
 
 	// The ground the bot is standing on, so that a bot with nowhere better still has an answer

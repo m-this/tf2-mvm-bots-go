@@ -14,6 +14,10 @@
 stock void CollectBombApproachAreas(const float target[3], float sentryRange, ArrayList out)
 {
 	AreasCollector areas = TheNavMesh.CollectAreasInRadius(target, sentryRange);
+	if (areas == null)
+	{
+		return;
+	}
 	int count = areas.Count();
 	int stride = 1;
 	if (count > MAX_APPROACH_SAMPLES)

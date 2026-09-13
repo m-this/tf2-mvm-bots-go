@@ -38,6 +38,9 @@ func OnStart(actor int32) engine.Outcome {
 	}
 
 	hAreas := engine.CollectAreasInRadius(engine.AbsOriginOf(point), 300.0)
+	if hAreas == engine.NoAreas() {
+		return engine.ChangeTo(engine.DefenderAttack(), "No navigation areas near point")
+	}
 	defer hAreas.Close()
 
 	for i := int32(0); i < hAreas.Count(); i++ {

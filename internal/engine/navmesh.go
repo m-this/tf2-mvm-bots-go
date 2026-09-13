@@ -49,6 +49,13 @@ func InstallNav(c NavCalls) func() {
 //sp:tag AreasCollector
 type Areas int32
 
+// NoAreas is the null collector CBaseNPC returns when no navigation areas can
+// be collected around a point. Callers must not ask it for a count or delete
+// it as a live handle.
+//
+//sp:global null
+func NoAreas() Areas { return 0 }
+
 // NavArea is a CTFNavArea, one piece of walkable ground.
 //
 //sp:tag CTFNavArea

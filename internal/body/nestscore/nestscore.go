@@ -37,6 +37,9 @@ shape of answer for a fixed price.
 //sp:const target
 func CollectBombApproachAreas(target [3]float32, sentryRange float32, out engine.List) {
 	areas := engine.CollectAreasInRadius(target, sentryRange)
+	if areas == engine.NoAreas() {
+		return
+	}
 	defer areas.Close()
 
 	count := areas.Count()
