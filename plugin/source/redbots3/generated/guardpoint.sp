@@ -24,6 +24,10 @@ public Action CTFBotGuardPoint_OnStart(BehaviorAction action, int actor, Behavio
 		return action.ChangeTo(CTFBotDefenderAttack(), "No point found");
 	}
 	AreasCollector hAreas = TheNavMesh.CollectAreasInRadius(GetAbsOrigin(point), 300.0);
+	if (hAreas == null)
+	{
+		return action.ChangeTo(CTFBotDefenderAttack(), "No navigation areas near point");
+	}
 	for (int i = 0; i < hAreas.Count(); i++)
 	{
 		CTFNavArea area = hAreas.Get(i);

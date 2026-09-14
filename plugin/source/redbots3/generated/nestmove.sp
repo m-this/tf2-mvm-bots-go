@@ -16,6 +16,10 @@ stock CNavArea PickBusterRetreatArea(int sentry, int buster)
 	float bestDistance = GetVectorDistance(sentryOrigin, busterOrigin) + BUSTER_BLAST_RANGE;
 	CNavArea best = NULL_AREA;
 	AreasCollector areas = TheNavMesh.CollectAreasInRadius(sentryOrigin, SENTRY_HAUL_SEARCH_RANGE);
+	if (areas == null)
+	{
+		return best;
+	}
 	int count = areas.Count();
 	// One engineer, once per buster, but the count belongs to the map rather than to this
 	if (count > 256)

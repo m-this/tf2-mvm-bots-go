@@ -76,6 +76,10 @@ stock bool CTFBotEvadeBuster_FindEscape(int actor, float busterOrigin[3], float 
 	float myOrigin[3];
 	GetClientAbsOrigin(actor, myOrigin);
 	AreasCollector hAreas = TheNavMesh.CollectAreasInRadius(myOrigin, BUSTER_ESCAPE_SEARCH_RANGE);
+	if (hAreas == null)
+	{
+		return false;
+	}
 	// The ground the bot is standing on, so that a bot with nowhere better still has an answer
 	float bestDistance = GetVectorDistance(myOrigin, busterOrigin);
 	int count = hAreas.Count();
