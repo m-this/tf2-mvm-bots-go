@@ -103,7 +103,25 @@ func IsZeroVector(origin [3]float32) bool {
 	return origin[0] == engine.NullVector()[0] && origin[1] == engine.NullVector()[1] && origin[2] == engine.NullVector()[2]
 }
 
-// SetPlayerReady presses ready for the bot, when it is not already pressed.
+/*
+	ReadyRetryInterval is how long a refused ready waits before it is sent again
+
+The command is the only thing that makes the game re-evaluate who is ready and
+start the wave. Writing m_bPlayerReady instead sets the flag and nothing reads
+it: measured on the bed, a team that readies that way stands in a loaded
+mission that never plays. So the command stays and the rate is what gets a
+bound.
+*/
+const ReadyRetryInterval = 1.0
+
+/*
+	SetPlayerReady presses ready for the bot, when it is not already pressed
+
+ReadyDefender sends this every frame while the flag disagrees, and the game
+refuses a ready for the first seconds after a wave ends. Every refused frame
+spoke the mercenary's Ready line, which is the voice spam players reported. One
+attempt a second still catches the moment the game starts accepting them.
+*/
 //
 //sp:name SetPlayerReady
 func SetPlayerReady(client int32, state bool) {
@@ -111,6 +129,11 @@ func SetPlayerReady(client int32, state bool) {
 		return
 	}
 
+	if engine.NextReadyCommandTime(client) > engine.GameTime() {
+		return
+	}
+
+	engine.SetNextReadyCommandTime(client, engine.GameTime()+ReadyRetryInterval)
 	engine.FakeClientCommand(client, "tournament_player_readystate %d", state)
 }
 

@@ -40,6 +40,8 @@ type RegisterCalls struct {
 	UpdateChosenBotTeamComposition func()
 	ReseatOnBreak                  func()
 	SetNextReadyTime               func(when float32)
+	NextReadyCommandTime           func(client int32) float32
+	SetNextReadyCommandTime        func(client int32, when float32)
 	RemoveAllDefenderBots          func(reason string)
 }
 
@@ -285,6 +287,21 @@ func NextReadyTime() float32 { return 0 }
 //
 //sp:globalset g_flNextReadyTime
 func SetNextReadyTime(when float32) { registrations.SetNextReadyTime(when) }
+
+// NextReadyCommandTime is g_flNextReadyCommandTime, when this bot may press
+// ready again.
+//
+//sp:slot g_flNextReadyCommandTime
+func NextReadyCommandTime(client int32) float32 {
+	return registrations.NextReadyCommandTime(client)
+}
+
+// SetNextReadyCommandTime writes it.
+//
+//sp:slotset g_flNextReadyCommandTime
+func SetNextReadyCommandTime(client int32, when float32) {
+	registrations.SetNextReadyCommandTime(client, when)
+}
 
 // RemoveAllDefenderBots clears the team out, saying why. Ported, manage.
 //
