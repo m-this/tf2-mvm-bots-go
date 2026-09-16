@@ -111,6 +111,12 @@ func CommandRequestExtraBot(client int32, args int32) Outcome { return 0 }
 //nolint:revive // unused-parameter: a name handed to a registration, never called
 func CommandRerollNewBotTeamComposition(client int32, args int32) Outcome { return 0 }
 
+// CommandReloadBotNames is the console command of that name.
+//
+//sp:callback Command_ReloadBotNames
+//nolint:revive // unused-parameter: a name handed to a registration, never called
+func CommandReloadBotNames(client int32, args int32) Outcome { return 0 }
+
 // CommandReseatBots is the console command of that name.
 //
 //sp:callback Command_ReseatBots

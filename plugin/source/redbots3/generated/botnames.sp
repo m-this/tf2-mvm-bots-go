@@ -17,6 +17,14 @@ int m_iFindNameTries[65];
 stock void SetRandomNameOnBot(int client)
 {
 	char newName[512];
+	// A seat somebody named keeps its name: people get attached to a team, and
+	// a bot whose name changed every wave was not one of theirs. The draw is
+	// for the seats nobody named, which is every seat until they do.
+	if (GetServerLoadoutName(client, newName, 512))
+	{
+		SetClientName(client, newName);
+		return;
+	}
 	GetRandomDefenderBotName(newName, 512);
 	if ((m_adtBotNames.Length > 0) && DoesAnyPlayerUseThisName(newName) && (m_iFindNameTries[client] < Go_MaxTries))
 	{

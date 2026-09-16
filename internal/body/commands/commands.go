@@ -94,6 +94,50 @@ func CommandDumpCredits(client int32, args int32) engine.Outcome {
 }
 
 /*
+	CommandReloadBotNames gives the bots their names again, without a reseat
+
+A rename is not worth a recycled team. sm_redbots_reseat kicks every bot and
+builds a new one, which costs the team the upgrades it bought, and a player who
+renamed a seat between waves would have paid for it with the wave.
+
+So the two files are read again and every seated bot is asked what it should be
+called. A bot whose seat names nobody keeps the name it drew: drawing again
+would rename the whole team every time one seat changed.
+*/
+//
+//sp:name Command_ReloadBotNames
+//sp:public
+//nolint:revive // unused-parameter: the argument count is the console's, and this command takes none
+func CommandReloadBotNames(client int32, args int32) engine.Outcome {
+	engine.ConfigLoadBotNames()
+	engine.ConfigLoadServerLoadout()
+
+	renamed := int32(0)
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if !engine.IsClientInGame(i) || !engine.IsDefenderBot(i) {
+			continue
+		}
+
+		var pinned engine.Text
+
+		if !engine.ServerLoadoutNameFor(i, pinned, 512) {
+			continue
+		}
+
+		engine.MarkNeedsNamePurge(i)
+		engine.SetClientName(i, pinned)
+
+		renamed++
+	}
+
+	engine.LogMessage("Reload names: %d bot(s) renamed from the loadout file", renamed)
+	engine.ReplyToCommand(client, "%s Read the names again, renamed %d bot(s).", engine.PluginPrefix(), renamed)
+
+	return engine.PluginHandled()
+}
+
+/*
 	CommandReseatBots rebuilds the team from the loadout file
 
 A recycle asked for mid-wave is held until the break: kicking a bot in the

@@ -22,6 +22,7 @@ type EventCalls struct {
 	IsValidAttributeName         func(name string) bool
 	SetDefenderBotFlag           func(client int32, ours bool)
 	SetRandomNameOnBot           func(client int32)
+	ServerLoadoutNameFor         func(client int32, buffer Text, maxlen int32) bool
 	RespawnPlayer                func(client int32)
 	RegeneratePlayer             func(client int32)
 	AddBotAttribute              func(client int32, attribute int32)
@@ -218,6 +219,14 @@ func RemoveAllDefenderBotsWhen(reason string, danceInstead bool) {
 //
 //sp:slotset g_bIsDefenderBot
 func SetDefenderBotFlag(client int32, ours bool) { events.SetDefenderBotFlag(client, ours) }
+
+// ServerLoadoutNameFor is the name the loadout file pins to this bot's seat,
+// and false when it pins none. Ported, playerpref.
+//
+//sp:body GetServerLoadoutName
+func ServerLoadoutNameFor(client int32, buffer Text, maxlen int32) bool {
+	return events.ServerLoadoutNameFor(client, buffer, maxlen)
+}
 
 // SetRandomNameOnBotFor gives it a name off the list. Ported, botnames.
 //

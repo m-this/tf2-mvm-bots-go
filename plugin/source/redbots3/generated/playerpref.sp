@@ -233,6 +233,33 @@ stock int GetWeaponPreference(int client, const char[] class, const char[] slot)
 	return weaponIndex;
 }
 
+// 	GetServerLoadoutName is the name the loadout file pins to this bot's seat
+//
+// Empty when the file names none, which is every seat until somebody says
+// otherwise: the bot then draws from the pool as it always did.
+//
+// Unlike the weapons, this does not ask what class the seat was written for. A
+// name belongs to the seat rather than to the class in it, so a team that put an
+// engineer where a pyro used to sit keeps calling that seat what it was called.
+stock bool GetServerLoadoutName(int client, char[] buffer, int maxlen)
+{
+	if ((m_kvServerLoadout == null) || !IsValidLoadoutSeat(m_iBotSeat[client]))
+	{
+		return false;
+	}
+	m_kvServerLoadout.Rewind();
+	char section[512];
+	IntToString(m_iBotSeat[client], section, 512);
+	if (!m_kvServerLoadout.JumpToKey("seats", false) || !m_kvServerLoadout.JumpToKey(section, false))
+	{
+		m_kvServerLoadout.Rewind();
+		return false;
+	}
+	m_kvServerLoadout.GetString("name", buffer, maxlen, "");
+	m_kvServerLoadout.Rewind();
+	return strlen(buffer) > 0;
+}
+
 // GetPreferredWeaponForClass is the weapon a bot of that class carries in that slot.
 //
 // The server's own loadout answers first when there is one. Otherwise the players

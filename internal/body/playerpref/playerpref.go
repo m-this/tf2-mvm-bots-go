@@ -329,6 +329,39 @@ func GetWeaponPreference(client int32, class string, slot string) int32 {
 }
 
 /*
+	GetServerLoadoutName is the name the loadout file pins to this bot's seat
+
+Empty when the file names none, which is every seat until somebody says
+otherwise: the bot then draws from the pool as it always did.
+
+Unlike the weapons, this does not ask what class the seat was written for. A
+name belongs to the seat rather than to the class in it, so a team that put an
+engineer where a pyro used to sit keeps calling that seat what it was called.
+*/
+//
+//sp:name GetServerLoadoutName
+//sp:length buffer maxlen
+func GetServerLoadoutName(client int32, buffer engine.Text, maxlen int32) bool {
+	if serverLoadout == engine.NoKeyValues() || !IsValidLoadoutSeat(botSeat[client]) {
+		return false
+	}
+
+	serverLoadout.Rewind()
+
+	_, section := engine.IntToString(botSeat[client])
+
+	if !serverLoadout.JumpToKey("seats", false) || !serverLoadout.JumpToKeyText(section, false) {
+		serverLoadout.Rewind()
+		return false
+	}
+
+	serverLoadout.StringInto("name", buffer, maxlen, "")
+	serverLoadout.Rewind()
+
+	return engine.TextLength(buffer) > 0
+}
+
+/*
 GetPreferredWeaponForClass is the weapon a bot of that class carries in that slot.
 
 The server's own loadout answers first when there is one. Otherwise the players

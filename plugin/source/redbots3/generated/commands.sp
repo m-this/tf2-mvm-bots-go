@@ -65,6 +65,40 @@ public Action Command_DumpCredits(int client, int args)
 	return Plugin_Handled;
 }
 
+// 	CommandReloadBotNames gives the bots their names again, without a reseat
+//
+// A rename is not worth a recycled team. sm_redbots_reseat kicks every bot and
+// builds a new one, which costs the team the upgrades it bought, and a player who
+// renamed a seat between waves would have paid for it with the wave.
+//
+// So the two files are read again and every seated bot is asked what it should be
+// called. A bot whose seat names nobody keeps the name it drew: drawing again
+// would rename the whole team every time one seat changed.
+public Action Command_ReloadBotNames(int client, int args)
+{
+	Config_LoadBotNames();
+	Config_LoadServerLoadout();
+	int renamed = 0;
+	for (int i = 1; i <= MaxClients; i++)
+	{
+		if (!IsClientInGame(i) || !IsDefenderBot(i))
+		{
+			continue;
+		}
+		char pinned[512];
+		if (!GetServerLoadoutName(i, pinned, 512))
+		{
+			continue;
+		}
+		BaseEntity_MarkNeedsNamePurge(i);
+		SetClientName(i, pinned);
+		renamed++;
+	}
+	LogMessage("Reload names: %d bot(s) renamed from the loadout file", renamed);
+	ReplyToCommand(client, "%s Read the names again, renamed %d bot(s).", PLUGIN_PREFIX, renamed);
+	return Plugin_Handled;
+}
+
 // 	CommandReseatBots rebuilds the team from the loadout file
 //
 // A recycle asked for mid-wave is held until the break: kicking a bot in the

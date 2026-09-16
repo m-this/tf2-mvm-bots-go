@@ -36,6 +36,15 @@ otherwise draw for ever.
 //sp:name SetRandomNameOnBot
 func SetRandomNameOnBot(client int32) {
 	var newName engine.Text
+
+	// A seat somebody named keeps its name: people get attached to a team, and
+	// a bot whose name changed every wave was not one of theirs. The draw is
+	// for the seats nobody named, which is every seat until they do.
+	if engine.ServerLoadoutNameFor(client, newName, 512) {
+		engine.SetClientName(client, newName)
+		return
+	}
+
 	GetRandomDefenderBotName(newName, 512)
 
 	if engine.BotNames().Length() > 0 && engine.DoesAnyPlayerUseThisName(newName) && findNameTries[client] < MaxTries {
