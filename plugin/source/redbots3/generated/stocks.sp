@@ -88,14 +88,21 @@ stock bool IsZeroVector(float origin[3])
 	return (origin[0] == NULL_VECTOR[0]) && (origin[1] == NULL_VECTOR[1]) && (origin[2] == NULL_VECTOR[2]);
 }
 
-// SetPlayerReady presses ready for the bot, when it is not already pressed.
+// SetPlayerReady changes the bot's ready flag without sending TF2's client
+// command. The command handler plays the mercenary's Ready response, which
+// becomes voice spam when readiness is reasserted between waves.
 stock void SetPlayerReady(int client, bool state)
 {
 	if (IsPlayerReady(client) == state)
 	{
 		return;
 	}
-	FakeClientCommand(client, "tournament_player_readystate %d", state);
+	int value = 0;
+	if (state)
+	{
+		value = 1;
+	}
+	GameRules_SetProp("m_bPlayerReady", value, 1, client, true);
 }
 
 // UseActionSlotItem uses the canteen, which the game takes as key values rather

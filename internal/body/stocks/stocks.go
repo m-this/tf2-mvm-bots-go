@@ -103,7 +103,9 @@ func IsZeroVector(origin [3]float32) bool {
 	return origin[0] == engine.NullVector()[0] && origin[1] == engine.NullVector()[1] && origin[2] == engine.NullVector()[2]
 }
 
-// SetPlayerReady presses ready for the bot, when it is not already pressed.
+// SetPlayerReady changes the bot's ready flag without sending TF2's client
+// command. The command handler plays the mercenary's Ready response, which
+// becomes voice spam when readiness is reasserted between waves.
 //
 //sp:name SetPlayerReady
 func SetPlayerReady(client int32, state bool) {
@@ -111,7 +113,11 @@ func SetPlayerReady(client int32, state bool) {
 		return
 	}
 
-	engine.FakeClientCommand(client, "tournament_player_readystate %d", state)
+	value := int32(0)
+	if state {
+		value = 1
+	}
+	engine.SetGameRulesPropAt("m_bPlayerReady", value, 1, client, true)
 }
 
 // UseActionSlotItem uses the canteen, which the game takes as key values rather
