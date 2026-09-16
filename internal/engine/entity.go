@@ -9,7 +9,6 @@ type EntityCalls struct {
 	VectorAngles                func(direction [3]float32) [3]float32
 	RoundToFloor                func(value float32) int32
 	GameRulesPropAt             func(prop string, size int32, element int32) int32
-	SetGameRulesPropAt          func(prop string, value int32, size int32, element int32, changeState bool)
 	CreateEntityByName          func(classname string) int32
 	RemoveEffectsFrom           func(entity int32, effects int32)
 	DispatchSpawn               func(entity int32) bool
@@ -127,13 +126,6 @@ func RoundToFloor(value float32) int32 { return entities.RoundToFloor(value) }
 //sp:native GameRules_GetProp
 func GameRulesPropAt(prop string, size int32, element int32) int32 {
 	return entities.GameRulesPropAt(prop, size, element)
-}
-
-// SetGameRulesPropAt writes one element of a game rules array property.
-//
-//sp:native GameRules_SetProp
-func SetGameRulesPropAt(prop string, value int32, size int32, element int32, changeState bool) {
-	entities.SetGameRulesPropAt(prop, value, size, element, changeState)
 }
 
 // Address is a raw memory address, which the gamedata hands out and two reads

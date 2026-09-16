@@ -103,6 +103,7 @@ bool g_bAllowBotTeamRedo;
 bool g_bIsDefenderBot[65];
 bool g_bIsBeingRevived[65];
 bool g_bHasUpgraded[65];
+float g_flNextReadyCommandTime[65];
 bool g_bShoppedThisBreak[65];
 esButtonInput g_arrExtraButtons[65];
 float m_flDeadRethinkTime[65];

@@ -109,6 +109,18 @@ var isBeingRevived [slots.Count]bool
 var hasUpgraded [slots.Count]bool
 
 /*
+nextReadyCommandTime is when this bot may press ready again.
+
+The ready command goes out every frame while the flag disagrees, and the game
+refuses one for the first seconds after a wave ends. Every refused frame spoke
+the mercenary's Ready line, which is the voice spam players reported.
+*/
+//
+//sp:name g_flNextReadyCommandTime
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var nextReadyCommandTime [slots.Count]float32
+
+/*
 shoppedThisBreak is whether this bot has done its shopping since the last wave
 started.
 
