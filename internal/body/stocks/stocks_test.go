@@ -48,6 +48,17 @@ func TestARefusedReadyIsSentAgainOnceASecondAndNotEveryFrame(t *testing.T) {
 	if commands != 2 {
 		t.Fatalf("the next second sent %d commands in total, want two", commands)
 	}
+	// A map change restarts the engine clock. A timestamp from the old map
+	// must not silence F4 until the new clock catches up.
+	now = 5
+	SetPlayerReady(7, true)
+	if commands != 3 {
+		t.Fatalf("clock reset left ready blocked: got %d commands, want three", commands)
+	}
+	SetPlayerReady(7, true)
+	if commands != 3 {
+		t.Fatal("clock reset disabled retry throttling")
+	}
 }
 
 // A bot already in the state it is being asked for presses nothing, and so

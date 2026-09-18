@@ -102,11 +102,15 @@ stock void SetPlayerReady(int client, bool state)
 	{
 		return;
 	}
-	if (g_flNextReadyCommandTime[client] > GetGameTime())
+	// The engine clock can restart on a map change. A valid deadline is
+	// never more than one retry interval ahead; discard a stale map's time.
+	float now = GetGameTime();
+	float remaining = g_flNextReadyCommandTime[client] - now;
+	if ((remaining > 0.0) && (remaining <= Go_ReadyRetryInterval))
 	{
 		return;
 	}
-	g_flNextReadyCommandTime[client] = GetGameTime() + Go_ReadyRetryInterval;
+	g_flNextReadyCommandTime[client] = now + Go_ReadyRetryInterval;
 	FakeClientCommand(client, "tournament_player_readystate %d", state);
 }
 
