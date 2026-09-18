@@ -117,6 +117,11 @@ stock Action Timer_RefillDefenderTeam(Handle timer)
 // OnMapStart puts the mod back to nothing and reads the new map's files.
 public void OnMapStart()
 {
+	// Per-client deadlines use the old map's clock, even for retained clients.
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		g_flNextReadyCommandTime[client] = 0.0;
+	}
 	g_bBotsEnabled = false;
 	g_flAddingBotTime = 0.0;
 	g_flNextReadyTime = 0.0;
@@ -158,6 +163,7 @@ public void OnClientDisconnect(int client)
 // loadout.
 public void OnClientPutInServer(int client)
 {
+	g_flNextReadyCommandTime[client] = 0.0;
 	if (!IsFakeClient(client))
 	{
 		MakeRoomForHumanPlayer(client);

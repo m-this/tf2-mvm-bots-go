@@ -150,6 +150,10 @@ func TimerRefillDefenderTeam(timer engine.Timer) engine.Outcome {
 //sp:name OnMapStart
 //sp:public
 func OnMapStart() {
+	// Per-client deadlines use the old map's clock, even for retained clients.
+	for client := int32(1); client <= engine.MaxClients(); client++ {
+		engine.SetNextReadyCommandTime(client, 0.0)
+	}
 	engine.SetBotsEnabled(false)
 	engine.SetAddingBotTime(0.0)
 	engine.SetNextReadyTime(0.0)
@@ -204,6 +208,7 @@ loadout.
 //sp:name OnClientPutInServer
 //sp:public
 func OnClientPutInServer(client int32) {
+	engine.SetNextReadyCommandTime(client, 0.0)
 	if !engine.IsFakeClient(client) {
 		engine.MakeRoomForHumanPlayer(client)
 	}

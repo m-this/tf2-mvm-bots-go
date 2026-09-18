@@ -129,11 +129,15 @@ func SetPlayerReady(client int32, state bool) {
 		return
 	}
 
-	if engine.NextReadyCommandTime(client) > engine.GameTime() {
+	// The engine clock can restart on a map change. A valid deadline is
+	// never more than one retry interval ahead; discard a stale map's time.
+	now := engine.GameTime()
+	remaining := engine.NextReadyCommandTime(client) - now
+	if remaining > 0 && remaining <= ReadyRetryInterval {
 		return
 	}
 
-	engine.SetNextReadyCommandTime(client, engine.GameTime()+ReadyRetryInterval)
+	engine.SetNextReadyCommandTime(client, now+ReadyRetryInterval)
 	engine.FakeClientCommand(client, "tournament_player_readystate %d", state)
 }
 
