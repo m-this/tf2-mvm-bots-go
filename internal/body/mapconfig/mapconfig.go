@@ -63,7 +63,12 @@ func LoadLocations(kv engine.KeyValues, key string, locations engine.List) {
 	kv.GoBack()
 }
 
-// LoadBotNames reads one name per line, blank lines dropped.
+// LoadBotNames reads one name per line, blank lines and // comments dropped.
+//
+// The comment rule is not decoration. The launcher writes this file and puts
+// "// Managed by tf2ap. Edits here are replaced the next time the launcher
+// starts." on the first line, so without this the first bot to draw a name was
+// called "// Managed by tf2ap. Edits here", the game cutting it at 31.
 //
 //sp:name Config_LoadBotNames
 func LoadBotNames() {
@@ -87,7 +92,7 @@ func LoadBotNames() {
 
 		engine.TrimString(currentLine)
 
-		if engine.TextLength(currentLine) > 0 {
+		if engine.TextLength(currentLine) > 0 && engine.StrContains(currentLine, "//", true) != 0 {
 			engine.BotNames().PushStringText(currentLine)
 		}
 	}

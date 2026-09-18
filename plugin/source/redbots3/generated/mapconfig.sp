@@ -52,7 +52,12 @@ stock void Config_LoadLocations(KeyValues kv, const char[] key, ArrayList locati
 	kv.GoBack();
 }
 
-// LoadBotNames reads one name per line, blank lines dropped.
+// LoadBotNames reads one name per line, blank lines and // comments dropped.
+//
+// The comment rule is not decoration. The launcher writes this file and puts
+// "// Managed by tf2ap. Edits here are replaced the next time the launcher
+// starts." on the first line, so without this the first bot to draw a name was
+// called "// Managed by tf2ap. Edits here", the game cutting it at 31.
 stock void Config_LoadBotNames()
 {
 	char filePath[512];
@@ -73,7 +78,7 @@ stock void Config_LoadBotNames()
 			break;
 		}
 		TrimString(currentLine);
-		if (strlen(currentLine) > 0)
+		if ((strlen(currentLine) > 0) && (StrContains(currentLine, "//", true) != 0))
 		{
 			m_adtBotNames.PushString(currentLine);
 		}
