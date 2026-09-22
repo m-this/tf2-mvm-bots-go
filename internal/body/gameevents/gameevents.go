@@ -484,6 +484,12 @@ func TimerPlayerSpawn(timer engine.Timer, data int32) engine.Outcome {
 	}
 
 	if engine.DefenderBotFlag(data) {
+		// A respawn can retain the action chosen before death. Reconsider the
+		// current wave now that the bot is alive again, so it follows the fight
+		// instead of resuming an obsolete hold at the hatch.
+		if engine.RoundState() == engine.RoundStateRunning() {
+			engine.ResetIntentionInterface(data)
+		}
 		// Mainly for wave failures, try to request credits again.
 		if engine.RequestCredits().Bool() && engine.RoundState() == engine.RoundStateBetweenRounds() {
 			engine.FakeClientCommandText(data, "sm_requestcredits")

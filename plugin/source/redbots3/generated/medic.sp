@@ -15,7 +15,7 @@ public Action Command_DumpMedic(int client, int args)
 	bool haveBomb = GetBombInfo(bomb);
 	for (int i = 1; i <= MaxClients; i++)
 	{
-		if (!IsClientInGame(i) || !IsPlayerAlive(i) || (TF2_GetPlayerClass(i) != TFClass_Medic))
+		if (!IsClientInGame(i) || !IsFakeClient(i) || !g_bIsDefenderBot[i] || !IsPlayerAlive(i) || (TF2_GetPlayerClass(i) != TFClass_Medic))
 		{
 			continue;
 		}

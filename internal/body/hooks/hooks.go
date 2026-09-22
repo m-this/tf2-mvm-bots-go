@@ -144,6 +144,14 @@ func MedicHealUpdatePost(action engine.Behaviour, actor int32, interval float32,
 		name := resultingAction.ActionName()
 
 		if engine.StrEqual(name, "FetchFlag") {
+			// Recalled to Life puts every RED player on Medic. When its house
+			// opens, an idle Medic has no non-Medic patient to follow. Let him
+			// pursue a robot through the connected NAV instead of guarding the
+			// distant hatch. The game's Heal action still runs whenever it has
+			// a patient, so beams and shields retain their normal behavior.
+			if VillaRecalledCombatWave() {
+				return engine.SuspendFor(engine.DefenderAttack(), "Villa: seek the active defense area")
+			}
 			return engine.SuspendFor(engine.GuardPoint(), "Nothing to heal, so hold the hatch")
 		}
 	}
@@ -165,6 +173,24 @@ func MedicHealUpdatePost(action engine.Behaviour, actor int32, interval float32,
 	it, and the marker does not expire in that time. */
 	if engine.MedicReviveIsPossible(actor) && !engine.IsChargeReleasing(secondary) {
 		return engine.SuspendFor(engine.MedicRevive(), "Revive teammate")
+	}
+
+	// Stock Heal can stay at the hatch indefinitely when this mission forces
+	// every defender to Medic: there is nobody on the medigun and no FetchFlag
+	// transition for the earlier fallback to intercept. Seek a live robot in
+	// the connected house instead. A connected beam keeps stock Heal in charge.
+	if VillaRecalledCombatWave() && engine.RoundState() == engine.RoundStateRunning() &&
+		engine.EntPropEnt(secondary, engine.PropSend(), "m_hHealingTarget") == -1 {
+		if engine.DefenderAttackSelectTarget(actor) {
+			return engine.SuspendFor(engine.DefenderAttack(), "Villa: idle Medic seeks robot")
+		}
+		// The house robots can be inside a respawn room, where ordinary target
+		// selection excludes them. Walk to the connected house NAV first;
+		// stock Heal and attack selection can take over once it is occupied.
+		house := [3]float32{-8637.5, 5712.5, 896.2}
+		if engine.VectorDistance(engine.WorldSpaceCenter(actor), house) > 160.0 {
+			return engine.SuspendFor(engine.MoveToFront(), "Villa: enter opened house")
+		}
 	}
 
 	if engine.RoundState() == engine.RoundStateBetweenRounds() && !engine.ShoppedThisBreak(actor) {
@@ -189,6 +215,20 @@ func MedicHealUpdatePost(action engine.Behaviour, actor int32, interval float32,
 	}
 
 	return engine.PluginContinue()
+}
+
+// VillaRecalledCombatWave reports the house-defense waves of Recalled to Life.
+func VillaRecalledCombatWave() bool {
+	resource := engine.FindEntityByClassname(engine.MaxClients()+1, "tf_objective_resource")
+	if resource == -1 {
+		return false
+	}
+	wave := engine.WaveCount(resource)
+	if wave < 2 || wave > 5 {
+		return false
+	}
+	pop := engine.MvMPopfileName(resource)
+	return engine.StrContains(pop, "mvm_villa_b13f_adv_recalled_to_life", false) != -1
 }
 
 /*

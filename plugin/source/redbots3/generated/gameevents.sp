@@ -390,6 +390,13 @@ public Action Timer_PlayerSpawn(Handle timer, int data)
 	}
 	if (g_bIsDefenderBot[data])
 	{
+		// A respawn can retain the action chosen before death. Reconsider the
+		// current wave now that the bot is alive again, so it follows the fight
+		// instead of resuming an obsolete hold at the hatch.
+		if (GameRules_GetRoundState() == RoundState_RoundRunning)
+		{
+			ResetIntentionInterface(data);
+		}
 		// Mainly for wave failures, try to request credits again.
 		if (redbots_manager_bot_request_credits.BoolValue && (GameRules_GetRoundState() == RoundState_BetweenRounds))
 		{

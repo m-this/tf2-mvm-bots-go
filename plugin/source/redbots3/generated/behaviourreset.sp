@@ -53,6 +53,13 @@ public Action Timer_ResetOneBehaviour(Handle timer)
 // leaving alone.
 stock bool ShouldResetBehavior(int client)
 {
+	// Stock Heal can carry a Villa Medic's between-wave Retreat into the
+	// opened house wave. Rebuild that intent once at wave start, as a respawn
+	// already does, so the Medic considers the newly spawned robots.
+	if ((TF2_GetPlayerClass(client) == TFClass_Medic) && Go_VillaRecalledCombatWave())
+	{
+		return true;
+	}
 	if (ActionsManager.LookupEntityActionByName(client, "SniperLurk") != INVALID_ACTION)
 	{
 		return false;

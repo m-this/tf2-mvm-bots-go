@@ -38,6 +38,21 @@ stock bool IsWaitingAtTheFront(int client)
 // meeting the wave halfway up the map.
 stock bool PickTheFront(int actor)
 {
+	if (Go_villaHouseWalk(actor))
+	{
+		// This NAV area is inside Villa's opened house and connected to RED's
+		// hatch. Pick a point on it so the bot uses ordinary pathing through
+		// the door instead of appearing in the room by teleport.
+		float house[3] = {-8637.5, 5712.5, 896.2};
+		CNavArea area = TheNavMesh.GetNearestNavArea(house, true, 150.0, false, true, GetClientTeam(actor));
+		if (area == NULL_AREA)
+		{
+			return false;
+		}
+		CNavArea_GetRandomPoint(area, m_vecGoalArea[actor]);
+		m_flRepathTime[actor] = 0.0;
+		return true;
+	}
 	// The classes that shoot from a distance wait at the nest, the rest at the gate
 	//
 	// The gate is where the robots come out, and standing on it is how a defender meets a giant with
@@ -192,10 +207,17 @@ public Action CTFBotMoveToFront_OnStart(BehaviorAction action, int actor, Behavi
 	m_iMoveToFrontTry[actor] = 0;
 	m_bAtTheFront[actor] = false;
 	m_ctMoveTimeout[actor] = GetGameTime() + MOVE_TO_FRONT_REACH;
+	if (Go_villaHouseWalk(actor))
+	{
+		m_ctMoveTimeout[actor] += MOVE_TO_FRONT_REACH;
+	}
 	RecoverDefenderFromDisconnectedSpawn(actor);
 	if (!PickTheFront(actor))
 	{
-		SetPlayerReady(actor, true);
+		if (!Go_villaHouseWalk(actor))
+		{
+			SetPlayerReady(actor, true);
+		}
 		return action.Done("Cannot find the start of the robots' path from wherever we are");
 	}
 	return action.Continue();
@@ -211,23 +233,34 @@ public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float i
 	// of GetDesiredBotAction had no answer for a bot that had already shopped, so the game got the
 	// bot back and roamed it around the map. Reported as the Heavy, the Medic and the Pyro wandering
 	// off before the wave and turning up inside the middle house on Coaltown.
-	if (GameRules_GetRoundState() != RoundState_BetweenRounds)
+	if ((GameRules_GetRoundState() != RoundState_BetweenRounds) && !Go_villaHouseWalk(actor))
 	{
 		return action.Done("The wave has started");
 	}
 	// Credits on the floor are still worth the walk while we wait
-	if (CTFBotCollectMoney_IsPossible(actor))
+	if (!Go_villaHouseWalk(actor) && CTFBotCollectMoney_IsPossible(actor))
 	{
 		return action.SuspendFor(CTFBotCollectMoney(), "Money on the floor");
 	}
 	if (m_bAtTheFront[actor])
 	{
+		if (Go_villaHouseWalk(actor))
+		{
+			return action.Done("Reached Villa's house");
+		}
 		return action.Continue();
 	}
 	if (GetVectorDistance(m_vecGoalArea[actor], WorldSpaceCenter(actor)) < MOVE_TO_FRONT_ARRIVED)
 	{
-		SetPlayerReady(actor, true);
+		if (!Go_villaHouseWalk(actor))
+		{
+			SetPlayerReady(actor, true);
+		}
 		m_bAtTheFront[actor] = true;
+		if (Go_villaHouseWalk(actor))
+		{
+			return action.Done("Reached Villa's house");
+		}
 		return action.Continue();
 	}
 	INextBot myBot = CBaseNPC_GetNextBotOfEntity(actor);
@@ -252,6 +285,10 @@ public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float i
 	}
 	if ((m_iMoveToFrontTry[actor] >= MOVE_TO_FRONT_TRIES) || (m_ctMoveTimeout[actor] < GetGameTime()))
 	{
+		if (Go_villaHouseWalk(actor))
+		{
+			return action.Done("Villa house path timed out");
+		}
 		SetPlayerReady(actor, true);
 		m_bAtTheFront[actor] = true;
 		if (redbots_manager_debug_actions.BoolValue)
@@ -267,13 +304,21 @@ public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float i
 	}
 	if (PathFailedFor(actor))
 	{
-		NudgeTowardsGoal(actor, myBot, m_vecGoalArea[actor]);
+		if (!Go_villaHouseWalk(actor))
+		{
+			NudgeTowardsGoal(actor, myBot, m_vecGoalArea[actor]);
+		}
 	}
 	else
 	{
 		m_pPath[actor].Update(myBot);
 	}
 	return action.Continue();
+}
+
+stock bool Go_villaHouseWalk(int actor)
+{
+	return (TF2_GetPlayerClass(actor) == TFClass_Medic) && (GameRules_GetRoundState() == RoundState_RoundRunning) && Go_VillaRecalledCombatWave();
 }
 
 // OnEnd forgets the goal.

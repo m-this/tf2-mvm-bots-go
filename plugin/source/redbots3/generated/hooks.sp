@@ -102,6 +102,15 @@ public Action CTFBotMedicHeal_UpdatePost(BehaviorAction action, int actor, float
 		resultingAction.GetName(name, 512);
 		if (StrEqual(name, "FetchFlag"))
 		{
+			// Recalled to Life puts every RED player on Medic. When its house
+			// opens, an idle Medic has no non-Medic patient to follow. Let him
+			// pursue a robot through the connected NAV instead of guarding the
+			// distant hatch. The game's Heal action still runs whenever it has
+			// a patient, so beams and shields retain their normal behavior.
+			if (Go_VillaRecalledCombatWave())
+			{
+				return action.SuspendFor(CTFBotDefenderAttack(), "Villa: seek the active defense area");
+			}
 			return action.SuspendFor(CTFBotGuardPoint(), "Nothing to heal, so hold the hatch");
 		}
 	}
@@ -123,6 +132,25 @@ public Action CTFBotMedicHeal_UpdatePost(BehaviorAction action, int actor, float
 	{
 		return action.SuspendFor(CTFBotMedicRevive(), "Revive teammate");
 	}
+	// Stock Heal can stay at the hatch indefinitely when this mission forces
+	// every defender to Medic: there is nobody on the medigun and no FetchFlag
+	// transition for the earlier fallback to intercept. Seek a live robot in
+	// the connected house instead. A connected beam keeps stock Heal in charge.
+	if (Go_VillaRecalledCombatWave() && (GameRules_GetRoundState() == RoundState_RoundRunning) && (GetEntPropEnt(secondary, Prop_Send, "m_hHealingTarget") == -1))
+	{
+		if (CTFBotDefenderAttack_SelectTarget(actor))
+		{
+			return action.SuspendFor(CTFBotDefenderAttack(), "Villa: idle Medic seeks robot");
+		}
+		// The house robots can be inside a respawn room, where ordinary target
+		// selection excludes them. Walk to the connected house NAV first;
+		// stock Heal and attack selection can take over once it is occupied.
+		float house[3] = {-8637.5, 5712.5, 896.2};
+		if (GetVectorDistance(WorldSpaceCenter(actor), house) > 160.0)
+		{
+			return action.SuspendFor(CTFBotMoveToFront(), "Villa: enter opened house");
+		}
+	}
 	if ((GameRules_GetRoundState() == RoundState_BetweenRounds) && !g_bShoppedThisBreak[actor])
 	{
 		return Plugin_Continue;
@@ -143,6 +171,24 @@ public Action CTFBotMedicHeal_UpdatePost(BehaviorAction action, int actor, float
 		MedicUberAndResist(actor, myWeapon, GetEntPropEnt(myWeapon, Prop_Send, "m_hHealingTarget"));
 	}
 	return Plugin_Continue;
+}
+
+// VillaRecalledCombatWave reports the house-defense waves of Recalled to Life.
+stock bool Go_VillaRecalledCombatWave()
+{
+	int resource = FindEntityByClassname(MaxClients + 1, "tf_objective_resource");
+	if (resource == -1)
+	{
+		return false;
+	}
+	int wave = TF2_GetMannVsMachineWaveCount(resource);
+	if ((wave < 2) || (wave > 5))
+	{
+		return false;
+	}
+	char pop[512];
+	TF2_GetMvMPopfileName(resource, pop, 512);
+	return StrContains(pop, "mvm_villa_b13f_adv_recalled_to_life", false) != -1;
 }
 
 // SniperLurkSelectMoreDangerousThreat is what a lurking sniper shoots first.

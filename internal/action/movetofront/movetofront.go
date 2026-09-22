@@ -16,6 +16,7 @@ written.
 package movetofront
 
 import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/hooks"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
 )
@@ -66,6 +67,20 @@ meeting the wave halfway up the map.
 //
 //sp:name PickTheFront
 func PickTheFront(actor int32) bool {
+	if villaHouseWalk(actor) {
+		// This NAV area is inside Villa's opened house and connected to RED's
+		// hatch. Pick a point on it so the bot uses ordinary pathing through
+		// the door instead of appearing in the room by teleport.
+		house := [3]float32{-8637.5, 5712.5, 896.2}
+		area := engine.NearestNavArea(house, true, 150.0, false, true, engine.GetClientTeam(actor))
+		if area == engine.NullArea() {
+			return false
+		}
+		goalArea[actor] = engine.RandomPointIn(area)
+		engine.SetRepathTime(actor, 0.0)
+		return true
+	}
+
 	/* The classes that shoot from a distance wait at the nest, the rest at the gate
 
 	The gate is where the robots come out, and standing on it is how a defender meets a giant with
@@ -231,10 +246,15 @@ func OnStart(actor int32) engine.Outcome {
 	moveToFrontTry[actor] = 0
 	atTheFront[actor] = false
 	moveTimeout[actor] = engine.GameTime() + reach
+	if villaHouseWalk(actor) {
+		moveTimeout[actor] += reach
+	}
 	engine.RecoverDefenderFromDisconnectedSpawn(actor)
 
 	if !PickTheFront(actor) {
-		engine.SetPlayerReady(actor, true)
+		if !villaHouseWalk(actor) {
+			engine.SetPlayerReady(actor, true)
+		}
 		return engine.Done("Cannot find the start of the robots' path from wherever we are")
 	}
 
@@ -250,22 +270,30 @@ func Update(actor int32) engine.Outcome {
 	of GetDesiredBotAction had no answer for a bot that had already shopped, so the game got the
 	bot back and roamed it around the map. Reported as the Heavy, the Medic and the Pyro wandering
 	off before the wave and turning up inside the middle house on Coaltown. */
-	if engine.RoundState() != engine.RoundStateBetweenRounds() {
+	if engine.RoundState() != engine.RoundStateBetweenRounds() && !villaHouseWalk(actor) {
 		return engine.Done("The wave has started")
 	}
 
 	// Credits on the floor are still worth the walk while we wait
-	if engine.CollectMoneyIsPossible(actor) {
+	if !villaHouseWalk(actor) && engine.CollectMoneyIsPossible(actor) {
 		return engine.SuspendFor(engine.CollectMoney(), "Money on the floor")
 	}
 
 	if atTheFront[actor] {
+		if villaHouseWalk(actor) {
+			return engine.Done("Reached Villa's house")
+		}
 		return engine.Continue()
 	}
 
 	if engine.VectorDistance(goalArea[actor], engine.WorldSpaceCenter(actor)) < arrived {
-		engine.SetPlayerReady(actor, true)
+		if !villaHouseWalk(actor) {
+			engine.SetPlayerReady(actor, true)
+		}
 		atTheFront[actor] = true
+		if villaHouseWalk(actor) {
+			return engine.Done("Reached Villa's house")
+		}
 
 		return engine.Continue()
 	}
@@ -293,6 +321,9 @@ func Update(actor int32) engine.Outcome {
 	}
 
 	if moveToFrontTry[actor] >= tries || moveTimeout[actor] < engine.GameTime() {
+		if villaHouseWalk(actor) {
+			return engine.Done("Villa house path timed out")
+		}
 		engine.SetPlayerReady(actor, true)
 		atTheFront[actor] = true
 
@@ -309,12 +340,19 @@ func Update(actor int32) engine.Outcome {
 	}
 
 	if engine.PathFailedFor(actor) {
-		engine.NudgeTowardsGoal(actor, myBot, goalArea[actor])
+		if !villaHouseWalk(actor) {
+			engine.NudgeTowardsGoal(actor, myBot, goalArea[actor])
+		}
 	} else {
 		engine.PathOf(actor).Update(myBot)
 	}
 
 	return engine.Continue()
+}
+
+func villaHouseWalk(actor int32) bool {
+	return engine.PlayerClass(actor) == engine.ClassMedic() &&
+		engine.RoundState() == engine.RoundStateRunning() && hooks.VillaRecalledCombatWave()
 }
 
 // OnEnd forgets the goal.

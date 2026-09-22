@@ -17,6 +17,7 @@ that the rule holds for every path rather than the one that was written.
 package guardpoint
 
 import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/hooks"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
 )
@@ -157,6 +158,12 @@ func OnTerritoryLost(actor int32, territory int32) engine.Outcome {
 //
 //sp:name CTFBotGuardPoint_IsPossible
 func IsPossible(client int32) bool {
+	// During Recalled to Life's house waves, the active defense is away from
+	// the hatch. In particular, an idle Medic must be allowed to pursue robots.
+	if hooks.VillaRecalledCombatWave() && engine.RoundState() == engine.RoundStateRunning() {
+		return false
+	}
+
 	// There are better things for scout to do than this
 	if engine.PlayerClass(client) == engine.ClassScout() {
 		return false
