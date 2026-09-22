@@ -16,7 +16,6 @@ written.
 package movetofront
 
 import (
-	"github.com/m-this/tf2-mvm-bots-go/internal/body/hooks"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
 )
@@ -67,12 +66,14 @@ meeting the wave halfway up the map.
 //
 //sp:name PickTheFront
 func PickTheFront(actor int32) bool {
-	if villaHouseWalk(actor) {
-		// This NAV area is inside Villa's opened house and connected to RED's
-		// hatch. Pick a point on it so the bot uses ordinary pathing through
-		// the door instead of appearing in the room by teleport.
-		house := [3]float32{-8637.5, 5712.5, 896.2}
-		area := engine.NearestNavArea(house, true, 150.0, false, true, engine.GetClientTeam(actor))
+	if directiveRallyWalk(actor) {
+		// Path to a NAV point near the caller's goal. The caller decides the
+		// destination; this action owns walking and stuck recovery.
+		goal := [3]float32{}
+		goal[0] = engine.DefenderRallyX(actor)
+		goal[1] = engine.DefenderRallyY(actor)
+		goal[2] = engine.DefenderRallyZ(actor)
+		area := engine.NearestNavArea(goal, true, 150.0, false, true, engine.GetClientTeam(actor))
 		if area == engine.NullArea() {
 			return false
 		}
@@ -246,13 +247,13 @@ func OnStart(actor int32) engine.Outcome {
 	moveToFrontTry[actor] = 0
 	atTheFront[actor] = false
 	moveTimeout[actor] = engine.GameTime() + reach
-	if villaHouseWalk(actor) {
+	if directiveRallyWalk(actor) {
 		moveTimeout[actor] += reach
 	}
 	engine.RecoverDefenderFromDisconnectedSpawn(actor)
 
 	if !PickTheFront(actor) {
-		if !villaHouseWalk(actor) {
+		if !directiveRallyWalk(actor) {
 			engine.SetPlayerReady(actor, true)
 		}
 		return engine.Done("Cannot find the start of the robots' path from wherever we are")
@@ -270,29 +271,40 @@ func Update(actor int32) engine.Outcome {
 	of GetDesiredBotAction had no answer for a bot that had already shopped, so the game got the
 	bot back and roamed it around the map. Reported as the Heavy, the Medic and the Pyro wandering
 	off before the wave and turning up inside the middle house on Coaltown. */
-	if engine.RoundState() != engine.RoundStateBetweenRounds() && !villaHouseWalk(actor) {
+	if engine.RoundState() != engine.RoundStateBetweenRounds() && !directiveRallyWalk(actor) {
 		return engine.Done("The wave has started")
+	}
+	if directiveRallyWalk(actor) {
+		goal := [3]float32{}
+		goal[0] = engine.DefenderRallyX(actor)
+		goal[1] = engine.DefenderRallyY(actor)
+		goal[2] = engine.DefenderRallyZ(actor)
+		if engine.VectorDistance(goalArea[actor], goal) > 200.0 && PickTheFront(actor) {
+			atTheFront[actor] = false
+			moveToFrontTry[actor] = 0
+			moveTimeout[actor] = engine.GameTime() + reach + reach
+		}
 	}
 
 	// Credits on the floor are still worth the walk while we wait
-	if !villaHouseWalk(actor) && engine.CollectMoneyIsPossible(actor) {
+	if !directiveRallyWalk(actor) && engine.CollectMoneyIsPossible(actor) {
 		return engine.SuspendFor(engine.CollectMoney(), "Money on the floor")
 	}
 
 	if atTheFront[actor] {
-		if villaHouseWalk(actor) {
-			return engine.Done("Reached Villa's house")
+		if directiveRallyWalk(actor) {
+			return engine.Done("Reached rally point")
 		}
 		return engine.Continue()
 	}
 
 	if engine.VectorDistance(goalArea[actor], engine.WorldSpaceCenter(actor)) < arrived {
-		if !villaHouseWalk(actor) {
+		if !directiveRallyWalk(actor) {
 			engine.SetPlayerReady(actor, true)
 		}
 		atTheFront[actor] = true
-		if villaHouseWalk(actor) {
-			return engine.Done("Reached Villa's house")
+		if directiveRallyWalk(actor) {
+			return engine.Done("Reached rally point")
 		}
 
 		return engine.Continue()
@@ -321,8 +333,8 @@ func Update(actor int32) engine.Outcome {
 	}
 
 	if moveToFrontTry[actor] >= tries || moveTimeout[actor] < engine.GameTime() {
-		if villaHouseWalk(actor) {
-			return engine.Done("Villa house path timed out")
+		if directiveRallyWalk(actor) {
+			return engine.Done("Rally path timed out")
 		}
 		engine.SetPlayerReady(actor, true)
 		atTheFront[actor] = true
@@ -340,7 +352,7 @@ func Update(actor int32) engine.Outcome {
 	}
 
 	if engine.PathFailedFor(actor) {
-		if !villaHouseWalk(actor) {
+		if !directiveRallyWalk(actor) {
 			engine.NudgeTowardsGoal(actor, myBot, goalArea[actor])
 		}
 	} else {
@@ -350,9 +362,8 @@ func Update(actor int32) engine.Outcome {
 	return engine.Continue()
 }
 
-func villaHouseWalk(actor int32) bool {
-	return engine.PlayerClass(actor) == engine.ClassMedic() &&
-		engine.RoundState() == engine.RoundStateRunning() && hooks.VillaRecalledCombatWave()
+func directiveRallyWalk(actor int32) bool {
+	return engine.RoundState() == engine.RoundStateRunning() && engine.DefenderRallyActive(actor)
 }
 
 // OnEnd forgets the goal.

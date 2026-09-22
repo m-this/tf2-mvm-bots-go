@@ -8,7 +8,6 @@ on the frame a wave starts is a frame the server does not finish in time.
 package behaviourreset
 
 import (
-	"github.com/m-this/tf2-mvm-bots-go/internal/body/hooks"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
 )
 
@@ -88,10 +87,9 @@ func TimerResetOneBehaviour(timer engine.Timer) engine.Outcome {
 //
 //sp:name ShouldResetBehavior
 func ShouldResetBehavior(client int32) bool {
-	// Stock Heal can carry a Villa Medic's between-wave Retreat into the
-	// opened house wave. Rebuild that intent once at wave start, as a respawn
-	// already does, so the Medic considers the newly spawned robots.
-	if engine.PlayerClass(client) == engine.ClassMedic() && hooks.VillaRecalledCombatWave() {
+	// A new external combat order must dislodge an idle Medic's old Heal
+	// intent when the wave starts, as a respawn already does.
+	if engine.PlayerClass(client) == engine.ClassMedic() && engine.DefenderSeekEnemies(client) {
 		return true
 	}
 

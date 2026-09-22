@@ -146,6 +146,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] errorText, int err
 	CreateNative("Defenderbots_GetAttackTarget", Native_GetAttackTarget);
 	CreateNative("Defenderbots_GetMedicPatient", Native_GetMedicPatient);
 	RegisterFeatureNatives();
+	RegisterDirectiveNatives();
 	// The one native this plugin asks for rather than offers, and it is
 	// allowed to be missing.
 	//

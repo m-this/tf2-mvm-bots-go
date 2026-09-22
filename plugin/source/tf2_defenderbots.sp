@@ -27,6 +27,7 @@ Author: ★ Officer Spy ★
 #include "redbots3/generated/declarations.sp"
 #include "redbots3/generated/pluginbot.sp"
 #include "redbots3/archipelago.sp"
+#include "redbots3/directives.sp"
 #include "redbots3/generated/archipelago.sp"
 #include "redbots3/generated/features.sp"
 #include "redbots3/generated/loadout.sp"
@@ -197,4 +198,3 @@ Standing on the spot is the accurate way and stays the default. The aim mode is 
 traces the crosshair to the world and writes down what it hit, so a whole map can be marked from
 above without landing on every spot. It refuses a trace that hits nothing, since a spot in the
 skybox is worse than no spot */
-

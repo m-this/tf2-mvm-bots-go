@@ -38,13 +38,15 @@ stock bool IsWaitingAtTheFront(int client)
 // meeting the wave halfway up the map.
 stock bool PickTheFront(int actor)
 {
-	if (Go_villaHouseWalk(actor))
+	if (Go_directiveRallyWalk(actor))
 	{
-		// This NAV area is inside Villa's opened house and connected to RED's
-		// hatch. Pick a point on it so the bot uses ordinary pathing through
-		// the door instead of appearing in the room by teleport.
-		float house[3] = {-8637.5, 5712.5, 896.2};
-		CNavArea area = TheNavMesh.GetNearestNavArea(house, true, 150.0, false, true, GetClientTeam(actor));
+		// Path to a NAV point near the caller's goal. The caller decides the
+		// destination; this action owns walking and stuck recovery.
+		float goal[3] = {};
+		goal[0] = DefenderRallyX(actor);
+		goal[1] = DefenderRallyY(actor);
+		goal[2] = DefenderRallyZ(actor);
+		CNavArea area = TheNavMesh.GetNearestNavArea(goal, true, 150.0, false, true, GetClientTeam(actor));
 		if (area == NULL_AREA)
 		{
 			return false;
@@ -207,14 +209,14 @@ public Action CTFBotMoveToFront_OnStart(BehaviorAction action, int actor, Behavi
 	m_iMoveToFrontTry[actor] = 0;
 	m_bAtTheFront[actor] = false;
 	m_ctMoveTimeout[actor] = GetGameTime() + MOVE_TO_FRONT_REACH;
-	if (Go_villaHouseWalk(actor))
+	if (Go_directiveRallyWalk(actor))
 	{
 		m_ctMoveTimeout[actor] += MOVE_TO_FRONT_REACH;
 	}
 	RecoverDefenderFromDisconnectedSpawn(actor);
 	if (!PickTheFront(actor))
 	{
-		if (!Go_villaHouseWalk(actor))
+		if (!Go_directiveRallyWalk(actor))
 		{
 			SetPlayerReady(actor, true);
 		}
@@ -233,33 +235,46 @@ public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float i
 	// of GetDesiredBotAction had no answer for a bot that had already shopped, so the game got the
 	// bot back and roamed it around the map. Reported as the Heavy, the Medic and the Pyro wandering
 	// off before the wave and turning up inside the middle house on Coaltown.
-	if ((GameRules_GetRoundState() != RoundState_BetweenRounds) && !Go_villaHouseWalk(actor))
+	if ((GameRules_GetRoundState() != RoundState_BetweenRounds) && !Go_directiveRallyWalk(actor))
 	{
 		return action.Done("The wave has started");
 	}
+	if (Go_directiveRallyWalk(actor))
+	{
+		float goal[3] = {};
+		goal[0] = DefenderRallyX(actor);
+		goal[1] = DefenderRallyY(actor);
+		goal[2] = DefenderRallyZ(actor);
+		if ((GetVectorDistance(m_vecGoalArea[actor], goal) > 200.0) && PickTheFront(actor))
+		{
+			m_bAtTheFront[actor] = false;
+			m_iMoveToFrontTry[actor] = 0;
+			m_ctMoveTimeout[actor] = GetGameTime() + MOVE_TO_FRONT_REACH + MOVE_TO_FRONT_REACH;
+		}
+	}
 	// Credits on the floor are still worth the walk while we wait
-	if (!Go_villaHouseWalk(actor) && CTFBotCollectMoney_IsPossible(actor))
+	if (!Go_directiveRallyWalk(actor) && CTFBotCollectMoney_IsPossible(actor))
 	{
 		return action.SuspendFor(CTFBotCollectMoney(), "Money on the floor");
 	}
 	if (m_bAtTheFront[actor])
 	{
-		if (Go_villaHouseWalk(actor))
+		if (Go_directiveRallyWalk(actor))
 		{
-			return action.Done("Reached Villa's house");
+			return action.Done("Reached rally point");
 		}
 		return action.Continue();
 	}
 	if (GetVectorDistance(m_vecGoalArea[actor], WorldSpaceCenter(actor)) < MOVE_TO_FRONT_ARRIVED)
 	{
-		if (!Go_villaHouseWalk(actor))
+		if (!Go_directiveRallyWalk(actor))
 		{
 			SetPlayerReady(actor, true);
 		}
 		m_bAtTheFront[actor] = true;
-		if (Go_villaHouseWalk(actor))
+		if (Go_directiveRallyWalk(actor))
 		{
-			return action.Done("Reached Villa's house");
+			return action.Done("Reached rally point");
 		}
 		return action.Continue();
 	}
@@ -285,9 +300,9 @@ public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float i
 	}
 	if ((m_iMoveToFrontTry[actor] >= MOVE_TO_FRONT_TRIES) || (m_ctMoveTimeout[actor] < GetGameTime()))
 	{
-		if (Go_villaHouseWalk(actor))
+		if (Go_directiveRallyWalk(actor))
 		{
-			return action.Done("Villa house path timed out");
+			return action.Done("Rally path timed out");
 		}
 		SetPlayerReady(actor, true);
 		m_bAtTheFront[actor] = true;
@@ -304,7 +319,7 @@ public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float i
 	}
 	if (PathFailedFor(actor))
 	{
-		if (!Go_villaHouseWalk(actor))
+		if (!Go_directiveRallyWalk(actor))
 		{
 			NudgeTowardsGoal(actor, myBot, m_vecGoalArea[actor]);
 		}
@@ -316,9 +331,9 @@ public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float i
 	return action.Continue();
 }
 
-stock bool Go_villaHouseWalk(int actor)
+stock bool Go_directiveRallyWalk(int actor)
 {
-	return (TF2_GetPlayerClass(actor) == TFClass_Medic) && (GameRules_GetRoundState() == RoundState_RoundRunning) && Go_VillaRecalledCombatWave();
+	return (GameRules_GetRoundState() == RoundState_RoundRunning) && DefenderRallyActive(actor);
 }
 
 // OnEnd forgets the goal.
