@@ -5,14 +5,25 @@ SourcePawn, the plugin they become, and the test-bed that plays them. Everything
 is here, plugin tree included. SourcePawn is a build artifact, not a place
 anybody writes.
 
-`plugin/source` holds 221 lines of hand-written SourcePawn and not one function:
-`tf2_defenderbots.sp` is the include list, the two `_disable_actions_*` defines
-and `public Plugin myinfo`, and `archipelago.sp` is one `native` declaration of
-another plugin's export with the paragraph saying why it is optional. The mod
-ships one build; the compile-time toggles the SourcePawn had were resolved by
-the port. The gamedata seam went the same way: an offset read, an SDKCall
-preparation, a DHook callback and a methodmap over an `Address` are all things
-the emitter writes.
+`plugin/source` holds the hand-written SourcePawn, and almost none of it is
+code: `tf2_defenderbots.sp` is the include list, the two `_disable_actions_*`
+defines and `public Plugin myinfo`, and `archipelago.sp` is one `native`
+declaration of another plugin's export with the paragraph saying why it is
+optional. The mod ships one build; the compile-time toggles the SourcePawn had
+were resolved by the port. The gamedata seam went the same way: an offset read,
+an SDKCall preparation, a DHook callback and a methodmap over an `Address` are
+all things the emitter writes.
+
+`directives.sp` is the one exception, and it is an argued one rather than a
+lapse. It registers `Defenderbots_SetDirective` so another plugin can give a
+defender a short lived order, and the two things it needs, `CreateNative` with
+its `GetNative*` unpacking and storage keyed by client, are the two things the
+emitter has no way to write: a native's arguments arrive untyped from a caller
+this repository never sees. The decisions still live in Go. `internal/engine`
+declares the seam, the bodies read it through `DefenderRallyActive` and friends,
+and this file is the SourcePawn end of that seam and nothing else. Work that
+belongs in Go must not drift into it: if a rule about when an order applies ever
+appears here, it is in the wrong file.
 
 tf2-archipelago deploys this as a Go module and nothing else. Its go.mod
 requirement is the only pin and `go get` is how it moves.

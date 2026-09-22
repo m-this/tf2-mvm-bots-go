@@ -17,6 +17,7 @@ float m_vecGoalArea[65][3];
 float m_ctMoveTimeout[65];
 int m_iMoveToFrontTry[65];
 bool m_bAtTheFront[65];
+bool m_bRallyWalk[65];
 
 // IsWaitingAtTheFront says whether this bot has finished taking up its position
 // for the coming wave.
@@ -206,6 +207,7 @@ stock bool PickTheNest(int actor)
 // OnStart picks the front and gives up at once when there is none to pick.
 public Action CTFBotMoveToFront_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
+	LatchRallyWalk(actor);
 	m_iMoveToFrontTry[actor] = 0;
 	m_bAtTheFront[actor] = false;
 	m_ctMoveTimeout[actor] = GetGameTime() + MOVE_TO_FRONT_REACH;
@@ -229,6 +231,7 @@ public Action CTFBotMoveToFront_OnStart(BehaviorAction action, int actor, Behavi
 // arrives.
 public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
+	LatchRallyWalk(actor);
 	// The wave is what ends this, not arriving
 	//
 	// Arriving used to end it, and what happened next was nothing at all: the between-rounds branch
@@ -331,9 +334,16 @@ public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float i
 	return action.Continue();
 }
 
+// latchRallyWalk settles the mode for this tick. Both entry points call it
+// before anything else reads it.
+stock void LatchRallyWalk(int actor)
+{
+	m_bRallyWalk[actor] = (GameRules_GetRoundState() == RoundState_RoundRunning) && DefenderRallyActive(actor);
+}
+
 stock bool Go_directiveRallyWalk(int actor)
 {
-	return (GameRules_GetRoundState() == RoundState_RoundRunning) && DefenderRallyActive(actor);
+	return m_bRallyWalk[actor];
 }
 
 // OnEnd forgets the goal.

@@ -38,6 +38,17 @@ var (
 	moveToFrontTry [slots.Count]int32
 	//sp:name m_bAtTheFront
 	atTheFront [slots.Count]bool
+	/* Whether this tick is walking to a caller's rally point
+
+	   The answer is read at nearly every step of the walk, and it used to be
+	   recomputed at each one. Its freshness is measured against the engine
+	   clock, so one Update could take the rally branch at the top and the
+	   ordinary branch further down, after the order lapsed in between: the
+	   wave-started check would decline to end the action and SetPlayerReady
+	   would then run anyway. Latching it on entry means a tick is one mode
+	   throughout. */
+	//sp:name m_bRallyWalk
+	rallyWalk [slots.Count]bool
 )
 
 /*
@@ -244,6 +255,7 @@ func PickTheNest(actor int32) bool {
 
 // OnStart picks the front and gives up at once when there is none to pick.
 func OnStart(actor int32) engine.Outcome {
+	latchRallyWalk(actor)
 	moveToFrontTry[actor] = 0
 	atTheFront[actor] = false
 	moveTimeout[actor] = engine.GameTime() + reach
@@ -265,6 +277,8 @@ func OnStart(actor int32) engine.Outcome {
 // Update walks there, and stops when the wave starts rather than when it
 // arrives.
 func Update(actor int32) engine.Outcome {
+	latchRallyWalk(actor)
+
 	/* The wave is what ends this, not arriving
 
 	Arriving used to end it, and what happened next was nothing at all: the between-rounds branch
@@ -362,8 +376,16 @@ func Update(actor int32) engine.Outcome {
 	return engine.Continue()
 }
 
+// latchRallyWalk settles the mode for this tick. Both entry points call it
+// before anything else reads it.
+//
+//sp:name LatchRallyWalk
+func latchRallyWalk(actor int32) {
+	rallyWalk[actor] = engine.RoundState() == engine.RoundStateRunning() && engine.DefenderRallyActive(actor)
+}
+
 func directiveRallyWalk(actor int32) bool {
-	return engine.RoundState() == engine.RoundStateRunning() && engine.DefenderRallyActive(actor)
+	return rallyWalk[actor]
 }
 
 // OnEnd forgets the goal.
