@@ -21,6 +21,13 @@ var station [slots.Count]int32
 // could reach.
 func OnStart(actor int32) engine.Outcome {
 	engine.PathOf(actor).SetMinLookAheadDistance(engine.DesiredPathLookAheadRange(actor))
+	mapName := engine.CurrentMap()
+	if engine.StrContains(mapName, "mvm_villa_b13f", true) != -1 {
+		// Villa's station sits behind spawn geometry that can send bots to
+		// the wrong side. Let them buy before returning to the fight.
+		engine.SetInUpgradeZone(actor, true)
+		return engine.Continue()
+	}
 
 	station[actor] = engine.FindClosestUpgradeStation(actor)
 

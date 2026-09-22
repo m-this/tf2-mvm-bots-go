@@ -17,6 +17,15 @@ int m_iStation[65];
 public Action CTFBotGotoUpgrade_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
+	char mapName[512];
+	GetCurrentMap(mapName, 512);
+	if (StrContains(mapName, "mvm_villa_b13f", true) != -1)
+	{
+		// Villa's station sits behind spawn geometry that can send bots to
+		// the wrong side. Let them buy before returning to the fight.
+		TF2_SetInUpgradeZone(actor, true);
+		return action.Continue();
+	}
 	m_iStation[actor] = FindClosestUpgradeStation(actor);
 	if ((m_iStation[actor] <= MaxClients) || !IsValidEntity(m_iStation[actor]))
 	{
