@@ -262,6 +262,49 @@ stock bool MoveDefenderFromSpawnToBattlefield(int client, const char[] reason)
 	return true;
 }
 
+// AtRecoveryDestination says the bot already stands where a recovery would put
+// it.
+//
+// MvM puts RED's spawn beside the hatch, so the objective's ground is usually
+// inside the radius that counts as near spawn. A bot holding the hatch was moved
+// onto the hatch again every six seconds: three times in six seconds for one
+// Demoman on Decoy.
+stock bool AtRecoveryDestination(int client)
+{
+	float here[3];
+	here = WorldSpaceCenter(client);
+	if (TF2Util_IsPointInRespawnRoom(here))
+	{
+		return false;
+	}
+	char anchorSource[512];
+	CNavArea area = FindSpawnRecoveryArea(client, anchorSource, 32);
+	if (area == NULL_AREA)
+	{
+		return false;
+	}
+	float anchor[3];
+	area.GetCenter(anchor);
+	return GetVectorDistance(here, anchor) <= redbots_manager_spawn_nav_recovery_radius.FloatValue;
+}
+
+// IsParkedNearSpawn is a bot outside the spawn room that is standing still by
+// choice rather than failing to walk.
+//
+// The radius around spawn is there for a bot wedged in the doorway, and that bot
+// is trying to move, so its locomotion says it is stuck. A bot that is not
+// trying to move near spawn is at its post: two engineers on Homestead
+// Happenings nested inside the radius and were carried to the hatch every six
+// seconds, 88 times in one wave, and never built.
+stock bool IsParkedNearSpawn(int client)
+{
+	if (TF2Util_IsPointInRespawnRoom(WorldSpaceCenter(client)))
+	{
+		return false;
+	}
+	return !CBaseNPC_GetNextBotOfEntity(client).GetLocomotionInterface().IsStuck();
+}
+
 // RecoverDefenderFromDisconnectedSpawn moves a bot whose spawn has no route
 // out at all, which a mission with gates produces on purpose.
 stock bool RecoverDefenderFromDisconnectedSpawn(int client)
@@ -305,6 +348,12 @@ stock void WatchDefenderSpawnExit(int client)
 	float now = GetGameTime();
 	if (m_flSpawnExitWatchAt[client] > now)
 	{
+		return;
+	}
+	if (AtRecoveryDestination(client) || IsParkedNearSpawn(client))
+	{
+		ResetSpawnExitWatch(client);
+		m_flSpawnExitWatchAt[client] = now + SPAWN_EXIT_WATCH_INTERVAL;
 		return;
 	}
 	m_flSpawnExitWatchAt[client] = now + SPAWN_EXIT_WATCH_INTERVAL;

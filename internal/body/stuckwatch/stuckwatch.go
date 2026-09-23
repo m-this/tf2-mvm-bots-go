@@ -10,6 +10,7 @@ package stuckwatch
 
 import (
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/spawnexit"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
 )
 
@@ -243,6 +244,29 @@ func UpdateStuckWatchdog(actor int32) {
 	engine.ApplyNextFrameCell(FrameUnstickDefender, actor)
 }
 
+// WedgeRepeatRadius is how near the last wedge rescue a new wedge must be to be
+// the same wedge.
+//
+//sp:name WEDGE_REPEAT_RADIUS
+const WedgeRepeatRadius = 300.0
+
+// WedgeRepeatTime is how long after a wedge rescue a wedge at the same spot
+// still counts as the rescue having failed.
+//
+//sp:name WEDGE_REPEAT_TIME
+const WedgeRepeatTime = 90.0
+
+// Where and when the last wedge rescue happened, so the second one at the same
+// spot is told apart from a new wedge.
+//
+//sp:name m_vWedgeRescue
+//sp:keep read only within WEDGE_REPEAT_TIME of m_flWedgeRescueAt, so a new bot in the seat never sees it
+var wedgeRescue [slots.Count][3]float32
+
+//sp:name m_flWedgeRescueAt
+//sp:keep a time, and a stale one is older than WEDGE_REPEAT_TIME, which is the only test made of it
+var wedgeRescueAt [slots.Count]float32
+
 // MoveWedgedTries is how many random points are tried per area before giving
 // up on it.
 //
@@ -309,6 +333,11 @@ ground.
 func MoveWedgedDefender(client int32) bool {
 	here := engine.AbsOriginOf(client)
 
+	if wedgeRescueAt[client] > 0.0 && engine.GameTime()-wedgeRescueAt[client] <= WedgeRepeatTime &&
+		engine.VectorDistance(here, wedgeRescue[client]) <= WedgeRepeatRadius && MoveWedgedDefenderToGoal(client, here) {
+		return true
+	}
+
 	area := engine.NearestNavArea(here, true, StuckWedgeSearch, false, true, engine.TeamAny())
 
 	if area == engine.NullArea() {
@@ -346,8 +375,69 @@ func MoveWedgedDefender(client int32) bool {
 
 	engine.SetRepathTime(client, 0.0)
 	stuckWedgeCount[client] = 0
+	wedgeRescue[client] = here
+	wedgeRescueAt[client] = engine.GameTime()
 
 	engine.LogMessage("Stuck: %N was wedged at %.0f %.0f %.0f, moved to %.0f %.0f %.0f",
+		client, here[0], here[1], here[2], destination[0], destination[1], destination[2])
+
+	return true
+}
+
+/*
+WedgeGoalArea is the ground the bot was trying to reach: the plugin's own path
+goal when it has one, and the objective when it does not.
+
+A wedge the local rescue did not cure is one the bot walks straight back into,
+because its goal is on the far side. Mannhattan's engineer was moved off the
+same spot four times in one wave and back on it each time.
+*/
+//
+//sp:name WedgeGoalArea
+func WedgeGoalArea(client int32) engine.Area {
+	if engine.PluginBotOf(client).HasPathGoalVector() {
+		goal := engine.PluginBotOf(client).PathGoalVector()
+		return engine.NearestNavArea(goal, true, StuckWedgeSearch, false, true, engine.TeamAny())
+	}
+
+	target := engine.PluginBotOf(client).PathGoalEntity()
+
+	if engine.PluginBotOf(client).HasPathGoalEntity() && engine.IsValidEntity(target) {
+		goal := engine.WorldSpaceCenter(target)
+		return engine.NearestNavArea(goal, true, StuckWedgeSearch, false, true, engine.TeamAny())
+	}
+
+	var anchorSource engine.Text
+	return spawnexit.FindSpawnRecoveryArea(client, anchorSource, 32)
+}
+
+// MoveWedgedDefenderToGoal teleports a bot the local rescue already failed on
+// to where it was going.
+//
+//sp:name MoveWedgedDefenderToGoal
+//sp:const here
+func MoveWedgedDefenderToGoal(client int32, here [3]float32) bool {
+	area := WedgeGoalArea(client)
+
+	if area == engine.NullArea() {
+		return false
+	}
+
+	found, destination := spawnexit.RecoveryDestination(area)
+
+	if !found || engine.VectorDistance(here, destination) <= WedgeRepeatRadius {
+		return false
+	}
+
+	var stopped [3]float32
+	engine.TeleportEntity(client, destination, engine.NullVector(), stopped)
+	engine.CombatOf(client).UpdateLastKnownArea()
+
+	engine.SetRepathTime(client, 0.0)
+	stuckWedgeCount[client] = 0
+	wedgeRescueAt[client] = 0.0
+
+	engine.LogMessage("Stuck: %N was wedged at %.0f %.0f %.0f again, moved to its goal at %.0f %.0f %.0f",
 		client, here[0], here[1], here[2], destination[0], destination[1], destination[2])
 
 	return true
