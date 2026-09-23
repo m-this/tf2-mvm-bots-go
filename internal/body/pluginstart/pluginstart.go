@@ -179,6 +179,7 @@ func AskPluginLoad2(myself engine.Timer, late bool, errorText engine.Text, errMa
 	engine.CreateNative("Defenderbots_GetAttackTarget", engine.NativeGetAttackTarget)
 	engine.CreateNative("Defenderbots_GetMedicPatient", engine.NativeGetMedicPatient)
 	engine.RegisterFeatureNatives()
+	engine.RegisterDirectiveNatives()
 
 	/* The one native this plugin asks for rather than offers, and it is
 	allowed to be missing.

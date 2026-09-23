@@ -157,6 +157,11 @@ func OnTerritoryLost(actor int32, territory int32) engine.Outcome {
 //
 //sp:name CTFBotGuardPoint_IsPossible
 func IsPossible(client int32) bool {
+	// An external combat directive takes precedence over guarding the hatch.
+	if engine.DefenderSeekEnemies(client) && engine.RoundState() == engine.RoundStateRunning() {
+		return false
+	}
+
 	// There are better things for scout to do than this
 	if engine.PlayerClass(client) == engine.ClassScout() {
 		return false

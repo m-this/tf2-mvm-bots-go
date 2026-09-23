@@ -58,7 +58,7 @@ func DumpMedic(client int32, args int32) engine.Outcome { //nolint:revive // unu
 	haveBomb, bomb := engine.GetBombInfo()
 
 	for i := int32(1); i <= engine.MaxClients(); i++ {
-		if !engine.IsClientInGame(i) || !engine.IsPlayerAlive(i) || engine.PlayerClass(i) != engine.ClassMedic() {
+		if !engine.IsClientInGame(i) || !engine.IsFakeClient(i) || !engine.DefenderBotFlag(i) || !engine.IsPlayerAlive(i) || engine.PlayerClass(i) != engine.ClassMedic() {
 			continue
 		}
 
@@ -97,6 +97,5 @@ func DumpMedic(client int32, args int32) engine.Outcome { //nolint:revive // unu
 			i, patient, engine.VectorDistance(mine, theirs), fromBomb,
 			fromBombTheirs, stack)
 	}
-
 	return engine.PluginHandled()
 }

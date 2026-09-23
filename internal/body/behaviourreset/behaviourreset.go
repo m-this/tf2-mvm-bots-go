@@ -7,7 +7,9 @@ on the frame a wave starts is a frame the server does not finish in time.
 */
 package behaviourreset
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // BehaviourResetInterval is how long between one bot and the next.
 //
@@ -85,6 +87,12 @@ func TimerResetOneBehaviour(timer engine.Timer) engine.Outcome {
 //
 //sp:name ShouldResetBehavior
 func ShouldResetBehavior(client int32) bool {
+	// A new external combat order must dislodge an idle Medic's old Heal
+	// intent when the wave starts, as a respawn already does.
+	if engine.PlayerClass(client) == engine.ClassMedic() && engine.DefenderSeekEnemies(client) {
+		return true
+	}
+
 	if engine.LookupEntityActionByName(client, "SniperLurk") != engine.InvalidAction() {
 		return false
 	}

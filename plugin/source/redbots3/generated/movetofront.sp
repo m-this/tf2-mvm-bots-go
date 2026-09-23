@@ -17,6 +17,7 @@ float m_vecGoalArea[65][3];
 float m_ctMoveTimeout[65];
 int m_iMoveToFrontTry[65];
 bool m_bAtTheFront[65];
+bool m_bRallyWalk[65];
 
 // IsWaitingAtTheFront says whether this bot has finished taking up its position
 // for the coming wave.
@@ -38,6 +39,23 @@ stock bool IsWaitingAtTheFront(int client)
 // meeting the wave halfway up the map.
 stock bool PickTheFront(int actor)
 {
+	if (Go_directiveRallyWalk(actor))
+	{
+		// Path to a NAV point near the caller's goal. The caller decides the
+		// destination; this action owns walking and stuck recovery.
+		float goal[3] = {};
+		goal[0] = DefenderRallyX(actor);
+		goal[1] = DefenderRallyY(actor);
+		goal[2] = DefenderRallyZ(actor);
+		CNavArea area = TheNavMesh.GetNearestNavArea(goal, true, 150.0, false, true, GetClientTeam(actor));
+		if (area == NULL_AREA)
+		{
+			return false;
+		}
+		CNavArea_GetRandomPoint(area, m_vecGoalArea[actor]);
+		m_flRepathTime[actor] = 0.0;
+		return true;
+	}
 	// The classes that shoot from a distance wait at the nest, the rest at the gate
 	//
 	// The gate is where the robots come out, and standing on it is how a defender meets a giant with
@@ -189,13 +207,21 @@ stock bool PickTheNest(int actor)
 // OnStart picks the front and gives up at once when there is none to pick.
 public Action CTFBotMoveToFront_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
+	LatchRallyWalk(actor);
 	m_iMoveToFrontTry[actor] = 0;
 	m_bAtTheFront[actor] = false;
 	m_ctMoveTimeout[actor] = GetGameTime() + MOVE_TO_FRONT_REACH;
+	if (Go_directiveRallyWalk(actor))
+	{
+		m_ctMoveTimeout[actor] += MOVE_TO_FRONT_REACH;
+	}
 	RecoverDefenderFromDisconnectedSpawn(actor);
 	if (!PickTheFront(actor))
 	{
-		SetPlayerReady(actor, true);
+		if (!Go_directiveRallyWalk(actor))
+		{
+			SetPlayerReady(actor, true);
+		}
 		return action.Done("Cannot find the start of the robots' path from wherever we are");
 	}
 	return action.Continue();
@@ -205,29 +231,54 @@ public Action CTFBotMoveToFront_OnStart(BehaviorAction action, int actor, Behavi
 // arrives.
 public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float interval, ActionResult result)
 {
+	LatchRallyWalk(actor);
 	// The wave is what ends this, not arriving
 	//
 	// Arriving used to end it, and what happened next was nothing at all: the between-rounds branch
 	// of GetDesiredBotAction had no answer for a bot that had already shopped, so the game got the
 	// bot back and roamed it around the map. Reported as the Heavy, the Medic and the Pyro wandering
 	// off before the wave and turning up inside the middle house on Coaltown.
-	if (GameRules_GetRoundState() != RoundState_BetweenRounds)
+	if ((GameRules_GetRoundState() != RoundState_BetweenRounds) && !Go_directiveRallyWalk(actor))
 	{
 		return action.Done("The wave has started");
 	}
+	if (Go_directiveRallyWalk(actor))
+	{
+		float goal[3] = {};
+		goal[0] = DefenderRallyX(actor);
+		goal[1] = DefenderRallyY(actor);
+		goal[2] = DefenderRallyZ(actor);
+		if ((GetVectorDistance(m_vecGoalArea[actor], goal) > 200.0) && PickTheFront(actor))
+		{
+			m_bAtTheFront[actor] = false;
+			m_iMoveToFrontTry[actor] = 0;
+			m_ctMoveTimeout[actor] = GetGameTime() + MOVE_TO_FRONT_REACH + MOVE_TO_FRONT_REACH;
+		}
+	}
 	// Credits on the floor are still worth the walk while we wait
-	if (CTFBotCollectMoney_IsPossible(actor))
+	if (!Go_directiveRallyWalk(actor) && CTFBotCollectMoney_IsPossible(actor))
 	{
 		return action.SuspendFor(CTFBotCollectMoney(), "Money on the floor");
 	}
 	if (m_bAtTheFront[actor])
 	{
+		if (Go_directiveRallyWalk(actor))
+		{
+			return action.Done("Reached rally point");
+		}
 		return action.Continue();
 	}
 	if (GetVectorDistance(m_vecGoalArea[actor], WorldSpaceCenter(actor)) < MOVE_TO_FRONT_ARRIVED)
 	{
-		SetPlayerReady(actor, true);
+		if (!Go_directiveRallyWalk(actor))
+		{
+			SetPlayerReady(actor, true);
+		}
 		m_bAtTheFront[actor] = true;
+		if (Go_directiveRallyWalk(actor))
+		{
+			return action.Done("Reached rally point");
+		}
 		return action.Continue();
 	}
 	INextBot myBot = CBaseNPC_GetNextBotOfEntity(actor);
@@ -252,6 +303,10 @@ public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float i
 	}
 	if ((m_iMoveToFrontTry[actor] >= MOVE_TO_FRONT_TRIES) || (m_ctMoveTimeout[actor] < GetGameTime()))
 	{
+		if (Go_directiveRallyWalk(actor))
+		{
+			return action.Done("Rally path timed out");
+		}
 		SetPlayerReady(actor, true);
 		m_bAtTheFront[actor] = true;
 		if (redbots_manager_debug_actions.BoolValue)
@@ -267,13 +322,28 @@ public Action CTFBotMoveToFront_Update(BehaviorAction action, int actor, float i
 	}
 	if (PathFailedFor(actor))
 	{
-		NudgeTowardsGoal(actor, myBot, m_vecGoalArea[actor]);
+		if (!Go_directiveRallyWalk(actor))
+		{
+			NudgeTowardsGoal(actor, myBot, m_vecGoalArea[actor]);
+		}
 	}
 	else
 	{
 		m_pPath[actor].Update(myBot);
 	}
 	return action.Continue();
+}
+
+// latchRallyWalk settles the mode for this tick. Both entry points call it
+// before anything else reads it.
+stock void LatchRallyWalk(int actor)
+{
+	m_bRallyWalk[actor] = (GameRules_GetRoundState() == RoundState_RoundRunning) && DefenderRallyActive(actor);
+}
+
+stock bool Go_directiveRallyWalk(int actor)
+{
+	return m_bRallyWalk[actor];
 }
 
 // OnEnd forgets the goal.

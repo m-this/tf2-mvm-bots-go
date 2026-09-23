@@ -38,6 +38,17 @@ var (
 	moveToFrontTry [slots.Count]int32
 	//sp:name m_bAtTheFront
 	atTheFront [slots.Count]bool
+	/* Whether this tick is walking to a caller's rally point
+
+	   The answer is read at nearly every step of the walk, and it used to be
+	   recomputed at each one. Its freshness is measured against the engine
+	   clock, so one Update could take the rally branch at the top and the
+	   ordinary branch further down, after the order lapsed in between: the
+	   wave-started check would decline to end the action and SetPlayerReady
+	   would then run anyway. Latching it on entry means a tick is one mode
+	   throughout. */
+	//sp:name m_bRallyWalk
+	rallyWalk [slots.Count]bool
 )
 
 /*
@@ -66,6 +77,22 @@ meeting the wave halfway up the map.
 //
 //sp:name PickTheFront
 func PickTheFront(actor int32) bool {
+	if directiveRallyWalk(actor) {
+		// Path to a NAV point near the caller's goal. The caller decides the
+		// destination; this action owns walking and stuck recovery.
+		goal := [3]float32{}
+		goal[0] = engine.DefenderRallyX(actor)
+		goal[1] = engine.DefenderRallyY(actor)
+		goal[2] = engine.DefenderRallyZ(actor)
+		area := engine.NearestNavArea(goal, true, 150.0, false, true, engine.GetClientTeam(actor))
+		if area == engine.NullArea() {
+			return false
+		}
+		goalArea[actor] = engine.RandomPointIn(area)
+		engine.SetRepathTime(actor, 0.0)
+		return true
+	}
+
 	/* The classes that shoot from a distance wait at the nest, the rest at the gate
 
 	The gate is where the robots come out, and standing on it is how a defender meets a giant with
@@ -228,13 +255,19 @@ func PickTheNest(actor int32) bool {
 
 // OnStart picks the front and gives up at once when there is none to pick.
 func OnStart(actor int32) engine.Outcome {
+	latchRallyWalk(actor)
 	moveToFrontTry[actor] = 0
 	atTheFront[actor] = false
 	moveTimeout[actor] = engine.GameTime() + reach
+	if directiveRallyWalk(actor) {
+		moveTimeout[actor] += reach
+	}
 	engine.RecoverDefenderFromDisconnectedSpawn(actor)
 
 	if !PickTheFront(actor) {
-		engine.SetPlayerReady(actor, true)
+		if !directiveRallyWalk(actor) {
+			engine.SetPlayerReady(actor, true)
+		}
 		return engine.Done("Cannot find the start of the robots' path from wherever we are")
 	}
 
@@ -244,28 +277,49 @@ func OnStart(actor int32) engine.Outcome {
 // Update walks there, and stops when the wave starts rather than when it
 // arrives.
 func Update(actor int32) engine.Outcome {
+	latchRallyWalk(actor)
+
 	/* The wave is what ends this, not arriving
 
 	Arriving used to end it, and what happened next was nothing at all: the between-rounds branch
 	of GetDesiredBotAction had no answer for a bot that had already shopped, so the game got the
 	bot back and roamed it around the map. Reported as the Heavy, the Medic and the Pyro wandering
 	off before the wave and turning up inside the middle house on Coaltown. */
-	if engine.RoundState() != engine.RoundStateBetweenRounds() {
+	if engine.RoundState() != engine.RoundStateBetweenRounds() && !directiveRallyWalk(actor) {
 		return engine.Done("The wave has started")
+	}
+	if directiveRallyWalk(actor) {
+		goal := [3]float32{}
+		goal[0] = engine.DefenderRallyX(actor)
+		goal[1] = engine.DefenderRallyY(actor)
+		goal[2] = engine.DefenderRallyZ(actor)
+		if engine.VectorDistance(goalArea[actor], goal) > 200.0 && PickTheFront(actor) {
+			atTheFront[actor] = false
+			moveToFrontTry[actor] = 0
+			moveTimeout[actor] = engine.GameTime() + reach + reach
+		}
 	}
 
 	// Credits on the floor are still worth the walk while we wait
-	if engine.CollectMoneyIsPossible(actor) {
+	if !directiveRallyWalk(actor) && engine.CollectMoneyIsPossible(actor) {
 		return engine.SuspendFor(engine.CollectMoney(), "Money on the floor")
 	}
 
 	if atTheFront[actor] {
+		if directiveRallyWalk(actor) {
+			return engine.Done("Reached rally point")
+		}
 		return engine.Continue()
 	}
 
 	if engine.VectorDistance(goalArea[actor], engine.WorldSpaceCenter(actor)) < arrived {
-		engine.SetPlayerReady(actor, true)
+		if !directiveRallyWalk(actor) {
+			engine.SetPlayerReady(actor, true)
+		}
 		atTheFront[actor] = true
+		if directiveRallyWalk(actor) {
+			return engine.Done("Reached rally point")
+		}
 
 		return engine.Continue()
 	}
@@ -293,6 +347,9 @@ func Update(actor int32) engine.Outcome {
 	}
 
 	if moveToFrontTry[actor] >= tries || moveTimeout[actor] < engine.GameTime() {
+		if directiveRallyWalk(actor) {
+			return engine.Done("Rally path timed out")
+		}
 		engine.SetPlayerReady(actor, true)
 		atTheFront[actor] = true
 
@@ -309,12 +366,26 @@ func Update(actor int32) engine.Outcome {
 	}
 
 	if engine.PathFailedFor(actor) {
-		engine.NudgeTowardsGoal(actor, myBot, goalArea[actor])
+		if !directiveRallyWalk(actor) {
+			engine.NudgeTowardsGoal(actor, myBot, goalArea[actor])
+		}
 	} else {
 		engine.PathOf(actor).Update(myBot)
 	}
 
 	return engine.Continue()
+}
+
+// latchRallyWalk settles the mode for this tick. Both entry points call it
+// before anything else reads it.
+//
+//sp:name LatchRallyWalk
+func latchRallyWalk(actor int32) {
+	rallyWalk[actor] = engine.RoundState() == engine.RoundStateRunning() && engine.DefenderRallyActive(actor)
+}
+
+func directiveRallyWalk(actor int32) bool {
+	return rallyWalk[actor]
 }
 
 // OnEnd forgets the goal.

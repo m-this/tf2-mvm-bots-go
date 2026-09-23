@@ -144,6 +144,12 @@ func MedicHealUpdatePost(action engine.Behaviour, actor int32, interval float32,
 		name := resultingAction.ActionName()
 
 		if engine.StrEqual(name, "FetchFlag") {
+			// A caller can direct an idle Medic without a patient to seek
+			// enemies instead of guarding the hatch. Stock Heal still owns
+			// beams and shields whenever a patient exists.
+			if engine.DefenderSeekEnemies(actor) {
+				return engine.SuspendFor(engine.DefenderAttack(), "Directive: seek enemies")
+			}
 			return engine.SuspendFor(engine.GuardPoint(), "Nothing to heal, so hold the hatch")
 		}
 	}
@@ -165,6 +171,28 @@ func MedicHealUpdatePost(action engine.Behaviour, actor int32, interval float32,
 	it, and the marker does not expire in that time. */
 	if engine.MedicReviveIsPossible(actor) && !engine.IsChargeReleasing(secondary) {
 		return engine.SuspendFor(engine.MedicRevive(), "Revive teammate")
+	}
+
+	// Stock Heal can stay at the hatch indefinitely when every defender is
+	// a Medic. An external directive can send an idle Medic toward enemies
+	// or a walkable rally point. A connected beam keeps stock Heal in charge.
+	if engine.DefenderSeekEnemies(actor) && engine.RoundState() == engine.RoundStateRunning() &&
+		engine.EntPropEnt(secondary, engine.PropSend(), "m_hHealingTarget") == -1 {
+		if engine.DefenderAttackSelectTarget(actor) {
+			return engine.SuspendFor(engine.DefenderAttack(), "Directive: idle Medic seeks robot")
+		}
+		// Targets inside a respawn room can be excluded by stock selection.
+		// Walk to the caller's NAV goal first; attack selection takes over
+		// when a target becomes reachable.
+		if engine.DefenderRallyActive(actor) {
+			goal := [3]float32{}
+			goal[0] = engine.DefenderRallyX(actor)
+			goal[1] = engine.DefenderRallyY(actor)
+			goal[2] = engine.DefenderRallyZ(actor)
+			if engine.VectorDistance(engine.WorldSpaceCenter(actor), goal) > 160.0 {
+				return engine.SuspendFor(engine.MoveToFront(), "Directive: walk to rally point")
+			}
+		}
 	}
 
 	if engine.RoundState() == engine.RoundStateBetweenRounds() && !engine.ShoppedThisBreak(actor) {

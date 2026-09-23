@@ -17,6 +17,11 @@ int m_iStation[65];
 public Action CTFBotGotoUpgrade_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
+	if (DefenderBuyAnywhere(actor))
+	{
+		TF2_SetInUpgradeZone(actor, true);
+		return action.Continue();
+	}
 	m_iStation[actor] = FindClosestUpgradeStation(actor);
 	if ((m_iStation[actor] <= MaxClients) || !IsValidEntity(m_iStation[actor]))
 	{

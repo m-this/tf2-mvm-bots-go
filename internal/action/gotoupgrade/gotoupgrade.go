@@ -21,6 +21,10 @@ var station [slots.Count]int32
 // could reach.
 func OnStart(actor int32) engine.Outcome {
 	engine.PathOf(actor).SetMinLookAheadDistance(engine.DesiredPathLookAheadRange(actor))
+	if engine.DefenderBuyAnywhere(actor) {
+		engine.SetInUpgradeZone(actor, true)
+		return engine.Continue()
+	}
 
 	station[actor] = engine.FindClosestUpgradeStation(actor)
 

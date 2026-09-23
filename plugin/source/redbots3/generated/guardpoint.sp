@@ -140,6 +140,11 @@ public Action CTFBotGuardPoint_OnTerritoryLost(BehaviorAction action, int actor,
 // IsPossible says whether holding a point is worth doing at all.
 stock bool CTFBotGuardPoint_IsPossible(int client)
 {
+	// An external combat directive takes precedence over guarding the hatch.
+	if (DefenderSeekEnemies(client) && (GameRules_GetRoundState() == RoundState_RoundRunning))
+	{
+		return false;
+	}
 	// There are better things for scout to do than this
 	if (TF2_GetPlayerClass(client) == TFClass_Scout)
 	{

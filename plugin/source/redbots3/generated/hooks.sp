@@ -102,6 +102,13 @@ public Action CTFBotMedicHeal_UpdatePost(BehaviorAction action, int actor, float
 		resultingAction.GetName(name, 512);
 		if (StrEqual(name, "FetchFlag"))
 		{
+			// A caller can direct an idle Medic without a patient to seek
+			// enemies instead of guarding the hatch. Stock Heal still owns
+			// beams and shields whenever a patient exists.
+			if (DefenderSeekEnemies(actor))
+			{
+				return action.SuspendFor(CTFBotDefenderAttack(), "Directive: seek enemies");
+			}
 			return action.SuspendFor(CTFBotGuardPoint(), "Nothing to heal, so hold the hatch");
 		}
 	}
@@ -122,6 +129,30 @@ public Action CTFBotMedicHeal_UpdatePost(BehaviorAction action, int actor, float
 	if (CTFBotMedicRevive_IsPossible(actor) && !IsChargeReleasing(secondary))
 	{
 		return action.SuspendFor(CTFBotMedicRevive(), "Revive teammate");
+	}
+	// Stock Heal can stay at the hatch indefinitely when every defender is
+	// a Medic. An external directive can send an idle Medic toward enemies
+	// or a walkable rally point. A connected beam keeps stock Heal in charge.
+	if (DefenderSeekEnemies(actor) && (GameRules_GetRoundState() == RoundState_RoundRunning) && (GetEntPropEnt(secondary, Prop_Send, "m_hHealingTarget") == -1))
+	{
+		if (CTFBotDefenderAttack_SelectTarget(actor))
+		{
+			return action.SuspendFor(CTFBotDefenderAttack(), "Directive: idle Medic seeks robot");
+		}
+		// Targets inside a respawn room can be excluded by stock selection.
+		// Walk to the caller's NAV goal first; attack selection takes over
+		// when a target becomes reachable.
+		if (DefenderRallyActive(actor))
+		{
+			float goal[3] = {};
+			goal[0] = DefenderRallyX(actor);
+			goal[1] = DefenderRallyY(actor);
+			goal[2] = DefenderRallyZ(actor);
+			if (GetVectorDistance(WorldSpaceCenter(actor), goal) > 160.0)
+			{
+				return action.SuspendFor(CTFBotMoveToFront(), "Directive: walk to rally point");
+			}
+		}
 	}
 	if ((GameRules_GetRoundState() == RoundState_BetweenRounds) && !g_bShoppedThisBreak[actor])
 	{
