@@ -62,6 +62,7 @@ public void OnPluginStart()
 	RegAdminCmd("sm_purgebots", Command_RemoveAllBots, ADMFLAG_GENERIC);
 	RegAdminCmd("sm_redbots_reseat", Command_ReseatBots, ADMFLAG_GENERIC, "Reload the loadout file and rebuild RED from the current lineup");
 	RegAdminCmd("sm_redbots_reload_names", Command_ReloadBotNames, ADMFLAG_GENERIC, "Read the bots' names again and rename the seats that were given one");
+	RegAdminCmd("sm_redbots_rebind_seats", Command_RebindSeats, ADMFLAG_GENERIC, "Read the loadout file again and move each named bot to the seat that names it, without a reseat");
 	RegAdminCmd("sm_dump_credits", Command_DumpCredits, ADMFLAG_GENERIC, "What every player on RED is holding");
 	RegAdminCmd("sm_botmanager_stop", Command_StopManagingBots, ADMFLAG_GENERIC);
 	RegAdminCmd("sm_view_bot_upgrades", Command_ViewBotUpgrades, ADMFLAG_GENERIC);

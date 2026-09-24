@@ -23,6 +23,8 @@ type EventCalls struct {
 	SetDefenderBotFlag           func(client int32, ours bool)
 	SetRandomNameOnBot           func(client int32)
 	ServerLoadoutNameFor         func(client int32, buffer Text, maxlen int32) bool
+	BotSeatOf                    func(client int32) int32
+	RebindBotSeatByName          func(client int32) bool
 	RespawnPlayer                func(client int32)
 	RegeneratePlayer             func(client int32)
 	AddBotAttribute              func(client int32, attribute int32)
@@ -227,6 +229,18 @@ func SetDefenderBotFlag(client int32, ours bool) { events.SetDefenderBotFlag(cli
 func ServerLoadoutNameFor(client int32, buffer Text, maxlen int32) bool {
 	return events.ServerLoadoutNameFor(client, buffer, maxlen)
 }
+
+// BotSeatOf is the seat this bot fills, and 0 when it fills none. Ported,
+// playerpref.
+//
+//sp:body GetBotSeat
+func BotSeatOf(client int32) int32 { return events.BotSeatOf(client) }
+
+// RebindBotSeatByName moves the bot to the seat the loadout file names it for,
+// and false when no seat carries its name. Ported, playerpref.
+//
+//sp:body RebindBotSeatByName
+func RebindBotSeatByName(client int32) bool { return events.RebindBotSeatByName(client) }
 
 // SetRandomNameOnBotFor gives it a name off the list. Ported, botnames.
 //
