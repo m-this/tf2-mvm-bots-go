@@ -256,6 +256,28 @@ func SeatRank(client int32) int32 {
 	return engine.BotSeatOf(client)
 }
 
+/*
+NativeGetSeatRank is SeatRank for another plugin: how late in line this bot
+stands when somebody has to leave, and -1 for a client that is not one of ours.
+
+tf2-archipelago makes room when a spectator comes back to RED and trims RED when
+the team shrinks, neither of which is a connect, so it asks here rather than
+keeping a second copy of who leaves first.
+*/
+//
+//sp:name Native_GetSeatRank
+//
+//nolint:revive // unused-parameter: SourceMod hands every native the plugin and the count
+func NativeGetSeatRank(plugin engine.Timer, numParams int32) engine.Cell {
+	client := engine.NativeCell(1)
+
+	if client < 1 || client > engine.MaxClients() || !engine.IsClientInGame(client) || !engine.DefenderBotFlag(client) {
+		return engine.Cell(-1)
+	}
+
+	return engine.Cell(SeatRank(client))
+}
+
 // RemoveAllDefenderBots empties RED of ours.
 //
 //sp:name RemoveAllDefenderBots

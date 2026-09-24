@@ -216,6 +216,22 @@ stock int SeatRank(int client)
 	return GetBotSeat(client);
 }
 
+// NativeGetSeatRank is SeatRank for another plugin: how late in line this bot
+// stands when somebody has to leave, and -1 for a client that is not one of ours.
+//
+// tf2-archipelago makes room when a spectator comes back to RED and trims RED when
+// the team shrinks, neither of which is a connect, so it asks here rather than
+// keeping a second copy of who leaves first.
+stock any Native_GetSeatRank(Handle plugin, int numParams)
+{
+	int client = GetNativeCell(1);
+	if ((client < 1) || (client > MaxClients) || !IsClientInGame(client) || !g_bIsDefenderBot[client])
+	{
+		return -1;
+	}
+	return view_as<any>(SeatRank(client));
+}
+
 // RemoveAllDefenderBots empties RED of ours.
 stock void RemoveAllDefenderBots(char[] reason = "", bool bDanceInstead = false)
 {
