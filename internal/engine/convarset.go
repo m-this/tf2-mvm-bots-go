@@ -146,6 +146,11 @@ func SetUpgradeInterval(c ConVar) { conVarSets.set("redbots_manager_bot_upgrade_
 //sp:globalset redbots_manager_bot_use_upgrades
 func SetUseUpgrades(c ConVar) { conVarSets.set("redbots_manager_bot_use_upgrades", c) }
 
+// SetBuyAnywhere writes redbots_manager_bot_buy_anywhere.
+//
+//sp:globalset redbots_manager_bot_buy_anywhere
+func SetBuyAnywhere(c ConVar) { conVarSets.set("redbots_manager_bot_buy_anywhere", c) }
+
 // SetClassBlacklist writes redbots_manager_class_blacklist.
 //
 //sp:globalset redbots_manager_class_blacklist
