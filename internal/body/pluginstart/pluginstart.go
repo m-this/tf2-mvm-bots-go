@@ -78,6 +78,7 @@ func OnPluginStart() {
 	engine.RegAdminCmdPlain("sm_purgebots", engine.CommandRemoveAllBots, engine.AdmFlagGeneric())
 	engine.RegAdminCmd("sm_redbots_reseat", engine.CommandReseatBots, engine.AdmFlagGeneric(), "Reload the loadout file and rebuild RED from the current lineup")
 	engine.RegAdminCmd("sm_redbots_reload_names", engine.CommandReloadBotNames, engine.AdmFlagGeneric(), "Read the bots' names again and rename the seats that were given one")
+	engine.RegAdminCmd("sm_redbots_rebind_seats", engine.CommandRebindSeats, engine.AdmFlagGeneric(), "Read the loadout file again and move each named bot to the seat that names it, without a reseat")
 	engine.RegAdminCmd("sm_dump_credits", engine.CommandDumpCredits, engine.AdmFlagGeneric(), "What every player on RED is holding")
 	engine.RegAdminCmdPlain("sm_botmanager_stop", engine.CommandStopManagingBots, engine.AdmFlagGeneric())
 	engine.RegAdminCmdPlain("sm_view_bot_upgrades", engine.CommandViewBotUpgrades, engine.AdmFlagGeneric())
