@@ -264,6 +264,12 @@ func RemoveCondition(client int32, condition Condition) { queries.RemoveConditio
 //sp:global redbots_manager_bot_use_upgrades
 func UseUpgrades() ConVar { return 0 }
 
+// BuyAnywhere is redbots_manager_bot_buy_anywhere, whether every bot shops
+// where it stands rather than walking to a station.
+//
+//sp:global redbots_manager_bot_buy_anywhere
+func BuyAnywhere() ConVar { return 0 }
+
 // FeatureReadyWhenPrepared is FEATURE_READY_WHEN_PREPARED.
 //
 //sp:global FEATURE_READY_WHEN_PREPARED

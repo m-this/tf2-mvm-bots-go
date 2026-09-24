@@ -18,10 +18,11 @@ import (
 var station [slots.Count]int32
 
 // OnStart picks a station, and pretends the bot is at one when there is none it
-// could reach.
+// could reach, or when nobody wants it to walk: the server said so for every
+// bot, or another plugin said so for this one.
 func OnStart(actor int32) engine.Outcome {
 	engine.PathOf(actor).SetMinLookAheadDistance(engine.DesiredPathLookAheadRange(actor))
-	if engine.DefenderBuyAnywhere(actor) {
+	if engine.BuyAnywhere().Bool() || engine.DefenderBuyAnywhere(actor) {
 		engine.SetInUpgradeZone(actor, true)
 		return engine.Continue()
 	}

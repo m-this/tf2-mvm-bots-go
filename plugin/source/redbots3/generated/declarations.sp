@@ -135,6 +135,7 @@ ConVar redbots_manager_engineer_nest_depth;
 ConVar redbots_manager_engineer_nest_relocate;
 ConVar redbots_manager_engineer_nest_relocate_score_gain_min;
 ConVar redbots_manager_bot_use_upgrades;
+ConVar redbots_manager_bot_buy_anywhere;
 ConVar redbots_manager_spawn_nav_recovery;
 ConVar redbots_manager_spawn_nav_recovery_radius;
 ConVar redbots_manager_spawn_nav_recovery_time;
