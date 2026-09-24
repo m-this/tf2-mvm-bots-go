@@ -260,6 +260,62 @@ stock bool GetServerLoadoutName(int client, char[] buffer, int maxlen)
 	return strlen(buffer) > 0;
 }
 
+// GetBotSeat is the seat this bot fills, and 0 for a bot that fills none.
+stock int GetBotSeat(int client)
+{
+	return m_iBotSeat[client];
+}
+
+// RebindBotSeatByName moves a bot to the seat the loadout file names it for.
+//
+// A team somebody reordered keeps its bots. The seat that was third is now first,
+// and the bot called what the first seat is now called is the bot that sits there:
+// its weapons and its place in line come from that seat from its next respawn,
+// and nobody is kicked to get there.
+//
+// A name belongs to the seat rather than to the class in it, as for
+// GetServerLoadoutName, so the class is not asked. A bot whose name no seat
+// carries keeps the seat it had.
+stock bool RebindBotSeatByName(int client)
+{
+	if (m_kvServerLoadout == null)
+	{
+		return false;
+	}
+	char current[512];
+	bool found = GetClientName(client, current, 512);
+	if (!found)
+	{
+		return false;
+	}
+	m_kvServerLoadout.Rewind();
+	if (!m_kvServerLoadout.JumpToKey("seats", false))
+	{
+		m_kvServerLoadout.Rewind();
+		return false;
+	}
+	for (int seat = 1; seat <= MAXPLAYERS; seat++)
+	{
+		char section[512];
+		IntToString(seat, section, 512);
+		if (!m_kvServerLoadout.JumpToKey(section, false))
+		{
+			continue;
+		}
+		char pinned[512];
+		m_kvServerLoadout.GetString("name", pinned, 512, "");
+		m_kvServerLoadout.GoBack();
+		if ((strlen(pinned) > 0) && StrEqual(pinned, current))
+		{
+			m_iBotSeat[client] = seat;
+			m_kvServerLoadout.Rewind();
+			return true;
+		}
+	}
+	m_kvServerLoadout.Rewind();
+	return false;
+}
+
 // GetPreferredWeaponForClass is the weapon a bot of that class carries in that slot.
 //
 // The server's own loadout answers first when there is one. Otherwise the players

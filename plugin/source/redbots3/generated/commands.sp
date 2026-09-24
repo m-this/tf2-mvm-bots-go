@@ -99,6 +99,37 @@ public Action Command_ReloadBotNames(int client, int args)
 	return Plugin_Handled;
 }
 
+// 	CommandRebindSeats moves named bots to their seats, without a reseat
+//
+// A team somebody reordered is the same bots in a different order. sm_redbots_reseat
+// would kick all of them and cost the team every upgrade it bought, to arrive at
+// bots it already had.
+//
+// So the two files are read again and every bot on RED whose name a seat carries
+// is moved to that seat. It keeps its upgrades and its life; the seat's weapons
+// reach it at its next respawn, and its place in line counts from now, which is
+// what MakeRoomForHumanPlayer reads.
+public Action Command_RebindSeats(int client, int args)
+{
+	Config_LoadBotNames();
+	Config_LoadServerLoadout();
+	int rebound = 0;
+	for (int i = 1; i <= MaxClients; i++)
+	{
+		if (!IsClientInGame(i) || !IsDefenderBot(i) || (TF2_GetClientTeam(i) != TFTeam_Red))
+		{
+			continue;
+		}
+		if (RebindBotSeatByName(i))
+		{
+			rebound++;
+		}
+	}
+	LogMessage("Rebind seats: %d bot(s) moved to the seat that names them", rebound);
+	ReplyToCommand(client, "%s Read the loadout again, %d bot(s) in their named seats.", PLUGIN_PREFIX, rebound);
+	return Plugin_Handled;
+}
+
 // 	CommandReseatBots rebuilds the team from the loadout file
 //
 // A recycle asked for mid-wave is held until the break: kicking a bot in the
