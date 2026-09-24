@@ -361,6 +361,70 @@ func GetServerLoadoutName(client int32, buffer engine.Text, maxlen int32) bool {
 	return engine.TextLength(buffer) > 0
 }
 
+// GetBotSeat is the seat this bot fills, and 0 for a bot that fills none.
+//
+//sp:name GetBotSeat
+func GetBotSeat(client int32) int32 {
+	return botSeat[client]
+}
+
+/*
+RebindBotSeatByName moves a bot to the seat the loadout file names it for.
+
+A team somebody reordered keeps its bots. The seat that was third is now first,
+and the bot called what the first seat is now called is the bot that sits there:
+its weapons and its place in line come from that seat from its next respawn,
+and nobody is kicked to get there.
+
+A name belongs to the seat rather than to the class in it, as for
+GetServerLoadoutName, so the class is not asked. A bot whose name no seat
+carries keeps the seat it had.
+*/
+//
+//sp:name RebindBotSeatByName
+func RebindBotSeatByName(client int32) bool {
+	if serverLoadout == engine.NoKeyValues() {
+		return false
+	}
+
+	found, current := engine.ClientName(client)
+
+	if !found {
+		return false
+	}
+
+	serverLoadout.Rewind()
+
+	if !serverLoadout.JumpToKey("seats", false) {
+		serverLoadout.Rewind()
+		return false
+	}
+
+	for seat := int32(1); seat <= MaxPlayers; seat++ {
+		_, section := engine.IntToString(seat)
+
+		if !serverLoadout.JumpToKeyText(section, false) {
+			continue
+		}
+
+		var pinned engine.Text
+
+		serverLoadout.StringInto("name", pinned, 512, "")
+		serverLoadout.GoBack()
+
+		if engine.TextLength(pinned) > 0 && engine.StrEqualText(pinned, current) {
+			botSeat[client] = seat
+			serverLoadout.Rewind()
+
+			return true
+		}
+	}
+
+	serverLoadout.Rewind()
+
+	return false
+}
+
 /*
 GetPreferredWeaponForClass is the weapon a bot of that class carries in that slot.
 
