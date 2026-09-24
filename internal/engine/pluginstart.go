@@ -348,6 +348,12 @@ func NativeRangeRepairStalls(plugin int32, params int32) int32 { return 0 }
 //nolint:revive // unused-parameter: a name handed to CreateNative, never called
 func NativeGetAttackTarget(plugin int32, params int32) int32 { return 0 }
 
+// NativeGetSeatRank is the native of that name. Ported, manage.
+//
+//sp:callback Native_GetSeatRank
+//nolint:revive // unused-parameter: a name handed to CreateNative, never called
+func NativeGetSeatRank(plugin int32, params int32) int32 { return 0 }
+
 // NativeGetMedicPatient is the native of that name. Ported, statnatives.
 //
 //sp:callback Native_GetMedicPatient
