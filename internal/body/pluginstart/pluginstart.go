@@ -180,6 +180,7 @@ func AskPluginLoad2(myself engine.Timer, late bool, errorText engine.Text, errMa
 	engine.CreateNative("Defenderbots_RangeRepairStalls", engine.NativeRangeRepairStalls)
 	engine.CreateNative("Defenderbots_GetAttackTarget", engine.NativeGetAttackTarget)
 	engine.CreateNative("Defenderbots_GetMedicPatient", engine.NativeGetMedicPatient)
+	engine.CreateNative("Defenderbots_GetSeatRank", engine.NativeGetSeatRank)
 	engine.RegisterFeatureNatives()
 	engine.RegisterDirectiveNatives()
 
