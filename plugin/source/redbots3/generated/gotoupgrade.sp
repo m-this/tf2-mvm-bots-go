@@ -13,11 +13,12 @@ BehaviorAction CTFBotGotoUpgrade()
 int m_iStation[65];
 
 // OnStart picks a station, and pretends the bot is at one when there is none it
-// could reach.
+// could reach, or when nobody wants it to walk: the server said so for every
+// bot, or another plugin said so for this one.
 public Action CTFBotGotoUpgrade_OnStart(BehaviorAction action, int actor, BehaviorAction priorAction, ActionResult result)
 {
 	m_pPath[actor].SetMinLookAheadDistance(GetDesiredPathLookAheadRange(actor));
-	if (DefenderBuyAnywhere(actor))
+	if (redbots_manager_bot_buy_anywhere.BoolValue || DefenderBuyAnywhere(actor))
 	{
 		TF2_SetInUpgradeZone(actor, true);
 		return action.Continue();
