@@ -35,6 +35,7 @@ func OnPluginStart() {
 	engine.SetNestRelocateConVar(engine.CreateConVar("sm_redbots_manager_engineer_nest_relocate", "0", "Let engineers move their nest between waves when a better spot opens up. Off because it loses the mission: six waves on Decoy with two engineers cleared none against two, and neither transition crashed.", engine.FcvarNotify()))
 	engine.SetNestRelocateScoreGainMin(engine.CreateBoundedConVar("sm_redbots_manager_engineer_nest_relocate_score_gain_min", "40.0", "How much better a nest spot has to score than the one an engineer holds before he moves to it between waves. 0 makes him move for any improvement at all.", engine.FcvarNotify(), true, 0.0, true, 200.0))
 	engine.SetUseUpgrades(engine.CreateConVar("sm_redbots_manager_bot_use_upgrades", "1", "Enable bots to buy upgrades.", engine.FcvarNotify()))
+	engine.SetBuyAnywhere(engine.CreateConVar("sm_redbots_manager_bot_buy_anywhere", "0", "Let bots buy their upgrades where they stand instead of walking to a station.", engine.FcvarNotify()))
 	engine.SetSpawnNavRecovery(engine.CreateBoundedConVar("sm_redbots_spawn_nav_recovery", "1", "Recover prepared defender bots that cannot leave spawn.", engine.FcvarNotify(), true, 0.0, true, 1.0))
 	engine.SetSpawnNavRecoveryRadius(engine.CreateBoundedConVar("sm_redbots_spawn_nav_recovery_radius", "512.0", "Distance outside a RED spawn brush that still counts as spawn for navigation recovery.", engine.FcvarNotify(), true, 0.0, true, 4096.0))
 	engine.SetSpawnNavRecoveryTime(engine.CreateBoundedConVar("sm_redbots_spawn_nav_recovery_time", "12.0", "Maximum seconds a prepared defender may remain in or near spawn before recovery.", engine.FcvarNotify(), true, 1.0, true, 120.0))
@@ -78,6 +79,7 @@ func OnPluginStart() {
 	engine.RegAdminCmdPlain("sm_purgebots", engine.CommandRemoveAllBots, engine.AdmFlagGeneric())
 	engine.RegAdminCmd("sm_redbots_reseat", engine.CommandReseatBots, engine.AdmFlagGeneric(), "Reload the loadout file and rebuild RED from the current lineup")
 	engine.RegAdminCmd("sm_redbots_reload_names", engine.CommandReloadBotNames, engine.AdmFlagGeneric(), "Read the bots' names again and rename the seats that were given one")
+	engine.RegAdminCmd("sm_redbots_rebind_seats", engine.CommandRebindSeats, engine.AdmFlagGeneric(), "Read the loadout file again and move each named bot to the seat that names it, without a reseat")
 	engine.RegAdminCmd("sm_dump_credits", engine.CommandDumpCredits, engine.AdmFlagGeneric(), "What every player on RED is holding")
 	engine.RegAdminCmdPlain("sm_botmanager_stop", engine.CommandStopManagingBots, engine.AdmFlagGeneric())
 	engine.RegAdminCmdPlain("sm_view_bot_upgrades", engine.CommandViewBotUpgrades, engine.AdmFlagGeneric())
@@ -178,6 +180,7 @@ func AskPluginLoad2(myself engine.Timer, late bool, errorText engine.Text, errMa
 	engine.CreateNative("Defenderbots_RangeRepairStalls", engine.NativeRangeRepairStalls)
 	engine.CreateNative("Defenderbots_GetAttackTarget", engine.NativeGetAttackTarget)
 	engine.CreateNative("Defenderbots_GetMedicPatient", engine.NativeGetMedicPatient)
+	engine.CreateNative("Defenderbots_GetSeatRank", engine.NativeGetSeatRank)
 	engine.RegisterFeatureNatives()
 	engine.RegisterDirectiveNatives()
 

@@ -22,6 +22,7 @@ public void OnPluginStart()
 	redbots_manager_engineer_nest_relocate = CreateConVar("sm_redbots_manager_engineer_nest_relocate", "0", "Let engineers move their nest between waves when a better spot opens up. Off because it loses the mission: six waves on Decoy with two engineers cleared none against two, and neither transition crashed.", FCVAR_NOTIFY);
 	redbots_manager_engineer_nest_relocate_score_gain_min = CreateConVar("sm_redbots_manager_engineer_nest_relocate_score_gain_min", "40.0", "How much better a nest spot has to score than the one an engineer holds before he moves to it between waves. 0 makes him move for any improvement at all.", FCVAR_NOTIFY, true, 0.0, true, 200.0);
 	redbots_manager_bot_use_upgrades = CreateConVar("sm_redbots_manager_bot_use_upgrades", "1", "Enable bots to buy upgrades.", FCVAR_NOTIFY);
+	redbots_manager_bot_buy_anywhere = CreateConVar("sm_redbots_manager_bot_buy_anywhere", "0", "Let bots buy their upgrades where they stand instead of walking to a station.", FCVAR_NOTIFY);
 	redbots_manager_spawn_nav_recovery = CreateConVar("sm_redbots_spawn_nav_recovery", "1", "Recover prepared defender bots that cannot leave spawn.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	redbots_manager_spawn_nav_recovery_radius = CreateConVar("sm_redbots_spawn_nav_recovery_radius", "512.0", "Distance outside a RED spawn brush that still counts as spawn for navigation recovery.", FCVAR_NOTIFY, true, 0.0, true, 4096.0);
 	redbots_manager_spawn_nav_recovery_time = CreateConVar("sm_redbots_spawn_nav_recovery_time", "12.0", "Maximum seconds a prepared defender may remain in or near spawn before recovery.", FCVAR_NOTIFY, true, 1.0, true, 120.0);
@@ -62,6 +63,7 @@ public void OnPluginStart()
 	RegAdminCmd("sm_purgebots", Command_RemoveAllBots, ADMFLAG_GENERIC);
 	RegAdminCmd("sm_redbots_reseat", Command_ReseatBots, ADMFLAG_GENERIC, "Reload the loadout file and rebuild RED from the current lineup");
 	RegAdminCmd("sm_redbots_reload_names", Command_ReloadBotNames, ADMFLAG_GENERIC, "Read the bots' names again and rename the seats that were given one");
+	RegAdminCmd("sm_redbots_rebind_seats", Command_RebindSeats, ADMFLAG_GENERIC, "Read the loadout file again and move each named bot to the seat that names it, without a reseat");
 	RegAdminCmd("sm_dump_credits", Command_DumpCredits, ADMFLAG_GENERIC, "What every player on RED is holding");
 	RegAdminCmd("sm_botmanager_stop", Command_StopManagingBots, ADMFLAG_GENERIC);
 	RegAdminCmd("sm_view_bot_upgrades", Command_ViewBotUpgrades, ADMFLAG_GENERIC);
@@ -145,6 +147,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] errorText, int err
 	CreateNative("Defenderbots_RangeRepairStalls", Native_RangeRepairStalls);
 	CreateNative("Defenderbots_GetAttackTarget", Native_GetAttackTarget);
 	CreateNative("Defenderbots_GetMedicPatient", Native_GetMedicPatient);
+	CreateNative("Defenderbots_GetSeatRank", Native_GetSeatRank);
 	RegisterFeatureNatives();
 	RegisterDirectiveNatives();
 	// The one native this plugin asks for rather than offers, and it is

@@ -189,8 +189,10 @@ seat: the game caps the defending team, the bots fill it, and a player who joins
 the server after the mission started is told the team is full for the rest of it.
 
 Only when RED is already full: below the size there is a seat going spare and
-nobody has to leave. A dead bot goes first, since kicking one costs the team
-nothing it still had.
+nobody has to leave. A bot in a seat nobody named goes before any named one, and
+among named ones the last seat goes first: see SeatRank. Between equals a dead
+bot goes first, since kicking one costs the team nothing it still had. A server
+whose loadout file names nobody is all equals, and keeps the rule it had.
 
 */
 //
@@ -201,6 +203,7 @@ func MakeRoomForHumanPlayer(client int32) {
 	}
 
 	victim := int32(-1)
+	victimRank := int32(-1)
 
 	for i := int32(1); i <= engine.MaxClients(); i++ {
 		if i == client || !engine.IsClientInGame(i) || !engine.DefenderBotFlag(i) {
@@ -211,13 +214,13 @@ func MakeRoomForHumanPlayer(client int32) {
 			continue
 		}
 
-		if !engine.IsPlayerAlive(i) {
-			victim = i
-			break
-		}
+		rank := SeatRank(i)
 
-		if victim == -1 {
+		// The latest named seat leaves first. Between equals a dead bot goes
+		// before a living one, and otherwise the first one found.
+		if rank > victimRank || (rank == victimRank && engine.IsPlayerAlive(victim) && !engine.IsPlayerAlive(i)) {
 			victim = i
+			victimRank = rank
 		}
 	}
 
@@ -226,6 +229,53 @@ func MakeRoomForHumanPlayer(client int32) {
 	}
 
 	engine.KickClient(victim, "BotManager3: Making room for a player")
+}
+
+// UnnamedSeatRank is where a bot in a seat nobody named stands in line: behind
+// every seat that was named.
+//
+//sp:name UNNAMED_SEAT_RANK
+const UnnamedSeatRank = 1000
+
+/*
+SeatRank is how late in line this bot stands when somebody has to leave.
+
+A seat somebody named holds a bot they chose, and the seats count from the one
+they want most. A bot in a seat nobody named stands behind all of them: it drew
+its name, and none of the choosing was about it.
+*/
+//
+//sp:name SeatRank
+func SeatRank(client int32) int32 {
+	var pinned engine.Text
+
+	if !engine.ServerLoadoutNameFor(client, pinned, 512) {
+		return UnnamedSeatRank
+	}
+
+	return engine.BotSeatOf(client)
+}
+
+/*
+NativeGetSeatRank is SeatRank for another plugin: how late in line this bot
+stands when somebody has to leave, and -1 for a client that is not one of ours.
+
+tf2-archipelago makes room when a spectator comes back to RED and trims RED when
+the team shrinks, neither of which is a connect, so it asks here rather than
+keeping a second copy of who leaves first.
+*/
+//
+//sp:name Native_GetSeatRank
+//
+//nolint:revive // unused-parameter: SourceMod hands every native the plugin and the count
+func NativeGetSeatRank(plugin engine.Timer, numParams int32) engine.Cell {
+	client := engine.NativeCell(1)
+
+	if client < 1 || client > engine.MaxClients() || !engine.IsClientInGame(client) || !engine.DefenderBotFlag(client) {
+		return engine.Cell(-1)
+	}
+
+	return engine.Cell(SeatRank(client))
 }
 
 // RemoveAllDefenderBots empties RED of ours.

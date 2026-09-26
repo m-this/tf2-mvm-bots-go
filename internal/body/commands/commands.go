@@ -138,6 +138,44 @@ func CommandReloadBotNames(client int32, args int32) engine.Outcome {
 }
 
 /*
+	CommandRebindSeats moves named bots to their seats, without a reseat
+
+A team somebody reordered is the same bots in a different order. sm_redbots_reseat
+would kick all of them and cost the team every upgrade it bought, to arrive at
+bots it already had.
+
+So the two files are read again and every bot on RED whose name a seat carries
+is moved to that seat. It keeps its upgrades and its life; the seat's weapons
+reach it at its next respawn, and its place in line counts from now, which is
+what MakeRoomForHumanPlayer reads.
+*/
+//
+//sp:name Command_RebindSeats
+//sp:public
+//nolint:revive // unused-parameter: the argument count is the console's, and this command takes none
+func CommandRebindSeats(client int32, args int32) engine.Outcome {
+	engine.ConfigLoadBotNames()
+	engine.ConfigLoadServerLoadout()
+
+	rebound := int32(0)
+
+	for i := int32(1); i <= engine.MaxClients(); i++ {
+		if !engine.IsClientInGame(i) || !engine.IsDefenderBot(i) || engine.ClientTeam(i) != engine.TeamRed() {
+			continue
+		}
+
+		if engine.RebindBotSeatByName(i) {
+			rebound++
+		}
+	}
+
+	engine.LogMessage("Rebind seats: %d bot(s) moved to the seat that names them", rebound)
+	engine.ReplyToCommand(client, "%s Read the loadout again, %d bot(s) in their named seats.", engine.PluginPrefix(), rebound)
+
+	return engine.PluginHandled()
+}
+
+/*
 	CommandReseatBots rebuilds the team from the loadout file
 
 A recycle asked for mid-wave is held until the break: kicking a bot in the

@@ -268,6 +268,10 @@ var redbotsManagerEngineerNestRelocateScoreGainMin engine.ConVar
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
 var redbotsManagerBotUseUpgrades engine.ConVar
 
+//sp:name redbots_manager_bot_buy_anywhere
+//nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
+var redbotsManagerBotBuyAnywhere engine.ConVar
+
 //sp:name redbots_manager_spawn_nav_recovery
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
 var redbotsManagerSpawnNavRecovery engine.ConVar
