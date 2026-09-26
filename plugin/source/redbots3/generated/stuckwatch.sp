@@ -12,6 +12,10 @@
 
 #define SNIPER_STALL_TIME (20.0)
 
+#define WEDGE_REPEAT_RADIUS (300.0)
+
+#define WEDGE_REPEAT_TIME (90.0)
+
 #define MOVE_WEDGED_TRIES (8)
 
 float m_vStuckOrigin[65][3];
@@ -21,6 +25,8 @@ float m_vStuckWedge[65][3];
 int m_iStuckWedgeCount[65];
 float m_ctSniperStallDeadline[65];
 bool m_bSniperStalled[65];
+float m_vWedgeRescue[65][3];
+float m_flWedgeRescueAt[65];
 
 // StuckCountOf is how many times the watchdog has caught this bot.
 stock int StuckCountOf(int client)
@@ -225,6 +231,10 @@ stock bool MoveWedgedDefender(int client)
 {
 	float here[3];
 	here = GetAbsOrigin(client);
+	if ((m_flWedgeRescueAt[client] > 0.0) && ((GetGameTime() - m_flWedgeRescueAt[client]) <= WEDGE_REPEAT_TIME) && (GetVectorDistance(here, m_vWedgeRescue[client]) <= WEDGE_REPEAT_RADIUS) && MoveWedgedDefenderToGoal(client, here))
+	{
+		return true;
+	}
 	CNavArea area = TheNavMesh.GetNearestNavArea(here, true, STUCK_WEDGE_SEARCH, false, true, TEAM_ANY);
 	if (area == NULL_AREA)
 	{
@@ -259,7 +269,59 @@ stock bool MoveWedgedDefender(int client)
 	CBaseCombatCharacter(client).UpdateLastKnownArea();
 	m_flRepathTime[client] = 0.0;
 	m_iStuckWedgeCount[client] = 0;
+	m_vWedgeRescue[client] = here;
+	m_flWedgeRescueAt[client] = GetGameTime();
 	LogMessage("Stuck: %N was wedged at %.0f %.0f %.0f, moved to %.0f %.0f %.0f", client, here[0], here[1], here[2], destination[0], destination[1], destination[2]);
+	return true;
+}
+
+// WedgeGoalArea is the ground the bot was trying to reach: the plugin's own path
+// goal when it has one, and the objective when it does not.
+//
+// A wedge the local rescue did not cure is one the bot walks straight back into,
+// because its goal is on the far side. Mannhattan's engineer was moved off the
+// same spot four times in one wave and back on it each time.
+stock CNavArea WedgeGoalArea(int client)
+{
+	if (g_arrPluginBot[client].HasPathGoalVector())
+	{
+		float goal[3];
+		goal = g_arrPluginBot[client].vecPathGoal;
+		return TheNavMesh.GetNearestNavArea(goal, true, STUCK_WEDGE_SEARCH, false, true, TEAM_ANY);
+	}
+	int target = g_arrPluginBot[client].iPathGoalEntity;
+	if (g_arrPluginBot[client].HasPathGoalEntity() && IsValidEntity(target))
+	{
+		float goal[3];
+		goal = WorldSpaceCenter(target);
+		return TheNavMesh.GetNearestNavArea(goal, true, STUCK_WEDGE_SEARCH, false, true, TEAM_ANY);
+	}
+	char anchorSource[512];
+	return FindSpawnRecoveryArea(client, anchorSource, 32);
+}
+
+// MoveWedgedDefenderToGoal teleports a bot the local rescue already failed on
+// to where it was going.
+stock bool MoveWedgedDefenderToGoal(int client, const float here[3])
+{
+	CNavArea area = WedgeGoalArea(client);
+	if (area == NULL_AREA)
+	{
+		return false;
+	}
+	float destination[3];
+	bool found = RecoveryDestination(area, destination);
+	if (!found || (GetVectorDistance(here, destination) <= WEDGE_REPEAT_RADIUS))
+	{
+		return false;
+	}
+	float stopped[3];
+	TeleportEntity(client, destination, NULL_VECTOR, stopped);
+	CBaseCombatCharacter(client).UpdateLastKnownArea();
+	m_flRepathTime[client] = 0.0;
+	m_iStuckWedgeCount[client] = 0;
+	m_flWedgeRescueAt[client] = 0.0;
+	LogMessage("Stuck: %N was wedged at %.0f %.0f %.0f again, moved to its goal at %.0f %.0f %.0f", client, here[0], here[1], here[2], destination[0], destination[1], destination[2]);
 	return true;
 }
 
