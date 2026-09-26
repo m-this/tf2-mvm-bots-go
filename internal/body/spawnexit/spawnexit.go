@@ -317,6 +317,56 @@ func MoveDefenderFromSpawnToBattlefield(client int32, reason string) bool {
 	return true
 }
 
+/*
+AtRecoveryDestination says the bot already stands where a recovery would put
+it.
+
+MvM puts RED's spawn beside the hatch, so the objective's ground is usually
+inside the radius that counts as near spawn. A bot holding the hatch was moved
+onto the hatch again every six seconds: three times in six seconds for one
+Demoman on Decoy.
+*/
+//
+//sp:name AtRecoveryDestination
+func AtRecoveryDestination(client int32) bool {
+	here := engine.WorldSpaceCenter(client)
+
+	if engine.IsPointInRespawnRoom(here) {
+		return false
+	}
+
+	var anchorSource engine.Text
+	area := FindSpawnRecoveryArea(client, anchorSource, 32)
+
+	if area == engine.NullArea() {
+		return false
+	}
+
+	anchor := area.Center()
+
+	return engine.VectorDistance(here, anchor) <= engine.SpawnNavRecoveryRadius().Float()
+}
+
+/*
+IsParkedNearSpawn is a bot outside the spawn room that is standing still by
+choice rather than failing to walk.
+
+The radius around spawn is there for a bot wedged in the doorway, and that bot
+is trying to move, so its locomotion says it is stuck. A bot that is not
+trying to move near spawn is at its post: two engineers on Homestead
+Happenings nested inside the radius and were carried to the hatch every six
+seconds, 88 times in one wave, and never built.
+*/
+//
+//sp:name IsParkedNearSpawn
+func IsParkedNearSpawn(client int32) bool {
+	if engine.IsPointInRespawnRoom(engine.WorldSpaceCenter(client)) {
+		return false
+	}
+
+	return !engine.NextBotOf(client).Locomotion().IsStuck()
+}
+
 // RecoverDefenderFromDisconnectedSpawn moves a bot whose spawn has no route
 // out at all, which a mission with gates produces on purpose.
 //
@@ -366,6 +416,12 @@ func WatchDefenderSpawnExit(client int32) {
 	now := engine.GameTime()
 
 	if spawnExitWatchAt[client] > now {
+		return
+	}
+
+	if AtRecoveryDestination(client) || IsParkedNearSpawn(client) {
+		ResetSpawnExitWatch(client)
+		spawnExitWatchAt[client] = now + SpawnExitWatchInterval
 		return
 	}
 
