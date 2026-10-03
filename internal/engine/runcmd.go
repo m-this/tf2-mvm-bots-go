@@ -29,6 +29,7 @@ type RunCmdCalls struct {
 	SelectTargetPoint       func(i Intention, entity int32) [3]float32
 	FakeClientCommand       func(client int32, command string)
 	RandomFloat             func(low float32, high float32) float32
+	MainActionStarted       func(client int32) bool
 }
 
 var runCmds RunCmdCalls
@@ -185,3 +186,9 @@ func WatchDefenderSpawnExit(client int32) { runCmds.WatchDefenderSpawnExit(clien
 func (i Intention) SelectTargetPointOf(entity int32) (aimPos [3]float32) {
 	return runCmds.SelectTargetPoint(i, entity)
 }
+
+// MainActionStarted says the bot's behaviour has started, so its vision and
+// intention can be asked. Ported, hooks.
+//
+//sp:body MainActionStarted
+func MainActionStarted(client int32) bool { return runCmds.MainActionStarted(client) }

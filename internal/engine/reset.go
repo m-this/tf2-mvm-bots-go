@@ -24,6 +24,7 @@ type ResetCalls struct {
 	ResetBuildTeleporter    func(client int32)
 	ResetNestSetup          func(client int32)
 	ResetClimb              func(client int32)
+	ForgetMainActionStart   func(client int32)
 	ForgetRangeRepairStalls func(client int32)
 	ResetMedicRevive        func(client int32)
 	ResetMedicNudge         func(client int32)
@@ -115,6 +116,12 @@ func ResetBuildTeleporter(client int32) { resets.ResetBuildTeleporter(client) }
 //
 //sp:body Go_ResetNestSetup
 func ResetNestSetup(client int32) { resets.ResetNestSetup(client) }
+
+// ForgetMainActionStart is hooks' own: the behaviour about to be thrown away
+// was started, and the one that replaces it is not yet.
+//
+//sp:body ForgetMainActionStart
+func ForgetMainActionStart(client int32) { resets.ForgetMainActionStart(client) }
 
 // ResetClimb is climb's own: the jumps a seat had made at a rock.
 //

@@ -54,10 +54,13 @@ func IsAmmoFull(client int32) bool {
 	return isPrimaryFull && isSecondaryFull
 }
 
-// ResetIntentionInterface makes the bot decide again from the top.
+// ResetIntentionInterface makes the bot decide again from the top. The new
+// behaviour is not started until the bot's next update, so nothing asks it
+// anything before then.
 //
 //sp:name ResetIntentionInterface
 func ResetIntentionInterface(botEntidx int32) {
+	engine.ForgetMainActionStart(botEntidx)
 	engine.NextBotOf(botEntidx).Intention().Reset()
 }
 

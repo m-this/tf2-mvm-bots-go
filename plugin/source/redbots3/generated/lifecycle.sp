@@ -287,94 +287,80 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 					}
 				}
 			}
-			INextBot myBot = CBaseNPC_GetNextBotOfEntity(client);
-			IVision myVision = myBot.GetVisionInterface();
-			MonitorKnownEntities(client, myVision);
-			CKnownEntity threat = myVision.GetPrimaryKnownThreat(false);
-			OpportunisticallyUseWeaponAbilities(client, myWeapon, myBot, threat);
-			OpportunisticallyUsePowerupBottle(client, myWeapon, myBot, threat);
-			if (((weaponID == TF_WEAPON_FLAMETHROWER) || (weaponID == TF_WEAPON_FLAME_BALL)) && CanWeaponAirblast(myWeapon))
+			// A behaviour the game has built and not yet started has no actor, and
+			// the game's own answers to these questions read it. See
+			// hooks.MainActionStarted.
+			if (MainActionStarted(client))
 			{
-				UtilizeCompressionBlast(client, myBot, threat, 1);
-			}
-			if (WeaponID_IsSniperRifle(weaponID))
-			{
-				if (TF2_IsPlayerInCondition(client, TFCond_Zoomed))
+				INextBot myBot = CBaseNPC_GetNextBotOfEntity(client);
+				IVision myVision = myBot.GetVisionInterface();
+				MonitorKnownEntities(client, myVision);
+				CKnownEntity threat = myVision.GetPrimaryKnownThreat(false);
+				OpportunisticallyUseWeaponAbilities(client, myWeapon, myBot, threat);
+				OpportunisticallyUsePowerupBottle(client, myWeapon, myBot, threat);
+				if (((weaponID == TF_WEAPON_FLAMETHROWER) || (weaponID == TF_WEAPON_FLAME_BALL)) && CanWeaponAirblast(myWeapon))
 				{
-					if (redbots_manager_bot_aim_skill.IntValue >= 1)
+					UtilizeCompressionBlast(client, myBot, threat, 1);
+				}
+				if (WeaponID_IsSniperRifle(weaponID))
+				{
+					if (TF2_IsPlayerInCondition(client, TFCond_Zoomed))
 					{
-						if ((threat != NULL_KNOWN_ENTITY) && IsLineOfFireClearEntity(client, GetEyePosition(client), threat.GetEntity()))
+						if (redbots_manager_bot_aim_skill.IntValue >= 1)
 						{
-							float aimPos[3];
-							myBot.GetIntentionInterface().SelectTargetPoint(threat.GetEntity(), aimPos);
-							SnapViewToPosition(client, aimPos);
-							if (m_flNextSnipeFireTime[client] <= GetGameTime())
+							if ((threat != NULL_KNOWN_ENTITY) && IsLineOfFireClearEntity(client, GetEyePosition(client), threat.GetEntity()))
 							{
-								VS_PressFireButton(client);
+								float aimPos[3];
+								myBot.GetIntentionInterface().SelectTargetPoint(threat.GetEntity(), aimPos);
+								SnapViewToPosition(client, aimPos);
+								if (m_flNextSnipeFireTime[client] <= GetGameTime())
+								{
+									VS_PressFireButton(client);
+								}
+							}
+							else
+							{
+								// A reaction time before the next shot, so a threat
+								// that reappears is not hit instantly.
+								m_flNextSnipeFireTime[client] = GetGameTime() + SNIPER_REACTION_TIME;
 							}
 						}
 						else
 						{
-							// A reaction time before the next shot, so a threat
-							// that reappears is not hit instantly.
-							m_flNextSnipeFireTime[client] = GetGameTime() + SNIPER_REACTION_TIME;
+							if ((threat != NULL_KNOWN_ENTITY) && threat.IsVisibleInFOVNow() && myBot.GetBodyInterface().IsHeadAimingOnTarget())
+							{
+								if (m_flNextSnipeFireTime[client] <= GetGameTime())
+								{
+									VS_PressFireButton(client);
+								}
+							}
+							else
+							{
+								m_flNextSnipeFireTime[client] = GetGameTime() + SNIPER_REACTION_TIME;
+							}
 						}
 					}
 					else
 					{
-						if ((threat != NULL_KNOWN_ENTITY) && threat.IsVisibleInFOVNow() && myBot.GetBodyInterface().IsHeadAimingOnTarget())
-						{
-							if (m_flNextSnipeFireTime[client] <= GetGameTime())
-							{
-								VS_PressFireButton(client);
-							}
-						}
-						else
-						{
-							m_flNextSnipeFireTime[client] = GetGameTime() + SNIPER_REACTION_TIME;
-						}
+						// A reaction time while not scoped in.
+						m_flNextSnipeFireTime[client] = GetGameTime() + SNIPER_REACTION_TIME;
 					}
 				}
 				else
 				{
-					// A reaction time while not scoped in.
-					m_flNextSnipeFireTime[client] = GetGameTime() + SNIPER_REACTION_TIME;
-				}
-			}
-			else
-			{
-				if (threat != NULL_KNOWN_ENTITY)
-				{
-					// Some scenarios where the aim must not be altered.
-					if (IsCombatWeapon(client, myWeapon) && (weaponID != TF_WEAPON_KNIFE) && (TF2_GetPlayerClass(client) != TFClass_Engineer) && (weaponID != TF_WEAPON_BONESAW))
+					if (threat != NULL_KNOWN_ENTITY)
 					{
-						int iThreat = threat.GetEntity();
-						if (redbots_manager_bot_aim_skill.IntValue >= 2)
+						// Some scenarios where the aim must not be altered.
+						if (IsCombatWeapon(client, myWeapon) && (weaponID != TF_WEAPON_KNIFE) && (TF2_GetPlayerClass(client) != TFClass_Engineer) && (weaponID != TF_WEAPON_BONESAW))
 						{
-							// This used to be handled in CTFBotMainAction_SelectTargetPoint, but
-							// that function does not always get called when the bot is up close to a
-							// tank: the bot looks up, then starts looking towards the centre again and
-							// stops firing, then looks up and fires again, over and over until it gets
-							// away from the tank
-							if ((weaponID == TF_WEAPON_FLAMETHROWER) && IsBaseBoss(iThreat) && myBot.IsRangeLessThan(iThreat, FLAMETHROWER_REACH_RANGE))
+							int iThreat = threat.GetEntity();
+							if (redbots_manager_bot_aim_skill.IntValue >= 2)
 							{
-								float aimPos[3];
-								GetFlameThrowerAimForTank(iThreat, aimPos);
-								SnapViewToPosition(client, aimPos);
-								buttons |= IN_ATTACK;
-							}
-							else
-								if (!threat.IsVisibleInFOVNow() && IsLineOfFireClearEntity(client, GetEyePosition(client), iThreat))
-								{
-									// Not facing the threat, so turn towards it quickly.
-									float aimPos[3];
-									myBot.GetIntentionInterface().SelectTargetPoint(iThreat, aimPos);
-									SnapViewToPosition(client, aimPos);
-								}
-						}
-						else
-							if (redbots_manager_bot_aim_skill.IntValue == 1)
-							{
+								// This used to be handled in CTFBotMainAction_SelectTargetPoint, but
+								// that function does not always get called when the bot is up close to a
+								// tank: the bot looks up, then starts looking towards the centre again and
+								// stops firing, then looks up and fires again, over and over until it gets
+								// away from the tank
 								if ((weaponID == TF_WEAPON_FLAMETHROWER) && IsBaseBoss(iThreat) && myBot.IsRangeLessThan(iThreat, FLAMETHROWER_REACH_RANGE))
 								{
 									float aimPos[3];
@@ -383,32 +369,52 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 									buttons |= IN_ATTACK;
 								}
 								else
-									if (!threat.IsVisibleRecently() && IsLineOfFireClearEntity(client, GetEyePosition(client), iThreat))
+									if (!threat.IsVisibleInFOVNow() && IsLineOfFireClearEntity(client, GetEyePosition(client), iThreat))
 									{
+										// Not facing the threat, so turn towards it quickly.
 										float aimPos[3];
 										myBot.GetIntentionInterface().SelectTargetPoint(iThreat, aimPos);
 										SnapViewToPosition(client, aimPos);
 									}
 							}
 							else
-							{
-								if ((weaponID == TF_WEAPON_FLAMETHROWER) && IsBaseBoss(iThreat) && myBot.IsRangeLessThan(iThreat, FLAMETHROWER_REACH_RANGE))
+								if (redbots_manager_bot_aim_skill.IntValue == 1)
 								{
-									float aimPos[3];
-									GetFlameThrowerAimForTank(iThreat, aimPos);
-									SnapViewToPosition(client, aimPos);
-									buttons |= IN_ATTACK;
+									if ((weaponID == TF_WEAPON_FLAMETHROWER) && IsBaseBoss(iThreat) && myBot.IsRangeLessThan(iThreat, FLAMETHROWER_REACH_RANGE))
+									{
+										float aimPos[3];
+										GetFlameThrowerAimForTank(iThreat, aimPos);
+										SnapViewToPosition(client, aimPos);
+										buttons |= IN_ATTACK;
+									}
+									else
+										if (!threat.IsVisibleRecently() && IsLineOfFireClearEntity(client, GetEyePosition(client), iThreat))
+										{
+											float aimPos[3];
+											myBot.GetIntentionInterface().SelectTargetPoint(iThreat, aimPos);
+											SnapViewToPosition(client, aimPos);
+										}
 								}
-							}
+								else
+								{
+									if ((weaponID == TF_WEAPON_FLAMETHROWER) && IsBaseBoss(iThreat) && myBot.IsRangeLessThan(iThreat, FLAMETHROWER_REACH_RANGE))
+									{
+										float aimPos[3];
+										GetFlameThrowerAimForTank(iThreat, aimPos);
+										SnapViewToPosition(client, aimPos);
+										buttons |= IN_ATTACK;
+									}
+								}
+						}
 					}
 				}
-			}
-			if (redbots_manager_bot_rtd_variance.FloatValue >= COMMAND_MAX_RATE)
-			{
-				if ((threat != NULL_KNOWN_ENTITY) && threat.IsVisibleInFOVNow() && (m_flNextRollTime[client] <= GetGameTime()))
+				if (redbots_manager_bot_rtd_variance.FloatValue >= COMMAND_MAX_RATE)
 				{
-					m_flNextRollTime[client] = GetGameTime() + GetRandomFloat(COMMAND_MAX_RATE, redbots_manager_bot_rtd_variance.FloatValue);
-					FakeClientCommand(client, "sm_rtd");
+					if ((threat != NULL_KNOWN_ENTITY) && threat.IsVisibleInFOVNow() && (m_flNextRollTime[client] <= GetGameTime()))
+					{
+						m_flNextRollTime[client] = GetGameTime() + GetRandomFloat(COMMAND_MAX_RATE, redbots_manager_bot_rtd_variance.FloatValue);
+						FakeClientCommand(client, "sm_rtd");
+					}
 				}
 			}
 		}
