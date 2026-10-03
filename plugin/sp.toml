@@ -21,7 +21,3 @@ path = "."
 [[dependency]]
 url = "https://github.com/ErikMinekus/sm-ripext/tree/main/pawn/scripting/include"
 path = "."
-
-[[dependency]]
-url = "https://github.com/OfficerSpy/SM_Stock_OfficerSpy"
-path = "."

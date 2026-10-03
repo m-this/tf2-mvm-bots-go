@@ -44,7 +44,6 @@ func TestThePluginCompiles(t *testing.T) {
 
 	includes := []string{
 		filepath.Join(sm, "include"),
-		filepath.Join(src, "stocklib"),
 		filepath.Join(src, "stocksoup-root"),
 		filepath.Join(src, "cbasenpc", "scripting", "include"),
 		filepath.Join(src, "actions", "sourcemod", "include"),

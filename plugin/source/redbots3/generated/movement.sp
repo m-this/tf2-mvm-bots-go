@@ -26,7 +26,7 @@ stock float GetCurrentCharge(int weapon)
 // behaviour can be interrupted, so it is called here to make sure he has noticed.
 stock void TFBot_NoticeThreat(int tfbot, int threat)
 {
-	OSLib_RunScriptCode(tfbot, _, _, "self.DelayedThreatNotice(EntIndexToHScript(%d),0);self.UpdateDelayedThreatNotices()", threat);
+	RunScriptCode(tfbot, _, _, "self.DelayedThreatNotice(EntIndexToHScript(%d),0);self.UpdateDelayedThreatNotices()", threat);
 }
 
 // MovePlayerTowardsGoal is the WASD a bot is pushed with, as the two axes the game
