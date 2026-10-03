@@ -89,13 +89,66 @@ func SkipOrFail(t testing.TB) string {
 	if err == nil {
 		return dir
 	}
-	if os.Getenv(RequireEnv) == "" {
-		t.Skipf("no plugin tree: %v", err)
-	}
-	t.Fatalf("no plugin tree: %v (%s is set, so this is a failure and not a skip)", err, RequireEnv)
+	skipOrFail(t, fmt.Sprintf("no plugin tree: %v", err))
 	return ""
 }
 
-// RequireEnv turns a missing plugin tree from a skip into a failure. make check
-// sets it.
+/*
+StagedSkipOrFail is the test-bed tree plugin/testbed/build.sh stages.
+
+The include roots, the vendored sources and the SourceMod compiler the plugin
+ships with all live under it, and none of them is in the repository: staging
+them fetches seven projects. So a fresh clone has the plugin tree and not the
+staged tree, which puts every proof that needs spcomp on this side of the line
+rather than SkipOrFail's.
+*/
+func StagedSkipOrFail(t testing.TB) string {
+	t.Helper()
+
+	dir, err := Dir()
+	if err != nil {
+		skipOrFail(t, fmt.Sprintf("no plugin tree: %v", err))
+		return ""
+	}
+
+	build := filepath.Join(dir, "testbed", "build")
+	if _, err := os.Stat(build); err != nil {
+		NotStaged(t, err)
+		return ""
+	}
+
+	return build
+}
+
+/*
+NotStaged ends a test that found a piece of the staged tree missing.
+
+A caller that resolves its own path under the staged tree -- the compiler, one
+include, the vendored sources -- hands the stat error here rather than skipping
+on it. Skipping on it is what let the gate's one whole-plugin compile report ok
+in a second on a tree where nothing was staged.
+*/
+func NotStaged(t testing.TB, err error) {
+	t.Helper()
+	skipOrFail(t, fmt.Sprintf("%v: run plugin/testbed/build.sh", err))
+}
+
+/*
+skipOrFail is the one place that decides between the two.
+
+Without RequireEnv a skip is right: staging fetches seven projects and a plain
+go test ./... has to work without them. With it a skip is the bug, because the
+gate sets the variable to mean every proof runs.
+*/
+func skipOrFail(t testing.TB, what string) {
+	t.Helper()
+
+	if os.Getenv(RequireEnv) == "" {
+		t.Skip(what)
+	}
+	t.Fatalf("%s (%s is set, so this is a failure and not a skip)", what, RequireEnv)
+}
+
+// RequireEnv turns a missing plugin tree or an unstaged test-bed from a skip
+// into a failure. make check sets it.
 const RequireEnv = "MVMBOTS_REQUIRE_PLUGIN"

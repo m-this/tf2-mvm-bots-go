@@ -6,11 +6,14 @@ import (
 	goparser "go/parser"
 	gotoken "go/token"
 	"go/types"
+	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/m-this/tf2-mvm-bots-go/internal/plugin"
 )
 
 // undeclared matches the only type-check error a correctly emitted file may
@@ -24,9 +27,13 @@ var undeclared = regexp.MustCompile(`undefined: ([A-Za-z_][A-Za-z0-9_]*)`)
 func TestEmittedGoTypeChecks(t *testing.T) {
 	for _, tc := range goldenCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f, err := ParseFile(filepath.Join(includeRoot(t), tc.include))
+			path := filepath.Join(includeRoot(t), tc.include)
+			if _, err := os.Stat(path); err != nil {
+				plugin.NotStaged(t, err)
+			}
+			f, err := ParseFile(path)
 			if err != nil {
-				t.Skipf("include not present: %v", err)
+				t.Fatalf("parsing: %v", err)
 			}
 			out, err := Emit(f, Options{Package: "sp"})
 			if err != nil {
