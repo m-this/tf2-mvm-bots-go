@@ -180,11 +180,15 @@ The tracker lives here, everything under the epic `mvm-z83`.
   `internal/adopt` is the one list of which files those are.
 - `make check` is the gate: `go vet`, the linter, `go test -race`, then
   generation, then `spcomp` over the output. It sets `MVMBOTS_REQUIRE_SPSHELL`
-  and `MVMBOTS_REQUIRE_PLUGIN`, so a test that needs the toolchain or the
-  plugin tree fails there rather than skipping.
+  and `MVMBOTS_REQUIRE_PLUGIN`, so a test that needs the toolchain, the plugin
+  tree or the staged test-bed fails there rather than skipping.
 - The plugin tree is reached through `internal/plugin` and nowhere else. It owns
   the path resolution, because three packages doing it themselves got it wrong
   and their proofs skipped in silence.
+- A test that needs `plugin/testbed/build` calls `plugin.StagedSkipOrFail`, or
+  hands its own stat error to `plugin.NotStaged`. Never `t.Skipf` on an unstaged
+  path: that is a skip `MVMBOTS_REQUIRE_PLUGIN` cannot see, and it is how
+  `make check` went green over a plugin that did not compile.
 - CI runs Make targets, never raw commands, so the gate runs the same locally.
 - `make deadcode` refuses a function nothing reaches, minus `internal/engine`,
   `internal/action` and `internal/body`, which become SourcePawn and are called

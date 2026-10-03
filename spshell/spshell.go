@@ -195,6 +195,11 @@ Only the compiler changes. The VM stays spshell's, which works because the
 generated table is integer arithmetic: SourceMod's spcomp implicitly includes
 its own float.inc naming the float operators __FLOAT_DIV where spshell binds
 them __float_div, so anything that divides dies under the other one's VM.
+
+The error names the path it did not find and stops there. Where the script that
+would stage it lives is the caller's to say: this package is imported by more
+than one repository and the upstream tree sits at a different depth in each, so
+a remedy spelled here is wrong somewhere.
 */
 func (t Toolchain) WithSourceMod(upstream string) (Toolchain, error) {
 	sm := filepath.Join(upstream, "testbed", "build", "spcomp", "addons", "sourcemod", "scripting")
@@ -202,7 +207,7 @@ func (t Toolchain) WithSourceMod(upstream string) (Toolchain, error) {
 	t.IncludeDir = filepath.Join(sm, "include")
 	for _, path := range []string{t.Spcomp, t.IncludeDir} {
 		if _, err := os.Stat(path); err != nil {
-			return Toolchain{}, fmt.Errorf("%w: %s: run testbed/build.sh", ErrNoToolchain, path)
+			return Toolchain{}, fmt.Errorf("%w: %s", ErrNoToolchain, path)
 		}
 	}
 	return t, nil

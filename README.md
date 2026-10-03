@@ -83,6 +83,15 @@ It sets `MVMBOTS_REQUIRE_PLUGIN` for the same reason. Three packages resolved
 the path to the plugin tree themselves, got it wrong, and skipped: the binding
 and nav mesh proofs reported `ok` in under a second while running none of them.
 
+The variable covers the staged test-bed as well as the plugin tree, because the
+plugin tree is in the repository and the staged one is not: `plugin/testbed/build`
+is seven fetched projects plus SourceMod, and everything that needs `spcomp`
+needs it. A test that wants it goes through `plugin.StagedSkipOrFail` or hands
+its own stat error to `plugin.NotStaged`, never to `t.Skipf`. Skipping on it
+directly is what let the whole-plugin compile report `ok` in a second on a tree
+where nothing was staged, which made `make check` green over a plugin that did
+not compile.
+
 ## What this does not fix
 
 Bots stuck on geometry, nav mesh failures, engineers wedged in props. Reading

@@ -26,15 +26,18 @@ The check is that the name is not declared under plugin/testbed/build/src, which
 is where the vendored includes are fetched to.
 */
 func TestAPluginExternIsWorkAndNotADependency(t *testing.T) {
-	root := plugin.SkipOrFail(t)
+	src := filepath.Join(plugin.StagedSkipOrFail(t), "src")
+	if _, err := os.Stat(src); err != nil {
+		plugin.NotStaged(t, err)
+	}
 
 	declared, err := spbody.ExternsFromDir("../engine")
 	if err != nil {
 		t.Fatalf("reading the extern declarations: %v", err)
 	}
-	vendored, err := vendoredNames(filepath.Join(root, "testbed", "build", "src"))
+	vendored, err := vendoredNames(src)
 	if err != nil {
-		t.Skipf("the vendored includes are not built: %v", err)
+		t.Fatalf("reading the vendored includes: %v", err)
 	}
 	for qualified, x := range declared.Funcs {
 		if !x.Plugin || !vendored[x.Func] {
