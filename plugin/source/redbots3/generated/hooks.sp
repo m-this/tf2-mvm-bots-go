@@ -762,12 +762,14 @@ public bool NextBotTraceFilterIgnoreActors(int entity, int contentsMask, any iEx
 //
 // A whole PathFollower for one question, built and destroyed on the spot: there is
 // no cheaper way to ask, which is why the spawn recovery asks it once rather than
-// every think.
+// every think. It is capped and counted like every other route: see
+// pathing.PathLengthCap and pathing.SpendPathBudget.
 stock bool IsPathToVectorPossible(int botEntidx, const float vec[3], float &length = -1.0)
 {
 	CBaseCombatCharacter(botEntidx).UpdateLastKnownArea();
 	PathFollower tempPath = PathFollower(_, Path_FilterIgnoreActors, Path_FilterOnlyActors);
-	bool success = tempPath.ComputeToPos(CBaseNPC_GetNextBotOfEntity(botEntidx), vec);
+	SpendPathBudget();
+	bool success = tempPath.ComputeToPos(CBaseNPC_GetNextBotOfEntity(botEntidx), vec, PathLengthCap());
 	length = tempPath.GetLength();
 	tempPath.Destroy();
 	return success;

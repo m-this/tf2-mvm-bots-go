@@ -39,6 +39,23 @@ stock bool TakePathBudget()
 	return true;
 }
 
+// SpendPathBudget counts a route that cannot be refused against the frame.
+//
+// A one-shot question, whether a spot is reachable or where the way out of spawn
+// runs, has nothing to retry with, so it is built whatever the budget says. What
+// it can do is leave the frame's room spent, so the per-frame refresh that can
+// wait does, rather than stacking its own searches on top (mvm-qk6).
+stock void SpendPathBudget()
+{
+	int tick = GetGameTickCount();
+	if (tick != m_iPathBudgetTick)
+	{
+		m_iPathBudgetTick = tick;
+		m_iPathsThisTick = 0;
+	}
+	m_iPathsThisTick++;
+}
+
 // PathFailuresOf is how many times this bot's route requests have failed.
 stock int PathFailuresOf(int client)
 {

@@ -7,7 +7,10 @@ into it, so the points are sampled along the path the nav mesh itself would take
 */
 package spawnroute
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/pathing"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // NearestSpawnPoint is where this bot's team respawns, and false when the map
 // names no such thing.
@@ -70,7 +73,9 @@ func Points(actor int32, spawn [3]float32, first float32, step float32, reach fl
 
 	found := int32(0)
 
-	if route.Compute(engine.NextBotOf(actor), spawn) {
+	pathing.SpendPathBudget()
+
+	if route.Compute(engine.NextBotOf(actor), spawn, pathing.PathLengthCap()) {
 		length := route.Length()
 
 		for i := int32(0); i < pointsMax; i++ {
@@ -115,7 +120,9 @@ func Out(actor int32, nest [3]float32, first float32, step float32, reach float3
 
 	found := int32(0)
 
-	if route.Compute(engine.NextBotOf(actor), nest) {
+	pathing.SpendPathBudget()
+
+	if route.Compute(engine.NextBotOf(actor), nest, pathing.PathLengthCap()) {
 		length := route.Length()
 
 		for i := int32(0); i < pointsMax; i++ {

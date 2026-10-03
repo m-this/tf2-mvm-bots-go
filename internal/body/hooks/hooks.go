@@ -10,6 +10,7 @@ five say no and get out of the way.
 package hooks
 
 import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/pathing"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
 )
@@ -795,7 +796,8 @@ IsPathToVectorPossible says the mesh has a route to that point at all.
 
 A whole PathFollower for one question, built and destroyed on the spot: there is
 no cheaper way to ask, which is why the spawn recovery asks it once rather than
-every think.
+every think. It is capped and counted like every other route: see
+pathing.PathLengthCap and pathing.SpendPathBudget.
 */
 //
 //sp:name IsPathToVectorPossible
@@ -810,7 +812,9 @@ func IsPathToVectorPossible(botEntidx int32, vec [3]float32, length float32) boo
 	tempPath := engine.NewRoute(engine.FilterIgnoreActors(), engine.FilterOnlyActors())
 	defer tempPath.Close()
 
-	success := tempPath.Compute(engine.NextBotOf(botEntidx), vec)
+	pathing.SpendPathBudget()
+
+	success := tempPath.Compute(engine.NextBotOf(botEntidx), vec, pathing.PathLengthCap())
 
 	length = tempPath.Length()
 

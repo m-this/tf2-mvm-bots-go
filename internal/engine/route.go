@@ -11,7 +11,7 @@ and leaking one leaks a nav search per engineer per attempt.
 // RouteCalls are the answers.
 type RouteCalls struct {
 	NewRoute      func(cost int32, filter int32) Route
-	RouteCompute  func(r Route, bot Bot, goal [3]float32) bool
+	RouteCompute  func(r Route, bot Bot, goal [3]float32, maxDistance float32) bool
 	RouteLength   func(r Route) float32
 	RoutePosition func(r Route, distance float32) [3]float32
 	RouteDestroy  func(r Route)
@@ -56,10 +56,14 @@ func NewRoute(ignoreActors int32, onlyActors int32) Route {
 	return routes.NewRoute(ignoreActors, onlyActors)
 }
 
-// Compute builds the route to a position, and says whether there was one.
+// Compute builds the route to a position, no longer than maxDistance, and says
+// whether there was one.
 //
+//sp:cost path bounded
 //sp:method ComputeToPos
-func (r Route) Compute(bot Bot, goal [3]float32) bool { return routes.RouteCompute(r, bot, goal) }
+func (r Route) Compute(bot Bot, goal [3]float32, maxDistance float32) bool {
+	return routes.RouteCompute(r, bot, goal, maxDistance)
+}
 
 // Length is how long the route is.
 //
