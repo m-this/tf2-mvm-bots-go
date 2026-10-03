@@ -28,7 +28,12 @@ SM_Stock_OfficerSpy, by Officer Spy
   https://github.com/OfficerSpy/SM_Stock_OfficerSpy
   No licence is stated by its author.
 
-  plugin/source/tf2_defenderbots.sp includes ten of its headers, so its code
-  is compiled into the released .smx. Because its author has published no
-  licence, the terms covering that are unsettled. Replacing those includes is
-  tracked separately.
+  Releases up to and including v0.18.3 included ten of its headers, so its
+  code is compiled into those .smx files. Its author has published no licence,
+  so the terms covering that are unsettled.
+
+  The includes were removed after v0.18.3 and the plugin carries none of it
+  from the next release on. What replaced them is plugin/source/redbots3/game/,
+  written here against TF2's own netprop and datamap names. Two decision
+  tables there, the collision rules and the control point capture rules,
+  follow Valve's Source SDK 2013, which is also where upstream took them from.

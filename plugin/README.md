@@ -12,8 +12,6 @@ TFBots that can play Mann vs Machine.
 - [CBaseNPC](https://github.com/TF2-DMB/CBaseNPC)
 - [Actions](https://forums.alliedmods.net/showthread.php?t=336374)
 - [REST in Pawn](https://github.com/ErikMinekus/sm-ripext)
-## Compilation Only
-- [stocklib_officerspy](https://github.com/OfficerSpy/SM_Stock_OfficerSpy)
 # Testing
 `testbed/` runs a server with nobody on it and writes down what the bots did
 with every wave: cleared or lost, how long, how many robots and defenders died,
