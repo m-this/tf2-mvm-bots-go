@@ -1,0 +1,34 @@
+NOTICE
+
+This repository carries work derived from another project. What follows is in
+addition to LICENSE (MIT, the Go in this repository) and plugin/LICENSE
+(GPL-3.0, the SourcePawn tree).
+
+
+MvM Defender TFBots, by Officer Spy
+  https://github.com/OfficerSpy/TF2-MvM-Defender-TFBots
+  GPL-3.0
+
+  plugin/source/ is a fork of that project. plugin/LICENSE is its licence,
+  carried in with the fork rather than chosen here.
+
+  The Go under internal/ that authors the bots' decisions is a port of its
+  SourcePawn, not an independent implementation, and the SourcePawn generated
+  back out under plugin/source/redbots3/generated/ descends from it too.
+  docs/parity.md is the file-by-file inventory of what was ported and what was
+  not. That inventory is the answer to "which parts descend from upstream",
+  and it is deliberately not copied here: a second list would drift from it.
+
+  Modified from the original between April 2024 and October 2026 by m-this.
+  The modifications are the Go authoring layer, the generator, and the
+  SourcePawn it emits.
+
+
+SM_Stock_OfficerSpy, by Officer Spy
+  https://github.com/OfficerSpy/SM_Stock_OfficerSpy
+  No licence is stated by its author.
+
+  plugin/source/tf2_defenderbots.sp includes ten of its headers, so its code
+  is compiled into the released .smx. Because its author has published no
+  licence, the terms covering that are unsettled. Replacing those includes is
+  tracked separately.
