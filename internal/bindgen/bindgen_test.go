@@ -19,7 +19,7 @@ import (
 // silence.
 func includeRoot(t *testing.T) string {
 	t.Helper()
-	return filepath.Join(pluginDir(t), "testbed", "build")
+	return plugin.StagedSkipOrFail(t)
 }
 
 func pluginDir(t *testing.T) string {
@@ -28,13 +28,10 @@ func pluginDir(t *testing.T) string {
 	return plugin.SkipOrFail(t)
 }
 
-// generate runs the driver over the real tree, skipping when it is absent.
+// generate runs the driver over the real tree, skipping when it is not staged.
 func generate(t *testing.T) *Result {
 	t.Helper()
 	root := includeRoot(t)
-	if _, err := os.Stat(root); err != nil {
-		t.Skipf("include tree not present: %v", err)
-	}
 	res, err := Generate(Options{Root: root, Package: "sp"})
 	if err != nil {
 		t.Fatalf("generating: %v", err)
@@ -225,9 +222,6 @@ func TestResolvePrefersTheNearestCopy(t *testing.T) {
 func TestUnbound(t *testing.T) {
 	res := generate(t)
 	root := filepath.Join(pluginDir(t), "source")
-	if _, err := os.Stat(root); err != nil {
-		t.Skipf("plugin source not present: %v", err)
-	}
 	rep, err := Unbound(root, res)
 	if err != nil {
 		t.Fatalf("unbound: %v", err)

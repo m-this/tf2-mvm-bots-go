@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/m-this/tf2-mvm-bots-go/internal/plugin"
 )
 
 var update = flag.Bool("update", false, "rewrite the golden files from the current output")
@@ -30,7 +32,7 @@ func TestGolden(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			path := filepath.Join(includeRoot(t), tc.include)
 			if _, err := os.Stat(path); err != nil {
-				t.Skipf("include not present: %v", err)
+				plugin.NotStaged(t, err)
 			}
 			f, err := ParseFile(path)
 			if err != nil {

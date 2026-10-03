@@ -18,7 +18,7 @@ import (
 func includeRoot(t *testing.T) string {
 	t.Helper()
 
-	return filepath.Join(plugin.SkipOrFail(t), "testbed", "build")
+	return plugin.StagedSkipOrFail(t)
 }
 
 // includeFiles lists every .inc under the tree, skipping the prebuilt copies
@@ -26,9 +26,6 @@ func includeRoot(t *testing.T) string {
 func includeFiles(t *testing.T) []string {
 	t.Helper()
 	root := includeRoot(t)
-	if _, err := os.Stat(root); err != nil {
-		t.Skipf("include tree not present: %v", err)
-	}
 	var paths []string
 	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {

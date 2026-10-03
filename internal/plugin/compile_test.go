@@ -24,19 +24,17 @@ It found one the moment it was written: cutting PluginBot_SimulateFrame took its
 opening #if and left the #endif, and the plugin had not compiled since.
 
 Skipped when the staged include tree is not there, because building it fetches
-seven projects. plugin/testbed/build.sh makes it.
+seven projects. plugin/testbed/build.sh makes it. Under MVMBOTS_REQUIRE_PLUGIN
+that skip is a failure instead: the gate sets the variable to mean this test
+ran, and for a change confined to SourcePawn this test is the whole proof.
 */
 func TestThePluginCompiles(t *testing.T) {
-	dir, err := plugin.Dir()
-	if err != nil {
-		t.Skipf("no plugin tree: %v", err)
-	}
-
-	build := filepath.Join(dir, "testbed", "build")
+	dir := plugin.SkipOrFail(t)
+	build := plugin.StagedSkipOrFail(t)
 	spcomp := filepath.Join(build, "spcomp", "addons", "sourcemod", "scripting", "spcomp64")
 
 	if _, err := os.Stat(spcomp); err != nil {
-		t.Skipf("no staged compiler at %s: run plugin/testbed/build.sh", spcomp)
+		plugin.NotStaged(t, err)
 	}
 
 	src := filepath.Join(build, "src")

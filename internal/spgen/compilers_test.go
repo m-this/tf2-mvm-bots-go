@@ -25,7 +25,7 @@ func TestBothCompilersAgreeOnTheGeneratedTable(t *testing.T) {
 	local := spshell.ForTest(t)
 	shipped, err := local.WithSourceMod(plugin.SkipOrFail(t))
 	if err != nil {
-		t.Skipf("no SourceMod compiler: %v", err)
+		plugin.NotStaged(t, err)
 	}
 
 	byLocal, err := local.Run(t.Context(), "testdata/sweep.sp", nil)
@@ -71,7 +71,7 @@ func TestTheGeneratedEdgeCompilesUnderBothCompilers(t *testing.T) {
 	local := spshell.ForTest(t)
 	shipped, err := local.WithSourceMod(plugin.SkipOrFail(t))
 	if err != nil {
-		t.Skipf("no SourceMod compiler: %v", err)
+		plugin.NotStaged(t, err)
 	}
 	if err := shipped.Compile(t.Context(), "testdata/dispatch_smoke.sp", sourceModEnv); err != nil {
 		t.Fatalf("compiling the generated edge with SourceMod's spcomp64: %v", err)
