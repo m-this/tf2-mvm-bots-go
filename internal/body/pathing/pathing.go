@@ -75,6 +75,27 @@ func TakePathBudget() bool {
 	return true
 }
 
+/*
+SpendPathBudget counts a route that cannot be refused against the frame.
+
+A one-shot question, whether a spot is reachable or where the way out of spawn
+runs, has nothing to retry with, so it is built whatever the budget says. What
+it can do is leave the frame's room spent, so the per-frame refresh that can
+wait does, rather than stacking its own searches on top (mvm-qk6).
+*/
+//
+//sp:name SpendPathBudget
+func SpendPathBudget() {
+	tick := engine.GameTickCount()
+
+	if tick != pathBudgetTick {
+		pathBudgetTick = tick
+		pathsThisTick = 0
+	}
+
+	pathsThisTick++
+}
+
 //sp:name m_bPathFailed
 var pathFailed [slots.Count]bool
 
