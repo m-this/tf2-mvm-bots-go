@@ -204,11 +204,16 @@ func PostInventoryApplication(client int32) {
 	engine.DoPostInventoryApplication(client)
 }
 
-// SetMission is the prepared call by that name.
+// SetMission is the prepared call by that name. Resetting the behaviour system
+// builds the bot a new behaviour that has not started yet.
 //
 //sp:name SetMission
 //sp:default resetBehaviorSystem true
 func SetMission(client int32, mission int32, resetBehaviorSystem bool) {
+	if resetBehaviorSystem {
+		engine.ForgetMainActionStart(client)
+	}
+
 	engine.DoSetMission(client, mission, resetBehaviorSystem)
 }
 

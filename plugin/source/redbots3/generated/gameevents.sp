@@ -226,6 +226,8 @@ stock Action Listener_VoiceMenu(int client, const char[] command, int argc)
 stock void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
+	// A spawn builds the bot a new behaviour, which is not started yet.
+	ForgetMainActionStart(client);
 	if ((TF2_GetClientTeam(client) == TFTeam_Red) && IsTFBotPlayer(client))
 	{
 		CreateTimer(0.2, Timer_PlayerSpawn, client, TIMER_FLAG_NO_MAPCHANGE);

@@ -44,9 +44,12 @@ stock bool IsAmmoFull(int client)
 	return isPrimaryFull && isSecondaryFull;
 }
 
-// ResetIntentionInterface makes the bot decide again from the top.
+// ResetIntentionInterface makes the bot decide again from the top. The new
+// behaviour is not started until the bot's next update, so nothing asks it
+// anything before then.
 stock void ResetIntentionInterface(int botEntidx)
 {
+	ForgetMainActionStart(botEntidx);
 	CBaseNPC_GetNextBotOfEntity(botEntidx).GetIntentionInterface().Reset();
 }
 

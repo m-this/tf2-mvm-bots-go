@@ -41,6 +41,7 @@ stock void ResetNextBot(int client)
 	Go_ResetBuildTeleporter(client);
 	Go_ResetNestSetup(client);
 	Go_ResetClimb(client);
+	ForgetMainActionStart(client);
 	Go_ForgetRangeRepairStalls(client);
 	Go_ResetGuardPoint(client);
 	g_arrPluginBot[client].Reset();

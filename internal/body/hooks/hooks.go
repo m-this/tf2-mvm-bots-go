@@ -9,11 +9,59 @@ five say no and get out of the way.
 */
 package hooks
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
+
+/*
+mainActionStarted says the bot's MainAction has run its OnStart, which is when
+the game binds it to its actor.
+
+Until then CTFBotMainAction::GetActor is null, and every query the game routes
+through the action stack dereferences it: GetPrimaryKnownThreat reaches
+GetHealerOfThreat, which calls GetActor()->GetVisionInterface() unchecked. A
+new MainAction is built at every spawn and every intention reset, and it is not
+started until the bot's next NextBot update, which NextBotManager skips often on
+a busy server. apw-4ei is a crash reading 0x2668 on a null CTFBot from the
+run-command hook asking in that window (mvm-9q4).
+*/
+//
+//sp:name m_bMainActionStarted
+var mainActionStarted [slots.Count]bool
+
+// MainActionStarted says the bot's behaviour is bound to it, so asking its
+// vision or intention anything is safe.
+//
+//sp:name MainActionStarted
+func MainActionStarted(client int32) bool {
+	return mainActionStarted[client]
+}
+
+// ForgetMainActionStart is called before anything that throws the behaviour
+// away, so the bot is not asked anything until the new one has started.
+//
+//sp:name ForgetMainActionStart
+func ForgetMainActionStart(client int32) {
+	mainActionStarted[client] = false
+}
+
+// MainActionOnStart is the moment the game binds the action to its actor.
+//
+//sp:name CTFBotMainAction_OnStart
+//sp:public
+//nolint:revive // unused-parameter: the action, the prior action and the result are the game's
+func MainActionOnStart(action engine.Behaviour, actor int32, priorAction engine.Behaviour, result engine.ActionResult) engine.Outcome {
+	mainActionStarted[actor] = true
+
+	return engine.PluginContinue()
+}
 
 /*
 MainActionUpdate is the top of every bot's stack, and the only thing the mod
-wants from it is the fault injector's hook.
+wants from it is the fault injector's hook, and the mark that it has started:
+an action that updates has been started, and a bot already running when the
+plugin loaded never shows this one its OnStart.
 
 Emptying a stack on purpose is how the idle watchdog gets tested: a bot with no
 behaviour is exactly the one nothing else notices.
@@ -24,6 +72,8 @@ behaviour is exactly the one nothing else notices.
 //
 //nolint:revive // unused-parameter: the interval and the result are the game's, and this reads neither
 func MainActionUpdate(action engine.Behaviour, actor int32, interval float32, result engine.ActionResult) engine.Outcome {
+	mainActionStarted[actor] = true
+
 	if engine.DefenderBotFlag(actor) && engine.ShouldEmptyStack(actor) {
 		return action.EndWith("DebugFaults: emptying the stack")
 	}
@@ -678,6 +728,10 @@ func OnActionCreated(action engine.Behaviour, actor int32, name string) {
 	// TFBots are players, ignore all other nextbots.
 	if actor <= engine.MaxClients() {
 		if engine.StrEqualLiteral(name, "MainAction", true) {
+			// A new MainAction is not started yet, whenever the game built it.
+			mainActionStarted[actor] = false
+
+			action.SetOnStart(MainActionOnStart)
 			action.SetSelectTargetPoint(MainActionSelectTargetPoint)
 			action.SetShouldAttack(MainActionShouldAttack)
 			action.SetUpdate(MainActionUpdate)
