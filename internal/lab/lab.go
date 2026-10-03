@@ -78,9 +78,10 @@ func (l Lab) WaitForRcon(ctx context.Context, limit time.Duration) error {
 }
 
 var (
-	mapLine    = regexp.MustCompile(`(?m)^map\s+:\s+(\S+)`)
-	popLine    = regexp.MustCompile(`Current popfile is:\s*(\S+)`)
-	versionRow = regexp.MustCompile(`"Defender TFBots"\s+\(([^)]+)\)`)
+	mapLine      = regexp.MustCompile(`(?m)^map\s+:\s+(\S+)`)
+	popLine      = regexp.MustCompile(`Current popfile is:\s*(\S+)`)
+	versionRow   = regexp.MustCompile(`"Defender TFBots"\s+\(([^)]+)\)`)
+	sourcemodRow = regexp.MustCompile(`SourceMod Version:\s*(\S+)`)
 )
 
 // Roster is who is on the server: the humans, and the bots the mod put there.
@@ -250,6 +251,26 @@ func (l Lab) PluginVersion() (string, error) {
 		return m[1], nil
 	}
 	return "", fmt.Errorf("the defender mod is not in the plugin list: %q", trim(out))
+}
+
+/*
+SourcemodVersion is the SourceMod the server is running, which nothing in this
+repository chose.
+
+The base image installs it into the game volume on first start, at whatever the
+branch's latest was that day, and the volume keeps it. So it is read rather than
+assumed. It comes back in SourceMod's own printed form, 1.12.0.7255, and not in
+the form the drops are named in.
+*/
+func (l Lab) SourcemodVersion() (string, error) {
+	out, err := l.Do("sm version")
+	if err != nil {
+		return "", err
+	}
+	if m := sourcemodRow.FindStringSubmatch(out); m != nil {
+		return m[1], nil
+	}
+	return "", fmt.Errorf("sm version said nothing about a SourceMod version: %q", trim(out))
 }
 
 /*
