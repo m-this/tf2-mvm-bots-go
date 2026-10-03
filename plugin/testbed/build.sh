@@ -36,7 +36,6 @@ fetch() {
 
 # --- Sources the mod compiles against ---
 
-fetch OfficerSpy/SM_Stock_OfficerSpy "$SM_STOCK_OFFICERSPY_REF" stocklib
 fetch FlaminSarge/tf2attributes "$TF2ATTRIBUTES_VERSION" tf2attributes
 fetch nosoop/SM-TFEconData "$TFECONDATA_VERSION" tf_econ_data
 fetch nosoop/SM-TFUtils "$TF2UTILS_VERSION" tf2utils
@@ -114,7 +113,6 @@ compile() {
 	echo "compiling $name"
 	"$sm/spcomp64" \
 		-i"$sm/include" \
-		-i"$src/stocklib" \
 		-i"$src/stocksoup-root" \
 		-i"$src/cbasenpc/scripting/include" \
 		-i"$src/actions/sourcemod/include" \
