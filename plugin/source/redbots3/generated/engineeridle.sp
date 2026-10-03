@@ -411,7 +411,7 @@ static Action CTFBotMvMEngineerIdle_Update(BehaviorAction action, int actor, flo
 						TF2Util_SetPlayerActiveWeapon(actor, mySecondary);
 						if (myBody.IsHeadAimingOnTarget() && (GetEntProp(sentry, Prop_Send, "m_bPlayerControlled") != 0))
 						{
-							OSLib_RunScriptCode(actor, _, _, "self.PressFireButton(0.1);self.PressAltFireButton(0.1)");
+							RunScriptCode(actor, _, _, "self.PressFireButton(0.1);self.PressAltFireButton(0.1)");
 						}
 						g_arrPluginBot[actor].bPathing = false;
 						return action.Continue();

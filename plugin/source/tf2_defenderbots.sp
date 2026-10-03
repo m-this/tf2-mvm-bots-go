@@ -7,6 +7,7 @@ Modified from that work; see NOTICE and docs/parity.md for what descends from it
 -------------------------------------------------- */
 #include <sourcemod>
 #include <tf2_stocks>
+#include <sdkhooks>
 #include <dhooks>
 #include <tf2attributes>
 #include <tf_econ_data>
@@ -26,6 +27,23 @@ Modified from that work; see NOTICE and docs/parity.md for what descends from it
 
 
 
+/* What the game itself holds, read through its own property names.
+
+These were ten includes out of SM_Stock_OfficerSpy, which ships without a
+licence and so could not be redistributed inside the compiled plugin. They are
+first, because a constant has to be defined before the line that reads it. */
+#include "redbots3/game/defs.sp"
+#include "redbots3/game/math.sp"
+#include "redbots3/game/baseentity.sp"
+#include "redbots3/game/tfplayer.sp"
+#include "redbots3/game/tfobject.sp"
+#include "redbots3/game/objective.sp"
+#include "redbots3/game/item.sp"
+#include "redbots3/game/timer.sp"
+#include "redbots3/game/vscript.sp"
+#include "redbots3/game/speech.sp"
+#include "redbots3/game/tracefilter.sp"
+
 #include "redbots3/generated/declarations.sp"
 #include "redbots3/generated/pluginbot.sp"
 #include "redbots3/archipelago.sp"
@@ -42,16 +60,6 @@ Modified from that work; see NOTICE and docs/parity.md for what descends from it
 #include "redbots3/generated/buildings.sp"
 #include "redbots3/generated/scan.sp"
 #include "redbots3/generated/blu_assist.sp"
-#include <stocklib_officerspy/tf/tf_bot>
-#include <stocklib_officerspy/tf/tf_player>
-#include <stocklib_officerspy/tf/tf_obj>
-#include <stocklib_officerspy/tf/tf_objective_resource>
-#include <stocklib_officerspy/tf/stocklib_extra_vscript>
-#include <stocklib_officerspy/econ_item_view>
-#include <stocklib_officerspy/tf/tf_weaponbase>
-#include <stocklib_officerspy/tf/entity_capture_flag>
-#include <stocklib_officerspy/shared/util_shared>
-#include <stocklib_officerspy/mathlib/vector>
 #include "redbots3/generated/shared.sp"
 
 #include "redbots3/generated/roster_counts.sp"
