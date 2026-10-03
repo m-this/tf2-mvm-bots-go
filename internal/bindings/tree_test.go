@@ -66,16 +66,20 @@ func TestParseWholeTree(t *testing.T) {
 	// These are the ground-truth counts of `^native`, `^methodmap` and
 	// `^property` lines in the tree. A drop means the parser started
 	// swallowing declarations inside skipDeclaration.
+	//
+	// They are counts of the tree build.sh stages, so they move when a
+	// dependency does. Dropping SM_Stock_OfficerSpy took 12 methodmaps, 11
+	// properties, 357 methods and 561 stocks with it, and nothing else changed.
 	for _, want := range []struct {
 		name string
 		got  int
 		min  int
 	}{
 		{"natives", cov.Natives, 1175},
-		{"methodmaps", cov.Methodmaps, 112},
-		{"properties", cov.Properties, 310},
-		{"methods", cov.Methods, 1531},
-		{"stocks", cov.Stocks, 914},
+		{"methodmaps", cov.Methodmaps, 100},
+		{"properties", cov.Properties, 299},
+		{"methods", cov.Methods, 1174},
+		{"stocks", cov.Stocks, 353},
 	} {
 		if want.got < want.min {
 			t.Errorf("%s = %d, want at least %d", want.name, want.got, want.min)
