@@ -336,97 +336,102 @@ func OnPlayerRunCmd(client int32, buttons int32, impulse int32, vel [3]float32, 
 				}
 			}
 
-			myBot := engine.NextBotOf(client)
-			myVision := myBot.Vision()
+			// A behaviour the game has built and not yet started has no actor, and
+			// the game's own answers to these questions read it. See
+			// hooks.MainActionStarted.
+			if engine.MainActionStarted(client) {
+				myBot := engine.NextBotOf(client)
+				myVision := myBot.Vision()
 
-			engine.MonitorKnownEntities(client, myVision)
+				engine.MonitorKnownEntities(client, myVision)
 
-			threat := myVision.PrimaryKnownThreat(false)
+				threat := myVision.PrimaryKnownThreat(false)
 
-			engine.UseWeaponAbilities(client, myWeapon, myBot, threat)
-			engine.UsePowerupBottle(client, myWeapon, myBot, threat)
+				engine.UseWeaponAbilities(client, myWeapon, myBot, threat)
+				engine.UsePowerupBottle(client, myWeapon, myBot, threat)
 
-			if (weaponID == engine.WeaponFlamethrower() || weaponID == engine.WeaponFlameBall()) && engine.CanWeaponAirblast(myWeapon) {
-				engine.UtilizeCompressionBlast(client, myBot, threat, 1)
-			}
+				if (weaponID == engine.WeaponFlamethrower() || weaponID == engine.WeaponFlameBall()) && engine.CanWeaponAirblast(myWeapon) {
+					engine.UtilizeCompressionBlast(client, myBot, threat, 1)
+				}
 
-			if engine.WeaponIDIsSniperRifle(weaponID) {
-				if engine.IsPlayerInCondition(client, engine.ConditionZoomed()) {
-					if engine.AimSkill().Int() >= 1 {
-						if threat != engine.NoKnownEntity() && engine.IsLineOfFireClearEntity(client, engine.EyePosition(client), threat.Entity()) {
-							aimPos := myBot.Intention().SelectTargetPointOf(threat.Entity())
-							engine.SnapViewToPosition(client, aimPos)
+				if engine.WeaponIDIsSniperRifle(weaponID) {
+					if engine.IsPlayerInCondition(client, engine.ConditionZoomed()) {
+						if engine.AimSkill().Int() >= 1 {
+							if threat != engine.NoKnownEntity() && engine.IsLineOfFireClearEntity(client, engine.EyePosition(client), threat.Entity()) {
+								aimPos := myBot.Intention().SelectTargetPointOf(threat.Entity())
+								engine.SnapViewToPosition(client, aimPos)
 
-							if engine.NextSnipeFireTime(client) <= engine.GameTime() {
-								engine.PressFireButton(client)
+								if engine.NextSnipeFireTime(client) <= engine.GameTime() {
+									engine.PressFireButton(client)
+								}
+							} else {
+								// A reaction time before the next shot, so a threat
+								// that reappears is not hit instantly.
+								engine.SetNextSnipeFireTime(client, engine.GameTime()+engine.SniperReactionTime())
 							}
 						} else {
-							// A reaction time before the next shot, so a threat
-							// that reappears is not hit instantly.
-							engine.SetNextSnipeFireTime(client, engine.GameTime()+engine.SniperReactionTime())
+							if threat != engine.NoKnownEntity() && threat.VisibleInFOVNow() && myBot.Body().IsHeadAimingOnTarget() {
+								if engine.NextSnipeFireTime(client) <= engine.GameTime() {
+									engine.PressFireButton(client)
+								}
+							} else {
+								engine.SetNextSnipeFireTime(client, engine.GameTime()+engine.SniperReactionTime())
+							}
 						}
 					} else {
-						if threat != engine.NoKnownEntity() && threat.VisibleInFOVNow() && myBot.Body().IsHeadAimingOnTarget() {
-							if engine.NextSnipeFireTime(client) <= engine.GameTime() {
-								engine.PressFireButton(client)
-							}
-						} else {
-							engine.SetNextSnipeFireTime(client, engine.GameTime()+engine.SniperReactionTime())
-						}
+						// A reaction time while not scoped in.
+						engine.SetNextSnipeFireTime(client, engine.GameTime()+engine.SniperReactionTime())
 					}
 				} else {
-					// A reaction time while not scoped in.
-					engine.SetNextSnipeFireTime(client, engine.GameTime()+engine.SniperReactionTime())
-				}
-			} else {
-				if threat != engine.NoKnownEntity() {
-					// Some scenarios where the aim must not be altered.
-					if engine.IsCombatWeapon(client, myWeapon) && weaponID != engine.WeaponKnife() && engine.PlayerClass(client) != engine.ClassEngineer() && weaponID != engine.WeaponBonesaw() {
-						iThreat := threat.Entity()
+					if threat != engine.NoKnownEntity() {
+						// Some scenarios where the aim must not be altered.
+						if engine.IsCombatWeapon(client, myWeapon) && weaponID != engine.WeaponKnife() && engine.PlayerClass(client) != engine.ClassEngineer() && weaponID != engine.WeaponBonesaw() {
+							iThreat := threat.Entity()
 
-						//nolint:gocritic // ifElseChain: the shipped aim ladder is this chain, and a switch cannot be compared against it
-						if engine.AimSkill().Int() >= 2 {
-							/* This used to be handled in CTFBotMainAction_SelectTargetPoint, but
-							that function does not always get called when the bot is up close to a
-							tank: the bot looks up, then starts looking towards the centre again and
-							stops firing, then looks up and fires again, over and over until it gets
-							away from the tank */
-							if weaponID == engine.WeaponFlamethrower() && engine.IsBaseBoss(iThreat) && myBot.IsRangeLessThan(iThreat, engine.FlamethrowerReachRange()) {
-								aimPos := engine.FlameThrowerAimForTank(iThreat)
-								engine.SnapViewToPosition(client, aimPos)
-								//nolint:ineffassign,wastedassign // the caller sees this: buttons is a by-reference parameter in SourcePawn and //sp:byref says so
-								buttons |= engine.InAttack()
-							} else if !threat.VisibleInFOVNow() && engine.IsLineOfFireClearEntity(client, engine.EyePosition(client), iThreat) {
-								// Not facing the threat, so turn towards it quickly.
-								aimPos := myBot.Intention().SelectTargetPointOf(iThreat)
-								engine.SnapViewToPosition(client, aimPos)
-							}
-						} else if engine.AimSkill().Int() == 1 {
-							if weaponID == engine.WeaponFlamethrower() && engine.IsBaseBoss(iThreat) && myBot.IsRangeLessThan(iThreat, engine.FlamethrowerReachRange()) {
-								aimPos := engine.FlameThrowerAimForTank(iThreat)
-								engine.SnapViewToPosition(client, aimPos)
-								//nolint:ineffassign,wastedassign // the caller sees this: buttons is a by-reference parameter in SourcePawn and //sp:byref says so
-								buttons |= engine.InAttack()
-							} else if !threat.VisibleRecently() && engine.IsLineOfFireClearEntity(client, engine.EyePosition(client), iThreat) {
-								aimPos := myBot.Intention().SelectTargetPointOf(iThreat)
-								engine.SnapViewToPosition(client, aimPos)
-							}
-						} else {
-							if weaponID == engine.WeaponFlamethrower() && engine.IsBaseBoss(iThreat) && myBot.IsRangeLessThan(iThreat, engine.FlamethrowerReachRange()) {
-								aimPos := engine.FlameThrowerAimForTank(iThreat)
-								engine.SnapViewToPosition(client, aimPos)
-								//nolint:ineffassign,wastedassign // the caller sees this: buttons is a by-reference parameter in SourcePawn and //sp:byref says so
-								buttons |= engine.InAttack()
+							//nolint:gocritic // ifElseChain: the shipped aim ladder is this chain, and a switch cannot be compared against it
+							if engine.AimSkill().Int() >= 2 {
+								/* This used to be handled in CTFBotMainAction_SelectTargetPoint, but
+								that function does not always get called when the bot is up close to a
+								tank: the bot looks up, then starts looking towards the centre again and
+								stops firing, then looks up and fires again, over and over until it gets
+								away from the tank */
+								if weaponID == engine.WeaponFlamethrower() && engine.IsBaseBoss(iThreat) && myBot.IsRangeLessThan(iThreat, engine.FlamethrowerReachRange()) {
+									aimPos := engine.FlameThrowerAimForTank(iThreat)
+									engine.SnapViewToPosition(client, aimPos)
+									//nolint:ineffassign,wastedassign // the caller sees this: buttons is a by-reference parameter in SourcePawn and //sp:byref says so
+									buttons |= engine.InAttack()
+								} else if !threat.VisibleInFOVNow() && engine.IsLineOfFireClearEntity(client, engine.EyePosition(client), iThreat) {
+									// Not facing the threat, so turn towards it quickly.
+									aimPos := myBot.Intention().SelectTargetPointOf(iThreat)
+									engine.SnapViewToPosition(client, aimPos)
+								}
+							} else if engine.AimSkill().Int() == 1 {
+								if weaponID == engine.WeaponFlamethrower() && engine.IsBaseBoss(iThreat) && myBot.IsRangeLessThan(iThreat, engine.FlamethrowerReachRange()) {
+									aimPos := engine.FlameThrowerAimForTank(iThreat)
+									engine.SnapViewToPosition(client, aimPos)
+									//nolint:ineffassign,wastedassign // the caller sees this: buttons is a by-reference parameter in SourcePawn and //sp:byref says so
+									buttons |= engine.InAttack()
+								} else if !threat.VisibleRecently() && engine.IsLineOfFireClearEntity(client, engine.EyePosition(client), iThreat) {
+									aimPos := myBot.Intention().SelectTargetPointOf(iThreat)
+									engine.SnapViewToPosition(client, aimPos)
+								}
+							} else {
+								if weaponID == engine.WeaponFlamethrower() && engine.IsBaseBoss(iThreat) && myBot.IsRangeLessThan(iThreat, engine.FlamethrowerReachRange()) {
+									aimPos := engine.FlameThrowerAimForTank(iThreat)
+									engine.SnapViewToPosition(client, aimPos)
+									//nolint:ineffassign,wastedassign // the caller sees this: buttons is a by-reference parameter in SourcePawn and //sp:byref says so
+									buttons |= engine.InAttack()
+								}
 							}
 						}
 					}
 				}
-			}
 
-			if engine.RtdVariance().Float() >= engine.CommandMaxRate() {
-				if threat != engine.NoKnownEntity() && threat.VisibleInFOVNow() && engine.NextRollTime(client) <= engine.GameTime() {
-					engine.SetNextRollTime(client, engine.GameTime()+engine.RandomFloat(engine.CommandMaxRate(), engine.RtdVariance().Float()))
-					engine.FakeClientCommand(client, "sm_rtd")
+				if engine.RtdVariance().Float() >= engine.CommandMaxRate() {
+					if threat != engine.NoKnownEntity() && threat.VisibleInFOVNow() && engine.NextRollTime(client) <= engine.GameTime() {
+						engine.SetNextRollTime(client, engine.GameTime()+engine.RandomFloat(engine.CommandMaxRate(), engine.RtdVariance().Float()))
+						engine.FakeClientCommand(client, "sm_rtd")
+					}
 				}
 			}
 		}

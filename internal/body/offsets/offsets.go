@@ -120,35 +120,62 @@ func GetTurretAngles(sentry int32) (buffer [3]float32) {
 }
 
 /*
+IsCTFBot says the client is one of the game's own bots, which is the object every
+CTFBot field below is part of.
+
+A fake client is not enough to say so: a body another plugin seats with
+CreateFakeClient is a plain CTFPlayer, and a CTFBot offset read off one runs past
+the end of it. apw-4ei has the server faulting on exactly that, m_mission read at
+0x289c off a CTFPlayer (mvm-km5). A CTFBot has a nextbot and a CTFPlayer has
+none, which mvm-z83.93 measured as safe to ask of either.
+*/
+//
+//sp:name IsCTFBot
+func IsCTFBot(client int32) bool {
+	return engine.AddressOfBot(engine.NextBotOf(client)) != engine.NoAddress()
+}
+
+/*
 	SetLookingAroundForEnemies tells the game's own bot code to stop scanning
 
 Guarded, because an action's OnEnd runs after its actor may already be gone. The
 server hibernates at the end of a mission and punts every bot on the way, and
 the engineer's build actions end after that: three exceptions a map, all of them
-this, writing into an entity index that is nobody.
+this, writing into an entity index that is nobody. And only on a CTFBot, because
+on anything else the field is somebody else's memory.
 */
 //
 //sp:name SetLookingAroundForEnemies
 func SetLookingAroundForEnemies(client int32, shouldLook bool) {
-	if client < 1 || client > engine.MaxClients() || !engine.IsClientInGame(client) {
+	if client < 1 || client > engine.MaxClients() || !engine.IsClientInGame(client) || !IsCTFBot(client) {
 		return
 	}
 
 	engine.SetEntDataSized(client, GetOffset("CTFBot", "m_isLookingAroundForEnemies"), engine.CellOfBool(shouldLook), 1)
 }
 
-// GetTFBotMission is what the game's own bot code was told to do.
+// GetTFBotMission is what the game's own bot code was told to do, and no mission
+// at all for anything that is not a CTFBot: the game's NO_MISSION is zero.
 //
 //sp:name GetTFBotMission
 func GetTFBotMission(client int32) int32 {
+	if !IsCTFBot(client) {
+		return 0
+	}
+
 	return engine.EntDataDefault(client, GetOffset("CTFBot", "m_mission"))
 }
 
 // GetOpportunisticTimer is the timer the game uses to decide when a bot may
-// take a free shot at something it passed.
+// take a free shot at something it passed, and Address_Null for anything that is
+// not a CTFBot, which the caller already checks for.
 //
 //sp:name GetOpportunisticTimer
 func GetOpportunisticTimer(client int32) engine.Address {
+	if !IsCTFBot(client) {
+		return engine.NoAddress()
+	}
+
 	return engine.EntityAddress(client) + engine.Address(GetOffset("CTFBot", "m_opportunisticTimer"))
 }
 

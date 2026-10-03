@@ -300,6 +300,9 @@ a bend the game overwrites.
 func EventPlayerSpawn(event engine.Event, name string, dontBroadcast bool) {
 	client := engine.ClientOfUserID(event.EventInt("userid"))
 
+	// A spawn builds the bot a new behaviour, which is not started yet.
+	engine.ForgetMainActionStart(client)
+
 	if engine.ClientTeam(client) == engine.TeamRed() && engine.IsTFBotPlayer(client) {
 		engine.CreateTimerWith(0.2, TimerPlayerSpawn, client, engine.TimerNoMapChange())
 	}

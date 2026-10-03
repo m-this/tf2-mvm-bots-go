@@ -188,9 +188,19 @@ stock void PostInventoryApplication(int client)
 	SDKCall(m_hPostInventoryApplication, client);
 }
 
-// SetMission is the prepared call by that name.
+// SetMission is the prepared call by that name. Resetting the behaviour system
+// builds the bot a new behaviour that has not started yet. It writes
+// CTFBot::m_mission, so it is made on nothing but a CTFBot.
 stock void SetMission(int client, int mission, bool resetBehaviorSystem = true)
 {
+	if (!IsCTFBot(client))
+	{
+		return;
+	}
+	if (resetBehaviorSystem)
+	{
+		ForgetMainActionStart(client);
+	}
 	SDKCall(m_hSetMission, client, mission, resetBehaviorSystem);
 }
 

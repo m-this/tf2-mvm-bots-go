@@ -69,6 +69,54 @@ func pathBuilders(t *testing.T) map[string]string {
 	return out
 }
 
+// routeMethod is a declaration in internal/engine that SourcePawn writes as one of
+// the two calls that build a route.
+var routeMethod = regexp.MustCompile(`(?m)^//sp:method (ComputeToPos|ComputeToTarget)\b`)
+
+/*
+TestEveryRouteBuildSaysItIsOne is the check the one above depends on.
+
+The cost test can only watch the calls internal/engine annotates, and a
+declaration that writes ComputeToPos without //sp:cost path is a whole mesh
+search the test never sees. That is how three of them went uncapped: the
+engineer's two routes out of spawn and IsPathToVectorPossible all built through
+Route.Compute, which said nothing (mvm-qk6, a 45 s stall on a Windows bed in
+apw-4ei).
+*/
+func TestEveryRouteBuildSaysItIsOne(t *testing.T) {
+	entries, err := os.ReadDir("../engine")
+	if err != nil {
+		t.Fatalf("reading internal/engine: %v", err)
+	}
+	found := 0
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
+			continue
+		}
+		source, err := os.ReadFile(filepath.Join("../engine", entry.Name()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		lines := strings.Split(string(source), "\n")
+		for _, at := range routeMethod.FindAllStringIndex(string(source), -1) {
+			found++
+			line := strings.Count(string(source[:at[0]]), "\n")
+			annotated := false
+			// The directives sit together in the doc comment above the declaration.
+			for i := line - 1; i >= 0 && strings.HasPrefix(lines[i], "//"); i-- {
+				annotated = annotated || strings.HasPrefix(lines[i], "//sp:cost path ")
+			}
+			if !annotated {
+				t.Errorf("internal/engine/%s:%d: %s builds a route and has no //sp:cost path, so nothing checks what it costs",
+					entry.Name(), line+1, strings.TrimPrefix(lines[line], "//sp:method "))
+			}
+		}
+	}
+	if found == 0 {
+		t.Fatal("no route build declared in internal/engine, so this test proves nothing")
+	}
+}
+
 // callName is the function a call expression names, ignoring the receiver.
 func callName(call *ast.CallExpr) string {
 	switch fun := call.Fun.(type) {
