@@ -51,12 +51,18 @@ fetch Vinillia/actions.ext "$ACTIONS_VERSION" actions
 sed -i '/^#pragma unused UnloadAttributeValue$/d' "$src/tf2attributes/scripting/tf2attributes.sp"
 
 # --- The compiler ---
-
-if [ ! -d "$work/spcomp" ]; then
+#
+# Stamped with the version it holds, because $work survives between runs: a
+# compiler left from the previous pin compiles and says nothing, so a bump would
+# take effect the first time somebody cleaned the directory and not before.
+spcomp_stamp="$work/spcomp.ref"
+if [ ! -d "$work/spcomp" ] || [ "$(cat "$spcomp_stamp" 2>/dev/null)" != "$SOURCEMOD_VERSION" ]; then
 	echo "fetching SourceMod $SOURCEMOD_VERSION"
+	rm -rf "$work/spcomp"
 	mkdir -p "$work/spcomp"
 	curl -fsSL "https://sm.alliedmods.net/smdrop/$SOURCEMOD_BRANCH/sourcemod-$SOURCEMOD_VERSION-linux.tar.gz" |
 		tar xz -C "$work/spcomp"
+	printf '%s\n' "$SOURCEMOD_VERSION" >"$spcomp_stamp"
 fi
 sm="$work/spcomp/addons/sourcemod/scripting"
 

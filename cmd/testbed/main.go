@@ -248,6 +248,9 @@ func run() (err error) {
 	if err := l.WaitForRcon(ctx, 20*time.Minute); err != nil {
 		return err
 	}
+	if err := checkSourcemod(l, say); err != nil {
+		return err
+	}
 	version, err := checkVersion(root, l, say)
 	if err != nil {
 		return err

@@ -461,6 +461,12 @@ It refuses a run rather than producing one nobody should believe:
 - **The loaded plugin must be the built one.** The version in the source is
   compared with the version the server reports. A `--no-build` run once measured
   a two hour old mod and reported the fix doing nothing.
+- **The server's SourceMod must be at or above the floor.** Nothing here picks
+  it: the base image installs it into the game volume on the container's first
+  start and the volume keeps it, so a bed seeded months ago is running months-old
+  SourceMod. `SOURCEMOD_RUNTIME_MIN` in `versions.env` is the floor, and below it
+  the bots' `MVM_Upgrade` is refused with nothing logged, which reads as the mod
+  not buying upgrades. `TESTBED_SOURCEMOD_MIN=` plays anyway.
 - **The mission must be the one asked for**, and the map is loaded before the
   mission is named. A changelevel resets `tf_mvm_popfile`, and naming a mission
   on a long-running map leaves some of them loaded with none of their robots.
