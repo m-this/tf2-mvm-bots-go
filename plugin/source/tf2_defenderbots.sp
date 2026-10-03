@@ -1,8 +1,9 @@
 /* --------------------------------------------------
 MvM Defender TFBots
 April 2024 - October 2026
-Author: Mathis Faivre
+Author: m-this
 Originally by Officer Spy, https://github.com/OfficerSpy/TF2-MvM-Defender-TFBots
+Modified from that work; see NOTICE and docs/parity.md for what descends from it
 -------------------------------------------------- */
 #include <sourcemod>
 #include <tf2_stocks>
@@ -165,7 +166,7 @@ game-facing override in hooks. */
 public Plugin myinfo =
 {
 	name = "Defender TFBots",
-	author = "Mathis Faivre",
+	author = "m-this, after Officer Spy",
 	description = "TFBots that play Mann vs. Machine",
 	/* This fork's version, not upstream's. The tags here restarted at v2.0.0 because the fork is
 	far enough from 1.5.5 that the old number said nothing about what is running. Leaving myinfo on
