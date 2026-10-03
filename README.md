@@ -92,6 +92,18 @@ directly is what let the whole-plugin compile report `ok` in a second on a tree
 where nothing was staged, which made `make check` green over a plugin that did
 not compile.
 
+CI is `.github/workflows/ci.yml`, on every pull request and every push to
+`main`. It runs `plugin/testbed/build.sh`, then `make check`, and nothing else:
+the gate is not rewritten there. Staging comes first because `make check` does
+not stage. Afterwards it reads the test output and fails on any skipped test,
+which is the one thing the two variables cannot see: a test that calls `t.Skip`
+itself.
+
+The downloads are cached, and a pull request restores what `main` last passed
+with. A weekly run restores nothing and saves what it built, so a moved
+upstream branch shows up there, on `main`, rather than in somebody's pull
+request.
+
 ## What this does not fix
 
 Bots stuck on geometry, nav mesh failures, engineers wedged in props. Reading
