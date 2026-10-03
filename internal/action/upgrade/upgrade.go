@@ -663,9 +663,22 @@ buildings between waves on a path that had not changed. A finished building on
 ground the nest still occupies stays; anything short of finished comes down, and
 so does everything when the nest has moved, because then it is in the wrong
 place however good it is.
+
+Nothing at all for a bot who has already left. An action ends when its actor is
+gone too: the seat refill kicks bots, a mission's end punts them all, and the
+trip's OnEnd runs after SourceMod has let go of the slot. FakeClientCommandKeyValues
+throws on a client that is not connected, and the throw takes the rest of the
+callback with it. Cowser's console.log of 2026-10-02 has it from this line,
+"Client 24 is not connected", in apw-bjf. There is no station left to close the
+session with and no buildings or wallet to look after, and IsPlayerAlive below
+would throw the same way.
 */
 //
 func OnEnd(actor int32) {
+	if !engine.IsClientInGame(actor) {
+		return
+	}
+
 	KVUpgradesDone(actor)
 
 	if engine.PlayerClass(actor) == engine.ClassEngineer() && engine.RoundState() == engine.RoundStateBetweenRounds() {
