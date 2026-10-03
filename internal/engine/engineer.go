@@ -254,7 +254,7 @@ func ShouldBuildDisposable(actor int32) bool { return engineers.ShouldBuildDispo
 // RunScriptCodeAt is RunScriptCode with arguments folded into the line, which is
 // how a threat index reaches the script.
 //
-//sp:library OSLib_RunScriptCode
+//sp:library RunScriptCode
 //nolint:revive // unused-parameter: the two are SourcePawn's own defaults, written through
 func RunScriptCodeAt(client int32, first int32, second int32, code string, args ...any) {
 	engineers.RunScriptCodeAt(client, code, args...)
@@ -263,7 +263,7 @@ func RunScriptCodeAt(client int32, first int32, second int32, code string, args 
 // RunScriptCode hands a line of VScript to the bot, which is the only way to
 // press two buttons on the same frame while the sentry is wrangled.
 //
-//sp:library OSLib_RunScriptCode
+//sp:library RunScriptCode
 //nolint:revive // unused-parameter: the two are SourcePawn's own defaults, written through
 func RunScriptCode(client int32, first int32, second int32, code string) {
 	engineers.RunScriptCode(client, code)
