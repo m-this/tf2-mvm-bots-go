@@ -9,7 +9,10 @@ went missing and then stops, which is a better report than the first crash.
 */
 package sdkcalls
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/offsets"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // InitSDKCalls prepares every one of them, and says whether all of them worked.
 //
@@ -204,11 +207,21 @@ func PostInventoryApplication(client int32) {
 	engine.DoPostInventoryApplication(client)
 }
 
-// SetMission is the prepared call by that name.
+// SetMission is the prepared call by that name. Resetting the behaviour system
+// builds the bot a new behaviour that has not started yet. It writes
+// CTFBot::m_mission, so it is made on nothing but a CTFBot.
 //
 //sp:name SetMission
 //sp:default resetBehaviorSystem true
 func SetMission(client int32, mission int32, resetBehaviorSystem bool) {
+	if !offsets.IsCTFBot(client) {
+		return
+	}
+
+	if resetBehaviorSystem {
+		engine.ForgetMainActionStart(client)
+	}
+
 	engine.DoSetMission(client, mission, resetBehaviorSystem)
 }
 
