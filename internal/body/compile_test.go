@@ -22,7 +22,7 @@ func TestTheGeneratedFilesCompileUnderTheShippedCompiler(t *testing.T) {
 	local := spshell.ForTest(t)
 	shipped, err := local.WithSourceMod(plugin.SkipOrFail(t))
 	if err != nil {
-		t.Skipf("no SourceMod compiler: %v", err)
+		plugin.NotStaged(t, err)
 	}
 
 	generated, err := body.Generate("../..")

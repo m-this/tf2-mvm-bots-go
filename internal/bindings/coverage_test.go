@@ -28,9 +28,6 @@ var pluginDefinition = regexp.MustCompile(`(?m)^(?:public |static |stock |native
 func pluginSources(t *testing.T) []string {
 	t.Helper()
 	root := pluginRoot(t)
-	if _, err := os.Stat(root); err != nil {
-		t.Skipf("plugin source not present: %v", err)
-	}
 	var paths []string
 	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
