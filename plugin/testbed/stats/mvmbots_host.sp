@@ -66,6 +66,33 @@ public Plugin myinfo =
  * well inside the three. */
 #define HOST_READY_GAP		1.0
 
+/* How long to wait for the station's trigger to notice the puppet
+ *
+ * TeleportEntity touches the triggers it lands in and a fake client is
+ * simulated like any other player, so m_bInUpgradeZone is usually set on the
+ * frame of the teleport. The poll is here because "usually" is not something to
+ * buy upgrades on: an odd brush, or a station this landed outside of, has to be
+ * refused by name rather than reported as in_zone=0 next to a purchase the game
+ * threw away in silence. Two seconds is past any landing that was going to
+ * work. */
+#define SHOP_TOUCH_INTERVAL	0.1
+#define SHOP_TOUCH_TRIES	20
+
+/* The most steps of one upgrade a single call may buy
+ *
+ * The game takes a count, applies what it can and refuses the rest, so a big
+ * number is not dangerous, only unanswerable: nothing in the reply says which
+ * of ten thousand steps were taken. No attribute in mvm_upgrades.txt has more
+ * tiers than this. */
+#define SHOP_COUNT_MAX		10
+
+//The itemslot range the game's own menu sends: -1 for the player, 0 to 5 for a weapon
+#define SHOP_SLOT_MIN		-1
+#define SHOP_SLOT_MAX		5
+
+//More func_upgradestation than any map ships, so the walk over them has a bound
+#define SHOP_STATIONS_MAX	16
+
 ConVar g_cvEnabled;
 ConVar g_cvName;
 ConVar g_cvPuppets;
@@ -75,6 +102,25 @@ ConVar g_cvReadyDelay;
 
 int g_iHost = -1;
 int g_arrPuppets[MAX_PUPPETS];
+
+/* A trip to the upgrade station, while one is in flight
+ *
+ * Per puppet, because the command is per puppet and so is the timer that
+ * finishes it. home is where the puppet stood before it was moved: one left
+ * standing in the station is one out of the medic's range for the rest of the
+ * wave, which quietly spoils every other measurement the run was making. */
+enum struct ShopTrip
+{
+	bool busy;
+	int slot;
+	int upgrade;
+	int count;
+	int stations;
+	int tries;
+	float home[3];
+}
+
+ShopTrip g_arrTrips[MAX_PUPPETS];
 
 //When the last round ended, in game time. The ready delay counts from here.
 float g_flRoundOver;
@@ -122,6 +168,8 @@ public void OnPluginStart()
 		"Press MEDIC!, as a player's key does. Takes a puppet index, or nothing for all of them.");
 	RegServerCmd("mvmbots_puppet_status", Command_PuppetStatus,
 		"Say what each puppet is doing and who is healing it, for a run to read without the results file.");
+	RegServerCmd("mvmbots_puppet_shop", Command_PuppetShop,
+		"Walk a puppet into the upgrade station, buy, and walk it back. Args: puppet [itemslot upgrade count].");
 
 	CreateTimer(HOST_WATCH_INTERVAL, Timer_WatchHost, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 
@@ -158,7 +206,12 @@ public void OnMapStart()
 	g_iHost = -1;
 
 	for (int n = 0; n < MAX_PUPPETS; n++)
+	{
 		g_arrPuppets[n] = -1;
+
+		//A map change kills the trip's timer, and a trip left busy refuses every later one
+		g_arrTrips[n].busy = false;
+	}
 
 	CreateTimer(HOST_JOIN_DELAY, Timer_Connect, _, TIMER_FLAG_NO_MAPCHANGE);
 }
@@ -466,6 +519,290 @@ static Action Command_PuppetCall(int args)
 	PrintToServer("mvmbots_puppet_call called=%d", called);
 
 	return Plugin_Handled;
+}
+
+/* Buy one upgrade, the way a player's client does
+ *
+ * The client sends MvM_UpgradesBegin when its menu opens, one MVM_Upgrade per
+ * click and MvM_UpgradesDone when it closes, and the game only takes the middle
+ * one from a player standing in a station. So the puppet is walked into the
+ * nearest station, the three go once the trigger has it, and it is put back
+ * where it stood.
+ *
+ * Nothing the game sends back says whether the purchase took. The credits
+ * moving is the only proof there is, so that is what this checks, the way the
+ * mod's own shopping action does.
+ *
+ * A refusal on SourceMod at or before git7253 is not this command: the
+ * 2026-10-02 game update changed the KeyValues layout, those builds write the
+ * old one, and every MVM_Upgrade is thrown away silently. git7255 reads the new
+ * layout and buys. Check the SourceMod build before changing anything here. */
+static Action Command_PuppetShop(int args)
+{
+	if (args != 1 && args != 4)
+	{
+		PrintToServer("mvmbots_puppet_shop: puppet [itemslot upgrade count]");
+
+		return Plugin_Handled;
+	}
+
+	int only;
+
+	if (!ArgInt(1, only) || only < 1 || only > MAX_PUPPETS)
+	{
+		PrintToServer("mvmbots_puppet_shop: argument 1 is a puppet, they are 1 to %d", MAX_PUPPETS);
+
+		return Plugin_Handled;
+	}
+
+	int n = only - 1;
+
+	if (!IsPuppetConnected(n) || !IsPlayerAlive(g_arrPuppets[n]))
+	{
+		PrintToServer("mvmbots_puppet_shop: puppet %d is not seated and alive", only);
+
+		return Plugin_Handled;
+	}
+
+	//One trip at a time, or the second overwrites the spot the first has to put it back in
+	if (g_arrTrips[n].busy)
+	{
+		PrintToServer("mvmbots_puppet_shop: puppet %d is still at the station", only);
+
+		return Plugin_Handled;
+	}
+
+	int slot = -1, upgrade = -1, count = 0;
+
+	if (args == 4 && !ShopArgs(slot, upgrade, count))
+		return Plugin_Handled;
+
+	int client = g_arrPuppets[n];
+	int stations;
+	int station = NearestStation(client, stations);
+
+	if (station == -1)
+	{
+		PrintToServer("mvmbots_puppet_shop: this map has no func_upgradestation a puppet could stand in");
+
+		return Plugin_Handled;
+	}
+
+	/* Said rather than refused: shopping during a wave is a thing a player
+	   does, and it is also the puppet leaving the fight for a second, which
+	   is worth having in the log beside whatever the run measured */
+	if (GameRules_GetRoundState() == RoundState_RoundRunning)
+		LogMessage("mvmbots_puppet_shop: the wave is running, so %N leaves it for the length of the trip", client);
+
+	g_arrTrips[n].busy = true;
+	g_arrTrips[n].slot = slot;
+	g_arrTrips[n].upgrade = upgrade;
+	g_arrTrips[n].count = count;
+	g_arrTrips[n].stations = stations;
+	g_arrTrips[n].tries = 0;
+	GetClientAbsOrigin(client, g_arrTrips[n].home);
+
+	float centre[3]; WorldSpaceCentre(station, centre);
+	TeleportEntity(client, centre, NULL_VECTOR, {0.0, 0.0, 0.0});
+
+	CreateTimer(SHOP_TOUCH_INTERVAL, Timer_PuppetShop, n, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+
+	return Plugin_Handled;
+}
+
+/* The three numbers an upgrade takes, refused here rather than passed on
+ *
+ * A bad itemslot or a bad row is answered by the game doing nothing, so a typo
+ * and a working command read the same in the log. count is bounded because
+ * nothing on the way in bounds it. */
+static bool ShopArgs(int &slot, int &upgrade, int &count)
+{
+	if (!ArgInt(2, slot) || slot < SHOP_SLOT_MIN || slot > SHOP_SLOT_MAX)
+	{
+		PrintToServer("mvmbots_puppet_shop: itemslot is %d to %d, -1 being the player's own upgrades",
+			SHOP_SLOT_MIN, SHOP_SLOT_MAX);
+
+		return false;
+	}
+
+	if (!ArgInt(3, upgrade) || upgrade < 0)
+	{
+		PrintToServer("mvmbots_puppet_shop: upgrade is a row of mvm_upgrades.txt, counted from nought");
+
+		return false;
+	}
+
+	if (!ArgInt(4, count) || count < 1 || count > SHOP_COUNT_MAX)
+	{
+		PrintToServer("mvmbots_puppet_shop: count is 1 to %d", SHOP_COUNT_MAX);
+
+		return false;
+	}
+
+	return true;
+}
+
+//The whole argument or nothing: StringToInt reads 0 out of a word, and 0 is a row and a slot
+static bool ArgInt(int argnum, int &value)
+{
+	char arg[16]; int length = GetCmdArg(argnum, arg, sizeof(arg));
+
+	return length > 0 && StringToIntEx(arg, value) == length;
+}
+
+/* The station nearest the puppet, and how many this map has
+ *
+ * Nearest, because a map with several puts them in different spawn rooms and
+ * the far one is a teleport through a wall. The count is reported rather than
+ * acted on: when the trip fails it is the first thing somebody needs to know.
+ *
+ * A station the map has switched off is skipped where the field is there to
+ * read. The mod reads a CUpgrades field of its own through a hand-counted
+ * offset; this does not, because an offset in a test-bed plugin rots without
+ * saying so, and the touch check in the timer is what actually proves the
+ * station took the puppet. */
+static int NearestStation(int client, int &count)
+{
+	float here[3]; GetClientAbsOrigin(client, here);
+
+	int nearest = -1;
+	float nearestDistance = 0.0;
+	int station = -1;
+
+	count = 0;
+
+	for (int seen = 0; seen < SHOP_STATIONS_MAX; seen++)
+	{
+		station = FindEntityByClassname(station, "func_upgradestation");
+
+		if (station == -1)
+			break;
+
+		count++;
+
+		if (HasEntProp(station, Prop_Data, "m_bDisabled") && GetEntProp(station, Prop_Data, "m_bDisabled") != 0)
+			continue;
+
+		float centre[3]; WorldSpaceCentre(station, centre);
+		float distance = GetVectorDistance(here, centre, true);
+
+		if (nearest == -1 || distance < nearestDistance)
+		{
+			nearest = station;
+			nearestDistance = distance;
+		}
+	}
+
+	return nearest;
+}
+
+/* The middle of an entity's box, in world coordinates
+ *
+ * m_vecMins and m_vecMaxs are the entity's own box and not world coordinates,
+ * even on a brush, so the middle is the origin plus half of them. The same
+ * arithmetic as the mod's WorldSpaceCenter, and the reason the z is not nudged:
+ * a trigger brush reaches below the floor it sits on as often as not, so feet
+ * placed just above its bottom are feet inside the floor. Dropped in at the
+ * middle the hull is inside the brush on the frame it arrives, which is all the
+ * touch needs, and gravity does the rest. */
+static void WorldSpaceCentre(int entity, float buffer[3])
+{
+	float origin[3], mins[3], maxs[3];
+	GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", origin);
+	GetEntPropVector(entity, Prop_Data, "m_vecMins", mins);
+	GetEntPropVector(entity, Prop_Data, "m_vecMaxs", maxs);
+
+	for (int axis = 0; axis < 3; axis++)
+		buffer[axis] = origin[axis] + (mins[axis] + maxs[axis]) * 0.5;
+}
+
+/* Finish the trip once the station's trigger has the puppet
+ *
+ * m_bInUpgradeZone is the whole precondition and the first version of this only
+ * logged it. A purchase sent without it is dropped by the game without a word,
+ * which reads in the results exactly like the mod refusing one. Failing by name
+ * is the point of the poll. */
+static Action Timer_PuppetShop(Handle timer, int n)
+{
+	if (!IsPuppetConnected(n) || !IsPlayerAlive(g_arrPuppets[n]))
+	{
+		LogError("mvmbots_puppet_shop: puppet %d left or died at the station, so it is not going back", n + 1);
+
+		g_arrTrips[n].busy = false;
+
+		return Plugin_Stop;
+	}
+
+	int client = g_arrPuppets[n];
+
+	g_arrTrips[n].tries++;
+
+	bool inZone = GetEntProp(client, Prop_Send, "m_bInUpgradeZone") != 0;
+
+	if (!inZone && g_arrTrips[n].tries < SHOP_TOUCH_TRIES)
+		return Plugin_Continue;
+
+	int before = GetEntProp(client, Prop_Send, "m_nCurrency");
+	int spent = inZone ? Shop(client, g_arrTrips[n].slot, g_arrTrips[n].upgrade, g_arrTrips[n].count) : 0;
+
+	PrintToServer("mvmbots_puppet_shop name=%N stations=%d tries=%d in_zone=%d currency=%d->%d",
+		client, g_arrTrips[n].stations, g_arrTrips[n].tries, inZone ? 1 : 0, before, before - spent);
+
+	if (!inZone)
+		LogError("mvmbots_puppet_shop: %N never touched a station in %d tries, of %d on this map, so nothing was bought",
+			client, g_arrTrips[n].tries, g_arrTrips[n].stations);
+	else if (g_arrTrips[n].upgrade >= 0 && spent < 1)
+		LogError("mvmbots_puppet_shop: the game turned down row %d in slot %d for %N, who holds %d credits",
+			g_arrTrips[n].upgrade, g_arrTrips[n].slot, client, before);
+
+	TeleportEntity(client, g_arrTrips[n].home, NULL_VECTOR, {0.0, 0.0, 0.0});
+
+	g_arrTrips[n].busy = false;
+
+	return Plugin_Stop;
+}
+
+/* The key values the client sends, and the credits they cost
+ *
+ * Begin and Done are a pair a client never leaves half open: the server holds a
+ * per player flag from the one to the other. The mod's own shopping action
+ * sends Done the same way and threw "client is not connected" out of it once,
+ * mvm-9sw, so the caller checks the seat first and all three go in this frame.
+ *
+ * No Rewind between the subkey and the send, matching the mod: the native sends
+ * the KeyValues it was handed, not wherever the cursor was left, so a rewind
+ * only looks like it is doing something.
+ *
+ * num_upgrades is read for the announcement and nothing else, and how many
+ * steps the game applied is not knowable from here, so a purchase that moved
+ * the credits counts as one. */
+static int Shop(int client, int slot, int upgrade, int count)
+{
+	KeyValues begin = new KeyValues("MvM_UpgradesBegin");
+	FakeClientCommandKeyValues(client, begin);
+	delete begin;
+
+	int before = GetEntProp(client, Prop_Send, "m_nCurrency");
+
+	if (upgrade >= 0)
+	{
+		KeyValues kv = new KeyValues("MVM_Upgrade");
+		kv.JumpToKey("upgrade", true);
+		kv.SetNum("itemslot", slot);
+		kv.SetNum("upgrade", upgrade);
+		kv.SetNum("count", count);
+		FakeClientCommandKeyValues(client, kv);
+		delete kv;
+	}
+
+	int spent = before - GetEntProp(client, Prop_Send, "m_nCurrency");
+
+	KeyValues done = new KeyValues("MvM_UpgradesDone");
+	done.SetNum("num_upgrades", spent > 0 ? 1 : 0);
+	FakeClientCommandKeyValues(client, done);
+	delete done;
+
+	return spent;
 }
 
 /* What each puppet is and who is healing it, in lines a run can read
