@@ -40,7 +40,7 @@ public Plugin myinfo =
 	name = "MvM Defender Bots: test-bed host",
 	author = "m-this",
 	description = "Holds the seats a run puts on RED: the host that readies up, and the puppets that stand in for players",
-	version = "1.2.0",
+	version = "1.3.0",
 	url = "https://github.com/m-this/tf2-mvm-bots"
 };
 
@@ -93,6 +93,12 @@ public Plugin myinfo =
 //More func_upgradestation than any map ships, so the walk over them has a bound
 #define SHOP_STATIONS_MAX	16
 
+//A player's top run speed. A held speed past it is clamped by the game anyway, so it is refused here
+#define INPUT_SPEED_MAX		450.0
+
+//The button names mvmbots_puppet_input takes, a comma list with no more entries than there are names
+#define INPUT_NAMES_MAX		8
+
 ConVar g_cvEnabled;
 ConVar g_cvName;
 ConVar g_cvPuppets;
@@ -121,6 +127,27 @@ enum struct ShopTrip
 }
 
 ShopTrip g_arrTrips[MAX_PUPPETS];
+
+/* What a run is holding down on each puppet
+ *
+ * Applied every tick in OnPlayerRunCmd, which is the usercmd a real client
+ * sends: the buttons, the walk speed on two axes, and where it looks. Held
+ * rather than pulsed, because a fake client sends nothing of its own and a
+ * command that only lasted one tick would be over before rcon answered. A run
+ * lets go with mvmbots_puppet_input <n> none 0 0. */
+enum struct PuppetInput
+{
+	int buttons;
+	float walk;
+	float strafe;
+	bool steering;
+	float angles[3];
+
+	//A loadout slot to select on the next tick, then -1: a weaponselect is sent once, not held
+	int select;
+}
+
+PuppetInput g_arrInputs[MAX_PUPPETS];
 
 //When the last round ended, in game time. The ready delay counts from here.
 float g_flRoundOver;
@@ -170,6 +197,22 @@ public void OnPluginStart()
 		"Say what each puppet is doing and who is healing it, for a run to read without the results file.");
 	RegServerCmd("mvmbots_puppet_shop", Command_PuppetShop,
 		"Walk a puppet into the upgrade station, buy, and walk it back. Args: puppet [itemslot upgrade count].");
+	RegServerCmd("mvmbots_puppet_input", Command_PuppetInput,
+		"Hold buttons and a walk speed on a puppet every tick. Args: puppet buttons|none forward side.");
+	RegServerCmd("mvmbots_puppet_look", Command_PuppetLook,
+		"Point a puppet's view and keep it there, or let go. Args: puppet pitch yaw, or puppet free.");
+	RegServerCmd("mvmbots_puppet_cmd", Command_PuppetCmd,
+		"Run a client command as a puppet, the way its console would. Args: puppet command...");
+	RegServerCmd("mvmbots_puppet_slot", Command_PuppetSlot,
+		"Switch a puppet to the weapon in a loadout slot, 0 primary to 5. Args: puppet slot.");
+	RegServerCmd("mvmbots_puppet_teleport", Command_PuppetTeleport,
+		"Put a puppet at a point. Args: puppet x y z.");
+	RegServerCmd("mvmbots_puppet_station", Command_PuppetStation,
+		"Say where the upgrade station nearest a puppet is. Args: puppet.");
+
+	//Zero is a slot, so a fresh array would select the primary on the first tick
+	for (int n = 0; n < MAX_PUPPETS; n++)
+		ReleaseInput(n);
 
 	CreateTimer(HOST_WATCH_INTERVAL, Timer_WatchHost, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 
@@ -211,6 +254,8 @@ public void OnMapStart()
 
 		//A map change kills the trip's timer, and a trip left busy refuses every later one
 		g_arrTrips[n].busy = false;
+
+		ReleaseInput(n);
 	}
 
 	CreateTimer(HOST_JOIN_DELAY, Timer_Connect, _, TIMER_FLAG_NO_MAPCHANGE);
@@ -450,6 +495,9 @@ static void ConnectPuppet(int n)
 
 	g_arrPuppets[n] = client;
 
+	//A new body in the seat does not inherit what the last one was told to hold
+	ReleaseInput(n);
+
 	char class[32]; g_cvPuppetClass.GetString(class, sizeof(class));
 
 	ChangeClientTeam(client, view_as<int>(TFTeam_Red));
@@ -470,13 +518,18 @@ static void PuppetName(int n, char[] buffer, int length)
 
 static bool IsPuppet(int client)
 {
+	return PuppetIndex(client) != -1;
+}
+
+static int PuppetIndex(int client)
+{
 	for (int n = 0; n < MAX_PUPPETS; n++)
 	{
 		if (g_arrPuppets[n] == client)
-			return true;
+			return n;
 	}
 
-	return false;
+	return -1;
 }
 
 /* Press MEDIC!, the way a player's key does
@@ -826,9 +879,30 @@ static Action Command_PuppetStatus(int args)
 		if (alive)
 			HealerOf(client, healer, sizeof(healer));
 
-		PrintToServer("mvmbots_puppet %d name=%N class=%s alive=%d hp=%d healer=%s",
+		float origin[3]; GetClientAbsOrigin(client, origin);
+		float eyes[3]; GetClientEyeAngles(client, eyes);
+		char weapon[48] = "none";
+		int clip = -1;
+		int active = alive ? GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") : -1;
+
+		if (active > MaxClients && IsValidEntity(active))
+		{
+			GetEntityClassname(active, weapon, sizeof(weapon));
+			clip = GetEntProp(active, Prop_Send, "m_iClip1");
+		}
+
+		int held = g_arrInputs[n].buttons;
+		float walk = g_arrInputs[n].walk, strafe = g_arrInputs[n].strafe;
+
+		/* healer stays where it was in the line, empty or not, so the fields
+		   after it are named and a reader never counts its way to them */
+		PrintToServer("mvmbots_puppet %d name=%N class=%s alive=%d hp=%d healer=%s pos=%.0f,%.0f,%.0f pitch=%.0f yaw=%.0f currency=%d in_zone=%d buttons=%d forward=%.0f side=%.0f weapon=%s clip=%d",
 			n + 1, client, ClassNameOf(client), alive ? 1 : 0,
-			alive ? GetClientHealth(client) : 0, healer);
+			alive ? GetClientHealth(client) : 0, healer,
+			origin[0], origin[1], origin[2], eyes[0], eyes[1],
+			GetEntProp(client, Prop_Send, "m_nCurrency"),
+			GetEntProp(client, Prop_Send, "m_bInUpgradeZone"),
+			held, walk, strafe, weapon, clip);
 	}
 
 	return Plugin_Handled;
@@ -915,6 +989,354 @@ static Action Command_Roster(int args)
 
 	//The host and the puppets hold RED seats and neither is a defender, so both are named separately
 	PrintToServer("mvmbots_roster red=%d blu=%d humans=%d host=%d puppets=%d", red, blu, humans, host, puppets);
+
+	return Plugin_Handled;
+}
+
+/* The usercmd a run is holding, put on the puppet every tick
+ *
+ * A fake client's command is empty unless something fills it, and this is the
+ * one place that does. The movement bits go with the speeds because the
+ * animation and a few game checks read the buttons, not the velocity.
+ *
+ * The angles go in the command and through TeleportEntity both: the command is
+ * what the game simulates the tick with, and a fake client's eye angles are not
+ * always taken from it, which is the difference between aiming and looking. */
+public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
+{
+	int n = PuppetIndex(client);
+
+	if (n == -1 || !IsClientInGame(client) || !IsPlayerAlive(client))
+		return Plugin_Continue;
+
+	buttons |= g_arrInputs[n].buttons;
+	vel[0] = g_arrInputs[n].walk;
+	vel[1] = g_arrInputs[n].strafe;
+
+	if (vel[0] > 0.0)
+		buttons |= IN_FORWARD;
+	else if (vel[0] < 0.0)
+		buttons |= IN_BACK;
+
+	if (vel[1] > 0.0)
+		buttons |= IN_MOVERIGHT;
+	else if (vel[1] < 0.0)
+		buttons |= IN_MOVELEFT;
+
+	/* slot1 to slot6 never reach the server: the client's HUD turns them into
+	   the weapon field of its next usercmd, and this is that field */
+	if (g_arrInputs[n].select != -1)
+	{
+		int chosen = GetPlayerWeaponSlot(client, g_arrInputs[n].select);
+
+		if (chosen != -1)
+			weapon = chosen;
+
+		g_arrInputs[n].select = -1;
+	}
+
+	if (g_arrInputs[n].steering)
+	{
+		for (int axis = 0; axis < 3; axis++)
+			angles[axis] = g_arrInputs[n].angles[axis];
+
+		TeleportEntity(client, NULL_VECTOR, angles, NULL_VECTOR);
+	}
+
+	return Plugin_Changed;
+}
+
+static void ReleaseInput(int n)
+{
+	g_arrInputs[n].buttons = 0;
+	g_arrInputs[n].walk = 0.0;
+	g_arrInputs[n].strafe = 0.0;
+	g_arrInputs[n].steering = false;
+	g_arrInputs[n].select = -1;
+}
+
+/* The puppet named by argument 1, seated, or -1 having said why not
+ *
+ * Alive is not asked: holding input on a dead puppet is how a run says what it
+ * does the moment it respawns. */
+static int PuppetArg(const char[] command)
+{
+	int only;
+
+	if (!ArgInt(1, only) || only < 1 || only > MAX_PUPPETS)
+	{
+		PrintToServer("%s: argument 1 is a puppet, they are 1 to %d", command, MAX_PUPPETS);
+
+		return -1;
+	}
+
+	if (!IsPuppetConnected(only - 1))
+	{
+		PrintToServer("%s: puppet %d is not seated", command, only);
+
+		return -1;
+	}
+
+	return only - 1;
+}
+
+static bool ArgFloat(int argnum, float &value)
+{
+	char arg[32]; int length = GetCmdArg(argnum, arg, sizeof(arg));
+
+	return length > 0 && StringToFloatEx(arg, value) == length;
+}
+
+/* Hold buttons and a walk speed until told otherwise
+ *
+ * Buttons by name rather than by bit, so a script reads as what it does and a
+ * typo is refused instead of pressing whatever bit it happened to spell. */
+static Action Command_PuppetInput(int args)
+{
+	if (args != 4)
+	{
+		PrintToServer("mvmbots_puppet_input: puppet buttons|none forward side, buttons a comma list of attack,attack2,attack3,jump,duck,use,reload");
+
+		return Plugin_Handled;
+	}
+
+	int n = PuppetArg("mvmbots_puppet_input");
+
+	if (n == -1)
+		return Plugin_Handled;
+
+	char list[96]; GetCmdArg(2, list, sizeof(list));
+	int buttons;
+
+	if (!ParseButtons(list, buttons))
+	{
+		PrintToServer("mvmbots_puppet_input: %s is not a list of attack,attack2,attack3,jump,duck,use,reload, or none", list);
+
+		return Plugin_Handled;
+	}
+
+	float walk, strafe;
+
+	if (!ArgFloat(3, walk) || !ArgFloat(4, strafe)
+		|| FloatAbs(walk) > INPUT_SPEED_MAX || FloatAbs(strafe) > INPUT_SPEED_MAX)
+	{
+		PrintToServer("mvmbots_puppet_input: forward and side are speeds from -%.0f to %.0f", INPUT_SPEED_MAX, INPUT_SPEED_MAX);
+
+		return Plugin_Handled;
+	}
+
+	g_arrInputs[n].buttons = buttons;
+	g_arrInputs[n].walk = walk;
+	g_arrInputs[n].strafe = strafe;
+
+	PrintToServer("mvmbots_puppet_input puppet=%d buttons=%d forward=%.0f side=%.0f", n + 1, buttons, walk, strafe);
+
+	return Plugin_Handled;
+}
+
+static bool ParseButtons(const char[] list, int &buttons)
+{
+	buttons = 0;
+
+	if (StrEqual(list, "none"))
+		return true;
+
+	char names[INPUT_NAMES_MAX][16];
+	int count = ExplodeString(list, ",", names, sizeof(names), sizeof(names[]));
+
+	for (int i = 0; i < count; i++)
+	{
+		int bit = ButtonNamed(names[i]);
+
+		if (bit == 0)
+			return false;
+
+		buttons |= bit;
+	}
+
+	return count > 0;
+}
+
+static int ButtonNamed(const char[] name)
+{
+	if (StrEqual(name, "attack"))
+		return IN_ATTACK;
+	if (StrEqual(name, "attack2"))
+		return IN_ATTACK2;
+	if (StrEqual(name, "attack3"))
+		return IN_ATTACK3;
+	if (StrEqual(name, "jump"))
+		return IN_JUMP;
+	if (StrEqual(name, "duck"))
+		return IN_DUCK;
+	if (StrEqual(name, "use"))
+		return IN_USE;
+	if (StrEqual(name, "reload"))
+		return IN_RELOAD;
+
+	return 0;
+}
+
+static Action Command_PuppetLook(int args)
+{
+	int n = args >= 1 ? PuppetArg("mvmbots_puppet_look") : -1;
+
+	if (n == -1)
+	{
+		if (args < 1)
+			PrintToServer("mvmbots_puppet_look: puppet pitch yaw, or puppet free");
+
+		return Plugin_Handled;
+	}
+
+	char arg[16]; GetCmdArg(2, arg, sizeof(arg));
+
+	if (args == 2 && StrEqual(arg, "free"))
+	{
+		g_arrInputs[n].steering = false;
+		PrintToServer("mvmbots_puppet_look puppet=%d free", n + 1);
+
+		return Plugin_Handled;
+	}
+
+	float pitch, yaw;
+
+	if (args != 3 || !ArgFloat(2, pitch) || !ArgFloat(3, yaw) || FloatAbs(pitch) > 89.0 || FloatAbs(yaw) > 360.0)
+	{
+		PrintToServer("mvmbots_puppet_look: pitch is -89 to 89 and yaw -360 to 360, in degrees");
+
+		return Plugin_Handled;
+	}
+
+	g_arrInputs[n].steering = true;
+	g_arrInputs[n].angles[0] = pitch;
+	g_arrInputs[n].angles[1] = yaw;
+	g_arrInputs[n].angles[2] = 0.0;
+
+	PrintToServer("mvmbots_puppet_look puppet=%d pitch=%.1f yaw=%.1f", n + 1, pitch, yaw);
+
+	return Plugin_Handled;
+}
+
+/* A line typed into the puppet's console
+ *
+ * joinclass, voicemenu, build, taunt, say: what a player's binds send to the
+ * server goes through here, by the same FakeClientCommand route
+ * mvmbots_puppet_call already uses. slot1 to slot6 are the exception, being the
+ * client's own: mvmbots_puppet_slot does what they turn into. What a client builds itself and sends as
+ * key values does not: an engine-built MvM_UpgradesBegin or +inspect_server is
+ * out of a puppet's reach, which is the limit to state wherever a result rests
+ * on it. */
+static Action Command_PuppetCmd(int args)
+{
+	if (args < 2)
+	{
+		PrintToServer("mvmbots_puppet_cmd: puppet command...");
+
+		return Plugin_Handled;
+	}
+
+	int n = PuppetArg("mvmbots_puppet_cmd");
+
+	if (n == -1)
+		return Plugin_Handled;
+
+	char line[256]; GetCmdArgString(line, sizeof(line));
+	char first[16]; int skip = BreakString(line, first, sizeof(first));
+
+	if (skip == -1)
+		return Plugin_Handled;
+
+	FakeClientCommand(g_arrPuppets[n], "%s", line[skip]);
+
+	PrintToServer("mvmbots_puppet_cmd puppet=%d ran=%s", n + 1, line[skip]);
+
+	return Plugin_Handled;
+}
+
+static Action Command_PuppetSlot(int args)
+{
+	int n = args == 2 ? PuppetArg("mvmbots_puppet_slot") : -1;
+	int slot;
+
+	if (n == -1 || !ArgInt(2, slot) || slot < 0 || slot > SHOP_SLOT_MAX)
+	{
+		PrintToServer("mvmbots_puppet_slot: puppet slot, slot 0 primary to %d", SHOP_SLOT_MAX);
+
+		return Plugin_Handled;
+	}
+
+	if (!IsPlayerAlive(g_arrPuppets[n]) || GetPlayerWeaponSlot(g_arrPuppets[n], slot) == -1)
+	{
+		PrintToServer("mvmbots_puppet_slot: puppet %d holds nothing in slot %d", n + 1, slot);
+
+		return Plugin_Handled;
+	}
+
+	g_arrInputs[n].select = slot;
+
+	PrintToServer("mvmbots_puppet_slot puppet=%d slot=%d", n + 1, slot);
+
+	return Plugin_Handled;
+}
+
+static Action Command_PuppetTeleport(int args)
+{
+	if (args != 4)
+	{
+		PrintToServer("mvmbots_puppet_teleport: puppet x y z");
+
+		return Plugin_Handled;
+	}
+
+	int n = PuppetArg("mvmbots_puppet_teleport");
+
+	if (n == -1)
+		return Plugin_Handled;
+
+	float point[3];
+
+	if (!ArgFloat(2, point[0]) || !ArgFloat(3, point[1]) || !ArgFloat(4, point[2]))
+	{
+		PrintToServer("mvmbots_puppet_teleport: x y z are numbers");
+
+		return Plugin_Handled;
+	}
+
+	TeleportEntity(g_arrPuppets[n], point, NULL_VECTOR, {0.0, 0.0, 0.0});
+
+	PrintToServer("mvmbots_puppet_teleport puppet=%d pos=%.0f,%.0f,%.0f", n + 1, point[0], point[1], point[2]);
+
+	return Plugin_Handled;
+}
+
+//Where to walk to, for a harness that steers there itself instead of teleporting
+static Action Command_PuppetStation(int args)
+{
+	int n = args == 1 ? PuppetArg("mvmbots_puppet_station") : -1;
+
+	if (n == -1)
+	{
+		if (args != 1)
+			PrintToServer("mvmbots_puppet_station: puppet");
+
+		return Plugin_Handled;
+	}
+
+	int stations;
+	int station = NearestStation(g_arrPuppets[n], stations);
+
+	if (station == -1)
+	{
+		PrintToServer("mvmbots_puppet_station puppet=%d stations=%d none", n + 1, stations);
+
+		return Plugin_Handled;
+	}
+
+	float centre[3]; WorldSpaceCentre(station, centre);
+
+	PrintToServer("mvmbots_puppet_station puppet=%d stations=%d pos=%.0f,%.0f,%.0f",
+		n + 1, stations, centre[0], centre[1], centre[2]);
 
 	return Plugin_Handled;
 }

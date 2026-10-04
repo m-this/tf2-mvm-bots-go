@@ -85,6 +85,9 @@ a narrower aim and says so where it has been overtaken.
   on.
 - `cmd/testbed`, `cmd/rc`, `internal/lab`, `internal/rcon`, `internal/wave`,
   `internal/machine`, `report`, `sweepreport` — the test-bed, below.
+- `cmd/puppet`, `internal/puppet` — a puppet on RED steered over rcon, verb by
+  verb: walk, look, fire, switch weapon, shop. The test-bed README says what it
+  can and cannot stand in for.
 - `cmd/checkspots` — which dispenser spot each authored nest would take, read off
   the configs with no server. `cmd/deadsweep` — the unreachable-function gate.
 
