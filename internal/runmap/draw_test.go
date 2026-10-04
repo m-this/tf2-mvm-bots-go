@@ -3,6 +3,8 @@ package runmap
 import (
 	"bytes"
 	"flag"
+	"image"
+	"image/png"
 	"os"
 	"path/filepath"
 	"testing"
@@ -87,9 +89,47 @@ func TestDrawMatchesTheGolden(t *testing.T) {
 		t.Fatalf("%v (run go test ./internal/runmap -update to write it)", err)
 	}
 
-	if !bytes.Equal(got.Bytes(), want) {
+	if !samePixels(decode(t, got.Bytes()), decode(t, want)) {
 		t.Errorf("the drawing changed; look at it, then rerun with -update if it is right")
 	}
+}
+
+func decode(t *testing.T, data []byte) image.Image {
+	t.Helper()
+
+	img, err := png.Decode(bytes.NewReader(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return img
+}
+
+/*
+samePixels is what the golden is compared on, and the file's bytes are not.
+
+A PNG is a compressed stream, and which bytes come out for the same pixels is
+the encoder's business. Go 1.26.5 writes this picture in 1.3 kB and Go 1.27.1
+writes it in 2.0 kB, pixel for pixel the same. Comparing the files made the test
+pass only under the Go that wrote the golden, which was not the one go.mod
+names, and would have failed it again at the next release that touches
+compress/flate.
+*/
+func samePixels(got, want image.Image) bool {
+	if got.Bounds() != want.Bounds() {
+		return false
+	}
+
+	bounds := got.Bounds()
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			gr, gg, gb, ga := got.At(x, y).RGBA()
+			wr, wg, wb, wa := want.At(x, y).RGBA()
+			if gr != wr || gg != wg || gb != wb || ga != wa {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // The picture is the map's shape, not the frame's: a map twice as wide as it is

@@ -1,0 +1,245 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Monday, before anybody is pushing. Two of the test-bed's pins are branch
+    # names (TF2UTILS_VERSION and STOCKSOUP_REF are both `master`), so what a
+    # fresh clone builds against can change with no commit here. This run is
+    # the only thing that notices that in a week when nobody pushes.
+    #
+    # GitHub reads `schedule` from the default branch only, and switches it off
+    # in a public repository after 60 days without a commit. A quiet repository
+    # stops being watched, and the Actions tab is where it says so.
+    - cron: "17 4 * * 1"
+
+# A newer push to a pull request wins. Pushes to main and the weekly run are
+# never cancelled and never share a group: the weekly run is the one that
+# refreshes the caches, and a merge landing on Monday morning must not take
+# that away.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+# The weekly run, and one started by hand, restore nothing: they are a fresh
+# clone, which is what the README promises `make check` passes on. Everything
+# else restores what the last such run left behind.
+env:
+  COLD: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+
+# One job, because the gate is one target. `make check` is what runs here and
+# what runs on a laptop; nothing below picks tests or repeats a recipe from the
+# Makefile. The steps around it are the two things a fresh runner does not have
+# and the proof that the run was not empty.
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    # A cold run is three to four minutes and a warm one under two. Past this
+    # the job is hung on a download, not slow.
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      # Version from go.mod, which is the only place it is written. The built-in
+      # cache is off because it keys on go.sum and this module has none: no
+      # dependencies. The build cache is restored below instead.
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      # What the two scripts call and a bare runner may not have. tools/spshell.sh
+      # wants git, a C++ compiler and `python3 -m venv`, which Ubuntu splits into
+      # its own package. plugin/testbed/build.sh wants git, curl, tar and unzip.
+      #
+      # clang, because SourcePawn's tree is clang only and AMBuild tries clang
+      # before gcc. No 32-bit libraries: the toolchain is built for the host,
+      # and the SourceMod drop's compiler is run as spcomp64, never as the
+      # 32-bit spcomp beside it.
+      - name: install what the scripts call
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends clang curl git make python3-venv unzip
+
+      # Three caches, one rule. Each key ends in the run, so a key is never
+      # found exactly and the newest one with the same prefix is restored. Each
+      # is saved at the bottom of the job, after the gate is green, and only by
+      # a run that restored nothing: the weekly run, or the first run after the
+      # file in the key changed.
+      #
+      # So a pull request builds against what main last proved good, and a
+      # cache saved by a pull request stays inside that pull request, which is
+      # GitHub's rule and the reason a fork cannot hand main a tree.
+
+      # SourcePawn's compiler and VM. Pinned by commit inside the script, so the
+      # script is the whole key: up to a minute of C++ that changes when
+      # tools/spshell.sh does and at no other time.
+      - name: restore the toolchain
+        id: toolchain
+        if: env.COLD != 'true'
+        uses: actions/cache/restore@v6
+        with:
+          path: toolchain
+          key: toolchain-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('tools/spshell.sh') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            toolchain-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('tools/spshell.sh') }}-
+
+      # What build.sh downloads, and not what it assembles. package/ is left
+      # out so that it exists only if build.sh ran in this job, which is what
+      # the check after it relies on.
+      #
+      # Both files are in the key, the script as much as the pins. A build
+      # directory that outlives a change to build.sh keeps a dependency the
+      # script no longer fetches, and that has already produced a false pass:
+      # the binding counts were satisfied by a clone that was no longer part of
+      # the tree. A changed script starts from nothing.
+      #
+      # The key cannot see a branch move, and that is the trade. Up to a week,
+      # CI compiles against the commit `master` pointed at on Monday. The other
+      # choices were worse: no cache lets an upstream push turn an unrelated
+      # pull request red, and a key that never expires hides the push for good.
+      - name: restore the test-bed downloads
+        id: testbed
+        if: env.COLD != 'true'
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            plugin/testbed/build/src
+            plugin/testbed/build/spcomp
+            plugin/testbed/build/spcomp.ref
+            plugin/testbed/build/ripext
+            plugin/testbed/build/prebuilt
+          key: testbed-${{ hashFiles('plugin/testbed/build.sh', 'plugin/testbed/versions.env') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            testbed-${{ hashFiles('plugin/testbed/build.sh', 'plugin/testbed/versions.env') }}-
+
+      # Compiled packages, the linter and deadcode built from source, and the
+      # race-instrumented standard library. Content addressed, so a stale one
+      # costs time and cannot cost correctness.
+      - name: restore the Go caches
+        id: go
+        if: env.COLD != 'true'
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-${{ runner.os }}-${{ hashFiles('go.mod') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            go-${{ runner.os }}-${{ hashFiles('go.mod') }}-
+
+      # Its own step so the time shows, and so a failed build prints its log:
+      # the script sends the compiler's output to a file and says nothing.
+      # `make check` asks for the same target and finds it built.
+      - name: make toolchain
+        run: make toolchain || { tail -n 200 toolchain/build.log; exit 1; }
+
+      # Before the gate, and before anything runs `make gen`. `make check` does
+      # not stage: on a fresh clone the tests that need this tree used to skip,
+      # and the gate was green having compiled nothing. And the generator reads
+      # this tree when it is there, so one that appears between two generations
+      # fails the reproducibility diff for no reason.
+      - name: stage the test-bed
+        run: plugin/testbed/build.sh
+
+      # The plugin this commit holds, compiled by this job. Not restored: the
+      # cache above leaves package/ out.
+      - name: the staged tree is there
+        run: test -s plugin/testbed/build/package/addons/sourcemod/plugins/tf2_defenderbots.smx
+
+      # The gate, whole. The two flags change what it prints and what it may
+      # reuse, not what it runs.
+      #
+      # -v because the next step reads the test names. Without it a skip is
+      # invisible: a package that skipped everything prints `ok`.
+      #
+      # -count=1 because the build cache restored above carries test results
+      # too. `go test` replays a cached `ok` when the files the test itself
+      # opened are unchanged, and the plugin compile opens none: spcomp reads
+      # the .sp files in a child process. A cached result there would pass a
+      # plugin that no longer compiles.
+      #
+      # `shell: bash` is what turns pipefail on. The default shell has no
+      # pipefail, and `make check | tee` would then exit with tee's status,
+      # which is always 0.
+      - name: make check
+        shell: bash
+        env:
+          GOFLAGS: -v -count=1
+        run: make check 2>&1 | tee "$RUNNER_TEMP/check.log"
+
+      # Green is not the proof, this is. MVMBOTS_REQUIRE_SPSHELL and
+      # MVMBOTS_REQUIRE_PLUGIN turn the skips that go through the two helpers
+      # into failures, and they cannot see a test that calls t.Skip itself.
+      # Under the gate nothing skips, so any skip at all is refused here, and
+      # the whole-plugin compile has to have passed with its subtests.
+      - name: the gate ran everything
+        shell: bash
+        run: |
+          log="$RUNNER_TEMP/check.log"
+          passed=$(grep -cE '^ *--- PASS' "$log" || true)
+          skipped=$(grep -cE '^ *--- SKIP' "$log" || true)
+          cached=$(grep -cE '^ok .*\(cached\)' "$log" || true)
+          compiled=$(grep -cE '^ +--- PASS: TestThePluginCompiles/' "$log" || true)
+          echo "passed=$passed skipped=$skipped cached=$cached plugins_compiled=$compiled"
+
+          {
+            echo "| | |"
+            echo "|---|---|"
+            echo "| tests and subtests passed | $passed |"
+            echo "| skipped | $skipped |"
+            echo "| packages answered from the test cache | $cached |"
+            echo "| plugins TestThePluginCompiles compiled | $compiled |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          status=0
+          if [ "$skipped" -ne 0 ]; then
+            echo "::error::$skipped tests skipped under the gate:"
+            grep -E '^ *--- SKIP' "$log"
+            status=1
+          fi
+          if [ "$cached" -ne 0 ]; then
+            echo "::error::$cached packages were not run, their result came from the cache"
+            status=1
+          fi
+          if [ "$compiled" -eq 0 ]; then
+            echo "::error::TestThePluginCompiles compiled nothing"
+            status=1
+          fi
+          exit "$status"
+
+      - name: save the toolchain
+        if: steps.toolchain.outputs.cache-matched-key == ''
+        uses: actions/cache/save@v6
+        with:
+          path: toolchain
+          key: toolchain-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('tools/spshell.sh') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: save the test-bed downloads
+        if: steps.testbed.outputs.cache-matched-key == ''
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            plugin/testbed/build/src
+            plugin/testbed/build/spcomp
+            plugin/testbed/build/spcomp.ref
+            plugin/testbed/build/ripext
+            plugin/testbed/build/prebuilt
+          key: testbed-${{ hashFiles('plugin/testbed/build.sh', 'plugin/testbed/versions.env') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: save the Go caches
+        if: steps.go.outputs.cache-matched-key == ''
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-${{ runner.os }}-${{ hashFiles('go.mod') }}-${{ github.run_id }}-${{ github.run_attempt }}
