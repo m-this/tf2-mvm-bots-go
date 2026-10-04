@@ -95,6 +95,11 @@ var Injectors = []Injector{
 		About: "Write every sniper's action stack and position each tenth of a second.",
 		Why:   "mvm-bj8: three fixes written from the core alone all failed, because the top frame was not the action that was running.",
 	},
+	{
+		Name: "kill_sentry", Kind: InjectorSeconds,
+		About: "Destroy each defender engineer's sentry and dispenser once the sentry has stood this long in a wave, so the rebuild runs.",
+		Why:   "tf2-archipelago#155: the engineer is reported useless once his first sentry dies, and no wave the bed plays kills it on demand.",
+	},
 }
 
 // InjectorByConVar is the injector a console variable arms, and whether the

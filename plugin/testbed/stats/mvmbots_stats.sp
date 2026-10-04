@@ -2021,6 +2021,9 @@ static void WriteBotTelemetry(int client, float when, float clock)
 
 	bool firing = (GetEntProp(client, Prop_Data, "m_nButtons") & IN_ATTACK) != 0;
 
+	// What an engineer can build with. A sentry costs 130, and below that he cannot put one down at all
+	int metal = TF2_GetPlayerClass(client) == TFClass_Engineer ? GetEntProp(client, Prop_Send, "m_iAmmo", _, 3) : -1;
+
 	/* What is in the medigun, beside who the beam is on
 	 *
 	 * "Ubers deployed" is a wave total, and a total of zero cannot say whether the medic had no
@@ -2041,13 +2044,13 @@ static void WriteBotTelemetry(int client, float when, float clock)
 		"{\"event\":\"bot\",\"map\":\"%s\",\"wave\":%d,\"t\":%.1f,\"clock\":%.1f,\"who\":\"%s\",\"class\":\"%s\","
 		... "\"at\":[%.0f,%.0f,%.0f],\"hp\":%d,\"maxhp\":%d,\"weapon\":\"%s\",\"slot\":%d,"
 		... "\"nearest_enemy\":%.0f,\"aim\":\"%s\",\"aim_range\":%.0f,\"firing\":%d,"
-		... "\"path_len\":%.0f,\"pathing\":%d,\"path_failed\":%d,\"path_failures\":%d,\"repair_stalls\":%d,"
+		... "\"path_len\":%.0f,\"pathing\":%d,\"path_failed\":%d,\"path_failures\":%d,\"repair_stalls\":%d,\"metal\":%d,"
 		... "\"charge\":%.2f,\"deploying\":%d,\"between\":%d,"
 		... "\"healing\":\"%s\",\"wants\":\"%s\",\"picked\":\"%s\",\"action\":\"%s\"}",
 		g_sMap, g_iWave, when, clock, name, ClassName(TF2_GetPlayerClass(client)),
 		at[0], at[1], at[2], GetClientHealth(client), TF2Util_GetEntityMaxHealth(client),
 		weaponClass, slot, RangeToNearestEnemy(client), aim, aimRange, firing ? 1 : 0,
-		pathLength, pathing ? 1 : 0, pathFailed ? 1 : 0, pathFailures, repairStalls,
+		pathLength, pathing ? 1 : 0, pathFailed ? 1 : 0, pathFailures, repairStalls, metal,
 		charge, deploying ? 1 : 0, GameRules_GetRoundState() == RoundState_BetweenRounds ? 1 : 0,
 		healing, wants, picked, stack);
 
