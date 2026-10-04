@@ -9,9 +9,11 @@ ConVar redbots_debug_old_wedge_recovery;
 ConVar redbots_debug_unreachable_goal;
 ConVar redbots_debug_trace_snipers;
 ConVar redbots_debug_empty_stack;
+ConVar redbots_debug_kill_sentry;
 int m_iWedgedBot = -1;
 float m_flWedgedUntil;
 float m_vWedgedAt[3];
+float m_flSentryStoodSince[65];
 int m_iAmmoRefusalsLeft[65];
 int m_iEmptiedBot = -1;
 float m_flEmptiedUntil;
@@ -27,8 +29,51 @@ stock void DebugFaults_Init()
 	redbots_debug_old_wedge_recovery = CreateConVar("sm_redbots_debug_old_wedge_recovery", "0", "Use the pre-2.21.3 wedge recovery, which only ever tried the area the bot stands in. For measuring what that fix is worth.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	redbots_debug_empty_stack = CreateConVar("sm_redbots_debug_empty_stack", "0", "Leave one defender with no behaviour at all for this many seconds after a wave starts, to exercise the idle watchdog. 0 is off.", FCVAR_NOTIFY, true, 0.0, true, 300.0);
 	redbots_debug_trace_snipers = CreateConVar("sm_redbots_debug_trace_snipers", "0", "Write every sniper's action stack and position to the console each tenth of a second, to read back after a watchdog trip. 0 is off.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	redbots_debug_kill_sentry = CreateConVar("sm_redbots_debug_kill_sentry", "0", "Destroy each defender engineer's sentry and dispenser once the sentry has stood this many seconds in a wave, to exercise the rebuild. 0 is off.", FCVAR_NOTIFY, true, 0.0, true, 600.0);
 	RegServerCmd("sm_redbots_debug_sniper_spots", Command_SniperSpots);
 	CreateTimer(0.1, Timer_TraceSnipers, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+	CreateTimer(1.0, Timer_DebugKillSentries, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+}
+
+// KillSentries takes down every nest whose sentry has stood long enough. Nothing
+// happens while the convar is zero.
+public Action Timer_DebugKillSentries(Handle timer)
+{
+	if ((redbots_debug_kill_sentry == null) || (redbots_debug_kill_sentry.FloatValue <= 0.0))
+	{
+		return Plugin_Continue;
+	}
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client) || !IsPlayerAlive(client))
+		{
+			continue;
+		}
+		if (!g_bIsDefenderBot[client] || (TF2_GetPlayerClass(client) != TFClass_Engineer))
+		{
+			continue;
+		}
+		int sentry = GetObjectOfType(client, TFObject_Sentry);
+		if ((GameRules_GetRoundState() != RoundState_RoundRunning) || (sentry == INVALID_ENT_REFERENCE) || TF2_IsBuilding(sentry))
+		{
+			m_flSentryStoodSince[client] = 0.0;
+			continue;
+		}
+		if (m_flSentryStoodSince[client] <= 0.0)
+		{
+			m_flSentryStoodSince[client] = GetGameTime();
+			continue;
+		}
+		if ((GetGameTime() - m_flSentryStoodSince[client]) < redbots_debug_kill_sentry.FloatValue)
+		{
+			continue;
+		}
+		m_flSentryStoodSince[client] = 0.0;
+		LogMessage("DebugFaults: destroying %N's nest, sentry level %d, with %d metal", client, TF2_GetUpgradeLevel(sentry), BaseCombatCharacter_GetAmmoCount(client, TF_AMMO_METAL));
+		DetonateObjectOfType(client, TFObject_Sentry);
+		DetonateObjectOfType(client, TFObject_Dispenser);
+	}
+	return Plugin_Continue;
 }
 
 // TraceSnipers says what each sniper was doing, tick by tick, so the frame that

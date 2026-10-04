@@ -43,6 +43,8 @@ var (
 	traceSnipers engine.ConVar
 	//sp:name redbots_debug_empty_stack
 	emptyStack engine.ConVar
+	//sp:name redbots_debug_kill_sentry
+	killSentry engine.ConVar
 )
 
 // The bot being held, and until when. One at a time: two wedged bots is a different test.
@@ -86,9 +88,78 @@ func Init() {
 		"Write every sniper's action stack and position to the console each tenth of a second, to read back after a watchdog trip. 0 is off.",
 		engine.FCVarNotify(), true, 0.0, true, 1.0)
 
+	killSentry = engine.CreateAssistConVar("sm_redbots_debug_kill_sentry", "0",
+		"Destroy each defender engineer's sentry and dispenser once the sentry has stood this many seconds in a wave, to exercise the rebuild. 0 is off.",
+		engine.FCVarNotify(), true, 0.0, true, 600.0)
+
 	engine.RegServerCmd("sm_redbots_debug_sniper_spots", CommandSniperSpots)
 
 	engine.CreateTimer(0.1, TraceSnipers, engine.Default(), engine.TimerRepeat()|engine.TimerNoMapChange())
+	engine.CreateTimer(1.0, KillSentries, engine.Default(), engine.TimerRepeat()|engine.TimerNoMapChange())
+}
+
+/*
+When each engineer's sentry was first seen finished, zero while he has none
+
+A wave kills a sentry when it likes, which is mostly never on the maps the
+test-bed plays, so the rebuild after one was never measured. tf2-archipelago#155
+is that rebuild. The sentry and the dispenser go together, the way a buster
+takes a nest, by his own destroy command, with the engineer alive and holding
+whatever metal the wave left him. Taking the sentry alone measured nothing: the
+dispenser beside it refilled him within seconds, so he always had the 130 a
+sentry costs.
+*/
+//
+//sp:name m_flSentryStoodSince
+//sp:keep cleared whenever the seat has no finished sentry, which a new bot in it does not
+var sentryStoodSince [slots.Count]float32
+
+// KillSentries takes down every nest whose sentry has stood long enough. Nothing
+// happens while the convar is zero.
+//
+//sp:name Timer_DebugKillSentries
+//sp:public
+//nolint:revive // unused-parameter: the signature is the timer's, not ours
+func KillSentries(timer engine.Timer) engine.Outcome {
+	if killSentry == engine.NoConVar() || killSentry.Float() <= 0.0 {
+		return engine.PluginContinue()
+	}
+
+	for client := int32(1); client <= engine.MaxClients(); client++ {
+		if !engine.IsClientInGame(client) || !engine.IsPlayerAlive(client) {
+			continue
+		}
+
+		if !engine.DefenderBotFlag(client) || engine.PlayerClass(client) != engine.ClassEngineer() {
+			continue
+		}
+
+		sentry := engine.ObjectOfType(client, engine.ObjectSentry())
+
+		if engine.RoundState() != engine.RoundStateRunning() || sentry == engine.InvalidEntReference() || engine.IsBuildingUp(sentry) {
+			sentryStoodSince[client] = 0.0
+			continue
+		}
+
+		if sentryStoodSince[client] <= 0.0 {
+			sentryStoodSince[client] = engine.GameTime()
+			continue
+		}
+
+		if engine.GameTime()-sentryStoodSince[client] < killSentry.Float() {
+			continue
+		}
+
+		sentryStoodSince[client] = 0.0
+
+		engine.LogMessage("DebugFaults: destroying %N's nest, sentry level %d, with %d metal",
+			client, engine.UpgradeLevel(sentry), engine.AmmoCount(client, engine.AmmoMetal()))
+
+		engine.DetonateObjectOfType(client, engine.ObjectSentry())
+		engine.DetonateObjectOfType(client, engine.ObjectDispenser())
+	}
+
+	return engine.PluginContinue()
 }
 
 /*

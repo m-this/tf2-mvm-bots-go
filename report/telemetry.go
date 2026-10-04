@@ -55,6 +55,7 @@ type botSample struct {
 	PathFailed   int       `json:"path_failed"`
 	PathFailures int       `json:"path_failures"`
 	RepairStalls int       `json:"repair_stalls"`
+	Metal        int       `json:"metal"`
 }
 
 type buildingSample struct {
