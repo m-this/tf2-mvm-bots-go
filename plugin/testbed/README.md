@@ -203,6 +203,45 @@ A puppet reproduces what a player does, not what a player feels. It has no
 input timing, no interpolation and no packet loss, so "the medic feels
 unresponsive" is still a play-test question.
 
+### Driving one by hand, or from a program
+
+`cmd/puppet` steers a seated puppet over rcon, one verb per call or a stream of
+them on stdin, so a harness can play it as it goes. `TESTBED_PORT` picks the bed
+and `TESTBED_RCONPW` the password, as for `rc`.
+
+```sh
+go run ./cmd/puppet walk 1 station
+printf 'slot 1 1\nlook 1 10 90\nhold 1 attack\nwait 1\nrelease 1\nshop 1 -1 59 1\n' \
+  | go run ./cmd/puppet -
+```
+
+The plugin holds a usercmd on the puppet every tick, in `OnPlayerRunCmd`:
+`mvmbots_puppet_input` sets buttons and a walk speed, `mvmbots_puppet_look` the
+view, and `mvmbots_puppet_slot` a weapon. That is the channel a real client's
+input arrives on, which is why `slot2` typed into the console does nothing: a
+client's HUD turns it into the usercmd's weapon field before the server sees
+it. `mvmbots_puppet_cmd` runs what a client does send as a command: `joinclass`,
+`voicemenu`, `build`, `taunt`. `walk` has no pathing. It runs in a straight
+line, jumps once when it stops getting closer, and gives up by name after six
+seconds without progress.
+
+Measured on the tf2-archipelago stack, SourceMod 1.12.0.7255, TF2 11076587: a
+second of forward moved the puppet 327 units, holding attack took the pistol's
+clip from 12 to 5, `walk 1 station` set `in_zone=1` on foot, and `shop 1 -1 60
+1` bought health regen, 400 credits to 200.
+
+What a puppet cannot do is send what a client builds itself. An engine-built
+`MvM_UpgradesBegin` or `+inspect_server` is out of reach: the puppet's key
+values are built by SourceMod. tf2-archipelago gh-179 crashed on exactly that
+path, so it stays unverified here and is confirmed by players.
+
+**Bots and puppets count seats differently.** With bots on, a puppet's ready
+press starts them, and the mod fills RED without counting the host or the
+puppets ("RED holds 0 of 4"). tf2-archipelago's lineup trim then counts every
+fake client against the same team size and evicts the puppet first ("RED holds
+5 of 4. testbed-player-1 leaves."). On that stack, play the puppet with
+`SRCDS_BOTS=0`, or expect it to be dropped when the bots arrive.
+
 ## What comes out
 
 One JSON object per line, appended as the waves happen. A crashed run still
