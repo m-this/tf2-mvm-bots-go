@@ -16,6 +16,15 @@ func GetDesiredPathLookAheadRange(client int32) float32 {
 	return engine.PathLookaheadRange().Float() * engine.ModelScale(client)
 }
 
+/*
+What the game charges for a sentry
+
+A mini costs less, so asking for this much is never asking for too little.
+*/
+//
+//sp:name SENTRY_METAL_COST
+const sentryMetalCost = 130
+
 // IsAmmoLow says the bot is worth sending to a resupply.
 //
 //sp:name IsAmmoLow
@@ -23,6 +32,19 @@ func IsAmmoLow(client int32) bool {
 	primary := engine.PlayerWeaponSlot(client, engine.WeaponSlotPrimary())
 
 	if engine.IsValidEntity(primary) && !engine.HasAmmo(primary) {
+		return true
+	}
+
+	/* An engineer with no sentry and less metal than one costs is out of ammo, whatever he holds
+
+	The metal test below only runs with the wrench out and only at nought. An engineer whose sentry
+	died while he had fifty left holds the toolbox, and the game refuses the build without a word:
+	the build action pressed at nothing for its forty five seconds, the idle action sent him back
+	three seconds later, and nothing ever sent him for metal. tf2-archipelago#155. */
+	if engine.PlayerClass(client) == engine.ClassEngineer() &&
+		engine.AmmoCount(client, engine.AmmoMetal()) < sentryMetalCost &&
+		engine.ObjectOfType(client, engine.ObjectSentry()) == engine.InvalidEntReference() &&
+		!engine.IsCarryingObject(client) {
 		return true
 	}
 
