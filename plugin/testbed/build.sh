@@ -49,6 +49,14 @@ fetch Vinillia/actions.ext "$ACTIONS_VERSION" actions
 # file, because a test-bed is not where a patch stack belongs.
 sed -i '/^#pragma unused UnloadAttributeValue$/d' "$src/tf2attributes/scripting/tf2attributes.sp"
 
+# TF2 11087207 put a 0x24-byte name map at CEconItemSchema+0x1E0, and TF Econ
+# Data 0.19.1.5 still reads the fields behind it at their old offsets: the
+# loadout slot names and the unusual effect lists come back as other memory.
+# Each of the six moved by 36. Drop this once upstream ships the new gamedata.
+for moved in 968:1004 876:912 908:944 928:964 948:984 1432:1468; do
+	sed -i -E "s/(\"(linux|windows)\"[[:space:]]+\")${moved%%:*}\"/\1${moved##*:}\"/" "$src/tf_econ_data/gamedata/tf2.econ_data.txt"
+done
+
 # --- The compiler ---
 #
 # Stamped with the version it holds, because $work survives between runs: a
