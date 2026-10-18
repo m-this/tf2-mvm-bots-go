@@ -70,6 +70,14 @@ func TF2Util_GetConditionName(cond TFCond, buffer []byte, maxlen int32) int32 {
 	panic("bindings: TF2Util_GetConditionName is SourcePawn and has no Go body")
 }
 
+// Given a valid condition name (case-insensitive), return its index.
+//
+// @param name         Condition name.
+// @return             Condition index, or -1 on an invalid name.
+func TF2Util_GetConditionFromName(name string) TFCond {
+	panic("bindings: TF2Util_GetConditionFromName is SourcePawn and has no Go body")
+}
+
 // Returns the remaining time on a player condition, or 0.0 if the condition is not active.
 //
 // This is just a wrapper around the internal condition list; some conditions may not accurately
