@@ -537,7 +537,7 @@ func IsThrowableReady(client int32, weapon int32) bool {
 EquipBestWeaponForThreat is the whole weapon choice, class by class.
 
 The default is the biggest gun that still fires; the classes then correct it:
-the Demoman's launcher rule and the reload trap of eight spent bombs, the
+the Demoman's launcher rule and the launcher he reloads between fights, the
 medigun that is the weapon while the syringe gun is only what he holds, the
 Scout's milk, the Soldier's shotgun that lost the A/B (damage 16890 to 10886
 over six waves on Decoy, so the rocket stays), the Sniper's bow and pee, the
@@ -581,6 +581,12 @@ func EquipBestWeaponForThreat(client int32, threat engine.Known) {
 	}
 
 	if threat == engine.NoKnownEntity() || !threat.WasEverVisible() || threat.TimeSinceLastSeen() > 5.0 {
+		if engine.PlayerClass(client) == engine.ClassDemoMan() && StickyLauncherNeedsReload(client, secondary) {
+			gun = secondary
+
+			engine.ExtraButtonsOf(client).PressButtonsNow(engine.InReload())
+		}
+
 		if gun != -1 {
 			engine.SetPlayerActiveWeapon(client, gun)
 		}
@@ -616,10 +622,13 @@ func EquipBestWeaponForThreat(client int32, threat engine.Known) {
 		/* An empty launcher is not the weapon that lands, whatever the rule
 		above says: holding eight spent bombs through the reload is a second
 		and a half of nothing with a loaded grenade launcher in the other
-		hand. */
+		hand. It is reloaded between fights instead.
+
+		Empty pipes are the same answer the other way round. Switching to the
+		launcher for a target the rule turned down fired bombs that
+		ShouldDetonateStickies never presses for, a lone robot or one at his
+		feet, and spent the clip the next giant needed. */
 		if wantSticky && engine.Clip1Of(secondary) > 0 {
-			gun = secondary
-		} else if gun != -1 && engine.Clip1Of(gun) == 0 && secondary != -1 && engine.Clip1Of(secondary) != 0 {
 			gun = secondary
 		}
 	case engine.ClassHeavyweapons(), engine.ClassSpy(), engine.ClassEngineer():
@@ -716,6 +725,28 @@ func EquipBestWeaponForThreat(client int32, threat engine.Known) {
 	if gun != -1 {
 		engine.SetPlayerActiveWeapon(client, gun)
 	}
+}
+
+/*
+StickyLauncherNeedsReload is a stickybomb launcher short of a full clip, with
+bombs left to load.
+
+The game reloads only the weapon in hand, and every rule that hands the Demoman
+his launcher asks for a loaded clip first. So a clip spent on a giant stayed
+spent until he died, and he met the next giant with pipes.
+*/
+//
+//sp:name StickyLauncherNeedsReload
+func StickyLauncherNeedsReload(client int32, launcher int32) bool {
+	if launcher == -1 || engine.WeaponID(launcher) != engine.WeaponPipebombLauncher() {
+		return false
+	}
+
+	if engine.AmmoCount(client, engine.AmmoSecondary()) <= 0 {
+		return false
+	}
+
+	return engine.Clip1Of(launcher) < engine.WeaponMaxClip(launcher)
 }
 
 /*
