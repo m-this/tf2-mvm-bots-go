@@ -469,7 +469,7 @@ stock bool IsThrowableReady(int client, int weapon)
 // EquipBestWeaponForThreat is the whole weapon choice, class by class.
 //
 // The default is the biggest gun that still fires; the classes then correct it:
-// the Demoman's launcher rule and the reload trap of eight spent bombs, the
+// the Demoman's launcher rule and the launcher he reloads between fights, the
 // medigun that is the weapon while the syringe gun is only what he holds, the
 // Scout's milk, the Soldier's shotgun that lost the A/B (damage 16890 to 10886
 // over six waves on Decoy, so the rocket stays), the Sniper's bow and pee, the
@@ -510,6 +510,11 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 		}
 	if ((threat == NULL_KNOWN_ENTITY) || !threat.WasEverVisible() || (threat.GetTimeSinceLastSeen() > 5.0))
 	{
+		if ((TF2_GetPlayerClass(client) == TFClass_DemoMan) && StickyLauncherNeedsReload(client, secondary))
+		{
+			gun = secondary;
+			g_arrExtraButtons[client].PressButtons(IN_RELOAD);
+		}
 		if (gun != -1)
 		{
 			TF2Util_SetPlayerActiveWeapon(client, gun);
@@ -545,16 +550,16 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 			// An empty launcher is not the weapon that lands, whatever the rule
 			// above says: holding eight spent bombs through the reload is a second
 			// and a half of nothing with a loaded grenade launcher in the other
-			// hand.
+			// hand. It is reloaded between fights instead.
+			//
+			// Empty pipes are the same answer the other way round. Switching to the
+			// launcher for a target the rule turned down fired bombs that
+			// ShouldDetonateStickies never presses for, a lone robot or one at his
+			// feet, and spent the clip the next giant needed.
 			if (wantSticky && (Clip1(secondary) > 0))
 			{
 				gun = secondary;
 			}
-			else
-				if ((gun != -1) && (Clip1(gun) == 0) && (secondary != -1) && (Clip1(secondary) != 0))
-				{
-					gun = secondary;
-				}
 		}
 		case TFClass_Heavy, TFClass_Spy, TFClass_Engineer:
 		{
@@ -684,6 +689,25 @@ stock void EquipBestWeaponForThreat(int client, const CKnownEntity threat)
 	{
 		TF2Util_SetPlayerActiveWeapon(client, gun);
 	}
+}
+
+// StickyLauncherNeedsReload is a stickybomb launcher short of a full clip, with
+// bombs left to load.
+//
+// The game reloads only the weapon in hand, and every rule that hands the Demoman
+// his launcher asks for a loaded clip first. So a clip spent on a giant stayed
+// spent until he died, and he met the next giant with pipes.
+stock bool StickyLauncherNeedsReload(int client, int launcher)
+{
+	if ((launcher == -1) || (TF2Util_GetWeaponID(launcher) != TF_WEAPON_PIPEBOMBLAUNCHER))
+	{
+		return false;
+	}
+	if (BaseCombatCharacter_GetAmmoCount(client, TF_AMMO_SECONDARY) <= 0)
+	{
+		return false;
+	}
+	return Clip1(launcher) < TF2Util_GetWeaponMaxClip(launcher);
 }
 
 // UtilizeCompressionBlast is the pyro's airblast, in two skill steps.

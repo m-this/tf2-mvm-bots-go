@@ -42,6 +42,7 @@ type QueryCalls struct {
 	StickyLauncherWanted        func(client int32, launcher int32, threat int32, threatRange float32) bool
 	MedicHasPatient             func(client int32, medigun int32) bool
 	Clip1Of                     func(weapon int32) int32
+	WeaponMaxClip               func(weapon int32) int32
 	ReleaseButtons              func(b Buttons, buttons int32)
 	CanBeReflected              func(entity int32) bool
 	LocalOrigin                 func(entity int32) [3]float32
@@ -516,6 +517,11 @@ func MedicHasPatient(client int32, medigun int32) bool {
 //
 //sp:body Clip1
 func Clip1Of(weapon int32) int32 { return queries.Clip1Of(weapon) }
+
+// WeaponMaxClip is how many rounds the clip holds, upgrades included.
+//
+//sp:native TF2Util_GetWeaponMaxClip
+func WeaponMaxClip(weapon int32) int32 { return queries.WeaponMaxClip(weapon) }
 
 // ConditionCharging is TFCond_Charging, the demoman's shield run.
 //
