@@ -57,7 +57,8 @@ pressed for damage.
 The cluster is whatever bombs happen to be on the ground, not a trap that was laid,
 so the question is the same one asked of a rocket at somebody's feet: is there more
 than one robot standing in the blast, or one robot big enough that the blast is
-worth it on its own.
+worth it on its own. When the stickies are the only weapon he has left, any robot
+in the blast is.
 */
 //
 //sp:name ShouldDetonateStickies
@@ -171,9 +172,37 @@ func ShouldDetonateStickies(client int32) bool {
 		}
 	}
 
+	/* With nothing else that fires, one robot is worth the press
+
+	The crowd rule exists to keep the clip for the giant while the pipes take the
+	small ones. A Demoman on Booties, or one whose pipes are spent, has no pipes,
+	and holding out for a crowd left every lone robot walking over his bombs. */
+	if caughtTotal > 0 && stickiesAreAllHeHas(client) {
+		return true
+	}
+
 	return worthItAlone ||
 		caughtTotal >= detonateEnemies ||
 		bombsWithEnemies >= detonateBombs
+}
+
+// stickiesAreAllHeHas says the primary slot holds no grenade launcher that can
+// still fire: a shield and Booties, or pipes with no ammo left.
+//
+//sp:name StickiesAreAllHeHas
+func stickiesAreAllHeHas(client int32) bool {
+	primary := engine.PlayerWeaponSlot(client, engine.WeaponSlotPrimary())
+
+	if primary == -1 {
+		return true
+	}
+
+	switch engine.WeaponID(primary) {
+	case engine.WeaponGrenadeLauncher(), engine.WeaponCannon():
+		return !engine.HasAmmo(primary)
+	}
+
+	return true
 }
 
 // IsStickyOnTank says a bomb at this position is stuck to a tank, or close enough

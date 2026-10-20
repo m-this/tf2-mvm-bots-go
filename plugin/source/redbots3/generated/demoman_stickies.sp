@@ -17,7 +17,8 @@
 // The cluster is whatever bombs happen to be on the ground, not a trap that was laid,
 // so the question is the same one asked of a rocket at somebody's feet: is there more
 // than one robot standing in the blast, or one robot big enough that the blast is
-// worth it on its own.
+// worth it on its own. When the stickies are the only weapon he has left, any robot
+// in the blast is.
 stock bool ShouldDetonateStickies(int client)
 {
 	if (TF2_GetPlayerClass(client) != TFClass_DemoMan)
@@ -123,7 +124,35 @@ stock bool ShouldDetonateStickies(int client)
 			worthItAlone = true;
 		}
 	}
+	// With nothing else that fires, one robot is worth the press
+	//
+	// The crowd rule exists to keep the clip for the giant while the pipes take the
+	// small ones. A Demoman on Booties, or one whose pipes are spent, has no pipes,
+	// and holding out for a crowd left every lone robot walking over his bombs.
+	if ((caughtTotal > 0) && StickiesAreAllHeHas(client))
+	{
+		return true;
+	}
 	return worthItAlone || (caughtTotal >= STICKY_DETONATE_ENEMIES) || (bombsWithEnemies >= STICKY_DETONATE_BOMBS);
+}
+
+// stickiesAreAllHeHas says the primary slot holds no grenade launcher that can
+// still fire: a shield and Booties, or pipes with no ammo left.
+stock bool StickiesAreAllHeHas(int client)
+{
+	int primary = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
+	if (primary == -1)
+	{
+		return true;
+	}
+	switch (TF2Util_GetWeaponID(primary))
+	{
+		case TF_WEAPON_GRENADELAUNCHER, TF_WEAPON_CANNON:
+		{
+			return !HasAmmo(primary);
+		}
+	}
+	return true;
 }
 
 // IsStickyOnTank says a bomb at this position is stuck to a tank, or close enough
