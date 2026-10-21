@@ -1,3 +1,3 @@
 module github.com/m-this/tf2-mvm-bots-go
 
-go 1.26.5
+go 1.27.3
