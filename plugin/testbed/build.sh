@@ -59,8 +59,11 @@ if [ ! -d "$work/spcomp" ] || [ "$(cat "$spcomp_stamp" 2>/dev/null)" != "$SOURCE
 	echo "fetching SourceMod $SOURCEMOD_VERSION"
 	rm -rf "$work/spcomp"
 	mkdir -p "$work/spcomp"
-	curl -fsSL "https://sm.alliedmods.net/smdrop/$SOURCEMOD_BRANCH/sourcemod-$SOURCEMOD_VERSION-linux.tar.gz" |
-		tar xz -C "$work/spcomp"
+	curl -fsSL -o "$work/sourcemod.tar.gz" \
+		"https://sm.alliedmods.net/smdrop/$SOURCEMOD_BRANCH/sourcemod-$SOURCEMOD_VERSION-linux.tar.gz"
+	echo "$SOURCEMOD_SHA256  $work/sourcemod.tar.gz" | sha256sum -c -
+	tar xzf "$work/sourcemod.tar.gz" -C "$work/spcomp"
+	rm -f "$work/sourcemod.tar.gz"
 	printf '%s\n' "$SOURCEMOD_VERSION" >"$spcomp_stamp"
 fi
 sm="$work/spcomp/addons/sourcemod/scripting"

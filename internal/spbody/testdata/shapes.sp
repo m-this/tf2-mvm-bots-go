@@ -154,3 +154,17 @@ stock float Go_Reach(Go_Sample s)
 	return middle[0] + middle[2];
 }
 
+// Pick shows a by-reference answer declared any. A callback typeset matches a
+// by-reference parameter's tag exactly, so where the include leaves it untagged
+// the declaration does too, and the body still writes the tagged value.
+stock bool Go_Pick(Go_Sample s, any &chosen)
+{
+	chosen = view_as<Go_Priority>(0);
+	if (s.Score > 0.0)
+	{
+		chosen = Go_PriorityUrgent;
+		return true;
+	}
+	return false;
+}
+

@@ -60,6 +60,16 @@ type callback struct {
 	Params string
 	// Names are the parameters a body may take, in the engine's names.
 	Names []string
+	// Listener wires the callback through __action_setlistener, the call the
+	// property setter makes, instead of through the property. spcomp in the
+	// 1.12 builds after git7164 segfaults checking a function against the
+	// ActionHandler typeset when an entry before the matching one has an
+	// array where the function has a scalar: IsValidImplicitArrayCast takes
+	// the inner type of an argument that is not an array. The territory
+	// callbacks are the only ones that reach past OnCommandApproachVector's
+	// const float pos[3]. The setter takes a Function, so nothing is matched
+	// and the signature above is the only check.
+	Listener bool
 }
 
 var callbacks = map[string]callback{
@@ -74,13 +84,15 @@ var callbacks = map[string]callback{
 	// The engine telling a behaviour about ground it was holding.
 	"OnTerritoryContested": {
 		Wire: "OnTerritoryContested", Returns: "Action",
-		Params: "int actor, int territory",
-		Names:  []string{"actor", "territory"},
+		Params:   "int actor, int territory",
+		Names:    []string{"actor", "territory"},
+		Listener: true,
 	},
 	"OnTerritoryLost": {
 		Wire: "OnTerritoryLost", Returns: "Action",
-		Params: "int actor, int territory",
-		Names:  []string{"actor", "territory"},
+		Params:   "int actor, int territory",
+		Names:    []string{"actor", "territory"},
+		Listener: true,
 	},
 	// The engine telling the behaviour something happened. The result is a
 	// desired one rather than an outcome, and the behaviour usually just
@@ -98,9 +110,11 @@ var callbacks = map[string]callback{
 	},
 	// The engine asking which of two threats matters more. The answer is the
 	// by-reference one; the return only says the behaviour had an opinion.
+	// It is any& because the typeset says so, and a by-reference tag has to
+	// match it exactly: //sp:any is the same rule for a body.
 	"SelectMoreDangerousThreat": {
 		Wire: "SelectMoreDangerousThreat", Returns: "Action",
-		Params: "INextBot nextbot, int entity, CKnownEntity threat1, CKnownEntity threat2, CKnownEntity& knownEntity",
+		Params: "INextBot nextbot, int entity, CKnownEntity threat1, CKnownEntity threat2, any& knownEntity",
 		Names:  []string{"nextbot", "entity", "threat1", "threat2", "knownEntity"},
 	},
 	"ShouldHurry": {
@@ -239,7 +253,12 @@ func constructor(a Action) string {
 	fmt.Fprintf(&b, "BehaviorAction %s()\n{\n", a.Prefix)
 	fmt.Fprintf(&b, "\tBehaviorAction action = ActionsManager.Create(%q);\n\n", a.Registered)
 	for _, name := range a.Has {
-		fmt.Fprintf(&b, "\taction.%s = %s_%s;\n", callbacks[name].Wire, a.Prefix, name)
+		cb := callbacks[name]
+		if cb.Listener {
+			fmt.Fprintf(&b, "\t__action_setlistener(action, __action_processor_%s, %s_%s, false);\n", cb.Wire, a.Prefix, name)
+			continue
+		}
+		fmt.Fprintf(&b, "\taction.%s = %s_%s;\n", cb.Wire, a.Prefix, name)
 	}
 	b.WriteString("\n\treturn action;\n}\n\n")
 	return b.String()

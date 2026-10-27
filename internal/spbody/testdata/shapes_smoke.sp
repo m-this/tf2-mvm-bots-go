@@ -4,6 +4,13 @@
 
 native void printnum(int n);
 
+typedef PickAnswer = function bool (Go_Sample s, any &chosen);
+
+void TakePick(PickAnswer answer)
+{
+	#pragma unused answer
+}
+
 public void main()
 {
 	Go_Sample s;
@@ -19,4 +26,5 @@ public void main()
 	printnum(view_as<int>(Go_Note(1, Go_PriorityBusy)));
 	printnum(view_as<int>(Go_Offset(s)));
 	printnum(view_as<int>(Go_Reach(s)));
+	TakePick(Go_Pick);
 }

@@ -102,7 +102,7 @@ public Action CTFBotAttackTank_Update(BehaviorAction action, int actor, float in
 
 // SelectMoreDangerousThreat keeps the tank the threat unless something nearer is
 // shooting at him.
-public Action CTFBotAttackTank_SelectMoreDangerousThreat(BehaviorAction action, INextBot nextbot, int entity, CKnownEntity threat1, CKnownEntity threat2, CKnownEntity& knownEntity)
+public Action CTFBotAttackTank_SelectMoreDangerousThreat(BehaviorAction action, INextBot nextbot, int entity, CKnownEntity threat1, CKnownEntity threat2, any& knownEntity)
 {
 	knownEntity = view_as<CKnownEntity>(0);
 	int iThreat1 = threat1.GetEntity();

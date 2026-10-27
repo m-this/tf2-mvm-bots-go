@@ -137,7 +137,9 @@ public Action Listener_TournamentPlayerReadystate(int client, const char[] comma
 						return Plugin_Handled;
 					}
 					PrintToChat(client, "%s Choose your bot team lineup first! Use command !choosebotteam or !cbt", PLUGIN_PREFIX);
-					return Plugin_BadLoad;
+					// The plugin returned Plugin_BadLoad, which spcomp 1.12 refuses as an
+					// Action. Its 7 acted as Plugin_Stop at run time, so this is that.
+					return Plugin_Stop;
 				}
 			}
 			if (m_flLastReadyInputTime[client] <= GetGameTime())

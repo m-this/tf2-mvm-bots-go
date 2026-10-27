@@ -37,7 +37,7 @@ public Action CTFBotDestroyTeleporter_Update(BehaviorAction action, int actor, f
 }
 
 // SelectMoreDangerousThreat answers which of two things to worry about.
-public Action CTFBotDestroyTeleporter_SelectMoreDangerousThreat(BehaviorAction action, INextBot nextbot, int entity, CKnownEntity threat1, CKnownEntity threat2, CKnownEntity& knownEntity)
+public Action CTFBotDestroyTeleporter_SelectMoreDangerousThreat(BehaviorAction action, INextBot nextbot, int entity, CKnownEntity threat1, CKnownEntity threat2, any& knownEntity)
 {
 	knownEntity = view_as<CKnownEntity>(0);
 	int iThreat1 = threat1.GetEntity();

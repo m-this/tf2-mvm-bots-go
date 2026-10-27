@@ -284,6 +284,7 @@ the normal threat targeting.
 //
 //sp:name CTFBotSniperLurk_SelectMoreDangerousThreat
 //sp:public
+//sp:any knownEntity
 //
 //nolint:revive // unused-parameter: the action, the bot and the entity are the game's
 func SniperLurkSelectMoreDangerousThreat(action engine.Behaviour, nextbot engine.Bot, entity int32, threat1 engine.Known, threat2 engine.Known) (result engine.Outcome, knownEntity engine.Known) {
@@ -485,6 +486,7 @@ Whatever wins, the beam on it wins instead: killing the healer is killing both.
 //
 //sp:name CTFBotMainAction_SelectMoreDangerousThreat
 //sp:public
+//sp:any knownEntity
 //
 //nolint:revive,gocritic // unused-parameter, ifElseChain: the action and the entity are the game's, and the chain is the shipped shape
 func MainActionSelectMoreDangerousThreat(action engine.Behaviour, nextbot engine.Bot, entity int32, threat1 engine.Known, threat2 engine.Known) (result engine.Outcome, knownEntity engine.Known) {

@@ -249,12 +249,6 @@ func StartBotVote(client int32) bool { return settings.StartBotVote(client) }
 //sp:global redbots_manager_extra_bots
 func ExtraBots() ConVar { return 0 }
 
-// PluginBadLoad is Plugin_BadLoad, which a command returns to say it refused
-// for a reason the caller has to fix first.
-//
-//sp:global Plugin_BadLoad
-func PluginBadLoad() Outcome { return 2 }
-
 // CompareTextCased is strcmp with the case flag written out.
 //
 //sp:native strcmp

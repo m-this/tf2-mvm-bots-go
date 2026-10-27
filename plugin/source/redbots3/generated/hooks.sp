@@ -211,7 +211,7 @@ public Action CTFBotMedicHeal_UpdatePost(BehaviorAction action, int actor, float
 //
 // Nothing else gets an opinion: the answer is null, which sends the choice back to
 // the normal threat targeting.
-public Action CTFBotSniperLurk_SelectMoreDangerousThreat(BehaviorAction action, INextBot nextbot, int entity, CKnownEntity threat1, CKnownEntity threat2, CKnownEntity &knownEntity)
+public Action CTFBotSniperLurk_SelectMoreDangerousThreat(BehaviorAction action, INextBot nextbot, int entity, CKnownEntity threat1, CKnownEntity threat2, any &knownEntity)
 {
 	knownEntity = view_as<CKnownEntity>(0);
 	int me = action.Actor;
@@ -405,7 +405,7 @@ public Action CTFBotTacticalMonitor_Update(BehaviorAction action, int actor, flo
 // worth nothing to a corpse.
 //
 // Whatever wins, the beam on it wins instead: killing the healer is killing both.
-public Action CTFBotMainAction_SelectMoreDangerousThreat(BehaviorAction action, INextBot nextbot, int entity, CKnownEntity threat1, CKnownEntity threat2, CKnownEntity &knownEntity)
+public Action CTFBotMainAction_SelectMoreDangerousThreat(BehaviorAction action, INextBot nextbot, int entity, CKnownEntity threat1, CKnownEntity threat2, any &knownEntity)
 {
 	knownEntity = view_as<CKnownEntity>(0);
 	int me = action.Actor;

@@ -169,6 +169,34 @@ func byrefsOf(d *ast.FuncDecl) map[string]bool {
 	return out
 }
 
+/*
+	anyDirective declares a by-reference parameter any
+
+A callback typeset compares a by-reference parameter's tag exactly, where a
+by-value one only has to convert. actions.ext declares SelectMoreDangerousThreat's
+answer any& knownEntity, so a callback that takes it as CKnownEntity& is refused.
+The Go keeps its type and the body writes the tagged value; only the declaration
+says any.
+*/
+const anyDirective = "//sp:any"
+
+// anysOf reads //sp:any <parameter> off a declaration.
+func anysOf(d *ast.FuncDecl) map[string]bool {
+	out := map[string]bool{}
+	if d.Doc == nil {
+		return out
+	}
+	for _, c := range d.Doc.List {
+		for line := range strings.Lines(c.Text) {
+			fields := strings.Fields(line)
+			if len(fields) == 2 && fields[0] == anyDirective {
+				out[fields[1]] = true
+			}
+		}
+	}
+	return out
+}
+
 // mutatesOf reads //sp:mutates <parameter> off a declaration.
 func mutatesOf(d *ast.FuncDecl) map[string]bool {
 	out := map[string]bool{}
@@ -407,6 +435,7 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 		}
 	}
 	spelling := dimsOf(d)
+	untagged := anysOf(d)
 
 	var names []string
 	for i := range sig.Params().Len() {
@@ -520,6 +549,9 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 			continue
 		}
 		if e.byrefs[name] && len(dims) == 0 {
+			if untagged[name] {
+				tag = "any"
+			}
 			params = append(params, declare(tag, "&"+e.ident(d.Pos(), name), nil))
 			continue
 		}
@@ -565,6 +597,9 @@ func (e *emitter) signature(d *ast.FuncDecl, sig *types.Signature) (ret string, 
 		record := isEnumStruct(r.Type())
 		e.outParams = append(e.outParams, outParam{name: name, tag: tag, dims: dims, record: record})
 		if len(dims) == 0 && !record {
+			if untagged[r.Name()] {
+				tag = "any"
+			}
 			name = "&" + name
 		}
 		params = append(params, declare(tag, name, dims))

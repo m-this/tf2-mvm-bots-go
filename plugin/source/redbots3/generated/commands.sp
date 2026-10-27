@@ -355,7 +355,9 @@ public Action Command_Votebots(int client, int args)
 				return Plugin_Handled;
 			}
 			ReplyToCommand(client, "%s Choose your bot team lineup first! Use command !choosebotteam or !cbt", PLUGIN_PREFIX);
-			return Plugin_BadLoad;
+			// The plugin returned Plugin_BadLoad, which spcomp 1.12 refuses as an
+			// Action. Its 7 acted as Plugin_Stop at run time, so this is that.
+			return Plugin_Stop;
 		}
 	}
 	switch (TF2_GetClientTeam(client))

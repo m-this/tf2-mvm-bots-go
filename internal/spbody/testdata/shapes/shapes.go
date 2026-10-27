@@ -132,3 +132,16 @@ func Reach(s Sample) float32 {
 	middle = Middle(s)
 	return middle[0] + middle[2]
 }
+
+// Pick shows a by-reference answer declared any. A callback typeset matches a
+// by-reference parameter's tag exactly, so where the include leaves it untagged
+// the declaration does too, and the body still writes the tagged value.
+//
+//sp:any chosen
+func Pick(s Sample) (found bool, chosen Priority) {
+	if s.Score > 0 {
+		chosen = PriorityUrgent
+		return true, chosen
+	}
+	return false, chosen
+}
