@@ -1759,7 +1759,7 @@ static void CollectTelemetryActionName(BehaviorAction action)
  * called. The property this used to say was not worth guessing at turns out to be the cheap one. */
 static bool HasBehaviour(int client)
 {
-	return CBaseNPC_GetNextBotOfEntity(client) != view_as<INextBot>(Address_Null);
+	return CBaseNPC_GetNextBotOfEntity(client) != NULL_NEXT_BOT;
 }
 
 static void TelemetryActionStack(int client, char[] buffer, int maxlength)

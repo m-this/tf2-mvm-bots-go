@@ -128,11 +128,18 @@ func GameRulesPropAt(prop string, size int32, element int32) int32 {
 	return entities.GameRulesPropAt(prop, size, element)
 }
 
-// Address is a raw memory address, which the gamedata hands out and two reads
-// follow.
+/*
+Address is a raw memory address, which the gamedata hands out and two reads
+follow.
+
+int64, because SourceMod 1.13 declares it so: typedef Address = int64. A
+pointer the mod keeps in a methodmap is still one cell, and crossing between
+the two is internal/body/address and nowhere else; internal/spbody refuses any
+other conversion that would cross.
+*/
 //
 //sp:tag Address
-type Address int32
+type Address int64
 
 // RemoveEffectsFrom clears effect bits, which internal/body/entity generates.
 //

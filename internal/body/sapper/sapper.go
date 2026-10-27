@@ -5,7 +5,10 @@ raw address.
 */
 package sapper
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/address"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 /*
 ParentEntity hangs one entity off another.
@@ -136,6 +139,6 @@ var offsetIsEnabled int32 = -1
 //
 //sp:name DereferencePointer
 func DereferencePointer(addr engine.Address) engine.Address {
-	// maybe someday we'll do 64-bit addresses
-	return engine.Address(engine.LoadFromAddress(addr))
+	// The pointer in memory is one 32-bit cell.
+	return address.Widen(engine.LoadFromAddress(addr))
 }

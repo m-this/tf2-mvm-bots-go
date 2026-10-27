@@ -21,7 +21,7 @@ type DHookCalls struct {
 	SetReturnBool        func(r DHookReturn, value bool)
 	SetGameRulesProp     func(prop string, value int32)
 	SetPlayerClass       func(client int32, class Class, weapons bool, persist bool)
-	VisionBot            func(vision Address) Bot
+	VisionBot            func(vision Vision) Bot
 	SetTouchCredits      func(on bool)
 	TouchCredits         func() bool
 	SetPlayerKilled      func(on bool)
@@ -135,13 +135,6 @@ func SetGameRulesProp(prop string, value int32) { dhooks.SetGameRulesProp(prop, 
 //sp:native TF2_SetPlayerClass
 func SetPlayerClass(client int32, class Class, weapons bool, persist bool) {
 	dhooks.SetPlayerClass(client, class, weapons, persist)
-}
-
-// VisionBot is the bot a vision interface belongs to.
-//
-//sp:cast IVision
-func VisionBot(vision Address) Vision {
-	return Vision(vision)
 }
 
 // SetTouchCredits writes m_bTouchCredits.
@@ -336,15 +329,7 @@ func (h Hook) HookRaw(when int32, address Address, callback DHookCallback) {
 	dhooks.HookRaw(h, when, address)
 }
 
-// AddressOfVision is the vision interface read as a memory address, which is
-// what HookRaw takes.
-//
-//sp:cast Address
-func AddressOfVision(v Vision) Address {
-	return Address(v)
-}
-
 // Bot is the bot a vision interface belongs to.
 //
 //sp:method GetBot
-func (v Vision) Bot() Bot { return dhooks.VisionBot(Address(v)) }
+func (v Vision) Bot() Bot { return dhooks.VisionBot(v) }

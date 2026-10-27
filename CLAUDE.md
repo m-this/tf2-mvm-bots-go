@@ -11,8 +11,10 @@ defines and `public Plugin myinfo`, and `archipelago.sp` is one `native`
 declaration of another plugin's export with the paragraph saying why it is
 optional. The mod ships one build; the compile-time toggles the SourcePawn had
 were resolved by the port. The gamedata seam went the same way: an offset read,
-an SDKCall preparation, a DHook callback and a methodmap over an `Address` are
-all things the emitter writes.
+an SDKCall preparation, a DHook callback and a methodmap over a pointer are
+all things the emitter writes. SourceMod 1.13 makes `Address` an int64 while a
+methodmap stays a cell, so a pointer crosses between the two only through
+`internal/body/address`; the emitter refuses any other conversion.
 
 `directives.sp` is the one exception, and it is an argued one rather than a
 lapse. It registers `Defenderbots_SetDirective` so another plugin can give a

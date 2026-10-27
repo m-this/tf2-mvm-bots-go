@@ -13,7 +13,10 @@ https://github.com/Mikusch/MannVsMann/blob/571737b5ae0aadc1e743360e94311ca64e693
 */
 package offsets
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/address"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 //sp:name m_adtOffsets
 //nolint:unused // emitted, not read from Go: the generated files that read it are SourcePawn
@@ -132,7 +135,7 @@ none, which mvm-z83.93 measured as safe to ask of either.
 //
 //sp:name IsCTFBot
 func IsCTFBot(client int32) bool {
-	return engine.AddressOfBot(engine.NextBotOf(client)) != engine.NoAddress()
+	return address.Widen(int32(engine.NextBotOf(client))) != engine.NoAddress()
 }
 
 /*
@@ -207,5 +210,5 @@ func GetLastAccuracyCheck(weapon int32) float32 {
 //
 //sp:name GetTravelDistanceToBombTarget
 func GetTravelDistanceToBombTarget(area engine.NavArea) float32 {
-	return engine.LoadFloatFromAddress(engine.AddressOfArea(area) + engine.Address(GetOffset("CTFNavArea", "m_distanceToBombTarget")))
+	return engine.LoadFloatFromAddress(address.Widen(int32(area)) + engine.Address(GetOffset("CTFNavArea", "m_distanceToBombTarget")))
 }

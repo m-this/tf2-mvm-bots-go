@@ -139,6 +139,7 @@ var All = []Body{
 	// for a number every caller folds. It is in the list because being in
 	// the list is what makes a package importable.
 	{Dir: "internal/body/slots", Prefix: "Go_"},
+	{Dir: "internal/body/address", Out: "sourcepawn/address.sp", Prefix: "Go_"},
 	{Dir: "internal/body/roster", Out: "sourcepawn/roster.sp", Hooks: "sourcepawn/roster_dhooks.sp", Prefix: "Go_", Proof: true},
 	{Dir: "internal/body/scan", Out: "sourcepawn/scan.sp", Prefix: "Go_"},
 	{Dir: "internal/body/medic", Out: "sourcepawn/medic.sp", Prefix: "Go_"},
@@ -549,9 +550,6 @@ func checkExterns(root string, declared spbody.Declared, owned map[string]owner)
 		if o.Decl.Sig == nil {
 			// A constructor spaction writes, or a generator outside
 			// the list. Neither has a Go signature to compare.
-			continue
-		}
-		if x.Untyped {
 			continue
 		}
 		here, checked := signatures[qualified]

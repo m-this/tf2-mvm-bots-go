@@ -119,6 +119,9 @@ type emitter struct {
 	// receiver is the name the method being emitted binds its receiver to,
 	// which SourcePawn spells this.
 	receiver string
+	// narrows says the function being emitted carries //sp:narrows, the
+	// one place an Address may become a cell.
+	narrows bool
 
 	// methodmapName is the methodmap being emitted, so a method that shares
 	// its name is written as the constructor it is.

@@ -40,6 +40,20 @@ const (
 	NULL_ACTION_ID    ActionId = 0
 )
 
+// @brief Type of value stored in an action transition context.
+type ActionTransitionValueType int32
+
+const (
+	ActionTransitionValue_PlainData     ActionTransitionValueType = 0
+	ActionTransitionValue_QueryResult   ActionTransitionValueType = 1
+	ActionTransitionValue_Action        ActionTransitionValueType = 2
+	ActionTransitionValue_ActionResult  ActionTransitionValueType = 3
+	ActionTransitionValue_DesiredResult ActionTransitionValueType = 4
+	ActionTransitionValue_Vector        ActionTransitionValueType = 5
+	ActionTransitionValue_PathFollower  ActionTransitionValueType = 6
+	ActionTransitionValue_KnownEntity   ActionTransitionValueType = 7
+)
+
 // @brief Called for every action
 //
 // @param action 	Self explanatory
@@ -126,6 +140,60 @@ func (this ActionDesiredResult) SetPriority(v EventResultPriorityType) {
 	panic("bindings: ActionDesiredResult.priority set is SourcePawn and has no Go body")
 }
 
+// @brief Temporary context describing a value returned by an action method.
+// @note The handle is borrowed and is only valid for the duration of the forward
+// in which it was provided. Do not store it for later use.
+type ActionTransitionContext struct{ Handle }
+
+func (this ActionTransitionContext) GetFloat() float32 {
+	panic("bindings: ActionTransitionContext.GetFloat is SourcePawn and has no Go body")
+}
+
+func (this ActionTransitionContext) GetInt() int32 {
+	panic("bindings: ActionTransitionContext.GetInt is SourcePawn and has no Go body")
+}
+
+func (this ActionTransitionContext) GetBool() bool {
+	panic("bindings: ActionTransitionContext.GetBool is SourcePawn and has no Go body")
+}
+
+func (this ActionTransitionContext) GetPathFollower() int32 {
+	panic("bindings: ActionTransitionContext.GetPathFollower is SourcePawn and has no Go body")
+}
+
+func (this ActionTransitionContext) GetKnownEntity() int32 {
+	panic("bindings: ActionTransitionContext.GetKnownEntity is SourcePawn and has no Go body")
+}
+
+func (this ActionTransitionContext) GetVector(out *[3]float32) {
+	panic("bindings: ActionTransitionContext.GetVector is SourcePawn and has no Go body")
+}
+
+func (this ActionTransitionContext) GetActionResult() ActionResult {
+	panic("bindings: ActionTransitionContext.GetActionResult is SourcePawn and has no Go body")
+}
+
+func (this ActionTransitionContext) GetEventDesiredResult() ActionDesiredResult {
+	panic("bindings: ActionTransitionContext.GetEventDesiredResult is SourcePawn and has no Go body")
+}
+
+func (this ActionTransitionContext) GetAction() BehaviorAction {
+	panic("bindings: ActionTransitionContext.GetAction is SourcePawn and has no Go body")
+}
+
+func (this ActionTransitionContext) GetQueryResult() QueryResultType {
+	panic("bindings: ActionTransitionContext.GetQueryResult is SourcePawn and has no Go body")
+}
+
+func (this ActionTransitionContext) GetFunctionName(buffer []byte, length int32) int32 {
+	panic("bindings: ActionTransitionContext.GetFunctionName is SourcePawn and has no Go body")
+}
+
+// @brief Gets the value type stored in this context.
+func (this ActionTransitionContext) Type() ActionTransitionValueType {
+	panic("bindings: ActionTransitionContext.Type is SourcePawn and has no Go body")
+}
+
 type ActionsManager struct{ Ref int32 }
 
 func ActionsManager_Create(name string) BehaviorAction {
@@ -188,30 +256,6 @@ func ActionsManager_SetActionUserDataString(action BehaviorAction, key string, s
 	panic("bindings: ActionsManager.SetActionUserDataString is SourcePawn and has no Go body")
 }
 
-func ActionsManager_GetActionUserDataIdentity(action BehaviorAction, key string, data *int32) bool {
-	panic("bindings: ActionsManager.GetActionUserDataIdentity is SourcePawn and has no Go body")
-}
-
-func ActionsManager_GetActionUserDataIdentityVector(action BehaviorAction, key string, vector *[3]float32) bool {
-	panic("bindings: ActionsManager.GetActionUserDataIdentityVector is SourcePawn and has no Go body")
-}
-
-func ActionsManager_GetActionUserDataIdentityString(action BehaviorAction, key string, buffer []byte, length int32) bool {
-	panic("bindings: ActionsManager.GetActionUserDataIdentityString is SourcePawn and has no Go body")
-}
-
-func ActionsManager_SetActionUserDataIdentity(action BehaviorAction, key string, data int32) {
-	panic("bindings: ActionsManager.SetActionUserDataIdentity is SourcePawn and has no Go body")
-}
-
-func ActionsManager_SetActionUserDataIdentityVector(action BehaviorAction, key string, vector [3]float32) {
-	panic("bindings: ActionsManager.SetActionUserDataIdentityVector is SourcePawn and has no Go body")
-}
-
-func ActionsManager_SetActionUserDataIdentityString(action BehaviorAction, key string, string string) {
-	panic("bindings: ActionsManager.SetActionUserDataIdentityString is SourcePawn and has no Go body")
-}
-
 type ActionComponent struct{ Handle }
 
 func NewActionComponent(entity int32, fnInitialAction ActionComponentFn, fnUpdate ActionComponentFn, fnUpkeep ActionComponentFn, fnReset ActionComponentFn, name string) ActionComponent {
@@ -262,7 +306,6 @@ func NewBehaviorAction(action int32) BehaviorAction {
 	panic("bindings: BehaviorAction() is SourcePawn and has no Go body")
 }
 
-// SourcePawn defaults: maxlength=ACTION_NAME_LENGTH
 func (this BehaviorAction) GetName(destination []byte, maxlength int32) int32 {
 	panic("bindings: BehaviorAction.GetName is SourcePawn and has no Go body")
 }
@@ -390,86 +433,6 @@ func (this BehaviorAction) SetUserDataVector(key string, vector [3]float32) {
 // @noreturn
 func (this BehaviorAction) SetUserDataString(key string, string string) {
 	panic("bindings: BehaviorAction.SetUserDataString is SourcePawn and has no Go body")
-}
-
-// @brief Gets action user data with identity
-// @remark Doesn't check if data exists
-// @remark Data persists until the plugin who owns data is unloaded
-// @remark Data is still usable in OnActionDestroyed callback
-//
-// @param key			Key for data
-//
-// @error				Invalid action passed
-// @return				Stored data
-func (this BehaviorAction) GetUserDataIdentity(key string) int32 {
-	panic("bindings: BehaviorAction.GetUserDataIdentity is SourcePawn and has no Go body")
-}
-
-// @brief Gets action user data (vector)
-// @remark Doesn't check if data exists
-// @remark Data persists until the plugin who owns data is unloaded
-// @remark Data is still usable in OnActionDestroyed callback
-//
-// @param key			Key for data
-// @param out			Out vector
-//
-// @error				Invalid action passed
-// @noreturn
-func (this BehaviorAction) GetUserDataIdentityVector(key string, out *[3]float32) {
-	panic("bindings: BehaviorAction.GetUserDataIdentityVector is SourcePawn and has no Go body")
-}
-
-// @brief Gets action user data (string)
-// @remark Doesn't check if data exists
-// @remark Data persists until the plugin who owns data is unloaded
-// @remark Data is still usable in OnActionDestroyed callback
-//
-// @param key			Key for data
-// @param buffer			Out buffer
-// @param length 		Buffer length
-//
-// @error				Invalid action passed
-// @noreturn
-func (this BehaviorAction) GetUserDataIdentityString(key string, buffer []byte, length int32) {
-	panic("bindings: BehaviorAction.GetUserDataIdentityString is SourcePawn and has no Go body")
-}
-
-// @brief Sets action user data with identity
-// @remark Data persists until the plugin who owns data is unloaded
-// @remark Data is still usable in OnActionDestroyed callback
-//
-// @param key			Key to store data at
-// @param data			Data to store
-//
-// @noreturn
-func (this BehaviorAction) SetUserDataIdentity(key string, data int32) {
-	panic("bindings: BehaviorAction.SetUserDataIdentity is SourcePawn and has no Go body")
-}
-
-// @brief Sets action user data with identity
-// @remark Data persists until the plugin who owns data is unloaded
-// @remark Data is still usable in OnActionDestroyed callback
-//
-// @param key			Key to store data at
-// @param vector			Vector to store
-//
-// @error				Invalid action passed
-// @noreturn
-func (this BehaviorAction) SetUserDataIdentityVector(key string, vector [3]float32) {
-	panic("bindings: BehaviorAction.SetUserDataIdentityVector is SourcePawn and has no Go body")
-}
-
-// @brief Sets action user data with identity
-// @remark Data persists until the plugin who owns data is unloaded
-// @remark Data is still usable in OnActionDestroyed callback
-//
-// @param key			Key to store data at
-// @param string			String to store
-//
-// @error				Invalid action passed
-// @noreturn
-func (this BehaviorAction) SetUserDataIdentityString(key string, string string) {
-	panic("bindings: BehaviorAction.SetUserDataIdentityString is SourcePawn and has no Go body")
 }
 
 func (this BehaviorAction) GetHandleEntity(offset int32) int32 {

@@ -15,7 +15,7 @@ import (
 
 The generated source was checked by one compiler and shipped by another, which
 means the check did not cover what ships. This walks the same sweep twice, once
-through the 1.13 spcomp built beside spshell and once through the 1.12 spcomp64
+through the spcomp built beside spshell and once through SourceMod's spcomp64
 the plugin builds with, and requires the two to answer the same cell every time.
 
 Both runs use spshell's VM. Only the compiler differs, so a disagreement is the

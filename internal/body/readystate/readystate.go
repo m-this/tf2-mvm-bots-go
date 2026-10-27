@@ -137,8 +137,8 @@ func ListenerTournamentPlayerReadystate(client int32, command engine.Text, argc 
 				}
 
 				engine.PrintToChat(client, "%s Choose your bot team lineup first! Use command !choosebotteam or !cbt", engine.PluginPrefix())
-				// The plugin returned Plugin_BadLoad, which spcomp 1.12 refuses as an
-				// Action. Its 7 acted as Plugin_Stop at run time, so this is that.
+				// The plugin returned Plugin_BadLoad, a PluginStatus and not an Action
+				// (spcomp warns 213). Its 7 acted as Plugin_Stop at run time, so this is that.
 				return engine.PluginStop()
 			}
 		}

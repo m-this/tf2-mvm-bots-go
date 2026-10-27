@@ -24,7 +24,7 @@ stock bool IsTFBotPlayer(int client)
 	{
 		return true;
 	}
-	return view_as<Address>(CBaseNPC_GetNextBotOfEntity(client)) != Address_Null;
+	return AddressOfCell(view_as<int>(CBaseNPC_GetNextBotOfEntity(client))) != Address_Null;
 }
 
 // IsFinalWave says this is the last one the mission has.

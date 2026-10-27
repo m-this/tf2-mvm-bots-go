@@ -28,15 +28,15 @@ type SDKCallCalls struct {
 	DoHasAmmo                      func(weapon int32) bool
 	DoClip1                        func(weapon int32) int32
 	DoGetProjectileSpeed           func(weapon int32) float32
-	DoGEconItemSchema              func() Address
-	DoGetAttributeDefinitionByName func(schema Address, name string) Address
-	DoCanUpgradeWithAttrib         func(player int32, slot int32, attrib int32, upgrade Address) bool
-	DoGetCostForUpgrade            func(upgrade Address, slot int32, class int32, purchaser int32) int32
+	DoGEconItemSchema              func() int32
+	DoGetAttributeDefinitionByName func(schema int32, name string) int32
+	DoCanUpgradeWithAttrib         func(player int32, slot int32, attrib int32, upgrade int32) bool
+	DoGetCostForUpgrade            func(upgrade int32, slot int32, class int32, purchaser int32) int32
 	DoGetUpgradeTier               func(upgrade int32) int32
 	DoIsUpgradeTierEnabled         func(player int32, slot int32, upgrade int32) bool
 	DoShouldCollide                func(entity int32, collisionGroup int32, contentsMask int32) bool
 	DoGetBonePosition              func(entity int32, bone int32) ([3]float32, [3]float32)
-	DoAimHeadTowards               func(body Body, lookAtPos [3]float32, priority LookAtPriority, duration float32, replyWhenAimed Address, reason string)
+	DoAimHeadTowards               func(body Body, lookAtPos [3]float32, priority LookAtPriority, duration float32, replyWhenAimed int32, reason string)
 }
 
 var sdkCalls SDKCallCalls
@@ -428,29 +428,35 @@ func DoClip1(weapon int32) int32 { return sdkCalls.DoClip1(weapon) }
 //sp:native SDKCall before m_hGetProjectileSpeed
 func DoGetProjectileSpeed(weapon int32) float32 { return sdkCalls.DoGetProjectileSpeed(weapon) }
 
-// DoGEconItemSchema runs the prepared call.
+/*
+DoGEconItemSchema runs the prepared call.
+
+The pointers an SDKCall takes and returns as plain old data are cells, and so
+are the ones below: sdktools reads a cell's worth for each. The body widens and
+narrows them through internal/body/address.
+*/
 //
 //sp:native SDKCall before m_hGEconItemSchema
-func DoGEconItemSchema() Address { return sdkCalls.DoGEconItemSchema() }
+func DoGEconItemSchema() int32 { return sdkCalls.DoGEconItemSchema() }
 
 // DoGetAttributeDefinitionByName runs the prepared call.
 //
 //sp:native SDKCall before m_hGetAttributeDefinitionByName
-func DoGetAttributeDefinitionByName(schema Address, name string) Address {
+func DoGetAttributeDefinitionByName(schema int32, name string) int32 {
 	return sdkCalls.DoGetAttributeDefinitionByName(schema, name)
 }
 
 // DoCanUpgradeWithAttrib runs the prepared call.
 //
 //sp:native SDKCall before m_hCanUpgradeWithAttrib
-func DoCanUpgradeWithAttrib(player int32, slot int32, attrib int32, upgrade Address) bool {
+func DoCanUpgradeWithAttrib(player int32, slot int32, attrib int32, upgrade int32) bool {
 	return sdkCalls.DoCanUpgradeWithAttrib(player, slot, attrib, upgrade)
 }
 
 // DoGetCostForUpgrade runs the prepared call.
 //
 //sp:native SDKCall before m_hGetCostForUpgrade
-func DoGetCostForUpgrade(upgrade Address, slot int32, class int32, purchaser int32) int32 {
+func DoGetCostForUpgrade(upgrade int32, slot int32, class int32, purchaser int32) int32 {
 	return sdkCalls.DoGetCostForUpgrade(upgrade, slot, class, purchaser)
 }
 
@@ -484,7 +490,7 @@ func DoGetBonePosition(entity int32, bone int32) (origin [3]float32, angles [3]f
 // DoAimHeadTowards runs the prepared call.
 //
 //sp:native SDKCall before m_hAimHeadTowards
-func DoAimHeadTowards(body Body, lookAtPos [3]float32, priority LookAtPriority, duration float32, replyWhenAimed Address, reason string) {
+func DoAimHeadTowards(body Body, lookAtPos [3]float32, priority LookAtPriority, duration float32, replyWhenAimed int32, reason string) {
 	sdkCalls.DoAimHeadTowards(body, lookAtPos, priority, duration, replyWhenAimed, reason)
 }
 

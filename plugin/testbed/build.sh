@@ -27,27 +27,51 @@ mkdir -p "$src" \
 
 git config --global advice.detachedHead false 2>/dev/null || true
 
-# $1 repo, $2 ref, $3 directory
+# $1 repo, $2 ref (a tag, a branch or a full commit), $3 directory
+#
+# Stamped with the ref it holds, the way the compiler is: $work survives
+# between runs, and a checkout left from the previous pin builds the old
+# version under the new name.
 fetch() {
-	[ -d "$src/$3" ] && return 0
+	stamp="$src/$3.ref"
+	if [ -d "$src/$3" ]; then
+		[ "$(cat "$stamp" 2>/dev/null)" = "$2" ] && return 0
+		rm -rf "$src/$3"
+	fi
 	echo "fetching $1@$2"
-	git clone --quiet --depth 1 --branch "$2" "https://github.com/$1" "$src/$3"
+	mkdir -p "$src/$3"
+	git -C "$src/$3" init --quiet
+	git -C "$src/$3" fetch --quiet --depth 1 "https://github.com/$1" "$2"
+	git -C "$src/$3" checkout --quiet FETCH_HEAD
+	printf '%s\n' "$2" >"$stamp"
+}
+
+# patches/<directory>/*.patch, applied in order. Already applied is fine, a
+# second run finds its own work; not applying is a failure, because it means
+# upstream moved under the pin.
+apply_patches() {
+	for patch in "$root/testbed/patches/$1"/*.patch; do
+		[ -e "$patch" ] || return 0
+		git -C "$src/$1" apply --reverse --check "$patch" 2>/dev/null && continue
+		echo "applying $1/$(basename "$patch")"
+		git -C "$src/$1" apply --whitespace=nowarn "$patch"
+	done
 }
 
 # --- Sources the mod compiles against ---
 
-fetch FlaminSarge/tf2attributes "$TF2ATTRIBUTES_VERSION" tf2attributes
+fetch "$TF2ATTRIBUTES_REPO" "$TF2ATTRIBUTES_VERSION" tf2attributes
 fetch nosoop/SM-TFEconData "$TFECONDATA_VERSION" tf_econ_data
 fetch nosoop/SM-TFUtils "$TF2UTILS_VERSION" tf2utils
 fetch nosoop/stocksoup "$STOCKSOUP_REF" stocksoup-root/stocksoup
 fetch TF2-DMB/CBaseNPC "$CBASENPC_VERSION" cbasenpc
-fetch Vinillia/actions.ext "$ACTIONS_VERSION" actions
+fetch Vinillia/actions.ext "$ACTIONS_COMMIT" actions
 
-# TF2Attributes does not compile as it ships: a #pragma unused sits above the
-# declaration of UnloadAttributeValue rather than below it, and spcomp treats
-# that as an error. One line, deleted in place rather than carried as a patch
-# file, because a test-bed is not where a patch stack belongs.
-sed -i '/^#pragma unused UnloadAttributeValue$/d' "$src/tf2attributes/scripting/tf2attributes.sp"
+# What each patch is for is in patches/README.md.
+apply_patches tf2attributes
+apply_patches tf2utils
+apply_patches cbasenpc
+apply_patches actions
 
 # --- The compiler ---
 #
@@ -89,26 +113,40 @@ cp -rp "$work/ripext/addons/sourcemod/extensions/." "$out/addons/sourcemod/exten
 #
 # Taken prebuilt. Building them needs a C++ toolchain and several CPU-minutes,
 # and nothing this repository changes is inside either of them.
+#
+# Actions v4.0.1 is built for SourceMod 1.13 (extension API 9). CBaseNPC has no
+# such release: 1.15.4.126 is API 8, and a 1.13 server refuses to load it. A
+# bed that runs this mod on 1.13 needs the CBaseNPC tf2-archipelago builds from
+# source (deploy/bots/build-extensions.sh), and its DHooks too: the drop's never
+# hands a virtual hook's Address to the plugin correctly (its patch
+# sourcemod/0001). Compiling, which is what make check asks of this script, needs
+# neither.
 
-if [ ! -d "$work/prebuilt" ]; then
-	mkdir -p "$work/prebuilt/cbasenpc" "$work/prebuilt/actions"
+cbasenpc_prebuilt="$work/prebuilt/cbasenpc-$CBASENPC_VERSION"
+actions_prebuilt="$work/prebuilt/actions-$ACTIONS_VERSION"
 
+if [ ! -d "$cbasenpc_prebuilt" ]; then
 	echo "fetching CBaseNPC $CBASENPC_VERSION"
+	mkdir -p "$cbasenpc_prebuilt"
 	curl -fsSL "https://github.com/TF2-DMB/CBaseNPC/releases/download/$CBASENPC_VERSION/cbasenpc${CBASENPC_VERSION}_linux.tar.gz" |
-		tar xz -C "$work/prebuilt/cbasenpc"
+		tar xz -C "$cbasenpc_prebuilt"
+fi
 
+if [ ! -d "$actions_prebuilt" ]; then
 	echo "fetching Actions $ACTIONS_VERSION"
 	curl -fsSL -o "$work/actions.zip" \
 		"https://github.com/Vinillia/actions.ext/releases/download/$ACTIONS_VERSION/actions.ext.zip"
-	unzip -oq "$work/actions.zip" -d "$work/prebuilt/actions"
+	echo "$ACTIONS_SHA256  $work/actions.zip" | sha256sum -c -
+	mkdir -p "$actions_prebuilt"
+	unzip -oq "$work/actions.zip" -d "$actions_prebuilt"
 	rm -f "$work/actions.zip"
 fi
 
-cp -p "$work/prebuilt/cbasenpc/addons/sourcemod/extensions/cbasenpc.ext.2.tf2.so" \
-	"$work/prebuilt/actions/actions.ext/extensions/actions.ext.2.tf2.so" \
+cp -p "$cbasenpc_prebuilt/addons/sourcemod/extensions/cbasenpc.ext.2.tf2.so" \
+	"$actions_prebuilt/extensions/actions.ext.2.tf2.so" \
 	"$out/addons/sourcemod/extensions/"
 
-cp -p "$work/prebuilt/cbasenpc/addons/sourcemod/gamedata/cbasenpc.txt" \
+cp -p "$cbasenpc_prebuilt/addons/sourcemod/gamedata/cbasenpc.txt" \
 	"$out/addons/sourcemod/gamedata/"
 cp "$src/actions/sourcemod/gamedata/actions.games.txt" \
 	"$out/addons/sourcemod/gamedata/"

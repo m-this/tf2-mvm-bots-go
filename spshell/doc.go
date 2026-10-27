@@ -17,7 +17,7 @@
 // That produces objdir/spshell/linux-x86_64/spshell and, next to it,
 // objdir/spcomp/linux-x86_64/spcomp.
 //
-// Compiling with that spcomp is not optional. The SourceMod 1.12 spcomp64 in
+// Compiling with that spcomp is not optional. The SourceMod spcomp64 in
 // testbed/build implicitly includes its own float.inc, which declares the float
 // operators as __FLOAT_DIV__ and friends; spshell binds them lowercase, as
 // __float_div, so an SM-compiled plugin dies on the first division with

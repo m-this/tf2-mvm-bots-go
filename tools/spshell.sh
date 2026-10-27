@@ -13,7 +13,7 @@ src="$work/sourcepawn"
 # Pinned, and it has to be. The -Werror removal below is a patch against a tree
 # that is clang only, and an unpinned patch rots: compiler/errors.cpp:241 has a
 # signed/unsigned comparison GCC rejects and upstream never sees.
-ref=f2d11ff1a80ac891b7fb7ba81ad78646d9232c3e
+ref=e65cf5df3b81a6b4eccdc34506f0c5d1a6fa0dbf
 
 spcomp="$src/objdir/spcomp/linux-x86_64/spcomp"
 spshell="$src/objdir/spshell/linux-x86_64/spshell"

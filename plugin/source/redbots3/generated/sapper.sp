@@ -107,7 +107,7 @@ stock bool IsUpgradeStationEnabled(int station)
 // DereferencePointer follows a pointer one step.
 stock Address DereferencePointer(Address addr)
 {
-	// maybe someday we'll do 64-bit addresses
-	return view_as<Address>(LoadFromAddress(addr, NumberType_Int32));
+	// The pointer in memory is one 32-bit cell.
+	return AddressOfCell(LoadFromAddress(addr, NumberType_Int32));
 }
 

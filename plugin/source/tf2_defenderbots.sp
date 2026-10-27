@@ -27,6 +27,10 @@ Modified from that work; see NOTICE and docs/parity.md for what descends from it
 
 
 
+/* Where a pointer crosses between a cell and SourceMod 1.13's int64 Address.
+Before the game files, because timer.sp is one of the callers. */
+#include "redbots3/generated/address.sp"
+
 /* What the game itself holds, read through its own property names.
 
 These were ten includes out of SM_Stock_OfficerSpy, which ships without a

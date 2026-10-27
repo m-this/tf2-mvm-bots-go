@@ -12,7 +12,10 @@ written out in the comment block at the end of the shipped file.
 */
 package tfupgrades
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/address"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 /*
 MaxUpgrades is a ceiling on the number of upgrades, not the number of them.
@@ -79,10 +82,10 @@ schema's range is the only way to tell which one this is.
 //
 //sp:name GetIndex
 func (a AttributeDefinition) GetIndex() int32 {
-	iAttribIndex := engine.LoadFromAddress(engine.Address(a) + engine.Address(defIndex))
+	iAttribIndex := engine.LoadFromAddress(address.Widen(int32(a)) + engine.Address(defIndex))
 
 	if iAttribIndex > 3018 || iAttribIndex < 0 {
-		iAttribIndex = engine.LoadFromAddress(engine.Address(a) - engine.Address(defIndex))
+		iAttribIndex = engine.LoadFromAddress(address.Widen(int32(a)) - engine.Address(defIndex))
 	}
 
 	return iAttribIndex
@@ -105,7 +108,7 @@ szAttrib sits at offset zero, so there is nothing to add.
 func (u Upgrades) Attribute() (attribute [AttributeDescriptionLength]byte) {
 	for i := int32(0); i < AttributeDescriptionLength; i++ {
 		//nolint:gosec // G115: the field is a char and the native answers a cell, which is what SourcePawn narrows here too
-		attribute[i] = byte(engine.LoadFromAddress(engine.Address(u) + engine.Address(i)))
+		attribute[i] = byte(engine.LoadFromAddress(address.Widen(int32(u)) + engine.Address(i)))
 	}
 
 	return attribute
@@ -115,7 +118,7 @@ func (u Upgrades) Attribute() (attribute [AttributeDescriptionLength]byte) {
 //
 //sp:name m_flCap
 func (u Upgrades) Cap() float32 {
-	return float32(engine.LoadFromAddress(engine.Address(u) + engine.Address(engine.OffsetCap())))
+	return float32(engine.LoadFromAddress(address.Widen(int32(u)) + engine.Address(engine.OffsetCap())))
 }
 
 // UIGroup is which part of the upgrade station shows it, which is how a player
@@ -123,7 +126,7 @@ func (u Upgrades) Cap() float32 {
 //
 //sp:name m_iUIGroup
 func (u Upgrades) UIGroup() int32 {
-	return engine.LoadFromAddress(engine.Address(u) + engine.Address(engine.OffsetUIGroup()))
+	return engine.LoadFromAddress(address.Widen(int32(u)) + engine.Address(engine.OffsetUIGroup()))
 }
 
 // UpgradeManager is CMannVsMachineUpgradeManager, the object that owns the
@@ -139,7 +142,7 @@ type UpgradeManager int32
 //sp:name CMannVsMachineUpgradeManager
 //nolint:revive // unused-receiver: a constructor is a method with nothing to read off the receiver
 func (m UpgradeManager) NewUpgradeManager() UpgradeManager {
-	return UpgradeManager(engine.UpgradesAddress())
+	return UpgradeManager(address.Narrow(engine.UpgradesAddress()))
 }
 
 /*
@@ -156,17 +159,17 @@ should be counting lines in a text file and hoping the game agrees.
 //
 //sp:name Count
 func (m UpgradeManager) Count() int32 {
-	return engine.LoadFromAddress(engine.Address(m) + engine.Address(upgrades+12))
+	return engine.LoadFromAddress(address.Widen(int32(m)) + engine.Address(upgrades+12))
 }
 
 // GetUpgradeByIndex is one row of the table, by the index the game uses.
 //
 //sp:name GetUpgradeByIndex
 func (m UpgradeManager) GetUpgradeByIndex(index int32) Upgrades {
-	rawUpgrades := engine.Address(m) + engine.Address(upgrades)
+	rawUpgrades := address.Widen(int32(m)) + engine.Address(upgrades)
 	pUpgrades := engine.DereferencePointer(rawUpgrades)
 
-	return Upgrades(pUpgrades + engine.Address(index*engine.UpgradeSize()))
+	return Upgrades(address.Narrow(pUpgrades + engine.Address(index*engine.UpgradeSize())))
 }
 
 /*
@@ -178,14 +181,14 @@ loaded an MvM map looks like.
 //
 //sp:name CEIAD_GetAttributeDefinitionByName
 //sp:public
-func AttributeDefinitionByName(szAttribute engine.Text) AttributeDefinition {
+func AttributeDefinitionByName(szAttribute engine.Text) engine.Address {
 	CEconItemSchema := engine.GEconItemSchema()
 
 	if CEconItemSchema == engine.NoAddress() {
-		return AttributeDefinition(engine.NoAddress())
+		return engine.NoAddress()
 	}
 
-	return AttributeDefinition(engine.GetAttributeDefinitionByName(CEconItemSchema, szAttribute))
+	return engine.GetAttributeDefinitionByName(CEconItemSchema, szAttribute)
 }
 
 // UpgradeCount is how many upgrades the game holds, asked of the game rather
@@ -216,15 +219,16 @@ func InitMvMUpgrades(hGamedata engine.GameData) {
 	The wrappers.
 
 The generated shopping code reaches these by name. Each is one methodmap call:
-the methodmap is this file's, built on the gamedata offsets, and a generated
-body has no form for a methodmap on an Address.
+the methodmap is this file's, built on the gamedata offsets. A methodmap is a
+cell and an Address is an int64, so each wrapper crosses through
+internal/body/address.
 */
 
 // UpgradeUIGroupOf is which part of the station shows that upgrade.
 //
 //sp:name UpgradeUIGroupOf
 func UpgradeUIGroupOf(upgrade engine.Address) int32 {
-	return Upgrades(upgrade).UIGroup()
+	return Upgrades(address.Narrow(upgrade)).UIGroup()
 }
 
 // UpgradeAttributeOf is the attribute name it grants.
@@ -232,7 +236,7 @@ func UpgradeUIGroupOf(upgrade engine.Address) int32 {
 //sp:name UpgradeAttributeOf
 //sp:returns
 func UpgradeAttributeOf(upgrade engine.Address) (attribute [AttributeDescriptionLength]byte) {
-	attribute = Upgrades(upgrade).Attribute()
+	attribute = Upgrades(address.Narrow(upgrade)).Attribute()
 
 	return attribute
 }
@@ -241,7 +245,7 @@ func UpgradeAttributeOf(upgrade engine.Address) (attribute [AttributeDescription
 //
 //sp:name UpgradeAddressByIndex
 func UpgradeAddressByIndex(index int32) engine.Address {
-	return engine.Address(UpgradeManager(engine.MvMUpgradeManager()).GetUpgradeByIndex(index))
+	return address.Widen(int32(UpgradeManager(address.Narrow(engine.UpgradesAddress())).GetUpgradeByIndex(index)))
 }
 
 // IsUpgradeManagerUp says the game has one, which it has not until an MvM map
@@ -249,7 +253,7 @@ func UpgradeAddressByIndex(index int32) engine.Address {
 //
 //sp:name IsUpgradeManagerUp
 func IsUpgradeManagerUp() bool {
-	return engine.MvMUpgradeManager() != engine.NoAddress()
+	return engine.UpgradesAddress() != engine.NoAddress()
 }
 
 /*
@@ -269,5 +273,5 @@ func UpgradeCountRaw() int32 {
 //
 //sp:name AttributeDefinitionIndexOf
 func AttributeDefinitionIndexOf(attr engine.Address) int32 {
-	return AttributeDefinition(attr).GetIndex()
+	return AttributeDefinition(address.Narrow(attr)).GetIndex()
 }

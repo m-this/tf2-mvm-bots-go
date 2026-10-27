@@ -60,16 +60,6 @@ type callback struct {
 	Params string
 	// Names are the parameters a body may take, in the engine's names.
 	Names []string
-	// Listener wires the callback through __action_setlistener, the call the
-	// property setter makes, instead of through the property. spcomp in the
-	// 1.12 builds after git7164 segfaults checking a function against the
-	// ActionHandler typeset when an entry before the matching one has an
-	// array where the function has a scalar: IsValidImplicitArrayCast takes
-	// the inner type of an argument that is not an array. The territory
-	// callbacks are the only ones that reach past OnCommandApproachVector's
-	// const float pos[3]. The setter takes a Function, so nothing is matched
-	// and the signature above is the only check.
-	Listener bool
 }
 
 var callbacks = map[string]callback{
@@ -84,22 +74,22 @@ var callbacks = map[string]callback{
 	// The engine telling a behaviour about ground it was holding.
 	"OnTerritoryContested": {
 		Wire: "OnTerritoryContested", Returns: "Action",
-		Params:   "int actor, int territory",
-		Names:    []string{"actor", "territory"},
-		Listener: true,
+		Params: "int actor, int territory",
+		Names:  []string{"actor", "territory"},
 	},
 	"OnTerritoryLost": {
 		Wire: "OnTerritoryLost", Returns: "Action",
-		Params:   "int actor, int territory",
-		Names:    []string{"actor", "territory"},
-		Listener: true,
+		Params: "int actor, int territory",
+		Names:  []string{"actor", "territory"},
 	},
 	// The engine telling the behaviour something happened. The result is a
 	// desired one rather than an outcome, and the behaviour usually just
-	// carries on.
+	// carries on. The damage record is any because the typeset says so: the
+	// extension pushes the pointer as one cell, and CBaseNPC's
+	// CTakeDamageInfo takes it as one.
 	"OnInjured": {
 		Wire: "OnInjured", Returns: "Action",
-		Params: "int actor, Address takedamageinfo, ActionDesiredResult result",
+		Params: "int actor, any takedamageinfo, ActionDesiredResult result",
 		Names:  []string{"actor", "takedamageinfo", "result"},
 	},
 	// The engine telling a behaviour the bot walked onto different ground.
@@ -254,10 +244,6 @@ func constructor(a Action) string {
 	fmt.Fprintf(&b, "\tBehaviorAction action = ActionsManager.Create(%q);\n\n", a.Registered)
 	for _, name := range a.Has {
 		cb := callbacks[name]
-		if cb.Listener {
-			fmt.Fprintf(&b, "\t__action_setlistener(action, __action_processor_%s, %s_%s, false);\n", cb.Wire, a.Prefix, name)
-			continue
-		}
 		fmt.Fprintf(&b, "\taction.%s = %s_%s;\n", cb.Wire, a.Prefix, name)
 	}
 	b.WriteString("\n\treturn action;\n}\n\n")

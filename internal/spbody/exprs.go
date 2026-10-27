@@ -470,6 +470,10 @@ func (e *emitter) callWith(call *ast.CallExpr, extra []string, front ...string) 
 			e.fail(call.Pos(), "%s is a tag change and takes one value", x.Func)
 			return ""
 		}
+		if from, _, err := e.spType(e.info.Types[call.Args[0]].Type); x.Func == addressTag || (err == nil && from == addressTag) {
+			e.fail(call.Pos(), "%s is a tag change, and an Address is an int64 rather than a cell; cross with internal/body/address", x.Func)
+			return ""
+		}
 		return fmt.Sprintf("view_as<%s>(%s)", x.Func, e.expr(call.Args[0]))
 	}
 	if x, ok := e.externOf2(call); ok && x.Same {
@@ -643,9 +647,20 @@ func builtinCall(name string) (string, []string, error) {
 	return "", nil, fmt.Errorf("the builtin %s has no SourcePawn", name)
 }
 
-// conversion is where SourcePawn and Go disagree most quietly. Between cells it
-// is a tag change and nothing else; across the int and float boundary it is a
-// call, and Go truncates towards zero, which is RoundToZero.
+/*
+conversion is where SourcePawn and Go disagree most quietly. Between cells it
+is a tag change and nothing else; across the int and float boundary it is a
+call, and Go truncates towards zero, which is RoundToZero.
+
+Address is SourceMod 1.13's int64 and the one type here wider than a cell. An
+int converts to it by view_as, which sign-extends as Go does, and that is right
+for the offsets added to one. A pointer held in any other tag does not: it goes
+through internal/body/address, and so does every Address on its way back to a
+cell.
+*/
+// addressTag is SourceMod's Address.
+const addressTag = "Address"
+
 func (e *emitter) conversion(call *ast.CallExpr, to types.Type) string {
 	if len(call.Args) != 1 {
 		e.fail(call.Pos(), "a conversion taking %d arguments", len(call.Args))
@@ -666,6 +681,12 @@ func (e *emitter) conversion(call *ast.CallExpr, to types.Type) string {
 	switch {
 	case fromTag == toTag:
 		return inner
+	case toTag == addressTag && fromTag != "int":
+		e.fail(call.Pos(), "a conversion from %s to Address: a %s is one cell and an Address is an int64; widen the pointer with address.Widen, which zero-extends", fromTag, fromTag)
+		return ""
+	case fromTag == addressTag && !e.narrows:
+		e.fail(call.Pos(), "a conversion from Address to %s drops the high half without a word; narrow with address.Narrow, which refuses an Address wider than a cell", toTag)
+		return ""
 	case fromTag == "int" && toTag == "float":
 		return fmt.Sprintf("float(%s)", inner)
 	case fromTag == "float" && toTag == "int":

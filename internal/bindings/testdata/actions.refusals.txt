@@ -1,4 +1,4 @@
 # refused while parsing
 
 # refused while emitting
-actions.inc:900: declaration: name already used on BehaviorAction (BehaviorAction.Set)
+actions.inc:836: declaration: name already used on BehaviorAction (BehaviorAction.Set)

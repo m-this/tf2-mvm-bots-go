@@ -80,7 +80,7 @@ public Action CTFBotMedicRevive_Update(BehaviorAction action, int actor, float i
 }
 
 // OnInjured pops the uber when something hits the medic mid-revive.
-public Action CTFBotMedicRevive_OnInjured(BehaviorAction action, int actor, Address takedamageinfo, ActionDesiredResult result)
+public Action CTFBotMedicRevive_OnInjured(BehaviorAction action, int actor, any takedamageinfo, ActionDesiredResult result)
 {
 	CTakeDamageInfo info = CTakeDamageInfo(takedamageinfo);
 	if (info.GetDamage() > 0.0)

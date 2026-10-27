@@ -168,11 +168,9 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 			return Extern{}, false, fmt.Errorf("the directive %q needs a kind, one name and at most one flag", line)
 		}
 		kind, name := fields[0], fields[1]
-		returnsArray, sized, fills, inPlace, borrowed, frees, into, untyped := false, false, false, false, false, false, false, false
+		returnsArray, sized, fills, inPlace, borrowed, frees, into := false, false, false, false, false, false, false
 		if len(fields) == 3 {
 			switch fields[2] {
-			case "untyped":
-				untyped = true
 			case "returns":
 				returnsArray = true
 			case "sized":
@@ -188,7 +186,7 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 			case "into":
 				into = true
 			default:
-				return Extern{}, false, fmt.Errorf("the directive flag %q is not returns, sized, fills, inplace, borrowed, frees, into or untyped", fields[2])
+				return Extern{}, false, fmt.Errorf("the directive flag %q is not returns, sized, fills, inplace, borrowed, frees or into", fields[2])
 			}
 		}
 		switch kind {
@@ -245,7 +243,7 @@ func parseDirective(doc *ast.CommentGroup) (Extern, bool, error) {
 		case "body":
 			// A ported function fills a buffer the same way an
 			// unported one does, so it takes the same flags.
-			return Extern{Func: name, Body: true, ReturnsArray: returnsArray, Sized: sized, Fills: fills, Trail: trail, Untyped: untyped}, true, nil
+			return Extern{Func: name, Body: true, ReturnsArray: returnsArray, Sized: sized, Fills: fills, Trail: trail}, true, nil
 		case "plugin":
 			return Extern{Func: name, Plugin: true, ReturnsArray: returnsArray, Sized: sized, Fills: fills, Trail: trail}, true, nil
 		case "library":

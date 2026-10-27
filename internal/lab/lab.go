@@ -259,7 +259,7 @@ repository chose.
 
 The base image installs it into the game volume on first start, at whatever the
 branch's latest was that day, and the volume keeps it. So it is read rather than
-assumed. It comes back in SourceMod's own printed form, 1.12.0.7255, and not in
+assumed. It comes back in SourceMod's own printed form, 1.13.0.7481, and not in
 the form the drops are named in.
 */
 func (l Lab) SourcemodVersion() (string, error) {

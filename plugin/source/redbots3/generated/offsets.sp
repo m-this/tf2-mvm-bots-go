@@ -109,7 +109,7 @@ stock void GetTurretAngles(int sentry, float buffer[3])
 // none, which mvm-z83.93 measured as safe to ask of either.
 stock bool IsCTFBot(int client)
 {
-	return view_as<Address>(CBaseNPC_GetNextBotOfEntity(client)) != Address_Null;
+	return AddressOfCell(view_as<int>(CBaseNPC_GetNextBotOfEntity(client))) != Address_Null;
 }
 
 // 	SetLookingAroundForEnemies tells the game's own bot code to stop scanning
@@ -175,6 +175,6 @@ stock float GetLastAccuracyCheck(int weapon)
 // on.
 stock float GetTravelDistanceToBombTarget(CTFNavArea area)
 {
-	return LoadFromAddress(view_as<Address>(area) + view_as<Address>(GetOffset("CTFNavArea", "m_distanceToBombTarget")), NumberType_Int32);
+	return LoadFromAddress(AddressOfCell(view_as<int>(area)) + view_as<Address>(GetOffset("CTFNavArea", "m_distanceToBombTarget")), NumberType_Int32);
 }
 

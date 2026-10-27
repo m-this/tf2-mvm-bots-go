@@ -117,9 +117,9 @@ jobs:
             plugin/testbed/build/spcomp.ref
             plugin/testbed/build/ripext
             plugin/testbed/build/prebuilt
-          key: testbed-${{ hashFiles('plugin/testbed/build.sh', 'plugin/testbed/versions.env') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: testbed-${{ hashFiles('plugin/testbed/build.sh', 'plugin/testbed/versions.env', 'plugin/testbed/patches/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            testbed-${{ hashFiles('plugin/testbed/build.sh', 'plugin/testbed/versions.env') }}-
+            testbed-${{ hashFiles('plugin/testbed/build.sh', 'plugin/testbed/versions.env', 'plugin/testbed/patches/**') }}-
 
       # Compiled packages, the linter and deadcode built from source, and the
       # race-instrumented standard library. Content addressed, so a stale one
@@ -233,7 +233,7 @@ jobs:
             plugin/testbed/build/spcomp.ref
             plugin/testbed/build/ripext
             plugin/testbed/build/prebuilt
-          key: testbed-${{ hashFiles('plugin/testbed/build.sh', 'plugin/testbed/versions.env') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: testbed-${{ hashFiles('plugin/testbed/build.sh', 'plugin/testbed/versions.env', 'plugin/testbed/patches/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: save the Go caches
         if: steps.go.outputs.cache-matched-key == ''

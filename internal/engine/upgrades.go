@@ -27,7 +27,6 @@ type UpgradeCalls struct {
 	UpgradeCount                 func() int32
 	IsUpgradeManagerUp           func() bool
 	UpgradeCountRaw              func() int32
-	MvMUpgradeManager            func() Address
 	GEconItemSchema              func() Address
 	GetAttributeDefinitionByName func(schema Address, name Text) Address
 	MvMUpgradeManagerCount       func() int32
@@ -103,11 +102,7 @@ func UpgradeAttribute(upgrade Address) Text { return upgrades.UpgradeAttribute(u
 
 // AttributeDefinitionByName is the schema's record for that attribute.
 //
-// The generated function returns CEconItemAttributeDefinition, the methodmap
-// internal/body/tfupgrades declares over an Address. This package cannot name a
-// body's type, so it names the Address underneath and says so: untyped.
-//
-//sp:body CEIAD_GetAttributeDefinitionByName untyped
+//sp:body CEIAD_GetAttributeDefinitionByName
 func AttributeDefinitionByName(name Text) Address { return upgrades.AttributeDefinitionByName(name) }
 
 // AttributeDefinitionIndex is its index.
@@ -297,12 +292,6 @@ func UpgradeCountRaw() int32 { return upgrades.UpgradeCountRaw() }
 //
 //sp:global MAX_ATTRIBUTE_DESCRIPTION_LENGTH
 func AttributeDescriptionMax() int32 { return 128 }
-
-// MvMUpgradeManager is the manager, by the methodmap constructor's name.
-// Ported, tfupgrades.
-//
-//sp:native CMannVsMachineUpgradeManager
-func MvMUpgradeManager() Address { return upgrades.MvMUpgradeManager() }
 
 // GEconItemSchema is the item schema, or null when the game has not built one.
 // Ported, sdkcalls.

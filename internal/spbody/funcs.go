@@ -197,6 +197,31 @@ func anysOf(d *ast.FuncDecl) map[string]bool {
 	return out
 }
 
+/*
+	narrowsDirective lets a function convert an Address to a cell
+
+SourceMod 1.13 makes Address an int64 and a methodmap stays one cell, so
+view_as<int> on an Address drops the high half without a word. conversion
+refuses it everywhere but in a function carrying this, and internal/body/address
+is the one that does: the narrowing that checks what it drops.
+*/
+const narrowsDirective = "//sp:narrows"
+
+// narrows says the declaration carries //sp:narrows.
+func narrows(d *ast.FuncDecl) bool {
+	if d.Doc == nil {
+		return false
+	}
+	for _, c := range d.Doc.List {
+		for line := range strings.Lines(c.Text) {
+			if strings.TrimSpace(line) == narrowsDirective {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // mutatesOf reads //sp:mutates <parameter> off a declaration.
 func mutatesOf(d *ast.FuncDecl) map[string]bool {
 	out := map[string]bool{}
@@ -323,6 +348,8 @@ func (e *emitter) funcDecl(d *ast.FuncDecl) {
 	e.mutates = mutatesOf(d)
 	e.byrefs = byrefsOf(d)
 	e.writable = writablesOf(d)
+	e.narrows = narrows(d)
+	defer func() { e.narrows = false }()
 	sig := obj.Type().(*types.Signature)
 	if sig.Recv() != nil {
 		e.fail(d.Pos(), "a method; write a plain function taking the receiver first")

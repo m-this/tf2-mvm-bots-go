@@ -209,21 +209,6 @@ type Extern struct {
 	// the assertion, because internal/body requires a body of that name to
 	// exist and refuses the declaration when it does not.
 	Body bool
-	/*
-		Untyped drops the shape comparison for one body extern.
-
-		The extern package cannot name a type a body declares, and a body
-		that declares a methodmap returns one: the generated function
-		returns CEconItemAttributeDefinition and the extern has nothing
-		to write for it but the Address it is a methodmap over. That is
-		the same cell and a different name, and no rule this side of an
-		import can tell it from the mismatches the comparison exists to
-		catch.
-
-		So it is written down instead, one extern at a time, with the
-		reason in the comment above it. There are no others.
-	*/
-	Untyped bool
 }
 
 /*

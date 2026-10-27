@@ -108,7 +108,7 @@ stock void DHooks_DefenderBot(int client)
 	m_hEventKilled.HookEntity(Hook_Pre, client, DHookCallback_EventKilled_Pre);
 	m_hEventKilled.HookEntity(Hook_Post, client, DHookCallback_EventKilled_Post);
 	INextBot bot = CBaseNPC_GetNextBotOfEntity(client);
-	Address vision = view_as<Address>(bot.GetVisionInterface());
+	Address vision = AddressOfCell(view_as<int>(bot.GetVisionInterface()));
 	if (vision != Address_Null)
 	{
 		m_hIsVisibleEntityNoticed.HookRaw(Hook_Pre, vision, DHookCallback_IsVisibleEntityNoticed_Pre);
@@ -305,7 +305,7 @@ stock MRESReturn DHookCallback_IsVisibleEntityNoticed_Post(Address pThis, DHookR
 stock MRESReturn DHookCallback_IsIgnored_Pre(Address pThis, DHookReturn hReturn, DHookParam hParams)
 {
 	int subject = hParams.Get(1);
-	int myself = view_as<IVision>(pThis).GetBot().GetEntity();
+	int myself = view_as<IVision>(CellOfAddress(pThis)).GetBot().GetEntity();
 	int myTeam = GetClientTeam(myself);
 	if (BaseEntity_IsPlayer(subject) && (GetClientTeam(subject) != myTeam))
 	{

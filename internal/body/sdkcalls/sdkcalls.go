@@ -10,6 +10,7 @@ went missing and then stops, which is a better report than the first crash.
 package sdkcalls
 
 import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/address"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/offsets"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
 )
@@ -257,21 +258,21 @@ func GetProjectileSpeed(weapon int32) float32 {
 //
 //sp:name GEconItemSchema
 func GEconItemSchema() engine.Address {
-	return engine.DoGEconItemSchema()
+	return address.Widen(engine.DoGEconItemSchema())
 }
 
 // GetAttributeDefinitionByName is the prepared call by that name.
 //
 //sp:name GetAttributeDefinitionByName
 func GetAttributeDefinitionByName(econItemSchema engine.Address, pszDefName string) engine.Address {
-	return engine.DoGetAttributeDefinitionByName(econItemSchema, pszDefName)
+	return address.Widen(engine.DoGetAttributeDefinitionByName(address.Narrow(econItemSchema), pszDefName))
 }
 
 // CanUpgradeWithAttrib is the prepared call by that name.
 //
 //sp:name CanUpgradeWithAttrib
 func CanUpgradeWithAttrib(pPlayer int32, iWeaponSlot int32, iAttribIndex int32, pUpgrade engine.Address) bool {
-	return engine.DoCanUpgradeWithAttrib(pPlayer, iWeaponSlot, iAttribIndex, pUpgrade)
+	return engine.DoCanUpgradeWithAttrib(pPlayer, iWeaponSlot, iAttribIndex, address.Narrow(pUpgrade))
 }
 
 // GetCostForUpgrade is the prepared call by that name.
@@ -279,7 +280,7 @@ func CanUpgradeWithAttrib(pPlayer int32, iWeaponSlot int32, iAttribIndex int32, 
 //sp:name GetCostForUpgrade
 //sp:default pPurchaser -1
 func GetCostForUpgrade(pUpgrade engine.Address, iItemSlot int32, nClass int32, pPurchaser int32) int32 {
-	return engine.DoGetCostForUpgrade(pUpgrade, iItemSlot, nClass, pPurchaser)
+	return engine.DoGetCostForUpgrade(address.Narrow(pUpgrade), iItemSlot, nClass, pPurchaser)
 }
 
 // GetUpgradeTier is the prepared call by that name.
@@ -317,9 +318,9 @@ func GetBonePosition(entity int32, iBone int32) (origin [3]float32, angles [3]fl
 //sp:name AimHeadTowards
 //sp:default priority BORING
 //sp:default duration 0.0
-//sp:default replyWhenAimed Address_Null
+//sp:default replyWhenAimed 0
 //sp:default reason NULL_STRING
 //sp:const reason
 func AimHeadTowards(body engine.Body, lookAtPos [3]float32, priority engine.LookAtPriority, duration float32, replyWhenAimed engine.Address, reason string) {
-	engine.DoAimHeadTowards(body, lookAtPos, priority, duration, replyWhenAimed, reason)
+	engine.DoAimHeadTowards(body, lookAtPos, priority, duration, address.Narrow(replyWhenAimed), reason)
 }

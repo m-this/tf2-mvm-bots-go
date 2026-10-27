@@ -4,7 +4,10 @@ about the mission and about who is playing it.
 */
 package mission
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/address"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 /*
 IsTFBotPlayer says the slot is one of the game's own bots.
@@ -30,7 +33,7 @@ func IsTFBotPlayer(client int32) bool {
 		return true
 	}
 
-	return engine.AddressOfBot(engine.NextBotOf(client)) != engine.NoAddress()
+	return address.Widen(int32(engine.NextBotOf(client))) != engine.NoAddress()
 }
 
 // IsFinalWave says this is the last one the mission has.

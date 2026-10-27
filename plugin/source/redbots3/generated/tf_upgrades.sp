@@ -16,10 +16,10 @@ methodmap CEconItemAttributeDefinition
 {
 	public int GetIndex()
 	{
-		int iAttribIndex = LoadFromAddress(view_as<Address>(this) + 4, NumberType_Int32);
+		int iAttribIndex = LoadFromAddress(AddressOfCell(view_as<int>(this)) + 4, NumberType_Int32);
 		if ((iAttribIndex > 3018) || (iAttribIndex < 0))
 		{
-			iAttribIndex = LoadFromAddress(view_as<Address>(this) - 4, NumberType_Int32);
+			iAttribIndex = LoadFromAddress(AddressOfCell(view_as<int>(this)) - 4, NumberType_Int32);
 		}
 		return iAttribIndex;
 	}
@@ -32,19 +32,19 @@ methodmap CMannVsMachineUpgrades
 		char attribute[128];
 		for (int i = 0; i < MAX_ATTRIBUTE_DESCRIPTION_LENGTH; i++)
 		{
-			attribute[i] = LoadFromAddress(view_as<Address>(this) + view_as<Address>(i), NumberType_Int32);
+			attribute[i] = LoadFromAddress(AddressOfCell(view_as<int>(this)) + view_as<Address>(i), NumberType_Int32);
 		}
 		return attribute;
 	}
 
 	public float m_flCap()
 	{
-		return float(LoadFromAddress(view_as<Address>(this) + view_as<Address>(offset_flCap), NumberType_Int32));
+		return float(LoadFromAddress(AddressOfCell(view_as<int>(this)) + view_as<Address>(offset_flCap), NumberType_Int32));
 	}
 
 	public int m_iUIGroup()
 	{
-		return LoadFromAddress(view_as<Address>(this) + view_as<Address>(offset_nUIGroup), NumberType_Int32);
+		return LoadFromAddress(AddressOfCell(view_as<int>(this)) + view_as<Address>(offset_nUIGroup), NumberType_Int32);
 	}
 }
 
@@ -52,19 +52,19 @@ methodmap CMannVsMachineUpgradeManager < CMannVsMachineUpgrades
 {
 	public CMannVsMachineUpgradeManager()
 	{
-		return view_as<CMannVsMachineUpgradeManager>(g_pMannVsMachineUpgrades);
+		return view_as<CMannVsMachineUpgradeManager>(CellOfAddress(g_pMannVsMachineUpgrades));
 	}
 
 	public int Count()
 	{
-		return LoadFromAddress(view_as<Address>(this) + 24, NumberType_Int32);
+		return LoadFromAddress(AddressOfCell(view_as<int>(this)) + 24, NumberType_Int32);
 	}
 
 	public CMannVsMachineUpgrades GetUpgradeByIndex(int index)
 	{
-		Address rawUpgrades = view_as<Address>(this) + 12;
+		Address rawUpgrades = AddressOfCell(view_as<int>(this)) + 12;
 		Address pUpgrades = DereferencePointer(rawUpgrades);
-		return view_as<CMannVsMachineUpgrades>(pUpgrades + view_as<Address>(index * CMannVsMachineUpgrades_Size));
+		return view_as<CMannVsMachineUpgrades>(CellOfAddress(pUpgrades + view_as<Address>(index * CMannVsMachineUpgrades_Size)));
 	}
 }
 
@@ -72,14 +72,14 @@ methodmap CMannVsMachineUpgradeManager < CMannVsMachineUpgrades
 //
 // Null when the schema itself is not up, which is what a server that has not
 // loaded an MvM map looks like.
-public CEconItemAttributeDefinition CEIAD_GetAttributeDefinitionByName(const char[] szAttribute)
+public Address CEIAD_GetAttributeDefinitionByName(const char[] szAttribute)
 {
 	Address CEconItemSchema = GEconItemSchema();
 	if (CEconItemSchema == Address_Null)
 	{
-		return view_as<CEconItemAttributeDefinition>(Address_Null);
+		return Address_Null;
 	}
-	return view_as<CEconItemAttributeDefinition>(GetAttributeDefinitionByName(CEconItemSchema, szAttribute));
+	return GetAttributeDefinitionByName(CEconItemSchema, szAttribute);
 }
 
 // UpgradeCount is how many upgrades the game holds, asked of the game rather
@@ -106,28 +106,28 @@ stock void InitMvMUpgrades(GameData hGamedata)
 // UpgradeUIGroupOf is which part of the station shows that upgrade.
 stock int UpgradeUIGroupOf(Address upgrade)
 {
-	return view_as<CMannVsMachineUpgrades>(upgrade).m_iUIGroup();
+	return view_as<CMannVsMachineUpgrades>(CellOfAddress(upgrade)).m_iUIGroup();
 }
 
 // UpgradeAttributeOf is the attribute name it grants.
 stock char[] UpgradeAttributeOf(Address upgrade)
 {
 	char attribute[128];
-	attribute = view_as<CMannVsMachineUpgrades>(upgrade).m_szAttribute();
+	attribute = view_as<CMannVsMachineUpgrades>(CellOfAddress(upgrade)).m_szAttribute();
 	return attribute;
 }
 
 // UpgradeAddressByIndex is the row at that index.
 stock Address UpgradeAddressByIndex(int index)
 {
-	return view_as<Address>(view_as<CMannVsMachineUpgradeManager>(CMannVsMachineUpgradeManager()).GetUpgradeByIndex(index));
+	return AddressOfCell(view_as<int>(view_as<CMannVsMachineUpgradeManager>(CellOfAddress(g_pMannVsMachineUpgrades)).GetUpgradeByIndex(index)));
 }
 
 // IsUpgradeManagerUp says the game has one, which it has not until an MvM map
 // has loaded.
 stock bool IsUpgradeManagerUp()
 {
-	return CMannVsMachineUpgradeManager() != Address_Null;
+	return g_pMannVsMachineUpgrades != Address_Null;
 }
 
 // 	UpgradeCountRaw is the count the manager itself gives, unclamped
@@ -143,6 +143,6 @@ stock int UpgradeCountRaw()
 // AttributeDefinitionIndexOf is the schema index of that attribute record.
 stock int AttributeDefinitionIndexOf(Address attr)
 {
-	return view_as<CEconItemAttributeDefinition>(attr).GetIndex();
+	return view_as<CEconItemAttributeDefinition>(CellOfAddress(attr)).GetIndex();
 }
 

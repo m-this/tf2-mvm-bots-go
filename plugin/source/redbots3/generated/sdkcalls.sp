@@ -231,25 +231,25 @@ stock float GetProjectileSpeed(int weapon)
 // GEconItemSchema is the prepared call by that name.
 stock Address GEconItemSchema()
 {
-	return SDKCall(m_hGEconItemSchema);
+	return AddressOfCell(SDKCall(m_hGEconItemSchema));
 }
 
 // GetAttributeDefinitionByName is the prepared call by that name.
 stock Address GetAttributeDefinitionByName(Address econItemSchema, const char[] pszDefName)
 {
-	return SDKCall(m_hGetAttributeDefinitionByName, econItemSchema, pszDefName);
+	return AddressOfCell(SDKCall(m_hGetAttributeDefinitionByName, CellOfAddress(econItemSchema), pszDefName));
 }
 
 // CanUpgradeWithAttrib is the prepared call by that name.
 stock bool CanUpgradeWithAttrib(int pPlayer, int iWeaponSlot, int iAttribIndex, Address pUpgrade)
 {
-	return SDKCall(m_hCanUpgradeWithAttrib, pPlayer, iWeaponSlot, iAttribIndex, pUpgrade);
+	return SDKCall(m_hCanUpgradeWithAttrib, pPlayer, iWeaponSlot, iAttribIndex, CellOfAddress(pUpgrade));
 }
 
 // GetCostForUpgrade is the prepared call by that name.
 stock int GetCostForUpgrade(Address pUpgrade, int iItemSlot, int nClass, int pPurchaser = -1)
 {
-	return SDKCall(m_hGetCostForUpgrade, pUpgrade, iItemSlot, nClass, pPurchaser);
+	return SDKCall(m_hGetCostForUpgrade, CellOfAddress(pUpgrade), iItemSlot, nClass, pPurchaser);
 }
 
 // GetUpgradeTier is the prepared call by that name.
@@ -286,8 +286,8 @@ stock void GetBonePosition(int entity, int iBone, float origin[3], float angles[
 }
 
 // AimHeadTowards points the bot's head at a place, for a reason it can say.
-stock void AimHeadTowards(IBody body, float lookAtPos[3], LookAtPriorityType priority = BORING, float duration = 0.0, Address replyWhenAimed = Address_Null, const char[] reason = NULL_STRING)
+stock void AimHeadTowards(IBody body, float lookAtPos[3], LookAtPriorityType priority = BORING, float duration = 0.0, Address replyWhenAimed = 0, const char[] reason = NULL_STRING)
 {
-	SDKCall(m_hAimHeadTowards, body, lookAtPos, priority, duration, replyWhenAimed, reason);
+	SDKCall(m_hAimHeadTowards, body, lookAtPos, priority, duration, CellOfAddress(replyWhenAimed), reason);
 }
 

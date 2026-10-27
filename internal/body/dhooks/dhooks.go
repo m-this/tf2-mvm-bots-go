@@ -8,7 +8,10 @@ whether to answer for the game or let it through.
 */
 package dhooks
 
-import "github.com/m-this/tf2-mvm-bots-go/internal/engine"
+import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/address"
+	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
+)
 
 // InitDHooks sets up every detour and hook, and says whether all of them worked.
 //
@@ -134,7 +137,7 @@ func DHooksDefenderBot(client int32) {
 	engine.HookEventKilled().HookEntity(engine.HookPost(), client, engine.DHookEventKilledPost())
 
 	bot := engine.NextBotOf(client)
-	vision := engine.AddressOfVision(bot.Vision())
+	vision := address.Widen(int32(bot.Vision()))
 
 	if vision != engine.NoAddress() {
 		engine.HookIsVisibleEntityNoticed().HookRaw(engine.HookPre(), vision, engine.DHookIsVisibleEntityNoticedPre())
@@ -358,7 +361,7 @@ building, which the game only ignores outside Mann vs Machine.
 //nolint:revive // unused-parameter: a DHook is handed the object, the return and the arguments
 func DHookCallbackIsIgnoredPre(pThis engine.Address, hReturn engine.DHookReturn, hParams engine.DHookParam) engine.Mres {
 	subject := hParams.Get(1)
-	myself := engine.VisionBot(pThis).Bot().Entity()
+	myself := engine.Vision(address.Narrow(pThis)).Bot().Entity()
 	myTeam := engine.GetClientTeam(myself)
 
 	if engine.IsPlayer(subject) && engine.GetClientTeam(subject) != myTeam {

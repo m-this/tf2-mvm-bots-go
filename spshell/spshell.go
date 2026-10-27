@@ -187,8 +187,8 @@ func literal(v float32) string { return sp.FloatLiteral(v) }
 /*
 	WithSourceMod swaps in the compiler the plugin actually ships with
 
-The differential tests compile with the 1.13 spcomp built beside spshell, and
-the plugin builds with SourceMod's 1.12 spcomp64. Same lineage, but a check that
+The differential tests compile with the spcomp built beside spshell, and the
+plugin builds with SourceMod's spcomp64. Same lineage, but a check that
 does not cover what ships is not a check, so mvm-z83.13 asks for both.
 
 Only the compiler changes. The VM stays spshell's, which works because the

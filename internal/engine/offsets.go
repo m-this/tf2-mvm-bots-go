@@ -150,11 +150,3 @@ func ThrowErrorText(format string, args ...any) { offsets.ThrowErrorText(format,
 //
 //sp:native LoadFromAddress after NumberType_Int32
 func LoadFloatFromAddress(address Address) float32 { return offsets.LoadFloatFromAddress(address) }
-
-// AddressOfArea is the nav area read as a memory address, which is what an
-// offset is added to.
-//
-//sp:cast Address
-func AddressOfArea(area NavArea) Address {
-	return Address(area)
-}

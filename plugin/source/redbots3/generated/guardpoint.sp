@@ -5,8 +5,8 @@ BehaviorAction CTFBotGuardPoint()
 	action.OnStart = CTFBotGuardPoint_OnStart;
 	action.Update = CTFBotGuardPoint_Update;
 	action.OnEnd = CTFBotGuardPoint_OnEnd;
-	__action_setlistener(action, __action_processor_OnTerritoryContested, CTFBotGuardPoint_OnTerritoryContested, false);
-	__action_setlistener(action, __action_processor_OnTerritoryLost, CTFBotGuardPoint_OnTerritoryLost, false);
+	action.OnTerritoryContested = CTFBotGuardPoint_OnTerritoryContested;
+	action.OnTerritoryLost = CTFBotGuardPoint_OnTerritoryLost;
 
 	return action;
 }

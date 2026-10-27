@@ -10,6 +10,7 @@ five say no and get out of the way.
 package hooks
 
 import (
+	"github.com/m-this/tf2-mvm-bots-go/internal/body/address"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/pathing"
 	"github.com/m-this/tf2-mvm-bots-go/internal/body/slots"
 	"github.com/m-this/tf2-mvm-bots-go/internal/engine"
@@ -407,7 +408,7 @@ func TacticalMonitorUpdate(action engine.Behaviour, actor int32, interval float3
 	}
 
 	if !engine.ShouldUseTeleporterNow(actor) {
-		pFindTeleporterTimer := engine.CountdownAt(engine.Address(int32(action) + engine.FindTeleporterOffset()))
+		pFindTeleporterTimer := engine.CountdownAt(address.Widen(int32(action) + engine.FindTeleporterOffset()))
 
 		if pFindTeleporterTimer.Address() != engine.NoAddress() {
 			// Don't look for any nearby teleporters to use. This forces

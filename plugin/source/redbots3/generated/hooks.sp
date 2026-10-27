@@ -330,7 +330,7 @@ public Action CTFBotTacticalMonitor_Update(BehaviorAction action, int actor, flo
 	}
 	if (!ShouldUseTeleporter(actor))
 	{
-		CountdownTimer pFindTeleporterTimer = CountdownTimer(view_as<Address>(view_as<int>(action) + 0x70));
+		CountdownTimer pFindTeleporterTimer = CountdownTimer(AddressOfCell(view_as<int>(action) + 0x70));
 		if (pFindTeleporterTimer.Address != Address_Null)
 		{
 			// Don't look for any nearby teleporters to use. This forces

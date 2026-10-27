@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Patches against upstream files, CRLF ones included: stored byte for byte.
+testbed/patches/**/*.patch -text

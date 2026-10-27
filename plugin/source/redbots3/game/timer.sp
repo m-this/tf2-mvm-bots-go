@@ -6,7 +6,11 @@ address and are written through it. Starting one is how the plugin tells a game
 behaviour to leave a bot alone for a while.
 
 LoadFromAddress and StoreToAddress take a number type rather than a float type,
-so the float goes through as its four bytes. */
+so the float goes through as its four bytes.
+
+The methodmap is one cell and SourceMod 1.13's Address is an int64, so the
+pointer crosses through generated/address.sp both ways: CellOfAddress refuses an
+address that does not fit, AddressOfCell zero-extends. */
 
 #define COUNTDOWNTIMER_OFFSET_DURATION	0x4
 #define COUNTDOWNTIMER_OFFSET_TIMESTAMP	0x8
@@ -15,12 +19,12 @@ methodmap CountdownTimer
 {
 	public CountdownTimer(Address pointer)
 	{
-		return view_as<CountdownTimer>(pointer);
+		return view_as<CountdownTimer>(CellOfAddress(pointer));
 	}
 
 	property Address Address
 	{
-		public get() { return view_as<Address>(this); }
+		public get() { return AddressOfCell(view_as<int>(this)); }
 	}
 
 	property float m_duration
