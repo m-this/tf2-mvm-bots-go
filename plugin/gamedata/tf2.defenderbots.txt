@@ -71,12 +71,16 @@
 			}
 			"CTFPlayer::PostInventoryApplication"
 			{
-				"windows"	"\x55\x8B\xEC\x83\xEC\x3C\x53\x8B\xD9\x56\x57"
+				// Since TF2 11267535 the first eleven bytes also open an item
+				// schema function earlier in server.dll: SourceMod took that one
+				// and the call corrupted the heap. m_Shared's offset is wildcarded.
+				"windows"	"\x55\x8B\xEC\x83\xEC\x3C\x53\x8B\xD9\x56\x57\x89\x5D\xF8\x8D\x8B\x2A\x2A\x2A\x2A\xE8"
 				"linux"		"@_ZN9CTFPlayer24PostInventoryApplicationEv"
 			}
 			"CTFBot::SetMission"
 			{
-				"windows"	"\x55\x8B\xEC\x83\xEC\x20\x80\x7D\x2A\x00"
+				// Ten bytes alone also open a function further on; this one was first.
+				"windows"	"\x55\x8B\xEC\x83\xEC\x20\x80\x7D\x2A\x00\x56\x8B\xF1\x8B\x86"
 				"linux"		"@_ZN6CTFBot10SetMissionENS_11MissionTypeEb"
 			}
 			"CBaseAnimating::LookupBone"
